@@ -1,30 +1,30 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: kafka
+  name: xrag-kafka
   namespace: rag-system
 spec:
   ports:
     - port: 9092
       name: client
   selector:
-    app: kafka
+    app: xrag-kafka
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: kafka
+  name: xrag-kafka
   namespace: rag-system
 spec:
-  serviceName: kafka
+  serviceName: xrag-kafka
   replicas: 1
   selector:
     matchLabels:
-      app: kafka
+      app: xrag-kafka
   template:
     metadata:
       labels:
-        app: kafka
+        app: xrag-kafka
     spec:
       containers:
         - name: kafka
@@ -41,7 +41,7 @@ spec:
             - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
               value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
             - name: KAFKA_CONTROLLER_QUORUM_VOTERS
-              value: "1@kafka-0.kafka.rag-system.svc.cluster.local:9093"
+              value: "1@xrag-kafka-0.xrag-kafka.rag-system.svc.cluster.local:9093"
             - name: KAFKA_CONTROLLER_LISTENER_NAMES
               value: "CONTROLLER"
             - name: KAFKA_INTER_BROKER_LISTENER_NAME

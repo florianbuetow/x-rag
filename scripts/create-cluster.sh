@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-CLUSTER_NAME="xrag"
+CLUSTER_NAME="xrag-k8"
 NAMESPACE="rag-system"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${SCRIPT_DIR}/.."

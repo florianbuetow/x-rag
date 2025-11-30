@@ -14,7 +14,7 @@ echo ""
 echo "[1/2] Deploying Prometheus..."
 kubectl apply -f "${PROJECT_ROOT}/infra/k8s/monitoring/prometheus.yaml" -n ${NAMESPACE}
 echo "Waiting for Prometheus to be ready..."
-kubectl wait --for=condition=Ready pod -l app=prometheus -n ${NAMESPACE} --timeout=120s
+kubectl wait --for=condition=Ready pod -l app=xrag-prometheus -n ${NAMESPACE} --timeout=120s
 echo "✓ Prometheus ready"
 
 # Deploy Grafana
@@ -22,7 +22,7 @@ echo ""
 echo "[2/2] Deploying Grafana..."
 kubectl apply -f "${PROJECT_ROOT}/infra/k8s/monitoring/grafana.yaml" -n ${NAMESPACE}
 echo "Waiting for Grafana to be ready..."
-kubectl wait --for=condition=Ready pod -l app=grafana -n ${NAMESPACE} --timeout=120s
+kubectl wait --for=condition=Ready pod -l app=xrag-grafana -n ${NAMESPACE} --timeout=120s
 echo "✓ Grafana ready"
 
 echo ""
@@ -34,4 +34,4 @@ echo "Access points:"
 echo "  Prometheus: http://localhost:9090"
 echo "  Grafana:    http://localhost:3000 (admin/admin)"
 echo ""
-echo "Verify with: kubectl get pods -n ${NAMESPACE} -l 'app in (prometheus,grafana)'"
+echo "Verify with: kubectl get pods -n ${NAMESPACE} -l 'app in (xrag-prometheus,xrag-grafana)'"

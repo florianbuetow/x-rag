@@ -75,7 +75,7 @@ spec:
           command: ["python", "/scripts/init-schema.py"]
           env:
             - name: WEAVIATE_URL
-              value: "http://weaviate:8080"
+              value: "http://xrag-weaviate:8080"
           volumeMounts:
             - name: scripts
               mountPath: /scripts

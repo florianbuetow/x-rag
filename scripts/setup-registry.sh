@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-REG_NAME="xrag-kind-registry"
+REG_NAME="xrag-k8-kind-registry"
 REG_PORT="5000"
 
 echo "=============================================="
