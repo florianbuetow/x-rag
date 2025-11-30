@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: embedding-service
+  namespace: rag-system
+  labels:
+    app: embedding-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: embedding-service
+  template:
+    metadata:
+      labels:
+        app: embedding-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: embedding-service
+          image: xrag-k8-kind-registry:5000/embedding-service:latest
+          imagePullPolicy: Always
+          ports:
+            - name: grpc
+              containerPort: 50051
+              protocol: TCP
+            - name: metrics
+              containerPort: 8080
+              protocol: TCP
+          env:
+            # Load from ConfigMap
+            - name: SERVICE_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: embedding-service-config
+                  key: SERVICE_NAME
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: embedding-service-config
+                  key: LOG_LEVEL
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: embedding-service-config
+                  key: PORT
+            - name: DEFAULT_MODEL
+              valueFrom:
+                configMapKeyRef:
+                  name: embedding-service-config
+                  key: DEFAULT_MODEL
+            - name: MAX_BATCH_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  name: embedding-service-config
+                  key: MAX_BATCH_SIZE
+            - name: ENABLE_REFLECTION
+              valueFrom:
+                configMapKeyRef:
+                  name: embedding-service-config
+                  key: ENABLE_REFLECTION
+            - name: MAX_WORKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: embedding-service-config
+                  key: MAX_WORKERS
+            # Load from Secret
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: embedding-service-secret
+                  key: OPENAI_API_KEY
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          livenessProbe:
+            exec:
+              command:
+                - python
+                - -c
+                - |
+                  import grpc
+                  from src.proto_gen.embedding_pb2_grpc import EmbeddingServiceStub
+                  from src.proto_gen.common_pb2 import HealthCheckRequest
+                  channel = grpc.insecure_channel('localhost:50051')
+                  stub = EmbeddingServiceStub(channel)
+                  response = stub.HealthCheck(HealthCheckRequest(), timeout=5)
+                  exit(0 if response.status == 1 else 1)
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - python
+                - -c
+                - |
+                  import grpc
+                  from src.proto_gen.embedding_pb2_grpc import EmbeddingServiceStub
+                  from src.proto_gen.common_pb2 import HealthCheckRequest
+                  channel = grpc.insecure_channel('localhost:50051')
+                  stub = EmbeddingServiceStub(channel)
+                  response = stub.HealthCheck(HealthCheckRequest(), timeout=5)
+                  exit(0 if response.status == 1 else 1)
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+      restartPolicy: Always
