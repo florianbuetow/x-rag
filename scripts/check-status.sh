@@ -78,7 +78,10 @@ if kubectl get namespace ${NAMESPACE} &>/dev/null; then
             ready=$(echo $line | awk '{print $2}')
             status=$(echo $line | awk '{print $3}')
 
-            if [[ "$ready" == "1/1" ]] && [[ "$status" == "Running" ]]; then
+            # Jobs that complete successfully should show as success
+            if [[ "$status" == "Completed" ]] && [[ "$ready" == "0/1" ]]; then
+                echo -e "    ${check_mark} ${pod_name} (job completed)"
+            elif [[ "$ready" == "1/1" ]] && [[ "$status" == "Running" ]]; then
                 echo -e "    ${check_mark} ${pod_name}"
             else
                 echo -e "    ${cross_mark} ${pod_name} (${status}, ${ready})"
@@ -189,9 +192,11 @@ echo "  Summary"
 echo -e "==============================================${NC}"
 echo ""
 
-# Count ready pods
+# Count ready pods (include both Running and Completed)
 total_pods=$(kubectl get pods -n ${NAMESPACE} --no-headers 2>/dev/null | wc -l | tr -d ' ')
-ready_pods=$(kubectl get pods -n ${NAMESPACE} --no-headers 2>/dev/null | grep "1/1.*Running" | wc -l | tr -d ' ')
+running_pods=$(kubectl get pods -n ${NAMESPACE} --no-headers 2>/dev/null | grep "1/1.*Running" | wc -l | tr -d ' ')
+completed_pods=$(kubectl get pods -n ${NAMESPACE} --no-headers 2>/dev/null | grep "0/1.*Completed" | wc -l | tr -d ' ')
+ready_pods=$((running_pods + completed_pods))
 
 if [ "$total_pods" -gt 0 ]; then
     echo -e "  Pods: ${ready_pods}/${total_pods} ready"
