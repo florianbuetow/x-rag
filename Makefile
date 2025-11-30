@@ -119,7 +119,43 @@ destroy: stop ## Stop cluster and delete all xrag-* Docker images
 	@rm -rf $(SETUP_DIR)
 	@echo "$(GREEN)All project images deleted$(NC)"
 
-reset: clean setup ## Clean and recreate everything (fresh start)
+reset: ## Reset all pods and data (keeps cluster running, deletes all state)
+	@echo "$(YELLOW)WARNING: This will DELETE all pod data and restart services!$(NC)"
+	@echo -n "Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+	@echo "$(BLUE)=== Resetting X-RAG Platform ===$(NC)"
+	@echo ""
+	@echo "$(YELLOW)[1/6] Deleting all workloads...$(NC)"
+	@kubectl delete deployments --all -n $(NAMESPACE) --ignore-not-found
+	@kubectl delete statefulsets --all -n $(NAMESPACE) --ignore-not-found
+	@kubectl delete jobs --all -n $(NAMESPACE) --ignore-not-found
+	@echo "$(GREEN)✓ All workloads deleted$(NC)"
+	@echo ""
+	@echo "$(YELLOW)[2/6] Deleting all services and configmaps...$(NC)"
+	@kubectl delete services --all -n $(NAMESPACE) --ignore-not-found
+	@kubectl delete configmaps --all -n $(NAMESPACE) --ignore-not-found
+	@echo "$(GREEN)✓ All services and configs deleted$(NC)"
+	@echo ""
+	@echo "$(YELLOW)[3/6] Deleting all persistent volume claims...$(NC)"
+	@kubectl delete pvc --all -n $(NAMESPACE) --ignore-not-found
+	@echo "$(GREEN)✓ All data deleted$(NC)"
+	@echo ""
+	@echo "$(YELLOW)[4/6] Clearing deployment checkpoints...$(NC)"
+	@rm -f $(SETUP_DIR)/infrastructure.done $(SETUP_DIR)/monitoring.done
+	@echo "$(GREEN)✓ Checkpoints cleared$(NC)"
+	@echo ""
+	@echo "$(YELLOW)[5/6] Waiting for cleanup to complete...$(NC)"
+	@sleep 5
+	@echo "$(GREEN)✓ Cleanup complete$(NC)"
+	@echo ""
+	@echo "$(YELLOW)[6/6] Redeploying all services...$(NC)"
+	@$(MAKE) .deploy-infrastructure
+	@$(MAKE) .deploy-monitoring
+	@$(MAKE) deploy-apps
+	@echo ""
+	@echo "$(GREEN)===== Reset Complete! =====$(NC)"
+	@echo ""
+	@echo "All services have been redeployed with fresh state."
+	@echo "Run 'make status' to verify all services are running."
 
 ##@ Build & Deploy
 
