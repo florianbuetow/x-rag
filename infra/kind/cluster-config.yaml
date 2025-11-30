@@ -25,6 +25,14 @@ nodes:
       - containerPort: 30090
         hostPort: 9090
         protocol: TCP
+      # Redis
+      - containerPort: 30079
+        hostPort: 6379
+        protocol: TCP
+      # Kafka
+      - containerPort: 30092
+        hostPort: 9092
+        protocol: TCP
     extraMounts:
       - hostPath: ./data/storage
         containerPath: /var/local-path-provisioner

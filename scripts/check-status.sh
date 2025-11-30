@@ -95,6 +95,12 @@ echo -e "${BLUE}[5/8] Weaviate (Vector Database)${NC}"
 if curl -s -f http://localhost:8081/v1/.well-known/ready &>/dev/null; then
     echo -e "  ${check_mark} Weaviate is ready"
     echo -e "  Endpoint: http://localhost:8081"
+
+    # Get version via curl
+    weaviate_version=$(curl -s http://localhost:8081/v1/meta 2>/dev/null | grep -o '"version":"[^"]*"' | cut -d'"' -f4)
+    if [ -n "$weaviate_version" ]; then
+        echo -e "  Version: ${weaviate_version}"
+    fi
 else
     echo -e "  ${cross_mark} Weaviate not accessible"
 fi
@@ -150,6 +156,12 @@ echo -e "${BLUE}[Monitoring] Prometheus${NC}"
 if curl -s -f http://localhost:9090/-/healthy &>/dev/null; then
     echo -e "  ${check_mark} Prometheus is healthy"
     echo -e "  Endpoint: http://localhost:9090"
+
+    # Get version via curl
+    prom_version=$(curl -s http://localhost:9090/api/v1/status/buildinfo 2>/dev/null | grep -o '"version":"[^"]*"' | cut -d'"' -f4)
+    if [ -n "$prom_version" ]; then
+        echo -e "  Version: ${prom_version}"
+    fi
 else
     echo -e "  ${cross_mark} Prometheus not accessible"
 fi
@@ -160,6 +172,12 @@ echo -e "${BLUE}[Monitoring] Grafana${NC}"
 if curl -s -f http://localhost:3000 &>/dev/null; then
     echo -e "  ${check_mark} Grafana is accessible"
     echo -e "  Endpoint: http://localhost:3000 (admin/admin)"
+
+    # Get version via curl
+    grafana_version=$(curl -s http://localhost:3000/api/health 2>/dev/null | grep version | awk -F'"' '{print $4}')
+    if [ -n "$grafana_version" ]; then
+        echo -e "  Version: ${grafana_version}"
+    fi
 else
     echo -e "  ${cross_mark} Grafana not accessible"
 fi
