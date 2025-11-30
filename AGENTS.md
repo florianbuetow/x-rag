@@ -5,18 +5,9 @@
 **The complete project plan is located at:**
 `/Users/flo/.claude/plans/mighty-jumping-bachman.md`
 
-**You MUST read the project plan before working on this project.** It contains:
-- Complete architecture and service definitions
-- Detailed technology stack and dependencies
-- Full directory structure
-- gRPC protocol definitions
-- Infrastructure components (Kind, Weaviate, Kafka, etc.)
-- All implementation phases
-- Kubernetes manifests specifications
-- Testing strategy
-- Success criteria
+**You MUST read the project plan before working on this project.**
 
-This file (AGENTS.md) contains only **operational rules** and **current status** - everything else is in the plan.
+This file (AGENTS.md) contains only **operational rules** and **current status**.
 
 ## Project Quick Summary
 
