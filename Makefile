@@ -1,7 +1,7 @@
 # X-RAG Platform - Makefile
 # Main developer interface for infrastructure and application management
 
-.PHONY: help check setup start stop status clean clean-force reset
+.PHONY: help check setup start stop status clean clean-force reset destroy
 .PHONY: build deploy-apps
 .PHONY: test test-e2e
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
@@ -108,6 +108,15 @@ clean-force: ## Force cleanup without confirmation
 	@rm -rf $(SETUP_DIR)
 	@rm -rf data/storage/*
 	@echo "$(GREEN)Force cleanup complete$(NC)"
+
+destroy: stop ## Stop services and DELETE all Docker images
+	@echo "$(RED)WARNING: This will DELETE all X-RAG Docker images!$(NC)"
+	@echo -n "Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+	@echo "$(YELLOW)Deleting Docker images...$(NC)"
+	@docker images --format "{{.Repository}}:{{.Tag}}" | grep "localhost:$(REGISTRY_PORT)" | xargs -r docker rmi -f 2>/dev/null || true
+	@docker images --format "{{.Repository}}:{{.Tag}}" | grep "x-rag" | xargs -r docker rmi -f 2>/dev/null || true
+	@echo "$(GREEN)Docker images deleted$(NC)"
+	@echo "Cluster and infrastructure still running. Run 'make clean' to remove everything."
 
 reset: clean setup ## Clean and recreate everything (fresh start)
 
