@@ -85,7 +85,7 @@ System Resources:
 ## Quick Reference
 
 - **Project Structure**: See project plan for full directory tree
-- **Port Mappings**: See project plan (8080=UI, 8081=Weaviate, 8082=Ingestion, 3000=Grafana, 9090=Prometheus)
+- **Port Mappings**: 8080=UI, 8081=Weaviate, 8082=Ingestion, 3000=Grafana, 9090=Prometheus, 6379=Redis, 9092=Kafka
 - **Environment Variables**: Copy `.env.example` to `.env` and add `OPENAI_API_KEY`
 
 ## Implementation Status
@@ -118,9 +118,73 @@ System Resources:
 4. **Use the Makefile** for all operations
 5. **Commit frequently** after each milestone
 
+## Understanding Docker vs Kubernetes Architecture
+
+### What You See in `docker ps` (4 Containers)
+
+When you run `docker ps`, you see **4 Docker containers**:
+```
+1. xrag-k8-kind-registry   ← Local Docker registry (stores images)
+2. xrag-k8-control-plane   ← Kubernetes master node
+3. xrag-k8-worker          ← Kubernetes worker node
+4. xrag-k8-worker2         ← Kubernetes worker node
+```
+
+### Where Are the Services?
+
+**Redis, Kafka, MinIO, and Weaviate are NOT separate Docker containers.**
+
+They run **INSIDE** the worker nodes as Kubernetes pods. Kind uses "Docker-in-Docker" - the worker containers run Kubernetes, and your services run as pods inside those containers.
+
+### Architecture Visualization
+
+```
+┌─────────────────────────────────────────────────┐
+│         Kubernetes Cluster (xrag-k8)            │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│  ┌──────────────────┐  ┌──────────────────┐    │
+│  │ xrag-k8-worker   │  │ xrag-k8-worker2  │    │
+│  ├──────────────────┤  ├──────────────────┤    │
+│  │ Pods:            │  │ Pods:            │    │
+│  │ • Redis          │  │ • MinIO          │    │
+│  │ • Kafka          │  │ • Weaviate       │    │
+│  │ • Grafana        │  │                  │    │
+│  │ • Prometheus     │  │                  │    │
+│  └──────────────────┘  └──────────────────┘    │
+│                                                 │
+└─────────────────────────────────────────────────┘
+```
+
+### How to See Your Services
+
+```bash
+# See Docker containers (infrastructure):
+docker ps
+
+# See Kubernetes pods (actual services):
+kubectl get pods -n rag-system
+
+# See which pod runs on which node:
+kubectl get pods -n rag-system -o wide
+
+# See all resources:
+kubectl get all -n rag-system
+```
+
+### Why Kubernetes Instead of Simple Docker?
+
+The X-RAG project uses Kubernetes for production-grade features:
+- **Independent scaling**: Scale search-api to 5 replicas, indexer to 10
+- **Production parity**: Same setup in dev and production
+- **Service discovery**: Automatic DNS (xrag-redis:6379)
+- **Health checks**: Automatic pod restarts
+- **Resource limits**: Prevent services from consuming all resources
+
 ## Common Issues
 
 - **"Docker daemon not running"**: Start Docker Desktop or `sudo systemctl start docker`
 - **"Port already in use"**: Run `make check` to identify the process
 - **"Cluster not found"**: Run `make setup` first
+- **"I only see 4 containers in docker ps"**: That's correct! Services run as pods inside worker nodes (see section above)
 - **Any other issue**: Run `make check` for actionable error messages

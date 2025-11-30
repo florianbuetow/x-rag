@@ -4,8 +4,10 @@ metadata:
   name: xrag-redis
   namespace: rag-system
 spec:
+  type: NodePort
   ports:
     - port: 6379
+      nodePort: 30079
   selector:
     app: xrag-redis
 ---

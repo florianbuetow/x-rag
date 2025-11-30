@@ -4,8 +4,10 @@ metadata:
   name: xrag-kafka
   namespace: rag-system
 spec:
+  type: NodePort
   ports:
     - port: 9092
+      nodePort: 30092
       name: client
   selector:
     app: xrag-kafka

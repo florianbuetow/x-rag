@@ -27,6 +27,7 @@ NC := \033[0m  # No Color
 ##@ General
 
 help: ## Display this help message
+	@clear
 	@echo "$(BLUE)X-RAG Platform - Available Commands$(NC)"
 	@echo ""
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage:\n  make $(CYAN)<target>$(NC)\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  $(CYAN)%-20s$(NC) %s\n", $$1, $$2 } /^##@/ { printf "\n$(YELLOW)%s$(NC)\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
@@ -34,33 +35,31 @@ help: ## Display this help message
 ##@ Setup & Management
 
 check: ## Validate all prerequisites (Docker, kubectl, Kind, Helm, Python, uv)
+	@clear
 	@echo "$(BLUE)=== Checking Prerequisites ===$(NC)"
 	@./scripts/check-prerequisites.sh
+	@echo ""
 
-setup: check ## One-time setup (create cluster, deploy infrastructure)
-	@echo "$(BLUE)=== X-RAG Platform - Initial Setup ===$(NC)"
+setup: check ## Build Docker images (does not start cluster)
+	@echo "$(BLUE)=== Building Docker Images ===$(NC)"
+	@$(MAKE) build
+	@echo ""
+	@echo "$(GREEN)===== Setup Complete! =====$(NC)"
+	@echo ""
+	@echo "Next steps:"
+	@echo "  1. Copy .env.example to .env and add your OPENAI_API_KEY"
+	@echo "  2. Run: make start    # Start cluster and all services"
+	@echo ""
+
+
+start: ## Start the cluster and all services
+	@echo "$(BLUE)=== Starting X-RAG Platform ===$(NC)"
 	@echo ""
 	@mkdir -p $(SETUP_DIR)
 	@$(MAKE) .setup-cluster
 	@$(MAKE) .setup-registry
 	@$(MAKE) .deploy-infrastructure
 	@$(MAKE) .deploy-monitoring
-	@echo ""
-	@echo "$(GREEN)===== Setup Complete! =====$(NC)"
-	@echo ""
-	@echo "Next steps:"
-	@echo "  1. Copy .env.example to .env and add your OPENAI_API_KEY"
-	@echo "  2. Run: make build    # Build application images"
-	@echo "  3. Run: make start    # Start all services"
-
-start: ## Start/restart all services (builds and deploys applications)
-	@echo "$(BLUE)=== Starting X-RAG Platform ===$(NC)"
-	@echo ""
-	@if ! kind get clusters 2>/dev/null | grep -q "$(CLUSTER_NAME)"; then \
-		echo "$(RED)Error: Cluster not found. Run 'make setup' first.$(NC)"; \
-		exit 1; \
-	fi
-	@$(MAKE) build
 	@$(MAKE) deploy-apps
 	@echo ""
 	@echo "$(GREEN)===== X-RAG Platform Started! =====$(NC)"
@@ -71,12 +70,14 @@ start: ## Start/restart all services (builds and deploys applications)
 	@echo "  Weaviate:      http://localhost:8081/v1/.well-known/ready"
 	@echo "  Grafana:       http://localhost:3000 (admin/admin)"
 	@echo "  Prometheus:    http://localhost:9090"
+	@echo "  Redis:         localhost:6379"
+	@echo "  Kafka:         localhost:9092"
 
-stop: ## Stop all services (keeps cluster running)
-	@echo "$(YELLOW)Stopping application services...$(NC)"
-	@kubectl delete deployment --all -n $(NAMESPACE) 2>/dev/null || true
-	@echo "$(GREEN)Services stopped. Cluster still running.$(NC)"
-	@echo "To completely remove everything, run: make clean"
+stop: ## Shutdown the cluster
+	@echo "$(YELLOW)Shutting down cluster...$(NC)"
+	@kind delete cluster --name $(CLUSTER_NAME) 2>/dev/null || true
+	@docker rm -f $(REGISTRY_NAME) 2>/dev/null || true
+	@echo "$(GREEN)Cluster stopped$(NC)"
 
 status: ## Display current system status and test all service connectivity
 	@./scripts/check-status.sh
@@ -101,14 +102,22 @@ clean-force: ## Force cleanup without confirmation
 	@rm -rf data/storage/*
 	@echo "$(GREEN)Force cleanup complete$(NC)"
 
-destroy: stop ## Stop services and DELETE all Docker images
-	@echo "$(RED)WARNING: This will DELETE all X-RAG Docker images!$(NC)"
+destroy: stop ## Stop cluster and delete all xrag-* Docker images
+	@echo "$(RED)WARNING: This will DELETE all project Docker images!$(NC)"
 	@echo -n "Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
-	@echo "$(YELLOW)Deleting Docker images...$(NC)"
-	@docker images --format "{{.Repository}}:{{.Tag}}" | grep "localhost:$(REGISTRY_PORT)" | xargs -r docker rmi -f 2>/dev/null || true
-	@docker images --format "{{.Repository}}:{{.Tag}}" | grep "x-rag" | xargs -r docker rmi -f 2>/dev/null || true
-	@echo "$(GREEN)Docker images deleted$(NC)"
-	@echo "Cluster and infrastructure still running. Run 'make clean' to remove everything."
+	@echo "$(YELLOW)Deleting project Docker images...$(NC)"
+	@for img in $$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "xrag-"); do \
+		echo "  Deleting $$img"; \
+		docker rmi -f $$img 2>/dev/null || true; \
+	done
+	@echo "  Deleting registry:2"; docker rmi -f registry:2 2>/dev/null || true
+	@echo "  Deleting kindest/node"; docker rmi -f kindest/node 2>/dev/null || true
+	@for img in $$(grep -rh "image:" infra/k8s/ | grep -v "^#" | awk '{print $$NF}' | sort -u); do \
+		echo "  Deleting $$img"; \
+		docker rmi -f $$img 2>/dev/null || true; \
+	done
+	@rm -rf $(SETUP_DIR)
+	@echo "$(GREEN)All project images deleted$(NC)"
 
 reset: clean setup ## Clean and recreate everything (fresh start)
 
