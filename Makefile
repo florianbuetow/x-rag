@@ -78,15 +78,8 @@ stop: ## Stop all services (keeps cluster running)
 	@echo "$(GREEN)Services stopped. Cluster still running.$(NC)"
 	@echo "To completely remove everything, run: make clean"
 
-status: ## Display current system status
-	@echo "$(BLUE)=== Cluster Status ===$(NC)"
-	@kind get clusters 2>/dev/null | grep "$(CLUSTER_NAME)" || echo "Cluster not found"
-	@echo ""
-	@echo "$(BLUE)=== Pods ===$(NC)"
-	@kubectl get pods -n $(NAMESPACE) 2>/dev/null || echo "Namespace not found"
-	@echo ""
-	@echo "$(BLUE)=== Services ===$(NC)"
-	@kubectl get svc -n $(NAMESPACE) 2>/dev/null || echo "Namespace not found"
+status: ## Display current system status and test all service connectivity
+	@./scripts/check-status.sh
 
 clean: ## Interactive cleanup with confirmation
 	@echo "$(YELLOW)WARNING: This will delete the Kind cluster and all data.$(NC)"
