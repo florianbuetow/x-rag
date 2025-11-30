@@ -31,14 +31,11 @@ MIN_CORES=4
 RECOMMENDED_MEM_GB=10
 RECOMMENDED_CORES=8
 
-printf "  %-20s " "Docker resources..."
-
 # Check memory
 if [ "$DOCKER_MEM_GB" -lt "$MIN_MEM_GB" ]; then
-    echo -e "${RED}✗ INSUFFICIENT${NC}"
-    echo ""
-    echo "  System RAM: ${SYSTEM_MEM_GB}GB"
-    echo "  Docker allocated: ${DOCKER_MEM_GB}GB (minimum: ${MIN_MEM_GB}GB)"
+    echo -e "${RED}System Resources:${NC}"
+    echo -e "  Recommended: ${MIN_MEM_GB}GB RAM, ${MIN_CORES} cores (minimum)"
+    echo -e "  ${RED}Available: ${DOCKER_MEM_GB}GB RAM, ${DOCKER_CORES} cores (via docker configuration) ✗${NC}"
     echo ""
     echo "  Fix: Increase Docker's memory allocation"
     echo "    macOS:  Docker Desktop → Settings → Resources → Memory → ${MIN_MEM_GB}GB+"
@@ -49,9 +46,9 @@ fi
 
 # Check cores
 if [ "$DOCKER_CORES" -lt "$MIN_CORES" ]; then
-    echo -e "${RED}✗ INSUFFICIENT${NC}"
-    echo ""
-    echo "  Docker cores: ${DOCKER_CORES} (minimum: ${MIN_CORES})"
+    echo -e "${RED}System Resources:${NC}"
+    echo -e "  Recommended: ${MIN_MEM_GB}GB RAM, ${MIN_CORES} cores (minimum)"
+    echo -e "  ${RED}Available: ${DOCKER_MEM_GB}GB RAM, ${DOCKER_CORES} cores (via docker configuration) ✗${NC}"
     echo ""
     echo "  Fix: Increase Docker's core allocation"
     echo "    Docker Desktop → Settings → Resources → CPUs → ${MIN_CORES}+"
@@ -59,27 +56,20 @@ if [ "$DOCKER_CORES" -lt "$MIN_CORES" ]; then
     exit 1
 fi
 
-# Build status message
-if [ "$SYSTEM_MEM_GB" -gt 0 ]; then
-    STATUS_MSG="System has ${SYSTEM_MEM_GB}GB, Docker allocated ${DOCKER_MEM_GB}GB, ${DOCKER_CORES} cores"
-else
-    STATUS_MSG="Docker allocated ${DOCKER_MEM_GB}GB, ${DOCKER_CORES} cores"
-fi
-
 # Always show recommended vs available comparison
 if [ "$DOCKER_MEM_GB" -lt "$RECOMMENDED_MEM_GB" ] || [ "$DOCKER_CORES" -lt "$RECOMMENDED_CORES" ]; then
     # Below recommended - show in yellow with warning
-    echo -e "${YELLOW}✓ ${STATUS_MSG}${NC}"
+    echo -e "${YELLOW}System Resources:${NC}"
+    echo -e "  ${YELLOW}Recommended: ${RECOMMENDED_MEM_GB}GB RAM, ${RECOMMENDED_CORES} cores${NC}"
+    echo -e "  ${YELLOW}Available: ${DOCKER_MEM_GB}GB RAM, ${DOCKER_CORES} cores (via docker configuration) ⚠${NC}"
     echo ""
-    echo -e "    ${YELLOW}⚠  Recommended: ${RECOMMENDED_MEM_GB}GB RAM, ${RECOMMENDED_CORES} cores${NC}"
-    echo -e "    ${YELLOW}⚠  You have: ${DOCKER_MEM_GB}GB RAM, ${DOCKER_CORES} cores allocated to Docker${NC}"
-    echo -e "    ${YELLOW}⚠  Fix: Docker Desktop → Settings → Resources → Memory${NC}"
+    echo -e "  ${YELLOW}⚠  Below recommended specs. Consider increasing Docker resources.${NC}"
+    echo -e "  ${YELLOW}⚠  Fix: Docker Desktop → Settings → Resources${NC}"
 else
     # Meets or exceeds recommended - show in green
-    echo -e "${GREEN}✓ ${STATUS_MSG}${NC}"
-    echo ""
-    echo -e "    Recommended: ${RECOMMENDED_MEM_GB}GB RAM, ${RECOMMENDED_CORES} cores"
-    echo -e "    ${GREEN}You have: ${DOCKER_MEM_GB}GB RAM, ${DOCKER_CORES} cores allocated to Docker ✓${NC}"
+    echo -e "${GREEN}System Resources:${NC}"
+    echo -e "  Recommended: ${RECOMMENDED_MEM_GB}GB RAM, ${RECOMMENDED_CORES} cores"
+    echo -e "  ${GREEN}Available: ${DOCKER_MEM_GB}GB RAM, ${DOCKER_CORES} cores (via docker configuration) ✓${NC}"
 fi
 
 exit 0
