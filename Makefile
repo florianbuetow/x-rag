@@ -38,8 +38,8 @@ check: ## Validate all prerequisites (Docker, kubectl, Kind, Helm, Python, uv)
 	@echo "$(BLUE)=== Checking Prerequisites ===$(NC)"
 	@./scripts/check-prerequisites.sh
 
-setup: ## Complete infrastructure setup (cluster + services)
-	@echo "$(BLUE)=== X-RAG Platform Setup ===$(NC)"
+setup: ## One-time setup (create cluster, deploy infrastructure)
+	@echo "$(BLUE)=== X-RAG Platform - Initial Setup ===$(NC)"
 	@echo ""
 	@mkdir -p $(SETUP_DIR)
 	@$(MAKE) check
@@ -50,27 +50,35 @@ setup: ## Complete infrastructure setup (cluster + services)
 	@echo ""
 	@echo "$(GREEN)===== Setup Complete! =====$(NC)"
 	@echo ""
-	@echo "Endpoints:"
-	@echo "  Search UI:     http://localhost:8080"
-	@echo "  Weaviate:      http://localhost:8081/v1/.well-known/ready"
-	@echo "  Ingestion API: http://localhost:8082"
-	@echo "  Grafana:       http://localhost:3000 (admin/admin)"
-	@echo "  Prometheus:    http://localhost:9090"
-	@echo ""
 	@echo "Next steps:"
 	@echo "  1. Copy .env.example to .env and add your OPENAI_API_KEY"
-	@echo "  2. Run: make build         # Build application images"
-	@echo "  3. Run: make deploy-apps   # Deploy applications"
-	@echo "  4. Run: make status        # Check system status"
+	@echo "  2. Run: make build    # Build application images"
+	@echo "  3. Run: make start    # Start all services"
 
-start: setup ## Start the X-RAG platform (alias for setup)
+start: ## Start/restart all services (builds and deploys applications)
+	@echo "$(BLUE)=== Starting X-RAG Platform ===$(NC)"
+	@echo ""
+	@if ! kind get clusters 2>/dev/null | grep -q "$(CLUSTER_NAME)"; then \
+		echo "$(RED)Error: Cluster not found. Run 'make setup' first.$(NC)"; \
+		exit 1; \
+	fi
+	@$(MAKE) build
+	@$(MAKE) deploy-apps
+	@echo ""
+	@echo "$(GREEN)===== X-RAG Platform Started! =====$(NC)"
+	@echo ""
+	@echo "Endpoints:"
+	@echo "  Search UI:     http://localhost:8080"
+	@echo "  Ingestion API: http://localhost:8082"
+	@echo "  Weaviate:      http://localhost:8081/v1/.well-known/ready"
+	@echo "  Grafana:       http://localhost:3000 (admin/admin)"
+	@echo "  Prometheus:    http://localhost:9090"
 
-stop: ## Stop the X-RAG platform (delete cluster)
-	@echo "$(YELLOW)Stopping X-RAG platform...$(NC)"
-	@kind delete cluster --name $(CLUSTER_NAME) 2>/dev/null || true
-	@docker rm -f $(REGISTRY_NAME) 2>/dev/null || true
-	@rm -rf $(SETUP_DIR)
-	@echo "$(GREEN)X-RAG platform stopped$(NC)"
+stop: ## Stop all services (keeps cluster running)
+	@echo "$(YELLOW)Stopping application services...$(NC)"
+	@kubectl delete deployment --all -n $(NAMESPACE) 2>/dev/null || true
+	@echo "$(GREEN)Services stopped. Cluster still running.$(NC)"
+	@echo "To completely remove everything, run: make clean"
 
 status: ## Display current system status
 	@echo "$(BLUE)=== Cluster Status ===$(NC)"
@@ -104,22 +112,26 @@ clean-force: ## Force cleanup without confirmation
 
 reset: clean setup ## Clean and recreate everything (fresh start)
 
-##@ Development
+##@ Local Development (run services on host for debugging)
 
-dev-search-ui: ## Run Search UI locally with hot reload
-	@echo "$(BLUE)Starting Search UI locally...$(NC)"
+dev-search-ui: ## Run Search UI locally on host (not in K8s) with hot reload
+	@echo "$(BLUE)Starting Search UI locally (port 8080)...$(NC)"
+	@echo "$(YELLOW)Note: Running on host machine, not in Kubernetes$(NC)"
 	@cd src && uv run uvicorn search_ui.main:app --reload --port 8080
 
-dev-search-service: ## Run Search Service (gRPC) locally
+dev-search-service: ## Run Search Service (gRPC) locally on host
 	@echo "$(BLUE)Starting Search Service (gRPC) locally...$(NC)"
+	@echo "$(YELLOW)Note: Running on host machine, not in Kubernetes$(NC)"
 	@cd src && uv run python -m search_service.main
 
-dev-embedding: ## Run Embedding Service (gRPC) locally
+dev-embedding: ## Run Embedding Service (gRPC) locally on host
 	@echo "$(BLUE)Starting Embedding Service (gRPC) locally...$(NC)"
+	@echo "$(YELLOW)Note: Running on host machine, not in Kubernetes$(NC)"
 	@cd src && uv run python -m embedding_service.main
 
-dev-ingest: ## Run Ingestion API locally with hot reload
-	@echo "$(BLUE)Starting Ingestion API locally...$(NC)"
+dev-ingest: ## Run Ingestion API locally on host with hot reload
+	@echo "$(BLUE)Starting Ingestion API locally (port 8082)...$(NC)"
+	@echo "$(YELLOW)Note: Running on host machine, not in Kubernetes$(NC)"
 	@cd src && uv run uvicorn ingestion_api.main:app --reload --port 8082
 
 build: ## Build all Docker images and push to local registry
