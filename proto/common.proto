@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package xrag.common;
+
+// Common message types shared across all services
+
+message Metadata {
+  map<string, string> fields = 1;
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  enum Status {
+    UNKNOWN = 0;
+    HEALTHY = 1;
+    DEGRADED = 2;
+    UNHEALTHY = 3;
+  }
+  Status status = 1;
+  map<string, string> dependencies = 2;  // dependency_name -> status
+  string message = 3;
+}

@@ -2,7 +2,7 @@
 # Main developer interface for infrastructure and application management
 
 .PHONY: help check setup start stop status clean clean-force reset destroy
-.PHONY: build deploy-apps
+.PHONY: generate-grpc build deploy-apps
 .PHONY: test test-e2e
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
 .PHONY: logs-weaviate logs-kafka logs-redis
@@ -159,6 +159,10 @@ reset: ## Reset all pods and data (keeps cluster running, deletes all state)
 	@echo "Run 'make status' to verify all services are running."
 
 ##@ Build & Deploy
+
+generate-grpc: ## Generate Python gRPC code from protocol buffers
+	@echo "$(BLUE)=== Generating gRPC Code ===$(NC)"
+	@./scripts/generate-grpc.sh
 
 build: ## Build all Docker images and push to local registry
 	@echo "$(BLUE)=== Building Docker Images ===$(NC)"

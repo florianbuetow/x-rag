@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package xrag.search;
+
+import "common.proto";
+
+// Search service for RAG queries
+
+service SearchService {
+  // Perform search and generate answer
+  rpc Search(SearchRequest) returns (SearchResponse);
+
+  // Health check
+  rpc HealthCheck(xrag.common.HealthCheckRequest) returns (xrag.common.HealthCheckResponse);
+}
+
+message SearchRequest {
+  string query = 1;
+  string namespace = 2;  // default: "default"
+  int32 top_k = 3;       // default: 10
+  string mode = 4;       // "vector", "bm25", or "hybrid"
+  map<string, string> options = 5;  // Additional search options (alpha for hybrid, etc.)
+}
+
+message Source {
+  string id = 1;
+  string content = 2;
+  float score = 3;
+  map<string, string> metadata = 4;
+}
+
+message SearchResponse {
+  string answer = 1;
+  repeated Source sources = 2;
+  map<string, string> metadata = 3;  // Search metadata (latency, cache hit, etc.)
+}
