@@ -70,8 +70,9 @@ fi
 if [ "$DOCKER_MEM_GB" -lt "$RECOMMENDED_MEM_GB" ] || [ "$DOCKER_CPU" -lt "$RECOMMENDED_CPU" ]; then
     echo -e "${YELLOW}✓ ${STATUS_MSG}${NC}"
     echo ""
-    echo -e "    ${YELLOW}⚠  Docker memory below recommended (need ${RECOMMENDED_MEM_GB}GB+)${NC}"
-    echo -e "    ${YELLOW}⚠  Increase in: Docker Desktop → Settings → Resources → Memory${NC}"
+    echo -e "    ${YELLOW}⚠  Recommended: ${RECOMMENDED_MEM_GB}GB RAM, ${RECOMMENDED_CPU} CPUs${NC}"
+    echo -e "    ${YELLOW}⚠  You have: ${DOCKER_MEM_GB}GB RAM allocated to Docker${NC}"
+    echo -e "    ${YELLOW}⚠  Fix: Docker Desktop → Settings → Resources → Memory${NC}"
 else
     echo -e "${GREEN}✓ ${STATUS_MSG}${NC}"
 fi
