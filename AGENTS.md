@@ -1,73 +1,50 @@
 # X-RAG Project Guide for AI Agents
 
-## Project Overview
+## 🚨 CRITICAL: Read the Project Plan First
 
-X-RAG is a production-grade distributed search and indexing platform for Retrieval-Augmented Generation (RAG), built entirely in Python and running on Kubernetes (Kind for local development).
+**The complete project plan is located at:**
+`/Users/flo/.claude/plans/mighty-jumping-bachman.md`
 
-## Core Technology Stack
+**You MUST read the project plan before working on this project.** It contains:
+- Complete architecture and service definitions
+- Detailed technology stack and dependencies
+- Full directory structure
+- gRPC protocol definitions
+- Infrastructure components (Kind, Weaviate, Kafka, etc.)
+- All implementation phases
+- Kubernetes manifests specifications
+- Testing strategy
+- Success criteria
 
-- **Language**: Python 3.11+
-- **Validation**: Pydantic for all data models
-- **RAG Framework**: Haystack for retrieval pipelines
-- **Internal Communication**: gRPC for service-to-service
-- **External APIs**: FastAPI for user-facing REST endpoints
-- **Infrastructure**: Kubernetes (Kind) for local development
-- **Package Management**: uv (manages Python versions and dependencies)
+This file (AGENTS.md) contains only **operational rules** and **current status** - everything else is in the plan.
 
-## Architecture
+## Project Quick Summary
 
-### Communication Pattern
-```
-External Users (HTTP/REST)
-    ↓
-[Search UI - FastAPI] ←─gRPC─→ [Search Service - gRPC] ←─gRPC─→ [Embedding Service - gRPC]
-                                         ↓
-                                     Weaviate
-                                         ↑
-[Ingestion API - FastAPI] ──→ Kafka → [Indexer] ─gRPC→ [Embedding Service]
-```
+X-RAG is a production-grade distributed RAG platform:
+- **Python 3.11+** for all services
+- **gRPC** for internal communication
+- **FastAPI** for external APIs
+- **Haystack** for RAG pipelines
+- **Pydantic** for validation
+- **Kind Kubernetes** for local development
 
-### Services
-1. **Search UI** (FastAPI REST) - User-facing web interface
-2. **Search Service** (gRPC Server) - Backend search logic with Haystack
-3. **Ingestion API** (FastAPI REST) - Document upload endpoint
-4. **Embedding Service** (gRPC Server) - Embedding generation service
-5. **Indexer** (Kafka Consumer) - Background document processing
+See the project plan for complete architecture details.
 
-### Infrastructure Components
-- **Weaviate**: Vector/BM25/hybrid search
-- **Kafka**: Message queue
-- **Redis**: Caching
-- **MinIO**: Object storage
-- **Prometheus + Grafana**: Monitoring
+## Main Commands
 
-## Development Workflow
-
-### Main Commands (ALWAYS use Makefile)
+**ALWAYS use Makefile, NEVER run scripts directly:**
 
 ```bash
-make help         # Show all available commands
+make help         # Show all commands
 make check        # Validate prerequisites
-make setup        # One-time cluster setup (creates Kind cluster, deploys infrastructure)
-make start        # Build and deploy applications
-make stop         # Stop services (keeps cluster)
-make status       # Show system status
-make test         # Run pytest tests
-make clean        # Delete cluster and data (with confirmation)
-make destroy      # Stop services and delete Docker images
-make reset        # Clean + setup (fresh start)
-```
-
-### Logs
-```bash
-make logs-search-ui
-make logs-search-service
-make logs-embedding
-make logs-ingest
-make logs-indexer
-make logs-weaviate
-make logs-kafka
-make logs-redis
+make setup        # One-time setup
+make start        # Build and deploy apps
+make stop         # Stop services
+make status       # Show status
+make test         # Run tests
+make clean        # Delete everything
+make destroy      # Stop + delete images
+make logs-*       # Tail service logs
 ```
 
 ## Critical Development Rules
@@ -105,100 +82,11 @@ System Resources:
   Available: 31GB RAM, 16 cores (via docker configuration) ✓
 ```
 
-## Project Structure
+## Quick Reference
 
-```
-x-rag/
-├── .gitignore
-├── .env.example              # Copy to .env and add OPENAI_API_KEY
-├── Makefile                  # Main developer interface
-├── pyproject.toml            # Python dependencies
-├── CLAUDE.md                 # Points to this file
-├── AGENTS.md                 # This file
-├── README.md
-├── SETUP.md
-├── SYSTEM-DIAGRAM.md
-│
-├── .setup/                   # Checkpoints (gitignored)
-├── data/storage/             # Kind PV mount (gitignored)
-│
-├── proto/                    # gRPC Protocol Buffers
-│   ├── embedding.proto
-│   ├── search.proto
-│   └── common.proto
-│
-├── infra/
-│   ├── kind/
-│   │   └── cluster-config.yaml
-│   ├── k8s/                  # Kubernetes manifests
-│   │   ├── weaviate/
-│   │   ├── kafka/
-│   │   ├── minio/
-│   │   ├── redis/
-│   │   ├── monitoring/
-│   │   ├── search-ui/
-│   │   ├── search-service/
-│   │   ├── ingestion-api/
-│   │   ├── embedding-service/
-│   │   └── indexer/
-│   └── docker/               # Dockerfiles
-│
-├── scripts/
-│   ├── check-prerequisites.sh
-│   ├── check-docker-resources.sh
-│   ├── check-ports.sh
-│   ├── create-cluster.sh
-│   ├── setup-registry.sh
-│   ├── deploy-infrastructure.sh
-│   ├── deploy-monitoring.sh
-│   ├── deploy-apps.sh
-│   ├── build-images.sh
-│   └── generate-grpc.sh
-│
-├── src/
-│   ├── proto_gen/            # Generated gRPC code (gitignored)
-│   ├── core/                 # Shared interfaces and models
-│   ├── common/               # Reusable utilities
-│   ├── retrievers/           # Haystack retrievers
-│   ├── pipelines/            # Haystack pipelines
-│   ├── search_ui/            # FastAPI web interface
-│   ├── search_service/       # gRPC search server
-│   ├── ingestion_api/        # FastAPI ingestion endpoint
-│   ├── embedding_service/    # gRPC embedding server
-│   └── indexer/              # Kafka consumer
-│
-└── tests/
-    ├── conftest.py
-    ├── test_health.py
-    ├── test_config.py
-    ├── test_grpc.py
-    └── test_e2e.py
-```
-
-## Port Mappings
-
-- **8080**: Search UI
-- **8081**: Weaviate
-- **8082**: Ingestion API
-- **3000**: Grafana (admin/admin)
-- **9090**: Prometheus
-- **5000**: Local Docker registry
-
-## Environment Variables
-
-Copy `.env.example` to `.env` and configure:
-
-```bash
-# Required
-OPENAI_API_KEY=sk-your-key-here
-
-# Internal Services (Kubernetes)
-WEAVIATE_URL=http://weaviate:8080
-KAFKA_BOOTSTRAP=kafka:9092
-REDIS_URL=redis://redis:6379
-EMBEDDING_SERVICE_ADDR=embedding-service:50051
-SEARCH_SERVICE_ADDR=search-service:50052
-```
+- **Project Structure**: See project plan for full directory tree
+- **Port Mappings**: See project plan (8080=UI, 8081=Weaviate, 8082=Ingestion, 3000=Grafana, 9090=Prometheus)
+- **Environment Variables**: Copy `.env.example` to `.env` and add `OPENAI_API_KEY`
 
 ## Implementation Status
 
@@ -222,65 +110,17 @@ SEARCH_SERVICE_ADDR=search-service:50052
 - Phase 12: Documentation
 - Phase 13: Validation
 
-## Common Issues & Solutions
-
-### Issue: "Docker daemon not running"
-**Solution**: Start Docker Desktop (macOS) or `sudo systemctl start docker` (Linux)
-
-### Issue: "Port already in use"
-**Solution**: Run `make check` to see which process is using the port, then stop it
-
-### Issue: "Insufficient Docker resources"
-**Solution**: Docker Desktop → Settings → Resources → Increase RAM/Cores
-
-### Issue: "Cluster not found"
-**Solution**: Run `make setup` to create the cluster first
-
-### Issue: "Prerequisites missing"
-**Solution**: Run `make check` to see what's missing and install required tools
-
-## Design Principles
-
-1. **Simplicity**: Don't over-engineer; solve the current problem
-2. **Idempotency**: All setup scripts can be run multiple times safely
-3. **Actionable Errors**: Every error message should tell the user exactly how to fix it
-4. **Minimal Base Images**: Use `python:3.11-slim` for Docker images
-5. **Health Checks**: All services must implement health endpoints
-6. **Metrics**: All services expose Prometheus metrics
-7. **Type Safety**: Use Pydantic for all data validation
-8. **Testing**: Write tests for all core functionality
-
 ## When Working on This Project
 
-1. **Always read this file first** to understand the architecture and rules
-2. **Use the Makefile** for all operations (never run scripts directly)
-3. **Check prerequisites** with `make check` before starting work
-4. **Refer to the plan** at `/Users/flo/.claude/plans/mighty-jumping-bachman.md` for detailed implementation phases
-5. **Commit frequently** after completing each milestone
-6. **Don't add emojis** unless explicitly requested by the user
-7. **Use proper terminology**: "cores" not "CPUs", "gRPC" not "grpc", etc.
+1. **Read the project plan** at `/Users/flo/.claude/plans/mighty-jumping-bachman.md` for architecture and implementation details
+2. **Read this file** for operational rules and current status
+3. **Run `make check`** before starting work
+4. **Use the Makefile** for all operations
+5. **Commit frequently** after each milestone
 
-## Quick Start for New Work
+## Common Issues
 
-```bash
-# 1. Check prerequisites
-make check
-
-# 2. Setup infrastructure (first time only)
-make setup
-
-# 3. Build and start services
-make start
-
-# 4. Check status
-make status
-
-# 5. Run tests
-make test
-```
-
-## Getting Help
-
-- Run `make help` to see all available commands
-- Check TROUBLESHOOTING.md for common issues (to be created in Phase 11)
-- Review ARCHITECTURE.md for design details (to be created in Phase 11)
+- **"Docker daemon not running"**: Start Docker Desktop or `sudo systemctl start docker`
+- **"Port already in use"**: Run `make check` to identify the process
+- **"Cluster not found"**: Run `make setup` first
+- **Any other issue**: Run `make check` for actionable error messages
