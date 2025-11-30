@@ -9,7 +9,7 @@ import grpc
 from src.proto_gen import embedding_pb2, embedding_pb2_grpc, common_pb2
 from src.common.health import HealthChecker
 from src.core.errors import ServiceUnavailableError
-from src.embedding_service.backends.base import EmbeddingBackend
+from src.embedding_service.generators.embedding_generator import EmbeddingGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -20,14 +20,14 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
     Implements the EmbeddingService gRPC interface defined in embedding.proto.
     """
 
-    def __init__(self, backend: EmbeddingBackend, default_model: str = "text-embedding-3-small"):
+    def __init__(self, generator: EmbeddingGenerator, default_model: str = "text-embedding-3-small"):
         """Initialize servicer.
 
         Args:
-            backend: Embedding backend implementation
+            generator: Embedding generator implementation
             default_model: Default model to use if not specified in request
         """
-        self.backend = backend
+        self.generator = generator
         self.default_model = default_model
         self.health_checker = HealthChecker()
         logger.info(f"EmbeddingServicer initialized with default model: {default_model}")
@@ -59,10 +59,10 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
 
             # Generate embedding
             logger.debug(f"Generating embedding for text (model={model})")
-            embedding = await self.backend.embed(request.text, model, **options)
+            embedding = await self.generator.embed(request.text, model, **options)
 
             # Get dimension
-            dimension = self.backend.get_dimension(model)
+            dimension = self.generator.get_dimension(model)
 
             return embedding_pb2.EmbedResponse(
                 embedding=embedding,
@@ -109,10 +109,10 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
 
             # Generate embeddings
             logger.debug(f"Generating {len(request.texts)} embeddings in batch (model={model})")
-            embeddings = await self.backend.embed_batch(list(request.texts), model, **options)
+            embeddings = await self.generator.embed_batch(list(request.texts), model, **options)
 
             # Get dimension
-            dimension = self.backend.get_dimension(model)
+            dimension = self.generator.get_dimension(model)
 
             # Build response with individual EmbedResponse messages
             embed_responses = [
@@ -153,25 +153,25 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
             HealthCheckResponse with service status
         """
         try:
-            # For embedding service, we mainly check if the backend is accessible
+            # For embedding service, we mainly check if the generator is accessible
             # We can do a simple check by verifying we can get model dimensions
             try:
-                self.backend.get_dimension(self.default_model)
-                backend_healthy = True
+                self.generator.get_dimension(self.default_model)
+                generator_healthy = True
             except Exception as e:
                 logger.warning(f"Backend health check failed: {e}")
-                backend_healthy = False
+                generator_healthy = False
 
-            if backend_healthy:
+            if generator_healthy:
                 return common_pb2.HealthCheckResponse(
                     status=common_pb2.HealthCheckResponse.HEALTHY,
-                    dependencies={"backend": "HEALTHY"},
+                    dependencies={"generator": "HEALTHY"},
                     message="Embedding service is healthy",
                 )
             else:
                 return common_pb2.HealthCheckResponse(
                     status=common_pb2.HealthCheckResponse.UNHEALTHY,
-                    dependencies={"backend": "UNHEALTHY"},
+                    dependencies={"generator": "UNHEALTHY"},
                     message="Backend is not available",
                 )
 

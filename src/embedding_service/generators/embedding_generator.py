@@ -1,14 +1,16 @@
-"""Base protocol for embedding backends."""
+"""Base abstract class for embedding generators."""
 
-from typing import Protocol
+from abc import ABC, abstractmethod
 
 
-class EmbeddingBackend(Protocol):
-    """Protocol for embedding generation backends.
+class EmbeddingGenerator(ABC):
+    """Abstract base class for embedding generators.
 
-    Implementations should support both single and batch embedding generation.
+    All embedding generators must implement these methods to support
+    both single and batch embedding generation.
     """
 
+    @abstractmethod
     async def embed(self, text: str, model: str, **options) -> list[float]:
         """Generate embedding for a single text.
 
@@ -20,8 +22,9 @@ class EmbeddingBackend(Protocol):
         Returns:
             Embedding vector as list of floats
         """
-        ...
+        pass
 
+    @abstractmethod
     async def embed_batch(self, texts: list[str], model: str, **options) -> list[list[float]]:
         """Generate embeddings for multiple texts (batched for efficiency).
 
@@ -33,8 +36,9 @@ class EmbeddingBackend(Protocol):
         Returns:
             List of embedding vectors
         """
-        ...
+        pass
 
+    @abstractmethod
     def get_dimension(self, model: str) -> int:
         """Get embedding dimension for a model.
 
@@ -44,4 +48,4 @@ class EmbeddingBackend(Protocol):
         Returns:
             Embedding dimension
         """
-        ...
+        pass

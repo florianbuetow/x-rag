@@ -47,11 +47,21 @@ spec:
                 configMapKeyRef:
                   name: embedding-service-config
                   key: PORT
+            - name: EMBEDDING_GENERATOR
+              valueFrom:
+                configMapKeyRef:
+                  name: embedding-service-config
+                  key: EMBEDDING_GENERATOR
             - name: DEFAULT_MODEL
               valueFrom:
                 configMapKeyRef:
                   name: embedding-service-config
                   key: DEFAULT_MODEL
+            - name: HASH_BASED_DIMENSION
+              valueFrom:
+                configMapKeyRef:
+                  name: embedding-service-config
+                  key: HASH_BASED_DIMENSION
             - name: MAX_BATCH_SIZE
               valueFrom:
                 configMapKeyRef:
