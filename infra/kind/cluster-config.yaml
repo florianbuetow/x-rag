@@ -1,0 +1,40 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: xrag
+
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      # Search UI
+      - containerPort: 30080
+        hostPort: 8080
+        protocol: TCP
+      # Ingestion API
+      - containerPort: 30082
+        hostPort: 8082
+        protocol: TCP
+      # Weaviate
+      - containerPort: 30081
+        hostPort: 8081
+        protocol: TCP
+      # Grafana
+      - containerPort: 30030
+        hostPort: 3000
+        protocol: TCP
+      # Prometheus
+      - containerPort: 30090
+        hostPort: 9090
+        protocol: TCP
+    extraMounts:
+      - hostPath: ./data/storage
+        containerPath: /var/local-path-provisioner
+
+  - role: worker
+    extraMounts:
+      - hostPath: ./data/storage
+        containerPath: /var/local-path-provisioner
+
+  - role: worker
+    extraMounts:
+      - hostPath: ./data/storage
+        containerPath: /var/local-path-provisioner

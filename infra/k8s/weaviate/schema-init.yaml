@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: weaviate-schema-init
+  namespace: rag-system
+data:
+  init-schema.py: |
+    #!/usr/bin/env python3
+    import os, sys, time, json, urllib.request, urllib.error
+
+    WEAVIATE_URL = os.environ.get("WEAVIATE_URL", "http://weaviate:8080")
+
+    def wait_for_weaviate():
+        for i in range(30):
+            try:
+                req = urllib.request.Request(f"{WEAVIATE_URL}/v1/.well-known/ready")
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    if resp.status == 200:
+                        return True
+            except Exception as e:
+                print(f"Waiting... {e}")
+            time.sleep(2)
+        return False
+
+    def create_schema():
+        schema = {
+            "class": "DocumentChunk",
+            "vectorizer": "text2vec-openai",
+            "moduleConfig": {"text2vec-openai": {"model": "text-embedding-3-small"}},
+            "properties": [
+                {"name": "content", "dataType": ["text"]},
+                {"name": "doc_id", "dataType": ["text"]},
+                {"name": "chunk_index", "dataType": ["int"]},
+                {"name": "namespace", "dataType": ["text"]},
+                {"name": "source", "dataType": ["text"]},
+                {"name": "title", "dataType": ["text"]},
+                {"name": "metadata_json", "dataType": ["text"]}
+            ]
+        }
+
+        try:
+            req = urllib.request.Request(f"{WEAVIATE_URL}/v1/schema/DocumentChunk")
+            urllib.request.urlopen(req)
+            print("Schema exists")
+            return True
+        except urllib.error.HTTPError as e:
+            if e.code != 404:
+                raise
+
+        data = json.dumps(schema).encode()
+        req = urllib.request.Request(f"{WEAVIATE_URL}/v1/schema", data=data,
+                                      headers={"Content-Type": "application/json"})
+        urllib.request.urlopen(req)
+        print("Schema created")
+        return True
+
+    if not wait_for_weaviate():
+        sys.exit(1)
+    if not create_schema():
+        sys.exit(1)
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: weaviate-schema-init
+  namespace: rag-system
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: init
+          image: python:3.11-slim
+          command: ["python", "/scripts/init-schema.py"]
+          env:
+            - name: WEAVIATE_URL
+              value: "http://weaviate:8080"
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+      volumes:
+        - name: scripts
+          configMap:
+            name: weaviate-schema-init

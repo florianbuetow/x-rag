@@ -8,9 +8,9 @@
 .PHONY: logs-weaviate logs-kafka logs-redis
 
 # Configuration
-CLUSTER_NAME := rag-hackathon
+CLUSTER_NAME := xrag
 NAMESPACE := rag-system
-REGISTRY_NAME := kind-registry
+REGISTRY_NAME := xrag-kind-registry
 REGISTRY_PORT := 5000
 SETUP_DIR := .setup
 
