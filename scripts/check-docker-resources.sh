@@ -66,15 +66,20 @@ else
     STATUS_MSG="Docker allocated ${DOCKER_MEM_GB}GB, ${DOCKER_CORES} cores"
 fi
 
-# Warnings for recommended specs
+# Always show recommended vs available comparison
 if [ "$DOCKER_MEM_GB" -lt "$RECOMMENDED_MEM_GB" ] || [ "$DOCKER_CORES" -lt "$RECOMMENDED_CORES" ]; then
+    # Below recommended - show in yellow with warning
     echo -e "${YELLOW}✓ ${STATUS_MSG}${NC}"
     echo ""
     echo -e "    ${YELLOW}⚠  Recommended: ${RECOMMENDED_MEM_GB}GB RAM, ${RECOMMENDED_CORES} cores${NC}"
-    echo -e "    ${YELLOW}⚠  You have: ${DOCKER_MEM_GB}GB RAM allocated to Docker${NC}"
+    echo -e "    ${YELLOW}⚠  You have: ${DOCKER_MEM_GB}GB RAM, ${DOCKER_CORES} cores allocated to Docker${NC}"
     echo -e "    ${YELLOW}⚠  Fix: Docker Desktop → Settings → Resources → Memory${NC}"
 else
+    # Meets or exceeds recommended - show in green
     echo -e "${GREEN}✓ ${STATUS_MSG}${NC}"
+    echo ""
+    echo -e "    Recommended: ${RECOMMENDED_MEM_GB}GB RAM, ${RECOMMENDED_CORES} cores"
+    echo -e "    ${GREEN}You have: ${DOCKER_MEM_GB}GB RAM, ${DOCKER_CORES} cores allocated to Docker ✓${NC}"
 fi
 
 exit 0
