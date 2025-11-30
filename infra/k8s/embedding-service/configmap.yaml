@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: embedding-service-config
+  namespace: rag-system
+  labels:
+    app: embedding-service
+data:
+  SERVICE_NAME: "embedding-service"
+  LOG_LEVEL: "INFO"
+  PORT: "50051"
+  DEFAULT_MODEL: "text-embedding-3-small"
+  MAX_BATCH_SIZE: "100"
+  ENABLE_REFLECTION: "true"
+  MAX_WORKERS: "10"

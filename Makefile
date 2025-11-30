@@ -1,7 +1,7 @@
 # X-RAG Platform - Makefile
 # Main developer interface for infrastructure and application management
 
-.PHONY: help check setup start stop status clean clean-force reset destroy
+.PHONY: help check setup start stop status clean reset destroy
 .PHONY: generate-grpc build deploy-apps
 .PHONY: test test-e2e
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
@@ -83,25 +83,13 @@ status: ## Display current system status and test all service connectivity
 	@./scripts/check-status.sh
 	@echo ""
 
-clean: ## Interactive cleanup with confirmation
-	@echo "$(YELLOW)WARNING: This will delete the Kind cluster and all data.$(NC)"
-	@echo -n "Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
-	@echo "Deleting cluster..."
-	@kind delete cluster --name $(CLUSTER_NAME) || true
-	@echo "Stopping registry..."
-	@docker rm -f $(REGISTRY_NAME) 2>/dev/null || true
-	@echo "Removing checkpoints..."
-	@rm -rf $(SETUP_DIR)
-	@echo -n "Delete data directory? [y/N] " && read ans && [ $${ans:-N} = y ] && rm -rf data/storage/* || true
-	@echo "$(GREEN)Cleanup complete$(NC)"
-
-clean-force: ## Force cleanup without confirmation
-	@echo "$(YELLOW)Force deleting cluster and data...$(NC)"
+clean: ## Delete cluster, registry, and all data
+	@echo "$(YELLOW)Deleting cluster and all data...$(NC)"
 	@kind delete cluster --name $(CLUSTER_NAME) 2>/dev/null || true
 	@docker rm -f $(REGISTRY_NAME) 2>/dev/null || true
 	@rm -rf $(SETUP_DIR)
 	@rm -rf data/storage/*
-	@echo "$(GREEN)Force cleanup complete$(NC)"
+	@echo "$(GREEN)Cleanup complete$(NC)"
 
 destroy: stop ## Stop cluster and delete all xrag-* Docker images
 	@echo "$(RED)WARNING: This will DELETE all project Docker images!$(NC)"

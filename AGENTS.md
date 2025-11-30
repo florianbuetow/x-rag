@@ -63,6 +63,8 @@ make logs-*       # Tail service logs
 - Python version managed by `uv` (defined in pyproject.toml)
 - Don't check for Python version in prerequisites
 - All dependencies in pyproject.toml
+- **ALWAYS** use `uv run python` instead of `python` directly
+- **NEVER** run Python outside the virtual environment
 
 ### 4. Docker Configuration
 - Minimum: 6GB RAM, 4 cores
@@ -93,14 +95,12 @@ System Resources:
 ### ✅ Completed
 - Phase 0: .gitignore
 - Phase 1: Foundation (Makefile, scripts, pyproject.toml, .env.example, directory structure)
-
-### 🚧 In Progress
 - Phase 2: Infrastructure Implementation (Kind cluster, K8s manifests)
+- Phase 3: gRPC Protocol Definitions
+- Phase 4: Common Modules (health checks, config, domain models)
+- Phase 5: Embedding Service (gRPC server, OpenAI backend, Dockerfile, K8s manifests)
 
 ### 📋 Pending
-- Phase 3: gRPC Protocol Definitions
-- Phase 4: Common Modules
-- Phase 5: Embedding Service
 - Phase 6: Ingestion API
 - Phase 7: Indexer
 - Phase 8: Search Service
