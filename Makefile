@@ -81,6 +81,7 @@ stop: ## Shutdown the cluster
 
 status: ## Display current system status and test all service connectivity
 	@./scripts/check-status.sh
+	@echo ""
 
 clean: ## Interactive cleanup with confirmation
 	@echo "$(YELLOW)WARNING: This will delete the Kind cluster and all data.$(NC)"
