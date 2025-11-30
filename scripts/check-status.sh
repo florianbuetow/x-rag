@@ -46,7 +46,7 @@ if kind get clusters 2>/dev/null | grep -q "^${CLUSTER_NAME}$"; then
     fi
 else
     echo -e "  ${cross_mark} Cluster '${CLUSTER_NAME}' not found"
-    echo -e "  Run: make setup"
+    echo -e "  Run: make start"
     exit 1
 fi
 echo ""
