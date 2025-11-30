@@ -16,7 +16,7 @@ echo ""
 echo "[1/4] Deploying Redis..."
 kubectl apply -f "${PROJECT_ROOT}/infra/k8s/redis/" -n ${NAMESPACE}
 echo "Waiting for Redis to be ready..."
-kubectl wait --for=condition=Ready pod -l app=redis -n ${NAMESPACE} --timeout=120s
+kubectl wait --for=condition=Ready pod -l app=xrag-redis -n ${NAMESPACE} --timeout=120s
 echo "✓ Redis ready"
 
 # 2. MinIO (medium startup)
@@ -24,7 +24,7 @@ echo ""
 echo "[2/4] Deploying MinIO..."
 kubectl apply -f "${PROJECT_ROOT}/infra/k8s/minio/" -n ${NAMESPACE}
 echo "Waiting for MinIO to be ready..."
-kubectl wait --for=condition=Ready pod -l app=minio -n ${NAMESPACE} --timeout=120s
+kubectl wait --for=condition=Ready pod -l app=xrag-minio -n ${NAMESPACE} --timeout=120s
 echo "✓ MinIO ready"
 
 # 3. Kafka (slow startup)
@@ -32,7 +32,7 @@ echo ""
 echo "[3/4] Deploying Kafka..."
 kubectl apply -f "${PROJECT_ROOT}/infra/k8s/kafka/" -n ${NAMESPACE}
 echo "Waiting for Kafka to be ready..."
-kubectl wait --for=condition=Ready pod -l app=kafka -n ${NAMESPACE} --timeout=240s
+kubectl wait --for=condition=Ready pod -l app=xrag-kafka -n ${NAMESPACE} --timeout=240s
 echo "✓ Kafka ready"
 
 # 4. Weaviate (slow startup, requires initialization)
@@ -40,7 +40,7 @@ echo ""
 echo "[4/4] Deploying Weaviate..."
 kubectl apply -f "${PROJECT_ROOT}/infra/k8s/weaviate/weaviate.yaml" -n ${NAMESPACE}
 echo "Waiting for Weaviate to be ready..."
-kubectl wait --for=condition=Ready pod -l app=weaviate -n ${NAMESPACE} --timeout=240s
+kubectl wait --for=condition=Ready pod -l app=xrag-weaviate -n ${NAMESPACE} --timeout=240s
 echo "✓ Weaviate ready"
 
 # Initialize Weaviate schema
@@ -60,9 +60,9 @@ echo "  Infrastructure Deployment Complete!"
 echo "=============================================="
 echo ""
 echo "Services:"
-echo "  ✓ Redis     - redis:6379"
-echo "  ✓ MinIO     - minio:9000"
-echo "  ✓ Kafka     - kafka:9092"
-echo "  ✓ Weaviate  - weaviate:8080 (also http://localhost:8081)"
+echo "  ✓ Redis     - xrag-redis:6379"
+echo "  ✓ MinIO     - xrag-minio:9000"
+echo "  ✓ Kafka     - xrag-kafka:9092"
+echo "  ✓ Weaviate  - xrag-weaviate:8080 (also http://localhost:8081)"
 echo ""
 echo "Verify with: kubectl get pods -n ${NAMESPACE}"

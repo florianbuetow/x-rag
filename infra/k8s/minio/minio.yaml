@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: minio
+  name: xrag-minio
   namespace: rag-system
 spec:
   ports:
@@ -10,23 +10,23 @@ spec:
     - port: 9001
       name: console
   selector:
-    app: minio
+    app: xrag-minio
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: minio
+  name: xrag-minio
   namespace: rag-system
 spec:
-  serviceName: minio
+  serviceName: xrag-minio
   replicas: 1
   selector:
     matchLabels:
-      app: minio
+      app: xrag-minio
   template:
     metadata:
       labels:
-        app: minio
+        app: xrag-minio
     spec:
       containers:
         - name: minio

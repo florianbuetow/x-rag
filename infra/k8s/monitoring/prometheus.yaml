@@ -30,7 +30,7 @@ data:
 apiVersion: v1
 kind: Service
 metadata:
-  name: prometheus
+  name: xrag-prometheus
   namespace: rag-system
 spec:
   type: NodePort
@@ -38,22 +38,22 @@ spec:
     - port: 9090
       nodePort: 30090
   selector:
-    app: prometheus
+    app: xrag-prometheus
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: prometheus
+  name: xrag-prometheus
   namespace: rag-system
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: prometheus
+      app: xrag-prometheus
   template:
     metadata:
       labels:
-        app: prometheus
+        app: xrag-prometheus
     spec:
       containers:
         - name: prometheus
