@@ -82,25 +82,7 @@ check_command "kind" "0.20+" "brew install kind (macOS) | curl -Lo ./kind https:
 # Check Helm
 check_command "helm" "3.12+" "brew install helm (macOS) | curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash" || true
 
-# Check Python
-if ! check_command "python3" "3.11+" "https://www.python.org/downloads/"; then
-    :  # Error already printed
-else
-    # Verify Python version is 3.11+
-    python_version=$(python3 --version 2>&1 | cut -d' ' -f2)
-    python_major=$(echo "$python_version" | cut -d'.' -f1)
-    python_minor=$(echo "$python_version" | cut -d'.' -f2)
-    
-    if [ "$python_major" -lt 3 ] || ([ "$python_major" -eq 3 ] && [ "$python_minor" -lt 11 ]); then
-        echo -e "${RED}✗ Python version too old: $python_version (need 3.11+)${NC}"
-        echo ""
-        echo "  Install Python 3.11+ from: https://www.python.org/downloads/"
-        echo ""
-        HAS_ERROR=1
-    fi
-fi
-
-# Check uv
+# Check uv (it will manage Python for us)
 check_command "uv" "latest" "curl -LsSf https://astral.sh/uv/install.sh | sh" || true
 
 echo ""
