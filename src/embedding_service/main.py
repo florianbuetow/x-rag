@@ -1,7 +1,7 @@
 """Main entrypoint for Embedding Service.
 
 Starts a gRPC server that provides text embedding generation using
-configurable backends (OpenAI, local models, etc.).
+configurable generators (OpenAI, local models, etc.).
 """
 
 import asyncio
@@ -16,7 +16,7 @@ from src.proto_gen import embedding_pb2_grpc
 from src.common.grpc_utils import create_grpc_server
 from src.embedding_service.config import EmbeddingServiceConfig
 from src.embedding_service.server import EmbeddingServicer
-from src.embedding_service.backends.openai import OpenAIEmbeddingBackend
+from src.embedding_service.generators.factory import EmbeddingGeneratorFactory
 
 # Configure logging
 logging.basicConfig(
@@ -52,17 +52,13 @@ class EmbeddingServiceRunner:
         start_http_server(metrics_port)
         logger.info(f"Prometheus metrics available at http://0.0.0.0:{metrics_port}/metrics")
 
-        # Initialize backend
-        logger.info("Initializing OpenAI embedding backend...")
-        backend = OpenAIEmbeddingBackend(
-            api_key=self.config.openai_api_key,
-            max_retries=3,
-            timeout=30,
-        )
+        # Initialize generator using factory
+        logger.info(f"Initializing {self.config.embedding_generator} embedding generator...")
+        generator = self._create_generator()
 
         # Create servicer
         servicer = EmbeddingServicer(
-            backend=backend,
+            generator=generator,
             default_model=self.config.default_model,
         )
 
@@ -84,9 +80,10 @@ class EmbeddingServiceRunner:
         # Enable reflection for debugging with grpcurl
         if self.config.enable_reflection:
             from grpc_reflection.v1alpha import reflection
+            from src.proto_gen import embedding_pb2
 
             service_names = (
-                embedding_pb2_grpc.DESCRIPTOR.services_by_name["EmbeddingService"].full_name,
+                embedding_pb2.DESCRIPTOR.services_by_name["EmbeddingService"].full_name,
                 reflection.SERVICE_NAME,
             )
             reflection.enable_server_reflection(service_names, self.server)
@@ -110,6 +107,27 @@ class EmbeddingServiceRunner:
             logger.info("Shutting down server...")
             await self.server.stop(grace=5.0)
             logger.info("Server stopped")
+
+    def _create_generator(self):
+        """Create embedding generator based on configuration.
+
+        Returns:
+            Configured embedding generator instance
+        """
+        if self.config.embedding_generator == "hash_based":
+            return EmbeddingGeneratorFactory.create_generator(
+                "hash_based",
+                default_dimension=self.config.hash_based_dimension,
+            )
+        elif self.config.embedding_generator == "openai":
+            return EmbeddingGeneratorFactory.create_generator(
+                "openai",
+                api_key=self.config.openai_api_key,
+                max_retries=self.config.openai_max_retries,
+                timeout=self.config.openai_timeout,
+            )
+        else:
+            raise ValueError(f"Unknown generator: {self.config.embedding_generator}")
 
     def signal_handler(self, signum: int, frame) -> None:
         """Handle shutdown signals.

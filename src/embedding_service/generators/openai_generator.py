@@ -1,18 +1,18 @@
-"""OpenAI embedding backend implementation."""
+"""OpenAI embedding generator implementation."""
 
-import asyncio
 import logging
 from typing import Any
 
 from openai import AsyncOpenAI, RateLimitError, APIError
 
 from src.core.errors import ServiceUnavailableError
+from src.embedding_service.generators.embedding_generator import EmbeddingGenerator
 
 logger = logging.getLogger(__name__)
 
 
-class OpenAIEmbeddingBackend:
-    """OpenAI embedding backend with rate limiting and error handling.
+class OpenAIEmbeddingGenerator(EmbeddingGenerator):
+    """OpenAI embedding generator with rate limiting and error handling.
 
     Supports OpenAI embedding models like text-embedding-3-small and
     text-embedding-3-large with automatic retry logic.
@@ -26,7 +26,7 @@ class OpenAIEmbeddingBackend:
     }
 
     def __init__(self, api_key: str, max_retries: int = 3, timeout: int = 30):
-        """Initialize OpenAI backend.
+        """Initialize OpenAI generator.
 
         Args:
             api_key: OpenAI API key
@@ -39,7 +39,7 @@ class OpenAIEmbeddingBackend:
             timeout=timeout,
         )
         self.max_retries = max_retries
-        logger.info("OpenAI embedding backend initialized")
+        logger.info("OpenAIEmbeddingGenerator initialized")
 
     async def embed(self, text: str, model: str, **options: Any) -> list[float]:
         """Generate embedding for a single text.
