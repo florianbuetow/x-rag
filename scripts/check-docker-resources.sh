@@ -61,14 +61,17 @@ fi
 
 # Build status message
 if [ "$SYSTEM_MEM_GB" -gt 0 ]; then
-    STATUS_MSG="Docker: ${DOCKER_MEM_GB}GB/${SYSTEM_MEM_GB}GB, ${DOCKER_CPU} CPUs"
+    STATUS_MSG="System has ${SYSTEM_MEM_GB}GB, Docker allocated ${DOCKER_MEM_GB}GB, ${DOCKER_CPU} CPUs"
 else
-    STATUS_MSG="Docker: ${DOCKER_MEM_GB}GB, ${DOCKER_CPU} CPUs"
+    STATUS_MSG="Docker allocated ${DOCKER_MEM_GB}GB, ${DOCKER_CPU} CPUs"
 fi
 
 # Warnings for recommended specs
 if [ "$DOCKER_MEM_GB" -lt "$RECOMMENDED_MEM_GB" ] || [ "$DOCKER_CPU" -lt "$RECOMMENDED_CPU" ]; then
-    echo -e "${YELLOW}✓ ${STATUS_MSG} (below recommended ${RECOMMENDED_MEM_GB}GB)${NC}"
+    echo -e "${YELLOW}✓ ${STATUS_MSG}${NC}"
+    echo ""
+    echo -e "    ${YELLOW}⚠  Docker memory below recommended (need ${RECOMMENDED_MEM_GB}GB+)${NC}"
+    echo -e "    ${YELLOW}⚠  Increase in: Docker Desktop → Settings → Resources → Memory${NC}"
 else
     echo -e "${GREEN}✓ ${STATUS_MSG}${NC}"
 fi
