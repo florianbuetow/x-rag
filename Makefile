@@ -3,7 +3,6 @@
 
 .PHONY: help check setup start stop status clean clean-force reset
 .PHONY: build deploy-apps
-.PHONY: dev-search-ui dev-search-service dev-embedding dev-ingest
 .PHONY: test test-e2e
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
 .PHONY: logs-weaviate logs-kafka logs-redis
@@ -112,27 +111,7 @@ clean-force: ## Force cleanup without confirmation
 
 reset: clean setup ## Clean and recreate everything (fresh start)
 
-##@ Local Development (run services on host for debugging)
-
-dev-search-ui: ## Run Search UI locally on host (not in K8s) with hot reload
-	@echo "$(BLUE)Starting Search UI locally (port 8080)...$(NC)"
-	@echo "$(YELLOW)Note: Running on host machine, not in Kubernetes$(NC)"
-	@cd src && uv run uvicorn search_ui.main:app --reload --port 8080
-
-dev-search-service: ## Run Search Service (gRPC) locally on host
-	@echo "$(BLUE)Starting Search Service (gRPC) locally...$(NC)"
-	@echo "$(YELLOW)Note: Running on host machine, not in Kubernetes$(NC)"
-	@cd src && uv run python -m search_service.main
-
-dev-embedding: ## Run Embedding Service (gRPC) locally on host
-	@echo "$(BLUE)Starting Embedding Service (gRPC) locally...$(NC)"
-	@echo "$(YELLOW)Note: Running on host machine, not in Kubernetes$(NC)"
-	@cd src && uv run python -m embedding_service.main
-
-dev-ingest: ## Run Ingestion API locally on host with hot reload
-	@echo "$(BLUE)Starting Ingestion API locally (port 8082)...$(NC)"
-	@echo "$(YELLOW)Note: Running on host machine, not in Kubernetes$(NC)"
-	@cd src && uv run uvicorn ingestion_api.main:app --reload --port 8082
+##@ Build & Deploy
 
 build: ## Build all Docker images and push to local registry
 	@echo "$(BLUE)=== Building Docker Images ===$(NC)"
