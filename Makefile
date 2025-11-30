@@ -37,11 +37,10 @@ check: ## Validate all prerequisites (Docker, kubectl, Kind, Helm, Python, uv)
 	@echo "$(BLUE)=== Checking Prerequisites ===$(NC)"
 	@./scripts/check-prerequisites.sh
 
-setup: ## One-time setup (create cluster, deploy infrastructure)
+setup: check ## One-time setup (create cluster, deploy infrastructure)
 	@echo "$(BLUE)=== X-RAG Platform - Initial Setup ===$(NC)"
 	@echo ""
 	@mkdir -p $(SETUP_DIR)
-	@$(MAKE) check
 	@$(MAKE) .setup-cluster
 	@$(MAKE) .setup-registry
 	@$(MAKE) .deploy-infrastructure
