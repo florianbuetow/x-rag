@@ -1,0 +1,22 @@
+# Indexer Service Dockerfile
+FROM python:3.13-slim
+
+WORKDIR /app
+
+# Install uv for dependency management
+RUN pip install --no-cache-dir uv
+
+# Copy project files
+COPY pyproject.toml .
+COPY src/ src/
+COPY proto/ proto/
+
+# Install dependencies using uv
+RUN uv pip install --system --no-cache -e .
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health/live').read()" || exit 1
+
+# Run indexer
+CMD ["python", "-m", "src.indexer.main"]

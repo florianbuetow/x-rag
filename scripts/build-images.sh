@@ -14,6 +14,7 @@ echo ""
 SERVICES=(
     "embedding-service"
     "ingestion-api"
+    "indexer"
 )
 
 for service in "${SERVICES[@]}"; do
