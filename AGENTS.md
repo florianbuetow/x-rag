@@ -143,15 +143,15 @@ They run **INSIDE** the worker nodes as Kubernetes pods. Kind uses "Docker-in-Do
 │         Kubernetes Cluster (xrag-k8)            │
 ├─────────────────────────────────────────────────┤
 │                                                 │
-│  ┌──────────────────┐  ┌──────────────────┐    │
-│  │ xrag-k8-worker   │  │ xrag-k8-worker2  │    │
-│  ├──────────────────┤  ├──────────────────┤    │
-│  │ Pods:            │  │ Pods:            │    │
-│  │ • Redis          │  │ • MinIO          │    │
-│  │ • Kafka          │  │ • Weaviate       │    │
-│  │ • Grafana        │  │                  │    │
-│  │ • Prometheus     │  │                  │    │
-│  └──────────────────┘  └──────────────────┘    │
+│  ┌──────────────────┐  ┌──────────────────┐     │
+│  │ xrag-k8-worker   │  │ xrag-k8-worker2  │     │
+│  ├──────────────────┤  ├──────────────────┤     │
+│  │ Pods:            │  │ Pods:            │     │
+│  │ • Redis          │  │ • MinIO          │     │
+│  │ • Kafka          │  │ • Weaviate       │     │
+│  │ • Grafana        │  │                  │     │
+│  │ • Prometheus     │  │                  │     │
+│  └──────────────────┘  └──────────────────┘     │
 │                                                 │
 └─────────────────────────────────────────────────┘
 ```

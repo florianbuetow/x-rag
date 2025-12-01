@@ -13,6 +13,7 @@ echo ""
 # List of services to deploy
 SERVICES=(
     "embedding-service"
+    "ingestion-api"
 )
 
 for service in "${SERVICES[@]}"; do
