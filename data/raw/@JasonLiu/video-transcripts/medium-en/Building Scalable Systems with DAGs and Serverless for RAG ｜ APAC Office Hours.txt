@@ -1,0 +1,1118 @@
+Matthew, hello.
+Holding a session in Asia timings, much appreciated that.
+Yeah, it's, it's nice.
+Cause otherwise it's always at 1 30 AM for me.
+Yeah.
+We've been thinking about what else we could do if we do the course again.
+A lot of things will brainstorm, but I think there are a lot of things we could
+do to improve it, especially for, and then I think it's even harder.
+It's hard now for people in Europe.
+We haven't set up a separate session for them, but they can't really do this one
+because it's a terrible time for them and they could sort of do ours, but they
+could sort of do the North American time, but times are, times are hard.
+Yeah.
+I used to, for events like this, enjoy making predictions, like how many people
+will show up and I said, like, well, data scientists, what we do is prediction.
+And so we should be good at it.
+But now what we do isn't exactly prediction anymore.
+So it doesn't quite bring the same.
+How do you think the whole data science scene is changing since you say that?
+Can you elaborate on that?
+Yeah.
+So I guess there was an extended period of time where we thought that prediction
+of either classification or regression predicting at some number, mostly with
+tabular data or with data that maybe with one text field, then you can make a tab
+there with like TFIDF or some backwards representation.
+We thought that those sorts of predictions would be extremely useful or
+like applicable everywhere.
+And shortly before LMS came into popularity or before chat TBT came out, we
+realized that the breadth of use cases for tabular prediction was like 20% as
+wide as people once thought.
+And I was at the time I started a company where I sold a data robot and I was
+looking like what are the use cases we're serving and we would have these
+advertisements saying like, it's going to revolutionize every business process.
+But then the things that it was actually used for was churn prediction, lead
+scoring, demand forecasting, one or two other things.
+And so you heard something that everyone thought was going to be so broadly useful.
+Unless you're at a big tech company where all the decisions need to be made at
+immense scale and in milliseconds for most things like human process, if you
+ran like a grocery store, it turns out machine learning wasn't so widely useful
+to you.
+And so I think conventional machine learning started getting less
+investment on like the Gartner.
+It was going into that trough even before large language models picked up.
+Analytics was still broadly useful.
+And I think now the people who were in machine learning, with conventional
+machine learning or prediction, or who would have gone into it most are working
+in generative AI in some way.
+And as a result, we got saved from the lack of career opportunities because
+we were able to transition.
+The other thing that's really amazing to me is that unless you, with some
+exceptions, the skillset that is required to do AI engineering is actually quite
+different from the skillset that was required to do feature engineering.
+And actually we, so like there are, there is some overlap thinking about, do I
+have leak, do I have target leakage in some way or look at your data?
+But for the most part, like the skills are pretty different.
+I'm, I know actually as data scientists go, I know like a lot of statistics and
+almost none of that is particularly useful for the projects that we do with
+generative AI.
+And so we switched over not because our skills were so, so transferable, but
+because people thought they were both AI or ML.
+And so we got to, we got sort of a pass to switch over more easily than I
+think was probably warranted.
+Very interesting.
+That's my, yeah.
+I think that's someone could disagree and I wouldn't think they're crazy, but
+that's like my current sense.
+Oh, right.
+Should we kick off office hours?
+I don't know if Dan you had anything else to, I know, I mean, we just like
+launched a survey, but I don't know if there's anything else we need to call out.
+Yeah.
+So you should have received an email about the survey and then I posted, I
+think in the general Slack channel, you should have received credits.
+If you didn't already fill out the form for modal, I would do that.
+Charles from modal is going to come modal is I think an awesome service.
+So you should, and then $500 is a fair amount of credits.
+So you should take advantage of that.
+And like I said, in Slack, if you have not gotten that, you haven't set up
+accounts with unstructured or brain trust, or I think llama or slash llama cloud,
+then do that.
+And then in about a week, I'm going to ask them to run the credit allocation
+script again, so you still have a chance to get those credits.
+I don't think there's any other bookkeeping.
+Cool.
+Yeah.
+Should we just jump into questions and let's do it.
+If nobody has questions, maybe we can also just have a conversation on some
+of the content we've had this past couple of weeks.
+Has everyone like watched the videos up until this week already, or are most
+people still on like week three?
+Cool.
+Yeah.
+I think one of the questions we asked for the breakout rooms was around like,
+what kind of processes could we model for both humans and all lens?
+I'm curious for the folks in this, this call, like, have you guys thought about
+building out routers before?
+And if so, how often are we actually exposing these APIs to both the language
+model and to users, for example, in the example of like searching blueprints,
+sometimes if we know the user wants to search images or wants to search
+proposals or contracts, we don't force them down this natural language path.
+We allow them to just go into like a contact, a contract search tool or an
+image search tool, and it just so happens that the tool that language model uses
+is the same tool that the human uses to do some of the search.
+So I'm really curious to hear some of your thoughts on that.
+So I, I, I, I'm hesitant to speak to the details of what I'm working on,
+but, but it's a, it's a challenge, right?
+With respect to both product and the experience design and everything,
+because the claim and also the desire for AI systems and things like that is
+that they will understand the intent and the expected outcomes and accordingly
+morph into whatever code path is desired.
+So that's kind of the desire and the intent and how we want to set expectations.
+However, like we have been dealing with in this course, these things are not
+perfect yet and what is that right trade off to show or ask the user, like any
+kind of confirmation, like if you have two possible intents, which one should
+be like this short as the user versus let's just go down the most likely
+intent and have some way to course correct once the answer is generated.
+Like those are some pretty hard decisions.
+And it's just, it's not just, it's not just engineering, right?
+It's also how the UX or how the product wants the product to, to, to look and to behave.
+Yeah, I definitely agree.
+I think part of the belief is that, okay, if we have a natural language
+interface, that is actually going to be preferred by most users.
+And I'm not, that's kind of, that's something where I don't
+really have that much data on, right?
+It's like, I think when we have expert users that know exactly what they want.
+Having to sort of use a natural language description versus just
+being able to sort of use one of these specific tools.
+I think that's a matter of like doing a lot of experimentation, right?
+Like if I want to understand the weather, sometimes I just want to like shout out
+like Alexa, what's the weather, but other times when I know exactly what I want, I
+do want to just go open up my weather app, see a seven day forecast and understand
+that this weekend I shouldn't go to the park.
+I don't really want to have a conversation around that.
+Do you, do you guys have like, like a data science team or a product team that
+does that kind of hypothesis testing or, or is it very much the case that
+like leadership just wants a, a search box and no other UI.
+Right.
+Oh, no, no, no, no, no.
+So, so there is a lot of user testing.
+So we are, we are a big company.
+So even within our company, we have a lot of kind of different roles and kind of
+personas that we can go and have these alphas and letas and have people use it
+and get feedback.
+So, so there's definitely that also the kind of questions people are already
+asking in the field can give us a sense of what they are likely to ask, should
+were we to advertise these other kinds of features and some of the things that,
+that don't exist in terms of capabilities, people are already trying to ask.
+I think you also covered it pretty well in many of your talks that like people
+don't know, they shouldn't have to know like what the system is capable of.
+The system should inform them and educate them what, what it can or cannot do.
+And maybe have some guardrails, et cetera, to make sure they can learn as they
+use the system.
+So, yeah, so, so that is, that is the case, but it's an open ended system.
+I think the one thing that would be interesting to cover in your course at
+some point would be how do you deal with multi-language inputs?
+Right.
+So right now English itself is a fair amount of usage, but there's other
+languages, European, but even non Latin.
+How, how should these systems be built so that, because the intent and
+et cetera, like it's even hard to judge, like English laws, we can review and
+get some quick sense of what like Japanese, et cetera, we can translate
+course, but it's just harder to have maybe cultural and all these kinds of
+understanding of how people would ask in their natural language, some of these
+intents, so that's, that's something that is a little bit tricky.
+Yeah.
+I definitely agree.
+I think one of the, if I, if I reframe it as just what are the risks of
+not having bad translation, one thing I've noticed that is that if we have
+prompts that are in English, then there was always some P probability that the
+responses or like the arguments end up being in English, even if the input data
+is not in English, like we have a lot of examples where we have prompts that do
+like call summarization or extract action items, and if the conversation was
+just in Turkish, the action items would still be returned in English.
+I think, I think part of, I mean, most of what we've done so far has just been
+leaning on the capabilities of something like GPT-4 or potentially some of the
+cohere multilingual models.
+And then as part of the prompting, figure out, okay, what arguments are
+like some symbols, right?
+For example, like a filter key, those might just be in English because that's
+just like the enums that we've used versus actually having to do keyword search
+or text search in a different language.
+But when you say like the, a lack of the cultural side of things, like, do you
+have an example of like what a failure mode could look like?
+Yeah.
+So for example, let's say we have a summarization code path and I don't know
+how a person using Japanese would ask the document to be summarized.
+So for example, in English, there could be different variations they could use,
+and we could have them in our test suite and make sure those are inferred
+correctly by the author.
+But with something like Japanese or Chinese or all these other languages
+coming in, it just becomes a little bit of a wire card, how these routers are
+going to behave when dealing with, I don't know how a Chinese person is going to
+frame a request to shorten the document or something like that.
+Yeah.
+And this, this request to shorten is less of like a, using a summarized tool, but
+just having some instructions.
+Cause I definitely know that like, just GPT in Chinese apparently has like a very
+specific tone, right?
+That like, I'm not aware of, but yeah, when I have friends that read that it
+definitely is a thing, but yeah, that's definitely going to be a challenge to
+figure out what, what kind of training data exists in these, these language
+models to do this kind of task.
+Cause yeah, I don't, I don't think, I don't know if I know GPT-4 has like
+Japanese specific language evals, but yeah, I'm not sure.
+I'm not sure like where OpenAI is spending most of the energy.
+The other curious fact is that most of these LLMs like English is obviously
+the best performing language and then everything else has a drop off with
+respect to English, what that drop off is with respect to intent understanding,
+etc is, is hard to assess.
+Yeah.
+I think they're just, I think if it was summarization specifically, maybe, maybe
+then like we need to have like summarization type evals, which I think
+Eugene has written a lot about, but for more, for other things, like whether
+it's like router selection or whatnot, those might be a little bit more easier
+to just sort of segment and again, model things like precision and recall.
+Any other thoughts on sort of the, the general split between LLM tools versus
+also exposing some of these interfaces to, to downstream consumers, right?
+Cause I think if we look at something like Google, right, Google has yet to
+avoid using routers that take you to different UIs, right?
+It's like, if you search for an image, if you search for a video, if you
+search for a product, Google will try to show you product specific interfaces.
+Right.
+And I think even like given that it's still the case that when we, when Google
+tries to then build some kind of natural language, text answering system,
+it's not very good, right?
+Usually the intent is a lot stronger.
+If I want to find images, I want to be shown images.
+And then once they're images, I want to be, I want to be able to filter for like
+the created date or the image size or like by color, right?
+Because those are sort of like, symbolizing a something that you can use to
+improve the satisfaction of whatever assets you're trying to show the user.
+We have actually done this.
+So like our, as I mentioned earlier, as well, we have this agent that has
+like two tools only one is to create charts and one is to create summary.
+And we have widened the summarization bit directly into wherever
+the user is seeing feedback.
+So you can directly ask questions, leveraging that tool.
+And even in that tool, it's kept like the filter creation part.
+So user can directly provide filters from the quantifier builder, what we call
+or the in the UI and then ask questions.
+So then we basically bypass the agent plus the filter selection that we have
+and directly summarize using rag.
+In those situations, do you ever use the user interaction data to potentially
+improve the few shotting examples and potentially fine tune the language models?
+I have one use case where when we have sales emails that are coming inbound,
+we're able to segment them into multiple search queries and render that to the UI.
+And then we have the sales team.
+If they want to improve the search queries, just edit some of the queries.
+And then by doing that, we can basically fine tune like a GPT 3.5 that is five
+times faster and like five times cheaper than GPT 4.
+We haven't started fine tuning yet.
+So we are still working around.
+So right now the prompts that we give to the user, and these are some of the
+questions that you get are still not dynamic in nature.
+So they don't take account like what is the context of the query?
+What is the feedback that you're looking at?
+And then accordingly, we are just, just do it.
+So we have first fixed that so that the queries are more that will allow users
+to actually ask more powerful questions.
+And then we start segmenting the type of questions that users are asking.
+We haven't yet spent time on segmenting, but what we have seen with the chat
+interface itself is the range of questions is quite big.
+So like the questions are very simple.
+And then there are like a table of very long questions that are like very
+complex and require like a lot of analysis, which the planning can do.
+So how do those, like still something that's up in the air.
+Yeah, that's definitely, that should be a question you ask Vyta
+Anker from Brain Trust and Zapier.
+I think they're thinking about doing a lot more planning based systems in
+their Zapier AI integrations.
+And so I'm curious what they have to say about that.
+When I was working with them, it was basically issue of, we're trying to
+do things in a React loop and it's very hard to get reproducible results.
+By building a DAG, the hope is to have much more reliability, much
+more higher reliability in those systems.
+We also went through these loops.
+Basically our agent like has been re-architected multiple times.
+First it started out with React.
+Then we started to make it more like a DAG.
+We moved back to React.
+And again, we are using a DAG.
+And this side of it.
+What, what was the, what was the limiting factor when it came from
+going from a DAG back to a React type model?
+So we wanted to basically, because we felt that the earlier DAG was not
+working out well, we wanted to have more connectivity with the user so that
+they make corrective actions on top of the steps that we were trying to execute.
+I see.
+But that the latency trade-off was too high.
+You could not run with many things in parallel.
+So that made it so that the complexity became too much and it was the
+users were also not really very interactive with the corrective process
+because they felt that there is too much complexity and too
+much overload in doing that.
+So we went back and this was like early before we launched it to a wider set
+of audience, so just our internal testing.
+And we felt it wasn't working well.
+Then the current approach was a DAG, but with a slight re-orchestration
+with only two rules and not giving too many options made it a lot
+more consistent than before.
+That makes sense.
+Yeah.
+Cause I think in the Zapio case, it's like, I wouldn't be surprised if like 90%
+of all Zaps had less than three, three nodes in the DAG.
+Yeah.
+Yeah.
+Cause one of the goals with producing the DAG was if you can iteratively modify
+the DAG, then what would happen is regardless of what kind of conversation
+you have, there's sort of a final target artifact that you want to produce
+from that conversation.
+And if you had that final artifact, you could produce a fine tuning data set
+that says, take this entire conversation, summarize it into a single request.
+And then that summary is assigned to that DAG, right?
+And then if I want to do few shotting, I can just basically do search
+against the summaries and find like six different DAGs that look like the
+one I might care about.
+Right?
+So if it's like, okay, turn my type form into an email and then add a row to notion.
+Like there would be like 10 examples of DAGs that do that.
+And then you could use that.
+And then ultimately you, then you can build a fine tuning data set that says,
+okay, I have like 6,000 examples of summaries to Zap your DAGs.
+Now let's fine tune it.
+And now we just have a data set to fine tune against.
+Sound like for your case, it's like two complex of a DAG or is it
+still like two, three nodes?
+It depends.
+Like in some cases it's two, three DAGs nodes only in some cases
+it's just one node even, but users can write a very complicated question.
+Like say 10 entities they'll mention.
+You could feedback from all these 10 things and then provide an overview.
+So now there we have even seen like the code breaks because we are running
+everything asynchronously and suddenly we're getting SSL timeouts at the
+connection breaks, we are not able to process that.
+So there are like a lot of code challenges around these kinds of very large
+DAGs that need to be processed that we're trying to answer.
+And then there are even cases where systems that are downstream start to
+break if the nodes are too complex, because those systems are written to be
+built in smaller and very granular nodes.
+But if the nodes become complex, then those start to break as well.
+Yeah.
+Cause I think, I think our goal is like, yeah, if we can produce a single DAG,
+we can send it to an execution engine and then the execution engine can handle
+all the concurrency that, and maybe all the types and, and all the checking.
+And then if there's any errors, we just give it back to the language model.
+But yeah, I can see how if it's very wide fan outs, you might have a lot more like.
+Issues.
+And what we do is we don't wait for the entire plan to be generated even.
+So we stream the plan and start execution as soon as that with the
+latency for the customer is a lot.
+We start streaming as well to do this is what is happening right now.
+So that will be, you don't feel like you're waiting for the
+entire plan to be generated.
+Yeah.
+I'm going to cover that a little bit in week six, basically doing a lot of like
+stream streaming planning using partials and didropoles, but so I'm curious to
+hear what you have to think, say about that, but I'll also just jump to
+a question that Matthew had.
+Matthew.
+Yeah, sorry.
+If I don't, if this is a stupid question, but by DAG you guys are referring to
+for example, in Zappier, this the workflow one, and then it connects to another.
+And exactly.
+Okay.
+I see.
+And as far as routing, is that one of the main implementation paradigms you
+recommend or you mentioned react or you're talking about like actual react UI
+stuff or like, no, no, no.
+So.
+Yeah.
+Let me, let me first define react, which is like react is reason and act.
+Okay.
+And so the idea is like, let me put in a loop.
+And so I'm going to let the language model decide, okay, given where you are
+and the request and I set up tools, which tool should I call?
+Okay.
+Call this tool, this tool return to this response.
+Cool.
+And then you put it on a given this response and the original goal.
+What is the next tool I can call?
+The issue is those aren't guaranteed to terminate.
+And so if you looked at the auto GBT a year ago, you would get, you would get a
+world where I think someone tried to like buy a bicycle and it ran for seven hours.
+And what ended up happening was like, they went back to sleep.
+They went to sleep.
+You woke up the next day and it was, Oh, I see a JSON parsing error.
+Let me remake a post request.
+Oh, I see the JSON.
+And then it just costs them like $40.
+Right.
+Whereas if you were to produce a DAG, you effectively like a directed
+acyclic graph, you can basically say this DAG has six steps.
+I'm going to run those six steps and get a result.
+And if that's not the result I want, I've at least terminated, which is one thing.
+And secondly, with the DAG, you can do a lot of checking, right?
+And so there's something that's incorrect in the structure of this call.
+You can sort of avoid that, but that's almost like routing like plus plus in my
+mind, cause it's, it's, it's less about tool use and more about structured outputs.
+But that tends to be a little bit more, more complex, I would say.
+Interesting.
+And then just one follow up to any of the, the cloud tools out there, like
+LAM index or anything, do they push you in one direction or the other in your experience?
+So I think for Lang chain, they almost do a third thing, which is they
+define almost like a state machine.
+So if you look at Lang graph, what they do, and to be fair, like chat bots that
+use state machines has been around for like a long, long time.
+Like I think I used to build a bunch of like Facebook chat bots in like 2016,
+and they were all state machines.
+And basically what happens is you would be at a certain node and at that node,
+you have a bunch of different edges that you can transition to.
+And the language can, language model can choose which transition to take.
+And then you transition to another state.
+And then from there, you would ask what is next transition.
+And so based on how you build that DAG, like you might always terminate or you
+might, you might still have like cycles and whatnot, but it's almost like a third
+way of building these things, right?
+One is the language model produces a graph versus there's an agent that has a
+state machine and the language model chooses to transitions in that graph.
+And then there's the react model, which is kind of just like a single
+node that goes to itself.
+Right.
+I would say those are kind of the three big paradigms, but I think all three are
+valid, right?
+Like there's this, there's this notion of like Bell's paradigm of Bell's, I
+forget what the Bell's principle, whatever, which just says that like any
+existing complex system was derived from an existing complex system and producing
+DAGs and using state machines both have like been successful for decades.
+And so I'm not, I'm not like leaning one side or the other.
+Interesting.
+Thank you.
+Like, um, yeah, like if you look at the chat, planning tasks is an example.
+And then if you look at land graph is another example, but that said, I'm
+probably mostly bullish on either using the state machine or producing a DAG.
+The only benefit to me is I can fine tune a language model of the output, the
+DAG where it's still not clear how I can fine tune the state machine.
+I don't know.
+Those are like specific enough, but I can try to share my screen and look at
+some documentation as well, if you'd like.
+That's good.
+And then the DAGs are kind of encapsulated and that's why it makes it easier for
+an alum to characterize those for you.
+Exactly.
+Cause you can say like, here are like the 10 node options and here are the six
+add options and your job is just like play with Legos and plug them together
+in a way that gets me the final result.
+And then my system can say, Hey, you plug the, you plug these systems
+together incorrectly, right?
+You're, or like, you're missing an argument and you can kind of type check this DAG.
+And so the error messages of the DAG kind of let the language
+model know how to, how to fix it.
+Yeah.
+So if I, if I show my full screen, like this is kind of a JSON object version
+of a graph, right?
+Where I asked the language model, what is the difference between the population
+of Canada and Jason's home country?
+And you'll realize, okay, well to figure that out, I actually need to know
+what Jason's home country is.
+Then I need to figure out what the population of Canada is.
+So then the population of Canada is of Jason's home country.
+And then find the difference, right?
+Like I can't do a single step of search.
+And what you can do is you can basically do something like this with a language
+model can produce a node, the question for that node, and if it has any dependencies.
+Right.
+And so you see here, the population of Jason's home country depends on
+identifying Jason's home country.
+And so you can just send this JSON object to some execution engine and
+just have code figure this out.
+Right.
+And maybe it's just like, okay, given this, should I do a search or should I use,
+should I ask for like human input?
+And then you can kind of reduce everything.
+And the idea is that given any of these, there should be like a correct answer.
+And that's kind of how you do fine tuning.
+Whereas if you look at something like line graph, I don't know if
+there's a good description of it here.
+This graph, this, this state machine is defined externally.
+And then how you transition the state machine is dependent on the language model.
+And this is how, this is how, how we've like built chat bots for decades.
+And so I definitely think this is sort of a, this is a durable abstraction when
+it comes to making these agent systems.
+Yeah.
+So it started, it's going to reason about the agent is going to either do
+some action and then come back.
+Like this is, this is basically the react model.
+The agent takes an action, gets a result, takes an action, gets a result,
+and eventually terminates.
+And then obviously I think you can warn that like, you might get stuck in this
+loop and you'll never terminate, but that's more of a computer science thing.
+I think with these systems, you can build pretty, pretty complex agents.
+Webaf, another question?
+Yeah.
+So wanted to ask, have you thought about how can we go about evaluating plans?
+So like given a question, you got a dad, but how can we evaluate and then
+start to improve that that is something we haven't yet solved.
+I wanted to hear any thoughts around that.
+Man, I don't have any good answers.
+I think the simplest thing to do is just checking for some notion
+of correctness in the graph.
+Right.
+So a simple example is when I ask a language model to write TypeScript, I run
+the TypeScript through a type checker.
+Right.
+And it's the type error.
+Really you can think of like the entire code base is this like AST and it's a type
+error means like something about the edges was incorrect.
+Right.
+Right.
+So you can imagine for this, for this JSON plan, I can run some tests that just says
+like, oh, are there any cycles or are there like, is there anything wrong with
+the structure of the DAG?
+So those are, those are like some computer science type tests.
+Outside of that, I'm not fully sure if there's any good, good literature on how
+to do this like multi-hop planning.
+Like, I think you can do it in a really simple case where it's like Wikipedia
+questions or math questions where the answer is easy to evaluate.
+Right.
+Yeah.
+If you were to go to like, okay, like, yeah, but I don't know if you have had
+examples where it's like, okay, you're, you're Zapier.
+Like, I don't know if Zapier has like a super solid system to evaluate, except
+for the fact that they know when the DAG has an error, right?
+So one thing you can do is you can type check the DAG, then you can check for
+cycles and you can do all your computer science tests.
+And then the second thing is when you execute the DAG, are there any errors
+and where are the errors found?
+Right.
+If you produce like, if you're Zapier and like your top five most common
+components are like email, probably type form and like Excel and Notion.
+You still, you likely have a per node error rate across all the workflows you've
+ever had the language multi-generate.
+In which case you can probably figure out like, okay, like if this is your
+segmentation, maybe you find that, oh, wow, we are really not doing email.
+Well, for some reason.
+Right.
+And if these, if these, if the input to this email node is some kind of schema,
+are we like inputting invalid bodies?
+Are we inputting invalid emails?
+And now you're gonna find like not only the node level issues, but potentially
+like the input field level issues.
+Right.
+These are still evaluations on the correctness of the DAG and some notions
+of correctness on the execution that is, that still feel very binary.
+Right.
+It's like, if you input a date that's invalid, that's, that's an error, but
+in terms of answer quality, I think that's, that's going to be as challenging
+as evaluating generation.
+And would it make sense to evaluate the steps that the model has given basically?
+So like, do them follow a logical consistency or would following those
+steps actually get to an answer?
+Without looking at the actual execution, because execution itself is like
+independent of the node creation right now.
+Yeah.
+I think semantically, you might be able to use an LLM to check some kind of
+ordering, but I would also suspect that's, that's going to be very use case specific.
+I've only thought about like sending emails and receiving emails and like,
+when a type form form is being submitted, it creates an entity that's passed it.
+And emails like, what would be an example in your case where you
+feel like you could test that?
+So people ask some questions like what kind of issues do users face when they,
+when we lose a D and which competitors are they mentioning leveraging over us instead?
+Now, this is a very complex question there and you need to first identify the
+competitors, you need to identify the issues and you need to collate those into
+a final answer and you also need to check that the deal is actually lost.
+So now the number of things that need to be done are complex in the
+model needs to understand and it's the reasoning needs to be very solid.
+Okay.
+What are the different steps and how do I actually strict stitch them
+together to get to the final answer?
+I wonder in that example, like how much, and by the way, like, I know we're kind
+of just like jamming on this problem, but if anyone has any other questions, like
+definitely like raise your hand or have any comments, but yeah, I wonder how
+many of those actually have dependencies.
+So sometimes they do like there are complex dependencies that like you need
+to identify the competitors and then for each competitor, do some sort of an
+analysis, like why are we losing these two each competitor, break it down by
+the competitors.
+So in that case, you need to first identify, add as your first dependency
+and then for each of them, create new nodes and those new nodes basically need
+to be executed for QK for this competitor.
+What was the feedback?
+So the kind of decomposition also happens where in the first node leads to the
+decomposition of the subsequent nodes.
+And then the DAG itself, the model cannot basically predict what would the
+competitors, so it creates a single node, but then we decompose it based on the
+
+Yeah.
+Yeah.
+That's something that would be hard to figure out using the state machine model.
+Cause you might assume that like it might turn to terminate.
+Like that's kind of where, that's why I kind of liked this idea of producing DAGs
+because if someone just came up to me with that example, I'll go, Oh, wow, this
+is something we don't have a capability for.
+Let me just produce like 10 more examples of questions that look like this and
+they're correct DAGs, put them in my like snippet database and check if this
+actually improves the performance.
+Like if I had this kind of feedback and it really mattered and it was a capability
+I cared about, I would just sort of like,
+We do have a snippet library as well, but we haven't seen that to help out as
+much as we would like, like, because maybe the retrieval is not good enough.
+It would be an issue.
+So we need to spend more time there.
+So like planner was like something we haven't invested in since we rolled out
+V1, that was something we were thinking about how to improve now since we have
+solved some of the other burning pains, but texture SQL.
+Yeah.
+I would love to test two things, right?
+One is given a question, can I retrieve that, that good snippet?
+And then the second question I would ask is condition on if the snippet was in
+there, does it actually improve the likelihood that I've generated a correct answer?
+Right.
+Makes sense.
+And if you can,
+yeah, cause, cause I definitely agree that it might be the case that we need to have
+better retrieval on those snippets.
+But I think if we could just come up with like 10 examples of going, Hey, we have
+a very similar DAG and a language model does not look at it or no matter how much
+we prompt it, it's still unable to reason about this, then those become sort of
+like larger fundamental issues with language models capable of, but yeah,
+you just have a number that's like, what is the probability we find the right
+example and then another number, which is the condition on that we found the right
+example and it is in the prompt.
+Can we generate a successful answer and just figure out like which number is
+lower and try to improve it.
+Makes sense.
+Yeah.
+Right now our library has like only 10, 20 samples.
+It's not a very extensive library.
+So I think spending more time expanding it might be worthwhile.
+Yeah, because if both those numbers are like 50%, maybe we just say like, okay,
+you know what, this is just going to be really impossible.
+But if it turns out like one, like if, for example, it's, we find that like, okay,
+if we found the right example, we always got a good answer.
+Then we know we just have to invest in better retrieval.
+Maybe we fine tune in to a better model.
+Maybe we make, maybe this is, this is the energy you need to go.
+Okay.
+Let's go from 20 examples to like 200 examples.
+Let's just, let's cover like every possible different use case for doing turn
+analysis.
+I doubt there's 200 different ways, but people doing turnout analysis.
+Yeah.
+Yeah.
+I bet like, I bet there's like 20 that most companies use.
+Like, do we lose, do we lose people from competitors?
+There's probably like 20 reasons people sign out.
+Can we systematize each one, make three examples for each and just really
+fit us, figure that out.
+If we demonstrate that conditioned on having the right snippet, our success
+probability is like 99% or something.
+But that's how I would like systematize that a little bit more.
+Before we go on with that, I think there's a quick question.
+Quick question.
+We built a document assistant that securely stores and helps chat with PDFs.
+Recently, we have added functionality where the system decides whether to
+process the entire text of the PDF or use a RAG approach based on the user's
+query.
+For example, if a user requests a summary, the full text might be more appropriate.
+However, maintaining the conversation context for the entire chat history
+challenging due to the limited storage capacity, we're seeking an effective way
+to store and manage the conversation history without overwhelming our storage
+resources.
+Additionally, we frequently deal with large PDFs for their complicating
+storage and processing.
+Okay.
+Let me think about this for a second.
+So it's like, sometimes we choose to return the full document.
+Other times we choose to return chunks, but the limitation is around.
+So Lang chain has a pretty, again, so I think any solution here really is going
+to be like a latency versus story trade-off.
+What Lang chain apps did a while back was do summaries of the current history.
+And so instead of just having a messages array and then in the middle of that
+messages array, having like 50,000 tokens of a text document, we will ask a
+language model to summarize some portion of it in such a way where like the last
+10 messages is all that's included and then anything beyond 10 messages is
+summarized.
+So there's some notions of like summarization as a way of improving that.
+There's other prompt libraries, like what cursor uses, where it's like really
+complex, but it kind of looks like XML and you can effectively limit the number
+of tokens per like template variable.
+And so you can basically what, what, what cursor is like prompting library does is
+it can dynamically figure out like, what should we summarize?
+How many messages can we include for each message?
+How long can it be in such a way where we will want to constrain it to be less than
+like 50,000 tokens.
+And so yeah, there's one, which is just like, can we just summarize everything and
+replace the messages with a summary?
+And the second one is, can we be smarter and more intentional about the limits that
+we set on some of this context?
+The other thing too, is maybe, maybe it's the case that if we answer our question,
+we can include the summary, but once we're done, the summary, we just don't
+include the full body in the next messages array, right?
+And if you want to answer another question, we just might have to like inject
+it back in and pull that out.
+I don't know, Dan, if you have any other thoughts on this.
+Yeah, I have two other thoughts.
+So I think there's a part of this question that I'm, that I might not
+understand some of the, what the product looks like.
+If the issue is that someone has a long history, long conversation, because they
+ask one question about one document and they bring in another question for another
+document, and ideally what you want them to do is just start a new conversation
+adding a little UI widget that says, Hey, we are reaching the end of some little UI
+widget that says basically we're reaching the end of our storage, which is the
+context window could be, I think a quite simple solution.
+And then to know how many tokens you've used, it would be straightforward.
+And then if there's a, if the concern is latency, when you have a back and forth,
+if you're using Claude, this could be a nice place to use the new KV caching.
+They've uploaded a huge document and now every time you want to process something,
+you're going to process, you have a long back and forth.
+Every time you're going to process something, you need to re process a 50,000
+token document, they've made it now easy with like a little, an extra argument to
+just cache the processing of that document.
+Yeah.
+And then you wouldn't repay the latency penalty of reading the document every time.
+Yeah.
+I feel like in the, in the, in ArrayCast, we had an issue where by default, everyone
+messages the same context history.
+And one of the solutions we prototype was just like, could we, could we have a
+tool that says start new thread?
+And like, just, just by having a simple prompt that's like, call this function.
+If you think the con the conversation has changed, we'll just like render a
+motor that says, Hey, if you start a new conversation, it's going to be cheaper
+for you, it's going to be a little bit faster and we can like organize your
+conversations and we just presented the benefits of starting a new conversation.
+I think that was like 85% accurate with a terrible prompt and some, like
+20 bad examples, but I don't know if that answered your question.
+I think.
+Yeah.
+If you can just follow up with a message that says, okay, like, is it the case
+that we do want to have everything in the prompt or is the case that we should just
+be pushing the user to, to change the messages?
+Yeah.
+I think that answered my question.
+But then again, the concern was that when we summarize the context, we tend to
+use out a lot of information.
+Yes.
+Yeah.
+So that's something we have buried out.
+I think there's something to be done there, which is figuring out why.
+Like if I just give a two hour video, like if I just gave like Claude, the first
+video of this lecture series and just said, summarize this, we might get six
+sentences that says, like the speaker talks about the importance of having
+metrics, which is like a correct summary, but maybe it's too short of a summary.
+And so I think a part of there might be actually just focusing on the
+summarization prompt and figuring out when we do misinformation, what exactly
+are we losing?
+Like, what are we not recalling in our summary?
+Like I even actually did a great post on doing chain of density summarization,
+where one of the goals of the summarization is to make sure we
+preserve all named entities.
+And so what that means is the summarization is incentivized to say,
+Jason Liu speaks about the importance of techniques one, two, and three
+versus the speaker, because Jason Liu is an entity that we want to preserve.
+Right.
+And so there's, there's some notions of the summarization there where maybe we
+benefit from saying, preserve all the entities, preserve all the facts.
+Here are some reasons why we do summarization, if that makes sense.
+Yeah.
+I also wonder if you can do something with the UI so that users can express
+dissatisfaction with an answer that came from RAG, and then you fall back on
+handling the whole document in those, just in those cases.
+Yeah.
+That's something we're thinking about getting feedback from the users themselves.
+Yeah.
+It works.
+Yeah.
+I think one metric that I try to, I'm trying to consider pushing out more on is,
+can we generate some statistics over the chunks and say, for all the
+chunks that are returned, are they from many documents or a few documents?
+Right?
+Like if we return 10, 10 text chunks and they came from 10 different documents,
+that's a different statistic than if, if 10 text chunks came from a single document.
+A lot of index calls out like small to big, but I think there's some
+hierarchical nature of how we can think about some of these things.
+Like for example, one of the clients I work with that does marketing, we know
+that pricing documents, like pricing questions should just use the entire
+pricing document rather than trying to do search, whereas asking about use cases.
+That's something that we can use chunks for.
+We just basically have a classifier in there.
+Bito asks, anyone know about using Claude caching in prod?
+I wonder if there's any gotchas.
+And then Matthew says, I know that the pricing of using the cache is not cheaper
+than open AI for many, maybe the model using the cache content in cloud is
+superior so the cache does not be on that cheap, it's still justified.
+I have not experimented too much with the prompt caching.
+I only know that like you can prompt, you can prompt the system message,
+sort of cache the system message.
+But I even remember like seeing prompt caching in Gemini and not being
+super impressed with it.
+I don't know.
+Dan, have you played with prompt caching a little bit?
+Maybe.
+I've done nothing more than read the blog post.
+Like it, it conceptually seems like a good idea and like it should work, but
+I haven't actually tried it.
+I haven't.
+Maybe we should do come up with some, some benchmarks for the instructor library
+and see if, if anything comes out of that.
+Yeah.
+I think in principle it's very useful, but even then I think, oh, one of the
+gotchas I know of is that the prompt caching time to live is like short.
+Five minutes.
+Five minutes.
+And so like, I think it's really just for conversations.
+Like if you're doing like code development, it might not make sense
+because you might cache the entire code base, but if you don't make another
+request in five minutes, you like lose the cash and so there's some, there's
+depending on the use case that might, it might differ.
+I think in the long run, it's not just conversations.
+I think that they hope that someone's going to have like a hundred pages of
+documents in our production app.
+And they always want this context to be there.
+And it's almost like a replacement for some version of rag.
+This is always there.
+There's always enough traffic that mostly keep it live.
+Yeah.
+I mean, I think I would consider doing that for like the instructor documentation.
+Yeah.
+We just loaded once and if you have enough traffic, we should, we can, we can do it.
+Oh, someone has a question.
+Is he all?
+Yeah.
+I think we're, uh, no more about Colbert.
+So I, uh, I think Ben was supposed to talk about Colbert.
+Uh, so when do you suggest to go with those embeddings and then against
+that other, other sort of.
+Yeah.
+I mean, I am not an expert on like interaction models, so I'm not going to say much,
+but two things, one, Dan, correct me if I'm wrong, but Ben will still
+present, but on a Wednesday, Ben is joining us next Wednesday.
+Okay.
+So, so we'll definitely talk about that.
+The second thing is, so today, I don't know if you were at the, uh, Lance TV talk,
+but they showed some like closed benchmarks that they're going to open up soon.
+And the cohere reranker V3 outperforms Colbert and it outperforms the answer AI.
+So it cohere V3 outperforms Ben's model.
+It's all I saw.
+And so I would use Colbert if your benchmark says Colbert is better.
+That's like the lazy answer.
+I think there's other like answers around like, how well does it standardize
+across other infrastructures, right?
+There might be differences if you have like 1 million vectors versus 30 billion
+vectors, but, but yeah, I think for me, I almost never think about the model.
+Like the model is like an implementation detail.
+Mostly what I think about is how easy it is.
+Is it to train this model?
+How much capacity does it have and what metrics do I care about optimizing for?
+Yeah.
+Usually to me, the model is just something I have to pick to satisfy
+other constraints that I have, right?
+It's like when I was training, like vision models, like ResNet 52,
+outperforms ResNet 34, but ResNet 34 fits nicely on like a cheap EC2
+instance and runs on a CPU.
+So I'm just going to pick that instead.
+Cause these models, well, they're going to change this year.
+Next year, there's going to be V4 and Colbert five.
+But like one thing I'll talk a lot about in next week is the fact that your
+moat as a business is going to be.
+Primarily, at least in the re-ranker part is just going to be about the volume of
+like triplet data you have that align with business outcomes and then which model
+you choose is just, you just find a hundred dollars and then he'll tell you
+that what the right answer is.
+Dan, are the, are the videos for Chang's talk live now?
+I think Matthew is just checking if there's.
+Yep.
+I'm pulling it up.
+I'm about to put it in the chat.
+So is that a video automatically uploaded to Maven or are you sort
+of doing that manually right now?
+No, everything is, there's a little bit of a delay for zoom to do some processing,
+but it all is automatically put in Maven.
+Okay.
+Yeah.
+At the end of the course, I'm going to like edit everything up and turn them into
+like, like I'm going to turn the guest speaker videos into YouTube videos and
+folks can just check those out there.
+But yeah, I was very surprised that Colbert V3 app performed,
+Coheer V3 app performed Colbert.
+There is a nuance though, I think, which is that Coheer V3 would suppose that you
+are both using a cosine search first and then using Coheer to rank it.
+Whereas I think with the Colbert model, you don't need cosine distance, right?
+Is a single API call.
+And so I think you benefit a lot from a latency trade-off, right?
+But do you need a GPU to run those models or it runs on CPU as well?
+I think those are just latency trade-offs.
+Like, yeah, cause I mean, yeah, like, like this is like a terrible answer.
+Cause I really don't know if you, I think what that really is saying is like,
+could you get under 300 milliseconds of latency with a CPU?
+That I don't know because the embeddings and doing the brute force calculation,
+I think are two separate tasks.
+And so, yeah, like maybe you rarely need CPUs to do that the K nearest
+neighbors search, but with enough data, you might want to use a GPU to do the
+embedding and so there's a, there's a separation there, right?
+And one more thing that was bothering me was like for Colbert, you need both
+the question as well as, so how do you retrieve those documents?
+Is it like you, you do a vector search on those documents and then give
+it to the Colbert model or?
+I don't know the full implementation details to give you a good answer.
+I think that I think that's definitely like an Omar or Ben question.
+Got it.
+Yeah.
+But yeah, I think there's just like every, every query is multiple vectors
+and you're just like chunk vectors.
+And then you interact them at the end and this interaction just basically says
+that like a vector model is unlikely to ever be able to figure out the difference
+between I love coffee and I hate coffee because like they're kind of averaged
+out of embedding vectors, whereas cross encoders will be able to detect that.
+If you have training data that suggests that those two are different things.
+And so the coherent rankers and Colbert both will be able to figure that out.
+The only difference is I think the Colbert vector search is a single call that gets
+you like a single set of results, whereas with coherent ranker, you're likely going
+to have to use vector search first to subset it and then do a re-ranking.
+It's like a small nuance, but, but again, to me, that's just like precision recall
+latency for some compute dollars per hour.
+And I just have to like make a sacrifice because obviously I think collect
+re-ranker V3 probably takes like 500 extra milliseconds and costs a couple of
+cents, a couple like fractions of a cent per comparison.
+And so there's like real reasons why you still might choose the model with lower
+performance. I think those constraints are very specific, right?
+Like you might find that if you can save 300 milliseconds, satisfaction goes up
+more than the satisfaction that would have gone up if you had like 5% more recall.
+But unfortunately, those are things we have to A-B test.
+The other thing I might add and Dan, I don't know if you know about this too.
+I don't know if there are like easy ways of hosting Colbert.
+It's like Quadrant, Quadrant and Vespa have one, but I don't know it.
+Like, I don't know if it's like easy to, to host.
+Yeah.
+I don't know anything about that.
+Yeah.
+Like, like you can't, I know, like you can't do that with like ChromaDB yet.
+I don't even know if you can use Colbert for LansDB.
+So there's other trade-offs of now I have like a full text index, then I have my
+data storage index, and then I have my vector index.
+And then you like break a config file or ETL goes wrong.
+All of a sudden there's like a million documents in open search and like a
+million and six documents and vectors.
+Like there's a lot of other things you make decisions on.
+I think Bito had a question first, aside from Lansy, if I recall storage is a
+concern, I need to catch up on the talks, but if I recall correctly, storage
+requirements for multi-value vectors are a lot larger.
+Yeah.
+This is a great comment that I tried to push Chang to answer in Lansy B,
+which is that because things like LansDB have their storage back down, like S3,
+I think like cost is cheaper.
+Right.
+And one of the things too is because if you use something like open search or
+something like pine cone, all the data is persisted, like in the instance.
+And so oftentimes to have resilience, you need to then have multiple instances,
+which means you end up paying like dollars per gigabyte times three,
+just to have reliability.
+And so there's definitely some trade-offs you have to make there as well.
+Whereas because it's on S3, like you might have a higher cold start when
+you actually create the instance, as much of other trade-offs as well.
+Generally, I think storage is pretty cheap.
+I don't think it's like the biggest concern.
+That said, I think, I think like pine cone instances will just like, like
+instances that would cost you $4 on like TurboPuffer and LansDB could cost
+you like $100 on pine cone.
+If I above, I feel like I don't know if I'm pronouncing your name correctly,
+but just let me know.
+Okay.
+Close enough.
+One more quick call out.
+So pine cone has recently released, well, it's architecture and you can save
+the data set on S3 and then it pulls the data and you have to be able to.
+That problem is not as much, but we are planning to migrate to that.
+So like some of our use cases.
+So yeah, yeah.
+Go on.
+I was going to switch topics.
+So I wanted to say you can complete it.
+Wait, I don't know if I heard you correctly.
+I'm going to switch topics.
+I wanted to say you can complete it.
+Oh yeah.
+I would love to know what your like cost savings are when you go to serverless.
+Cause I think I've still heard a lot of complaints, so I'm really, I'm really curious.
+So we are not planning to switch for cost actually, but planning to switch for scaling.
+So the scaling that the cards allow us is not good enough.
+So what happens is we have like these post-its and those patterns like end up
+throttling the entire system whenever.
+So that's when you're thinking about serverless so that it can scale up as
+best of infrastructure so that we don't get stuck with the latency and latency
+for other purposes.
+What was the follow up question?
+I also wanted to ask what are your thoughts around leveraging like out of
+the box retrieval systems, like snowflake has its own cortex retrieval system.
+No click search or something.
+Then they do the hybrid search plus the re-ramping.
+You and the latency over there is much better than doing it on our side because
+of the fact that they do it all on the database itself.
+So that read off how much is it worth to have it on our side, just
+leveraging something on the board.
+Yeah.
+I mean, I like Lansky and I like Postgres for the same reason that the compute can
+be closer to the database.
+Like I don't really have any sort of big concerns.
+I haven't gotten to a case yet, except for like title boosting where I
+needed so much control that if I was only able to like twist a knob within
+the database, I could get like much higher performance.
+Like that has not been the case so far.
+And so I don't really have much thoughts about it.
+Like just being able to have hybrid search already is so good.
+The only instance that that was an issue was when I knew many users knew the type,
+the file names of doc, Google docs they were searching for, and they would search
+basically like a one to one file name and we would not be able to find the results
+unless until we did full text search explicitly on a normalized version of the
+file name, then we're like, okay, can we just like wait the title boost by two?
+If that's the case.
+But outside of that, like I haven't seen any examples where it's like, oh, if I
+only change like the K parameter and BM 25 to be like seven, I would get good
+results that I haven't seen that.
+Yeah.
+Like generally I'm not against using frameworks.
+I think it's just a matter of like speed of development versus control and how big
+the team is, like if you're working with like seven Python developers, it might
+just be way easier to communicate if you use something like Lanchi and Lama index
+because those are some constraints that you can make sure everyone on the team
+writes code that looks the same.
+We struggled with that actually a lot.
+We didn't want to have to say we built everything into it.
+It's like, there is a lot of private knowledge.
+So it's very difficult for anyone else to come in and contribute on that.
+Yeah.
+Yeah, exactly.
+Like I built the recommendation and search frameworks at, at StitchFix my
+previous company, but I kind of did that knowing that like I would one be the
+villain and two, everything would be my fault, but at least like worked at the
+company, right?
+I think the danger is when you then use frameworks that are like also
+changing very quickly.
+It's like hard to blame anyone because you're not even like paying them.
+So I think it's like, yeah, it's, it's, it's tricky on both ends.
+Like I think, yeah, like one of my clients uses like Lama DB, Lama index.
+And like every eight, like every eight weeks, we take one week off to migrate
+to the newest version of Lama index.
+And that is like real cost, right?
+Or like a new model will come out, but the Lama index code has an assert on the
+model name and the model name won't be in the assert string.
+And so we can't test a new model until we upgrade Lama index.
+And then all of a sudden we realized like, oh, like this now broke some
+retriever.
+And it's like, yeah, like every six, every six, seven weeks, we end up having to
+migrate code.
+But that said, this engineering team would not have built their own like rag
+framework, right?
+So there still might be time savings, right?
+Because now we just have two people building out like six different retrievers.
+We put them on the router and it works.
+A lot of the work we had to do was because of the fact that we wanted to
+communicate as fast as the user.
+So we need to plug inside the tool and write a lot of our own, which made it
+very hard to like figure out what to do with Lama index.
+Like it has so many layers of abstraction.
+Now you need to know each layer in order to actually modify the things you need to
+modify, which was a very big thing for us to start from scratch.
+Yeah.
+I think, I mean, my belief is any framework should have at most three
+levels of abstraction.
+Like if you click command, click three functions, you should be just in like
+standard library code.
+Cause yeah, I think like for all, most of these frameworks, it's like, it's pretty
+hard to own the prompts and it's pretty hard to own the async loop.
+If you know, you want to do some kind of like either asynchronous code or
+multiprocessing, it's like, how do you decide whether or not you want to call
+your tools in parallel or not?
+Right.
+Those are the, or like rate limiting.
+I think those are like small things that are a little bit harder to reason about,
+but yeah, Dan, I would be really curious to do a survey on like what frameworks
+everyone is using and what tools like, and even languages, I doubt like 90% of
+the people here are writing Python, let alone from scratch.
+A couple of ways we get, I'll set up, I'll set up a survey.
+That'd be super interesting to see.
+Yeah.
+Cause yeah, I've had more people come to me for help on moving out of frameworks,
+but it is usually a lot of work.
+Right.
+But it isn't the only, you only do once.
+We have been getting pushed back to move to a framework instead, because that
+was standardized from the beginning.
+Yeah.
+Yeah.
+Again, it's like, it's, I think it's definitely got grass is green
+here on the other side thing.
+So I see you keep pushing.
+You should not have built it yourself.
+One specific decision I like to look at is whether or not we want custom UI.
+It is like pretty annoying to prompt.
+It's pretty hard to control the prompts.
+And so the more we care about the output format and the shape of the data and how
+we think about streaming to front ends.
+I think that's where we get like a little bit more complexity than we care about.
+Like, I just remember like wanting to change the word assistant to the word like helper.
+And this was like seven abstractions deep.
+And I was like, okay, I can't, I can't figure out how to like rename
+the name of the assistant.
+Those are some, some small challenges that kind of like escalated.
+Yeah.
+We have like a lot of abstractions just for sending data to our platform.
+So yeah.
+And those don't get fixed.
+Yeah.
+Yeah.
+Yeah.
+I mostly just use server side events.
+I know we're at time, but are there any other questions or things you
+folks wanted to follow up on?
+Sweet.
+All right.
+Please check out the like mid session survey that Dan sent out.
+It should be in your emails, you said.
+And yeah, as always, just ask any questions on the Ask Constructor channel.
+And we'll do our best to answer really quickly.
+Cool.
+All right.
+Take care.
+Thanks, Ed.

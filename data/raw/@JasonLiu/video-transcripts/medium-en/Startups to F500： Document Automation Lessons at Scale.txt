@@ -1,0 +1,959 @@
+Today, I'm pretty excited to bring in the folks at Extend to talk a little bit more
+about document automation.
+I think as most will know, if you've worked in the enterprise, manual document workflows
+still swallow up a ton of effort and causes a bunch of errors in production.
+And I think even in construction, for example, it takes a million documents, really just
+on a single building.
+And so we're processing PDFs, invoices, forms every day.
+And today I'm really excited to bring in Eli, who is the CTO of Extend, to really talk
+a little bit more about AI native document processing in the cloud.
+I think you guys are hitting 95 plus extraction accuracy for customers like Brex and other
+Fortune 500s.
+And so I think in the next 30 minutes, you'll lay out the playbook that you guys have around
+sort of mapping your current flows, building task specific evals, and then thinking about
+powerful automation, human in the loop.
+And I'm really excited to hear what you guys have to say.
+Just as a call out, if anyone has questions, we'll do them at the end.
+And Marin has shared a link in the bottom for Slido.
+And so just ask your questions there.
+We will upload up both the questions that people want to hear most, and we can go from
+there at the end of the talk.
+And so yeah, with that, Eli, the floor is yours.
+Awesome.
+Well, thanks for introducing.
+Super excited to be here.
+I've listened to a few of these and excited to contribute to the content here.
+So yeah, we're going to talk today about kind of document automation lessons at scale, like
+how to go from zero to in production with everything from startups to Fortune 500s and
+just all the different challenges that prop up.
+Even across industries, they tend to be pretty consistent at different types of like issues
+you'll run into trying to automate an end to end flow and want to like talk about those
+common failure cases and best practices.
+So just a little bit about us.
+We're a startup all in person in New York, growing and supporting some of the most cutting
+edge teams in the industry.
+Everyone from like FinTechs like Brex and Mercury to healthcare companies like Flatiron,
+everything in between.
+Work with some of the one of the largest like real estate marketplaces, a top five global
+logistics provider and one of the larger neo banks.
+So we've seen kind of it all.
+From like, you know, small use cases around like ingestion to like powering critical
+document workflows that power a given industry like logistics.
+Yeah, so for today, just going to give you a quick agenda and TLDR if you don't stay
+the whole time.
+So we're going to go an overview of like what is document processing because it's extremely
+broad and like kind of different types of use case and the specific type of use case
+we want to focus on today and then talk about some real world use cases and then tie those
+specifically to common failure cases in with like a given example and then like common
+ways to handle it and best practices to fix them.
+And then we'll kind of close out the TLDR of like key learnings.
+If you just want to grok the spark notes here.
+First and foremost, I'm sure that this is like Jason has hammered in like many times
+and a lot of these different sessions, but you really need to understand your data.
+In the case of document processing and specifically like document automation in a operational
+flow, it's not it's not just understanding the data, it's understanding the specific
+documents, but the existing manual processes around them.
+I think you'll find that a lot of companies, there's a enormous amount of tacit knowledge
+that's kind of like hidden in the company in people's heads, whether it's engineering
+operations, domain experts of some kind that makes it extremely difficult to automate if
+you don't fully understand what's actually happening today from either a data perspective
+or a process perspective.
+And I'll give a couple examples in the real world of that.
+The second key learning is that you need to invest very early in evals.
+It's essentially going to come down to how good are your evals at the specific task you're
+trying to do.
+It can be tempting with like document processing to think of things from a just like broad
+landscape benchmarking perspective.
+But in practice, when you're trying to automate like an end to end flow, the evals actually
+need to be very tailored to like your domain, how you how you think about the data, how
+you think about the process.
+And we'll talk a little bit about that in more detail.
+The third kind of like big takeaway that you should have is if you're automating like a
+document based workflow, a common failure case is shooting for like 100 percent automation
+at the start and creating unrealistic bar to hit from an accuracy perspective and even
+just like a change management perspective, going from manual to automated.
+And it's a lot better to kind of start with like piecewise automation.
+And we can talk about what that looks like.
+And then the final is like one also common mistake is trying to go for like a one to
+one replacement of an existing process rather than thinking about the process from scratch
+with automation in mind.
+And we found that generally it's it can be very difficult to just full swap out something
+that's been done over many years among many different stakeholders and just make that
+automated as opposed to really understanding as an engineer, what is the end to end process
+that's happening around this unstructured data and these documents being passed through all
+these different parties and trying to redesign the process around automation from the get
+go. So it's kind of the key learnings that we'll get into.
+In more detail here, let's start really quick overview, because again, docking processing
+is a really broad term, as I'm sure many folks must call no, no.
+They're kind of like three broad strokes of use cases with kind of like forks within them.
+But it's everything from like ingestion is one bucket back office, like processing when
+documents kind of serve as like a system of record.
+It's another bucket and then kind of like in product experiences or maybe like the more
+traditional OCR, you know, uploading an invoice, getting data back in case of ingestion.
+That's like rag context for agents, data mining and then the back office processing.
+That is the bucket I kind of want to focus on for this call, because I think it's one of
+the less lesser discussed kind of topics.
+But if you're an AI engineer, like a startup trying to reinvent a vertical or you're like
+an engineer, like a large enterprise that's trying to reinvent its operations, this is
+actually going to be one of the most critical types of use cases for you.
+And it has a lot of unintuitive challenges.
+And this is when you're trying to automate and ten workflows.
+And really, again, it's like you're processing some kind of system of record, like a contract
+or like a deed or anything that like there is really no room for error in practice in
+the end to end production flow.
+And so as a quick kind of like highlight of like what docking processing compasses at
+the limit across all these use cases, it's everything from the again, the OCR parsing,
+chunking ingestion piece of it, the context management, then the engineering of that
+context to do effective extraction, splitting, classification, etc.
+Then the data labeling and evaluation around these processes, the orchestration of a
+multi-step flow to process the document and then even human loop components and like
+real time feedback loops to improve the system over time.
+That's kind of like the end to end full stack of docking processing.
+Cool. So, yeah, biggest thing I just want to call out in the very beginning, like the
+most common common failure case here is like people try and one shot it.
+So, you know, they shoot, they're trying to automate some kind of manual operation that
+involves documents and think, OK, I know that, you know, we've got chat.
+GPT, I dumped a document in.
+It worked really well. Looks like it extracted perfectly.
+I think I can just automate this entire thing, get rid of the humans, just change the
+entire process all from this one shot in practice that will never work.
+Even even if the use case is not that complex and the accuracy on the extraction is going
+to be close to perfect, it's extraordinarily difficult to just like swap out a manual
+process for an automated process and practice.
+And it's really just like the first thing you should avoid if you're on a team that's
+exploring trying to automate a workflow in an industry in a vertical and you're talking
+about like people are saying, oh, we're going to be able to replace the entire thing,
+cut costs by X margins like that should throw up alarm bells.
+And it's just it's not actually going to happen the way you imagine it.
+And it's going to set up the team, not for success, the product team, the business
+stakeholders, etc, etc. So, yeah, just don't try and one shot it.
+I'm going to go over three use cases to talk about the other key learnings here.
+The first one that I think is pretty interesting and one of the first use cases that we
+helped the team to solve is automated SAS, like software contract ingestion.
+So the context is these folks have to like they have to ingest like their
+customers systems of record regarding their software purchases to build an accurate
+model pricing data.
+And the thing to understand here is that, like, I mean, I'm sure many people in this
+call have like purchase software, whether it's like Datadog or something else.
+And you'll have the enterprise.
+You tend to see a lot of different documents involved in that transaction.
+It's not just the invoice.
+It's like the order form prior to the invoice.
+It's the statement of work.
+It's like a DPA and MSA terms, all these different documents that kind of go into
+like the package of like SOC contracts being exchanged here.
+There are a lot of different challenges.
+You know, again, there's these different documents and then even within a document
+type, like one of the more critical ones typically is an order form.
+There's high variance within that type across different suppliers, different
+pricing methodologies.
+I mean, think about all the different ways software can price things across like
+industries, features, et cetera, and then kind of complex mapping problems around
+those types of terms.
+The goals for this team when they started working with us is was twofold.
+They were trying to automate a heavily manual process that existed today.
+But then on top of that, they wanted to process a lot of data that just could not
+be processed before because it was economically unfeasible to do it purely
+manual relative to the ROI that they would have had from a business standpoint.
+So that was kind of what they were trying to do.
+I think this customer in particular, but all that we've worked with, I think really
+crystallizes the both the failure that can happen at the start and then how much
+you can improve things from understanding your data and existing process.
+So when they signed on again, one of our earlier customers, they kind of went full
+seam ahead, rolled out very quickly, you know, wanted to just get this live as
+fast as possible and start processing all these documents and rip out their existing
+flow.
+And as you maybe can imagine that cause all kinds of issues because it's not only
+where was accuracy not high enough.
+It was just difficult to actually roll this out to the whole change
+management.
+A lot of things were breaking downstream for them.
+The quality was not what it needed to be.
+They even at one point considered just throwing, abandoning the entire thing.
+I think briefly.
+But what we, you know, what they ended up kind of refocusing on and working with us
+and our platform and tooling to do was just kind of like take a step back and
+then really understand all the documents that are coming in here.
+And they did this in a very actually interesting way that I think people on
+this call could learn from.
+So it was sort of like four key things that they did.
+One was they just went to actually a human loop flows to take the existing
+document flow that was using the AI driven document automation, but still
+routed everything to a human, regardless of whether they thought it was accurate
+or not, just so they could really robustly collect like production data
+separate from the evals that they'd already created.
+Two is they looped in domain experts, not on the engineering team that were in the
+company that had actually been previously doing this manually and had them get
+involved in tailoring the classifications and schema design.
+So that better map to like the jargon.
+And again, like the task and knowledge of the industry that the engineers who
+initially set this up did not have.
+And then third, the most important, which I think is the most interesting thing
+that probably everyone could explore in some way for a given use case, you're
+looking to for document automation is they created a series of extractors for
+these documents that were just trying to characterize normalized attributes.
+Like who is the supplier?
+What kind of layout does this have?
+What kind of pricing terminologies has just like sort of open-ended like, you
+know, enum based characterizations of the document, again, not trying to
+extract data to action on it.
+It's really just create a huge set of character, like again, like categories
+that they can map these documents into and then cluster them.
+And they ran this whole workflow on, I think around 200,000 or so, maybe
+150,000 documents, uh, close to like a million pages in like one bulk ingest.
+So they could have a very accurate representation of all their historical
+data and then from there be able to assess like the comm again, cluster that
+data and map it back to like the known label data that they have too, and
+figure out, all right, what, uh, what suppliers are actually a problem here?
+What kind of pricing terms are we not extracting correctly?
+What blind spots do we have in our existing flow around the
+document classifications?
+Like, are we just getting documents that we didn't even really know we were
+getting from like a general understanding of their own flow?
+Uh, and they did this and really invested in it over the course of quite
+some time and then came back and fully redesigned their existing document
+workflows with all this new knowledge and then reinvested in much more
+tailored extractors and evals.
+And now they are running a fully autonomously on this ingestion of,
+um, software contract data.
+And it's, it's awesome.
+Um, and I think it was this, this was the type of thing that I don't think
+everyone would think to do, but they had the idea to do it.
+And I would strongly recommend it to any team that's like trying to automate
+a very messy document ingestion flow.
+Take some kind of initial first pass that is entirely focused on
+understanding the data, not actually trying to get the data out, if that
+makes sense.
+Um, and then they ended up with like this very multi-step classification
+process in the document workflow that was trying to classify these different
+things that they knew would correspond to different issues that they could route
+more deterministically to, um, like, okay, if it's this supplier, we are
+going to extract, you know, the line items in this specific way versus that
+supplier, because we know that we can get that to an extremely high clip of
+accuracy when we tailor it that way.
+Um, cool.
+So yeah, that was one very big key learning again, understand your data,
+understand your existing process, get creative in how you try and figure that
+out.
+Uh, sir, second use case here.
+Um, this is automating document workflows and like home health.
+So this is a vertical AI team that, that we work with, um, that uses our
+platform to build everything from like, you know, rag ingestion flows and then
+to automating like complex multi-step, like healthcare documentation workflows,
+um, for their customers, which are various kinds of, um, healthcare providers.
+The goal here was automated EHR entry of like referral orders and kind of
+the associated data.
+Um, the challenges with this use case are that referral order packages come
+in these like a hundred plus oftentimes like multi hundred page scanned PDFs that
+can have many different referrals in one document, kind of like this, like
+history of a patient mixed in with doctor's notes, provider notes, all kinds
+of like messy data that's all lumped together and like one referral package.
+Um, and then even across that there's like high variants within the documents.
+Oh, whoops.
+I think I copied that from the wrong slide, but, um, there's high variants
+within the orders themselves, like across different healthcare providers,
+insurance providers, home health, like services.
+It just, it gets extremely complex.
+Not only from the fact that there's a bunch of different documents lumped
+together, but then within each category type of the sub documents in the package.
+Um, so in order to solve this in general, they were already going to use our,
+our splitting capabilities and extraction center, but the, the like first pass
+itself was not really enough.
+And what they, when they first signed on, they're like super happy.
+They got set up.
+They tried to go live again, common common failure case.
+Let's go live immediately.
+We're going to extract all the data.
+We're going to run through every document.
+We're not going to have humans evolve in this process.
+We're going to then just like automate the entire thing for our customers.
+Of course that did not go well out of the gate.
+Um, there were all kinds of issues they ran into.
+There's a lot of unknown unknowns with any different document automation process.
+Again, like in this, in an existing company, it's typically task and
+knowledge, task and knowledge within the organization.
+When you're like a vertical AI team working with your customers, it's just
+like knowledge that is not documented anywhere, like you don't even fully have
+an understanding of the unknown unknowns in this case, in this case.
+So yeah, one of the interesting things that they did here in order to invest
+in evals is they actually brought the, their AI engineers of this team worked
+with in-house nurses and medical technicians, like medical, um, I've
+heard the exact term, um, that's like someone that works with a doctor.
+Uh, let's call it a medical technician.
+Uh, and in order to build very, very, very robust, fine grained, comprehensive
+eval sets across a huge variety of different example documents, and then
+optimize again with actually with the nurses optimizing the schemas and really
+like the kind of extraction rules where they could kind of encode like their
+domain expertise around how to interpret certain kind of like doctor jargon and
+then map that back into, uh, rules for the schema extraction in order to properly
+extract the data so that they could again, like map it into their internal
+system and then action on it for their customers.
+It was actually really cool to see.
+And it showed the power of evals in looping in domain experts in order to
+create this sort of like flywheel effect.
+And one of the big benefits here is that not only did this allow them to kind of
+take a step back and like roll out with confidence and like a more controlled way.
+They also have all this like proprietary eval data that is like their competitive
+advantage in their industry.
+So that as new models come out, as we release new versions of our extractors
+and our splitters, they can very quickly and confidently like, you know, run those,
+do a regression test, make sure it's only strictly improvement, and then roll out
+and kind of get that like fast iteration loop.
+Um, and then on top of that, what they did is they still like take some, like, I
+don't know exactly how, um, they determine what percentage of documents they're
+going to human review, but they still do a slice just to still understand the like
+real world production data as it's changing.
+Cause that's like a very important thing for everyone to keep in mind.
+Like whenever you're automating some kind of workflow or some kind of ingestion
+process, like the data will change over time, um, in so many different ways.
+In their case, it's if they start working with new providers.
+Um, and so they want to always keep that like fresh loop of like, you know,
+production data to eval.
+Um, yeah.
+And even like things that you might not think about, like actually creating
+evaluations, that's for the splitter itself, not just even the extractors.
+Because again, like if you're doing a multi-step pipeline and even if you
+get extraction in like a contained way to like close to a hundred percent accuracy,
+if the initial step of splitting the document is wrong, the entire pipeline
+has broken down.
+And so you really need to invest at evals at every step of a flow when you're
+trying to automate an end to end document process.
+Um, okay.
+Like third and final use case, um, that we'll go into the next key learning.
+And this is automated claims reconciliation for like dental billing.
+Um, our image here is actually a fun one.
+We created all these like document, uh, document themed cookies.
+And one of our favorite use cases of these explanation of benefits documents
+on this team that we work with.
+Um, and so here's an example of one of those cookies.
+Um, but yeah, so the context on this one is it's a vertical AI startup
+automating back offices for dental billing.
+Um, their goals were to safely automate as many UOBs, um, like explanation
+benefits documents as possible to scale their service, you know, providing
+without error, because again, they, they kind of like run this like back office
+dental billing for their customers.
+And in fact, even like, um, kind of roll up a few, um, like small business
+dental billing providers and the challenges for them is that again, kind
+of similar to any sort of healthcare insurance use case, they had these
+hundred plus page explanation benefits documents, uh, with complex, very
+complex tables and chunking requirements because of how different claims can
+stretch across like bait page boundaries.
+There's not as much logical section chunking that actually separates things
+as purely semantic, like of like these notes correspond to this claim and these,
+um, um, procedures, et cetera.
+And so it's, yeah, again, there's not much in the, like PDF structure itself
+to be able to chunk on, um, just generally.
+And so again, that creates a lot of complexity that they had to deal with,
+um, and why they were kind of using our tooling to manage that, that chunking
+and extraction, but again, it ended up being a little more complex and process
+than just figuring out the chunking.
+Cause they realized over time that they actually had to break this out into
+a very multi-step process where they could just segment the problem.
+Like, you know, trim the amount of things that have to be solved at one point in
+time by one, like module extractor classifier, et cetera, and then also kind
+of control the inputs where, um, if they can like know that certain providers
+have certain kinds of edge cases and other providers have other kinds of edge
+cases, they can create like, uh, you know, configuration workflows for each of those
+providers that they most often work with and they have like a long tail catch
+tool and a key like, um, thing that they also did in order to like focus on
+what's called like maybe true automation rate where they're not trying to optimize
+to just getting to 98% plus accuracy on like some arbitrary measure of like
+extracted data from one document.
+Uh, they want to go to how high of an accuracy can we get where the end to end
+pipeline works a hundred percent and the times where it's not working, where it's
+inaccurate, we catch those a hundred percent of the time.
+So what that means is like, let's say we get, have 98% accuracy, but we don't
+really know the 2% that are not going to work.
+That's actually in generally, in most cases for like these critical systems of
+records, like ingestion use cases, that's strictly worse than if you can get to
+like 85% true automation rate where the 15% of the time that's not going to, you
+know, properly handle the document.
+You, you can catch that declaratively and then loop that to like some kind of
+manual human oriented process.
+And so they, they again, thought through this pretty early on and took this
+approach where they use all these kinds of data validations and guardrails in
+their system that kind of wrapped the document processing so that they could
+very declaratively know, okay, this one that went through, that was correct.
+And we can just now action on that.
+This one for X, Y, and Z factor, we are not confident that it actually was, you
+know, the whole pipeline worked properly.
+We're now going to send this to one of our, um, manual operations teams to handle
+this.
+And again, that's the data validations.
+Some of that actually is LLM driven checks that they built, um, and measured
+to ensure that like this works.
+We have a good, true positive, um, and true negative rate and, uh, measure that
+human loop system over time to constantly make sure that there's not like a drift
+in the success rate.
+And then, you know, um, the last thing is like, they also, in order to make this
+all work well, try to really design the process from scratch around this
+automation.
+And, you know, there's some benefits they had here where, because they actually
+like in-house, like a billing team, they could kind of control some of the
+variables so that it could be automated, um, in a better way, which is sometimes
+challenging if you're building more of like a SaaS product where you do not have
+control over how the customers are actually going to do things, do things.
+But if you can in some ways control the process, design the end to end flow
+around being able to actually validate it.
+That's like the most important thing because you can get accuracy, maybe as
+high as you need it to, but if you can declaratively validate, you can kind of
+roll out anything into production in some form.
+And that's like a really key thing when you're dealing with these, again, like
+systems of records, like exchanges, uh, where the document is very critical data
+that's being exchanged between two parties where there's zero room for error.
+Um, so yeah, that's kind of like the other key learning there.
+Now, yeah, kind of, um, taking it home summary here.
+Understand your data and existing manual process that is like above all, the most
+important thing by far for any trial, any kind of like AI automation that you're
+doing around documents, really just AI automation in general, you can't, you
+can't automate something you don't understand.
+Um, and then two is invest early in like very tailored evals to your use case.
+Um, lean away from kind of like broad strokes, you know, benchmarks, like it's
+great if like Gemini flash is better than like GPTX at like one different thing.
+It doesn't necessarily matter in practice.
+Like it might not.
+And you really need tailored evals to your domain and your data.
+Um, yeah, break things into multiple steps through a pipeline from parsing
+classification, splitting multiple, you know, potential rounds of that.
+Um, and then extraction semantic chunking, just like think of it as like a
+pipeline to process a document in the context of a workflow, uh, four is don't
+shoot for a hundred percent automation at the start and then five is rethink
+your process as much as possible.
+When, and when you can around automation, as opposed to just trying to hot swap
+in this like surgical transplant, like way from zero automation to full automation.
+Yeah.
+Thank you.
+Uh, we'll go over some of the questions, um, in the, in the side of first, but
+I'm actually curious, like, how do you think about, you mentioned a lot of
+like change management, like how do you communicate or like do expectation
+setting when you work with these customers and how do you actually think
+about this kind of change management?
+Yeah.
+I mean, I think that that is something that we've gotten better at over time
+because so it depends on the, it somewhat depends on the circumstance.
+If we're working with a team that's more of like a vertical AI team where they're
+actually the ones like automating a specific vertical industry, then it's
+more kind of like educating them about the PR the problems and pitfalls that
+they will run into by trying to do this docu automation so that they can from
+the get go, think about how they're going to build this into their product
+experience for their customers or how they're going to try and change this
+flow, because going back to that one, that, that second use case that we talked about.
+Um, you know, I think that team, we did not do a good job of like explaining to
+them the challenges of change manager.
+They were going to run into by trying to automate this like from scratch.
+And if we had done that better upfront, which I think we do more with like our
+current customers, then they will be more set up for success and that kind of like
+close the loop in other cases.
+We're working with more, just like a vertical business, like maybe like an
+enterprise and logistics, it's actually like an extremely critical part of like
+almost like the sales process and discovery process where we understand
+like, what are you currently doing today?
+Walk us through it end to end so we can identify, you know, there's a lot of like
+common patterns we can look out for.
+And if you get them to kind of talk through it, you can see like, Oh, it's
+already clear that they're making the mistake of they're going to be able to go
+from like, you know, many, many humans to zero humans, the moment they roll out
+extend. And that is like an immediate thing where we try and throw up alarm
+bells and explain to them that, Hey, not only will that not work B it's going to
+be very difficult for you to actually convince your internal stakeholders that
+that's like, okay.
+So you start like we lead almost with trying to help them build a human loop
+system from scratch so that they then again can collect the data, but then also
+like most companies are much more willing to roll something out and deal with the
+change management.
+If you focus on kind of augmentation at start and then turn augmentation into
+augment automation.
+And we even have this kind of catchphrase that we, we do in our sales process,
+it's like automate when possible augment.
+Otherwise it's kind of like the main way to think about any sort of workflow
+automation, particularly when there's like unstructured data in systems of record
+and that it's so critical.
+Yeah.
+And I guess to follow up on that, like as you start onboarding these customers,
+it sounds like a bit of that process is sort of investing in the ontology that
+they want to build out.
+How do you suggest these companies think about building this thing?
+You know, I think there's been many times where companies will talk to me and
+they want to do a knowledge graph.
+They really haven't thought about where it looks like.
+And then sort of you waste a lot of time, you burn a lot of cycles,
+figuring out what that is.
+You mentioned this technique, but I don't think I had a good understanding of
+what that actually.
+I mentioned this one.
+The clustering on the fields and then.
+Oh yeah.
+Well, so I mean, so that's a bit for a knowledge graph.
+I'm not totally sure what you do there, but in the case of like, let's say you're
+trying to do data extraction, what that team did, which I think is a very effective
+strategy that most people lean into is they did their whole process where they
+rolled out with extraction first and realized there were all kinds of issues.
+And then they, as like humans, looked through a lot of the data and tried to like,
+you know, use their own kind of like mental machine learning models to understand
+what are the common patterns of issues here?
+Like what types of documents are causing problems?
+It seems like certain types of suppliers are causing issues, certain types of
+pricing structure causing issue, certain types of layouts are causing issue, et
+cetera, et cetera.
+They created these like characterizations of the document that are not like the
+actual data extraction itself.
+It's more like a, like a class of a specific classification of the document.
+They turned that into like a schema of enums and they ran a large bulletin
+and they ran a large bulk ingest of documents just to map it into these categories
+and then cluster them together to see of these different categories, which one,
+which ones have more accuracy issues than others.
+So it's a pretty kind of like involved process and they're a fairly technical
+team, but if you can do that, if you can kind of like group and categorize and
+triage the specific issues, then you have a way better understanding of like what
+the data actually look like, looks like.
+Then if you work with a domain expert, you can kind of work backwards to
+effective pipelining of like, here are the multiple steps of classification
+we're going to do.
+And at each point, this is the extraction we're going to try and do from that.
+You kind of turn it into like a software process as opposed to a like, you know,
+blob in blob out AI process.
+Got it.
+Got it.
+Just looking at some of these questions, one of them is mostly around sort of
+techniques.
+The question is, is semantic chunking not very expensive to run?
+Any options on how to do it cheaply or what are the alternatives one should
+think about?
+Yeah, I mean, so semantic chunking can be expensive and slow, especially for these
+very large documents.
+If cost is a factor, I mean, we often like in our product, we have like a concept of
+like, you know, cheap, fast models versus performance, higher accuracy models.
+And in the case of chunking, it's actually not all that challenging of a task that
+smaller models can do effectively.
+Model distillation is actually a really great thing to do here for something like
+chunking.
+So if you take like your best model, you run the chunking on a bunch of samples
+and you clean out the ones that did not work and then you just distill that into
+a smaller model, that is a good way to like make this more affordable.
+It doesn't always solve the speed problem because there are a lot of reasons, even
+if you're using an extremely fast model to do effective semantic chunking, you kind
+of have to do multiple passes through a document to actually understand how to
+chunk it.
+Right.
+And that can be time consuming.
+It's not really something you can do for like that third type of use case going way
+back to the beginning of slides where, you know, let's say it's a user uploading a
+document.
+Semantic chunking is probably going to be, at least right now, too slow, no matter
+what approach you take.
+But if it's like, again, if it's a back office flow, I would encourage everyone on
+this call to not really like think about latency as a problem.
+In fact, you should think about designing a process where you can effectively remove
+latent latency as being consideration because it's really just a, it's kind of
+like a counterproductive problem when you're trying to automate something that's
+back office.
+And it's better to, again, like think from first principles.
+How can we design this process around the fact that there's going to be this
+async processing and then we can control the variables and then just focus on
+performance, performance, performance, because accuracy is a premium when you're
+doing a systems of record rather than latency.
+But that being said, like, I mean, cost definitely can be a factor here, but
+that's where I would really encourage you to do model distillation.
+Yeah, I think for a lot of different talks, it really has come down to this idea
+that it really isn't just about whether something is fast or whether something is
+good.
+We really understand, like, what is your performance budget?
+Right.
+How much can you spend on the tokens versus the time and versus, you know,
+inference and whatnot?
+And, you know, it's always going to be like multiple degrees of freedom that we
+explore.
+Yeah.
+As you know, it's not the case like rag is dead and long context is the winner.
+Well, you know, things might take more money.
+Is the recall worth the additional cost, worth the maintenance cost of doing your
+own inference?
+Those are the big things to think about.
+Or like a compounder we'll see is people will use like a light, fast classifier
+to like do the initial classification steps so they don't run semantic chunking
+or don't run splitting on every document because it's expensive and slow.
+And that's a very common pattern.
+So like classification, much easier task in most cases, do a bunch of pass through
+using faster, cheaper models that you've kind of like designed this process around
+so that you don't have to like jam.
+You don't think of it as like, okay, here's the total number of end documents that
+we're going to process.
+Now let me multiply that by the cost of doing semantic chunking and then conclusion
+too expensive.
+Instead, think through like, well, what can we change the process?
+Can we do a pre-filtering step that's extremely cheap and then actually cut out
+so that we only chunk the things where that matters?
+That's like another very common pattern.
+Yeah, I think segmentation and specialization will definitely be useful for
+for all time, I think.
+Yeah.
+I think this question is mostly around like, how do you guys think about yourselves
+relative to, you know, a business like Reducto?
+Where I think most of what I've seen them do is around the PDF to like mark down
+data output.
+But yeah, I would love to hear a little bit more about how you guys think about your
+approaches and how they differ.
+Yeah, I mean, I think Reducto is a great team.
+There's definitely some overlap at the end of the day, like doc and processing is a
+very broad space.
+I think the main kind of difference, at least what type tends to lead to us having
+fairly different customers than in some cases is that we, I think while they focus
+very heavily on like rag as a use case, so they tend to very much optimize their
+system and their API around that problem.
+We view more of the parsing as and chunking and all the things that we do to make this
+work well as kind of like a means to an end in order to do very effective processing,
+if that makes sense.
+And so in practice, while again, there can be a lot of overlap there because it's all
+still document processing.
+We've really designed our product and our expertise and our capabilities around these
+very complex multi-step processing of documents.
+And so we tend to more work with companies that are doing these either like they're
+either AI teams building these workflows around back office ingestion or they're
+large enterprises doing that kind of processing or actually they're building like user
+upload flows with processing invoices, order forms, et cetera.
+It tends to our product tends to be like a bit of a better fit there, as opposed to, I
+think, in Reducto because they focus so heavily on their parse API.
+That's something that they do very well, even though I think in practice, we actually
+do very similar things on the parsing.
+We both use OCR and VLM to create a representation of the document.
+We both do different kinds of chunking strategies and layout segmentation and like
+section based chunking or semantic chunking, et cetera, to do all this focus a lot on
+like high quality tables and figure detection.
+So the problems end up being very similar, but then like where you throw those solutions
+and invest ends up being a bit different, if that makes sense.
+Yeah, it's a lot about like what does success look like in these cases?
+For me, when I use something like DOS and Reducto, I just want the data.
+Yes, exactly.
+The invoices process is actually put back into the system.
+You know, we believe that this result is fully accurate.
+Yeah.
+Or, and I think that's like the main difference, right?
+So if like, if you're creating a, if you're doing a document conversion process, there
+is actually in some ways a more objective measure of accuracy, right?
+Because there's not, there's not two different ways in practice, like at the, like kind of
+theoretical limit of accuracy to create a markdown representation of a document.
+There are kind of like more objective, better and worse ways, where if you're dealing with
+a system of record and you're a business and you process that system of record in a certain
+way, then the accuracy is somewhat subjective to your process, right?
+And so it's, it's again, the product needs to be heavily oriented around trying to evaluate
+and measure and improve accuracy on my unique like schema and pipeline.
+And I think that kind of leads to the difference there.
+I guess to sort of think a little bit bigger on like, what are the things people are missing
+these days?
+You know, we've asked you a couple of questions, like, what is a question you feel like folks
+are not thinking about these days when it comes to these like documentation pipelines?
+Like, is there going to be, is it mostly around like, how do we train domain experts for like
+different UIs?
+Yeah, I'm curious if you're a little bit more about, you know, what are you asking?
+I think it's, I think it's two things.
+I think that at least of all the teams we've talked to, it's a lot of them, actually it's
+three things.
+With the domain expert one, I don't think it's that every team thinks about trying to
+use like the domain expert in their industry, whether it's like the nurse, even if they're
+like an AI team, they might not think, oh, we could actually put our nurses as part of
+understanding this process and understanding the data and understanding the prompting.
+I've only seen a subset of teams actually take that approach.
+And when they do, it tends to be an extreme competitive advantage.
+And so I think if you're like, what question are you not asking?
+It's like, if you're an engineer and you're tasked with this kind of problem, like, you
+know, your PM gave it to you and you're like, we got, you know, your top down CEO's like,
+we got to start automating these documents and you don't feel like you actually understand
+this process.
+Someone on your team has to write if you're doing this currently.
+And if you're in industry, someone understands this.
+And so from the get go, figuring out how to loop in those people and make them a part
+of it is actually very important.
+And you should ask, like, do do I really know what's happening here?
+The second piece somewhat related to it, I think a common pattern that I see is that
+especially at like larger late stage tech companies that are spinning up these AI teams,
+there is a bit of a inclination that the AI team wants to protect every product team
+from thinking about these problems is one approach that we've seen where they sort of
+centralize it and say anything that relates to like AI or docking processing, that's going
+to like roll through for us.
+What the problem there is, again, going back kind of relates to the first problem is that in a
+lot of cases, it's actually probably those like product and operations teams that understand
+the process a lot better.
+And so instead, it's like, how can they leverage you, the AI team, to help them build this,
+whether it's using tooling or internal or whatever it is, so that they are then empowered
+to customize the process and tailor it to their use case, as opposed to making yourself,
+the AI team, the blocker to getting anything done or changing anything here.
+Because not only is that not effective from an organizational structure standpoint, it's
+not actually going to lead to like the best outcomes.
+And then the third piece is the...
+Sorry, what was I going to say?
+I think that...
+There was one other one here.
+Yeah, I think...
+It's not about being the main experts.
+Yeah.
+Oh, it's the...
+Oh yeah, trying to reorient the process.
+So again, I think that a lot of folks, like what you're not asking, if you're tasked with
+processing these documents, it is a valid question to ask, like, should we be automating
+this? Because if you're operating in like an industry, like it's true that you probably
+have to process these documents.
+But if the specific flow today is maybe unnecessarily oriented around the fact that like,
+this is just how we've been doing this operational process to get from the beginning.
+And so now it's like, OK, hey, engineering team, automate this operational process.
+I do think you should take a step back as engineers, maybe put your AI hat off for a
+second and just think about operationally.
+Is this the right way for us to structure our business such that this bottleneck even
+happens? Is there a way that we can maybe push up the bottleneck because it actually
+is going to allow us to clean the data a bit more and filter the problem?
+Or is there a way to push it down so that there's like multiple levels of filtration
+before it's actually getting to the point where we need to run, you know, generative
+AI to like extract the data?
+Like you really kind of want to take a step back and actually think about the end to end
+process before you try and just like blindly automate.
+And I think that that's actually at a meta level relates to like, let's say you're a
+vertical team that's trying to reinvent the industry, like you're trying to build a new
+startup and you want to change, automate all these workflows.
+It's worth thinking through like, OK, yeah, maybe one option is we go to X, Y and Z
+business. We tell them we're going to automate your workflow for blank.
+We're going to automate your workflow for blank.
+Maybe it's like actually you go to that team and say like you change their approach for
+them. That's part of the service that you're actually providing and changing how they
+think about. And you have that power because you're going to provide a bit of a software
+and service model. So, yeah, just think of rethink the process.
+Makes a lot of sense. I think a lot of these other questions are mostly around OCR in
+general. But how have you guys thought about leveraging things like LLMs and traditional
+OCR techniques? You know, I think one of the questions around like complex table
+hierarchies, for example.
+I mean, so we use both OCR and VLMs in order to parse a document.
+So there's a lot of things that there's a lot of limitations that OCR has.
+There's also limitations that VLMs have.
+I think it can be tempting to think that you can just like throw a document into Gemini
+Flash and just convert it to markdown representation.
+But there's all kinds of issues that happen at the long tail of edge cases.
+And so instead, we think of it kind of like a multi-step process where there's like a
+layout step and you can run OCR on different sections, get the text and you can convert
+like use VLMs for handling figures, use VLMs to repair certain types of tables.
+It's at the end of the day, like in this where there's a lot of overlap with any kind
+of like rag product is like you're trying to create the breast representation of a
+document. And pure OCR is typically not enough.
+Pure VLMs are at least right now, like not great for it.
+But we've actually been over time relying more and more on like multimodal models to
+actually process the document.
+But yeah, it's like you kind of need to do both.
+And it can be pretty complex to manage on yourself.
+And that is one of the reasons why we see a lot of teams end up actually using our
+product is that it abstracts all this away from them.
+So they don't have to like think about it.
+They just think, OK, here's parsing, here's extraction, here's splitting, here's
+pipelining, et cetera. Here's evals.
+This is the actual job to be done.
+I don't want to think about like OCR or Flash, et cetera.
+Makes sense with that.
+I guess let's try to do some more live questions.
+If you see in the in the bottom folder, not bottom folder, the bottom bar on Zoom, you
+try to raise your hand. I know, Sergio, you had a question you wanted to ask.
+Yes, thank you. In part, this has been asked for so when you say don't shoot for
+under one hundred percent, then you end up omission to start.
+This makes me thinking that if we think that the best way could be taking product
+base point of view, which is what part asking the product side of asking the
+customers what part of the automation could be your real pain point or something
+that easier be a low hanging fruit or whatever and bringing the domain expert as
+you like as the formal stakeholder deciding what parts of the automation is
+most necessary now, thinking of starting that a long time so that we can promise
+something sooner and then we go to something else later on.
+Also, because down the road, we learn together that some parts of the process,
+as you say, may change, may be no longer needed for whatever reason as it's
+it's outdated or because it's going to be changing something like that.
+So I think thinking in terms of product here could be paramount.
+Yeah, no, I think I think you're exactly right.
+So like something we see very often is especially a larger company.
+They'll come to us and they'll be like, look, we're so excited to use you guys.
+We have like 15 use cases and we want to like handle all these.
+We've you extend as a way to centralize it.
+And the first thing we'll say is like you really should not try and use us to
+automate all 15 use cases at once.
+You should actually identify what is the most important thing for the business or
+product team right now.
+So like you do want to think about ROI because at the end of the day, all of
+this is an investment.
+Like you're going to whether you use like a provider, whether you build everything
+directly in house, no matter what you do, you are investing time as a business in
+order to do this.
+And there kind of has to be any measurable ROI.
+And on top of that, there are among all these use cases that you as a business
+might have just like you had to prioritize different features for your product.
+You do have to identify like, well, which of these automations are actually like
+realistic in the short term?
+What can allow us to get the fastest path to something rolled out so that we can
+again can deliver business value.
+But then also there's less like friction to roll this out, less change management.
+So the business as a whole, the product can get comfortable with this kind of
+automation on an easier use case.
+And then we can start to attack the other ones.
+So it is it is kind of like a product question.
+And that is why, you know, very often some of the people that we end up talking to
+during the discovery process is a PM.
+You know, it's like there there is like a management component.
+You're trying to you are fundamentally changing the products, even if it's an
+internal back office flow like that is still part of your end product in the
+market. Right.
+If you're a business doing this automation behind the scenes, if you change how you
+do that, it will change how you provide service in that market.
+So.
+The next question, I think, from Sri Rang.
+Thank you. I'm not going to put my camera on.
+I had my.
+To the to the extracted.
+So I look like an inhuman chipmunk, actually.
+Anyway, did you you mentioned that the client forums could have high degree of
+variance in each hour.
+So is that something that you kind of hinting at ontology build out in terms of
+understanding the real data at the back end that and kind of map those to that?
+That's my first question.
+I'll slip in another one to love to know about the extraction classifiers that
+you talk about.
+Thanks.
+Yeah.
+So first question, I mean, so it's in the in that case of like the, you know, the
+health care vertical AI, it's it's really like.
+They they need to sort of build out this ontology, right?
+They need to work with their customers in particular, in this case, like they're
+in-house, like nursing and technician team to understand what are like what are in
+all these documents?
+Like if you if you have some generic, the concept of like a referral order package
+in home health, what are all the potential documents that could be there?
+Even ones we don't need just so we can have like an understanding of representation
+of like what is the possible document set?
+Like, what are you as a nurse when you get one of these packages and you have to
+like transfer this system of record from like one doctor for this patient to your
+incoming system?
+How are you actually like thinking about it?
+What are you implicitly doing that you don't actually even have a written down?
+And that's like the the ontology piece, though, is more like what are, you know,
+what are the specific terminologies, like how someone might actually refer to a
+like a physician?
+Because also in a lot of these referrals, you can have multiple physicians being
+mentioned at different times.
+But there is like a primary physician, like that is like a specific thing that they
+need to figure out.
+But it might not be referred to as primary physician.
+So that is kind of like the ontology piece that they have to do.
+And again, part of why a lot of teams actually work with us is that we free up
+the time for them to focus on that.
+That's like very specific to their domain, because all everything else is handled
+for them with the tooling and the kind of the ways they can stitch this all
+together so that they can really understand their data.
+And then once you understand that ontology and the data, it's actually relatively
+easy to kind of figure out how to automate there.
+I think you also mentioned the classification in Copali.
+So we actually we are very soon rolling out an update to our classifier that
+utilizes Copali as part of a retrieval step, similar for like what we one of the
+things that our customers often want is they want to do kind of like schema
+mapping automatically.
+So again, they do it somewhat manually right now, where they'll create all these
+different extractors in our product.
+And then they will maybe do a first step where they extract like provider and all
+these different things.
+And then they will map like provider, then extract this, this, this, this.
+What they really want to be able to do is say like for this exact kind of document,
+I just wanted to do this for this exact kind of document.
+I want to do that.
+And as part of the retrieval building that Copali is actually a component of that
+because it's extremely good at this sort of like it of all the things it can do
+really, really well.
+It is this like the very solid differences between documents, like a BOL
+versus proof of lading, which is like a BOL with like a signature.
+It's like this kind of difference is easy to like assess, and then you can build
+much more fine grain mapping.
+That makes sense.
+Do you guys by any chance, you also looked at multi-vector like a late
+interaction with Maxim?
+We have not yet.
+No, I would love to.
+I just heard a talk the other day where somebody was pumping this quite a bit
+and a whole bunch of vector databases are now getting into multiple vectors,
+late interaction, a little bit more work, but they were saying the accuracy was
+a little 10% or 15% more.
+Thank you.
+I mean, I think that goes back to this idea that we have to have our own evals.
+Right.
+It might work 10% better on the Wikipedia question answering data set.
+But yes, Elon, this gets into this almost like nearest neighbors on PDF
+layouts.
+Yeah.
+Yeah, exactly.
+And I do think that that is sometimes the danger of like all the benchmarking is
+that it can be very, it can lead to people potentially making snap decisions to try
+and upgrade something when in practice might actually be better for what they're
+trying to do.
+And I mean, like one, I think a perfect example of this, Jason, we were talking
+about this like the other day is like going back to sort of the retrieval stuff.
+Like the fact that most of the coding agents ended up just using grep and everyone
+was trying to optimize the like semantic retrieval as much as they could keep
+climbing the, you know, climbing the Hill of like benchmarking results.
+And then just turned out actually for what we're really trying to do, we
+eval this end to end and figure out like what leads to the best outcome.
+It's actually just giving the agent access to grab.
+So I do.
+Yeah.
+That is, that really gets at the like, you have to think about it from the end,
+both the eval, your specific step and the end to end all encompassing eval.
+Like, did we get the outcome here on our specific use case and then work
+backwards from there?
+Yeah.
+And I also call out, you know, maybe even a year ago, my belief was that if you
+could figure out the success of every component, then like you kind of multiply
+them together and you kind of know the end to end system, like now with this
+agent work, that isn't really the case.
+I have it right.
+Like, um, a couple of weeks ago, Colin from augments had this talk and basically
+said, you know, like we improved our like embedding search by N percent.
+The end to end performance didn't change because the agent just tried two more
+times.
+Right.
+So now like the metric isn't even like, did you get the answer correctly?
+It's like, how many tries did it take for it to get done correctly?
+And also does that matter?
+Right.
+In a zero latency, like, no latency concern setting, that's actually fine.
+You can actually build a product.
+Yeah.
+Those are the kinds of things that now have really surprised me and changed how
+I think about building out some of these agents.
+Yeah, definitely.
+Um, I mean, that also gets another thing too, is like there are, when you have
+these agent flows, you introduce potential, like a lot of indeterminism
+that's hard to sometimes reason about.
+And I think it can be tempting to use like, uh, AI or like an LLM for like
+every step of every flow, but there are a lot of cases, especially in document
+processing, where if you can solve it with code, like, let's say you, you want
+to do some kind of like extraction where if you actually just extract the component
+parts and then use like, you know, math to get the inferred result, as opposed
+to asking the model to infer the outcome as part of the extraction, then you
+should, you should do the code-based approach, right?
+Because then you can actually guarantee it's going to behave how you want.
+Um, and yeah, so like making a trade-off of indeterminism versus
+determinism is pretty important.
+Beautiful.
+I think that's basically a time.
+Um, to everyone else who's still here, we will send some like study notes out as
+well as any resources that Eli wants to share with you this slide, maybe a link to
+extend.
+But before we go, yeah, is there any like final message or, you know, how can we find
+you if you want to reach out?
+Well, you can, you can find me on Twitter at twitter.com, mebadjoe with an underscore,
+because for some reason it was taken without an underscore, also on LinkedIn as
+Eli Baggio.
+Feel free to message me anytime or email me at Eli at extend.app.
+Um, you can find our product at extend.ai.
+Um, would love to keep chatting this.
+I mean, we, this is all we do every single day is kind of live and read docking
+processing.
+We sort of refer us, refer to ourselves as your docking processing team, um, and
+just love just thinking through the problems, really interesting stuff.
+One of the most interesting things about working on docking processing is just how
+much you learn about every industry.
+Um, it's like very, very fun.
+Um, so yeah, always excited to chat.
+Yeah.
+Now I know who to ask for when I have issues with the insurance claims.
+I'll just send you instead.
+Yeah.
+Awesome.
+Eli, I'm about to have everyone.
+Thank you so much for sharing your knowledge.

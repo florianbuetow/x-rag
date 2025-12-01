@@ -1,0 +1,774 @@
+So this is really special to me.
+I think I've been working with Luke and Roger for a little bit, just sort of like, you know,
+sitting in the same office, learning more about the problems we're working on.
+And in particular, I think a lot of the rag or a lot of the retrieval that most people
+work on really is around just PDFs and text, which is also very important.
+But some of the stuff that Roger is going to share is pretty exciting.
+It's around things like movement, you know, detecting faces, a lot of structure, and in
+particular a lot of structure over very multimodal data.
+Very few companies have really thought about this.
+I think Coheer is the only one that has trained like a pretty, I mean, Coheer and Voyager
+has trained a good image model, but there's really not much to be said around, you know,
+multimodal structure and all of that.
+So yeah, Rajen, take it away.
+Yeah, absolutely.
+Yeah, so let's get into a bit of background to begin with.
+So my name is Rajen.
+For the past four months, I was a research engineering intern at a sort of Pinoe lab.
+Before that, I spent about two to three years doing multimodal research, independent
+multi-machine learning research.
+And this fall, I'll be joining Amazon's AGI lab to be working on reinforcement learning
+for multimodal.
+And Luke, if he's not frozen, I'm gonna go back to the background.
+Otherwise I can just, one other bit for context, Luke is the CEO of Kinoe.
+He's been working on this for maybe the past two-ish years.
+So today is gonna be mostly about retrieval.
+It's very important to think about multimodal data, specifically how do you deal with video?
+Video is a bunch of moving frames.
+Those frames are connected to one another.
+There is audio that's happening.
+There's same text.
+There is emotion behind this audio.
+And this all happens for countless frames.
+And so if you want to do rag and you want to do effective search, you have to do really
+retrieval on finding any piece or any moment of what happens in any of these frames in
+that video.
+That is a lot of context, but we can't just treat this like a million tokens of text.
+We just treat it as unique video that can be searched in multiple, multiple different
+ways.
+So this is Kinoe.
+Kinoe is a video search and a genetic video editing platform for filmmakers.
+Video editors have the ability to index all their footage and search across it nearly
+immediately.
+It is all transcripted.
+There are highlights.
+There are people found.
+And it is all AI indexed nearly immediately.
+The idea at Kinoe is that you as a filmmaker can become infinitely faster.
+You can find any piece of footage you want.
+You can make plurals.
+You can make draft edits.
+And this becomes incredibly useful when you're dealing with quite literally hundreds of hours
+of footage.
+And you need to find that one five second moment that matters the most to you for your
+plot or for your video.
+This would be one of the best possible examples of needing video search.
+This is quite literally when there are those deals in the haystacks and there are those
+customers who quite literally have to go through seven to eight hours of footage just to find
+that five second clip that is an all or nothing for the quality of their final look.
+Whether you're making TikToks or movies or TV shows, every piece and every second matters,
+especially as attention has become so, so, so important, so valued.
+And so when I started my internship at Kinoe for the past four months, a big part was how
+do you find these second moments?
+How do you find these needles in these multimodal haystacks?
+I think the best way to communicate this fact is by talking about video.
+Video is inherently what I called earlier four dimensional data.
+There are so many different ways in which rag can just fail if you focus on one or the
+other.
+You can close in on visual details.
+Sure, we've improved our image embeddings a lot.
+But what happens when something happens in time frame one, happens in time frame four?
+How do you get these two linked together?
+When you have two different characters, how do you link them?
+When you have some action that is being done, how do you know if someone's picking something
+up or if someone's dropping something down?
+Those are two inherently and entirely different situations that have two different meanings.
+I like a lot of analogies to the idea of text.
+If you have the phrase, I am happy and I am not happy, even though there's three similar
+in very similar positions to one another, they are completely different in meaning and
+therefore should be treated differently.
+But sending it by here.
+I broke it down to three core things you need when understanding some video.
+To know what was said by someone, what was done by someone, or multiple people.
+What has happened and how the thing that happened in the past is going to influence what's going
+to happen in the next couple frames.
+That's how I've narrowed this thing down.
+There's a lot of core problems that people spent years researching in the context of
+text and now image that now are happening with video.
+We are dealing with not just pixels that are a thousand by a thousand pixels that makes
+an image.
+We're now dealing with hundreds of those frames.
+There is so much visual and textual content that we have to somehow tokenize and embed.
+We have to deal with countless different people speaking to each other.
+People with different tones, people with different emotions, different backgrounds.
+What happens when there's text on screen?
+How does that influence if something says Canada versus US in the background?
+That could have completely different things in the context of a completely different video.
+If two things happen really fast back to back and we're embedding both of those things as
+one long video, how do you differentiate between the two?
+Scale problems that happen with scale happen a lot more obviously with video because there
+is just so much more data to deal with.
+Once again, video is not just long text.
+Yeah, sure.
+We're having the context window scaling problems.
+We can do our context window every year, for example.
+That's not going to be enough when you're dealing with this type of data.
+You can't just throw it all and can't do it all.
+You're dealing with multimodal signals.
+How do you know what was said versus what was shown versus what was a moment?
+I'll get back into that part really in depth later on.
+When you have so much data, how do you make this feel instant?
+How do you make it feel as instant as a semantic search with text and rag?
+We spent a long time understanding how to optimize rag for text and sometimes for images,
+visual rag.
+This is a completely different role.
+I want to show you a bit into what Kino does and then break down how we approach these
+problems.
+For example, in Kino, you can just look up massive crowds.
+For example, this is an event called the Socraticus Symposium.
+I believe we had about 50 hours of footage from this event, potentially more.
+If you look at massive crowds, you want to see visually stunning clips of when there
+are a lot of different crowds.
+When this is happening, we're showing the top 30 results of large crowds.
+We're showing 10 highlights here of when massive crowds were happening at certain moments and
+how that was a meaningful moment.
+We also have titles here.
+This is a summarization of everything that's happened as well as a lot of different metadata
+that we also store.
+If you want to search for an individual person, you can find out, for example, this is Brian.
+He spent a long time on film trying to find the Ethernet cable across two or three different
+videos.
+How do you identify that this is the person who is on the quest to find the Ethernet cable?
+How do you index that and then search for the exact moment where he's either holding,
+mentioning Ethernet cables or something adjacent to that?
+That's inherently pretty hard problems to find exactly when this is happening.
+In Kino, you can index footage in a lot of different ways.
+We do highlight indexing.
+So, for example, this is a video montage showing various people working on different projects
+interspersed with text about artists, engineers, founders, and researchers.
+That is inherently what's happening on the video.
+We can index as highlight as it goes on.
+You can find out what the general purpose of a STEM in the video is.
+So in case of right here, it's finding Ethernet cable.
+We have long descriptions of what's happening where the driver stops the car to record cows
+in the field and the driver yells at the cows.
+As well as you can get core highlights that go into this is Chris and we know that Chris
+laughs and puts his hand on his head.
+How do you identify that this is Chris?
+Know that this is Chris and identify the action that he's doing in this one segment from 20
+seconds to 24 seconds.
+These are a lot of the different subproblems that we've taken on at Kino that all contribute
+to this massive video search and agentic video editing problem that we've really approached
+and tried to solve.
+Yeah, so I guess I'm going to like to bring it all together.
+Here are some of the core problems that I've been mentioning.
+If you cannot find a key moment, if someone wants to find when the demo was revealed,
+speech recognition is not perfect.
+There are words that are inherent to us that may not be universal.
+Embeddings are often reliable, often also require more re-ranking to fill in those gaps
+or to improve precision over recall.
+There are a lot of false positives that can happen.
+If there are the video is blurry, if you aren't entirely sure what's happening, if there's
+not a lot of training data in terms of like label training data video, we can get a lot
+of problems.
+If transcripts are not always the most accurate and someone wants to search for a very specific
+moment, if that transcript is not accurate, that search is just not showing up.
+Scale, the searches can take a long time, especially because once again, we're dealing
+with hundreds of frames, not just say we just one frame of an image.
+And also like, let's say someone wants to upload an hour long video, we've dealt with
+it a long time.
+Hour or two long videos, you can't just throw the entire thing into a VLM.
+You can't just embed the entire hour long video, you lose so much context.
+So how do you then regain that context later on?
+How do you know who she is if she is mentioned in your video?
+How do you know who this face is if this person was first introduced maybe 45 minutes previously
+in that video?
+And so that's what we had to kind of consider things as a multimodal situation, not just
+like a single way modality of different types.
+And we're not comparing one modality to another, we're thinking of this modality as four branched
+out modalities.
+We maintain these temporal features.
+We can just take a bunch of image embeddings every second across 10 seconds, mean those
+out.
+That does not work.
+I'll give you a pretty cool example that later on how that's been corporal.
+We want to preserve linearity, we want to know what was done.
+If I'm picking up these sunglasses versus putting them down, that's a completely different
+problem.
+If my intonation is more confident versus intonation is more sad, that changes the entirety
+of when I want to look up videos of people being sad.
+If they're visually not showing it, their intonation shows.
+Facial expressions, actions, we don't have really strong multimodal embeddings.
+There are a lot of them out there.
+We have some close sourcing, open source, some publicly available from large cloud providers
+that are pretty good at multimodal embeddings, but we cannot rely on them for sure.
+This is kind of like going into scaling laws, we have to wait more time for these to improve.
+At Kino, we didn't want to wait for those to improve.
+There's a lot of ways to take what we already have and get really, really, really high quality
+video search at it.
+This is where I introduce the idea of Atri.
+A lot of what was done is thinking about everything we do in our day as one long video and then
+breaking down this video into a decomposing this day into a bunch of sub-events.
+My day has broken down to morning, afternoon, and evening, and each of those are sub-events.
+In each of these, there's more sub-events and it goes on and on and on until we get
+to the most granular thing where every single word I say or every five seconds of what I
+say right now is a different event.
+By doing this idea of clustering and by doing this idea of grouping things, we maintain
+linearity.
+We also maintain different types of depths.
+We maintain the granularity when I say the word rag versus when I am doing this talk
+as a whole.
+Those are two completely different time lengths, requires two completely different indexing.
+I don't really want to index an hour-long video and also a five-second video, but I
+do want to maintain the general context of what's happening at different types of different
+lengths and different variable lengths.
+This example of Atri is what guided us throughout our entire approach into how do you search
+across any moment that someone may need?
+The answer is you have to index in multiple different ways.
+index text, treat visual cues, and treat moments as three distinct things.
+When you want to examine text, what people say is incredibly important to the context.
+Extract what they say, use a very good model, use whisper v3, use whatever you want, and
+store from any start time to any end time what they've done.
+For any visual cues, use multimodal embeddings that do not have audio at all accounted for,
+treat those visual cues as possible.
+Treat it like three subproblems where this subproblem is now, okay, how do you examine
+this footage?
+If there's a bluebird coming across, that's going to be hit by this visual cue, by this
+visual index.
+And then there's going to be curated highlights.
+Highlights are going to be summaries of what happens across your video.
+It's going to be a VLM answering pretty much whatever is happening in any key moment.
+And we want to use this as a text-based representation of relatively complex videos that are still
+multimodal.
+And the reason that we need that is when you want to answer a question about a video, the
+best way to do it right now is to ask a VLM.
+It's important that we try both asking that VLM as well as also getting these core multimodal
+embedding models to both do the trick and then aggregate those results.
+In the context of our tree, we want to treat these visual cues and these transfer cues
+as leaf node.
+These are the most granular you're ever going to get.
+This is going to be summaries of, this is going to be what someone says between five
+seconds and ten seconds, as well as what embedding represents, what happened between
+five seconds and 20 seconds.
+Then treat these highlights, treat these core moments that are VLM indexed as parent nodes.
+Then treat those parent nodes as one large root node that is going to be your description
+of what happens in your video and which video represents what thing.
+Then it comes up to the user to define how much depth they want and what they're looking for.
+Going to text indexing.
+The first step of indexing is when you want to just take your piece of text and find when
+someone says something.
+This is the most useful when myself, for example, as a filmmaker, knows what was said.
+I just have no clue in these thousands of video files where this example is.
+For example, if I want to search up the word, when I said the word compute, I know that
+in this video at 34 seconds, I use the word compute.
+This is going to be, this uses really, really fast text based search, keywords, and there's
+also the option to embed these transcripts.
+Whether you choose to embed these or not is a decision that depends on how well your user
+knows their footage.
+If they are very, very familiar, it is very likely that they'll know what phrases were
+said, what words were said.
+Then there's the cases where you're dealing with an inherent black box.
+This is just a large chunk, large store of footage.
+You have no clue what's happening in it.
+I want to find when someone mentions something related to compute.
+I have no clue whether they mentioned the word compute.
+That is a job for these dents and embeddings.
+This is a highly dependent problem, and this goes into the whole idea of know your users
+and know the type of footage you're dealing with before making these core decisions because
+this is a make or break in terms of latency as well as preprocessing time and may not
+always be the most necessary.
+Visual indexing and highlight indexing are a little more complicated.
+For visual indexing, there is the whole idea of using image embeddings.
+This is a picture of me about a year and a half ago, maybe two years ago.
+I built a little wearable.
+You just put on your hat as a webcam, record everything you're doing, and you can search
+for any moment that happened in the past seven days.
+This is when the idea of video embedding didn't necessarily exist or maybe I just didn't know
+about it.
+We chose to every 10 seconds take the image of what's happening as well as the transcripts
+within those 10 seconds and throw all that context into a language model to answer any
+question.
+If I want to look up anything about today's lecture, I'll just prompt decomposition, look
+up today, find all videos related to today, look up things that are related to lectures
+on Hinge Forces, show the top results, throw that all at a language model, answer that
+question.
+This is the most naive way to go about it because there's no temporal thing happening
+at all.
+We're just dealing with visual cues.
+Sure, this works, but we've grown a lot since then.
+We want to use multimodal embeddings.
+As of right now, there are not many good quality multimodal embeddings that also use audio,
+but they do maintain temporal video context.
+We want to index those once again as these leak nodes, treat them as the most granular
+setting possible and index those every 10 to 15 seconds.
+This will tell you a lot of things.
+Any core visual cue, these are extremely granular in these 10 to 15 seconds.
+If I am using my hand, if I pick up the sunglasses, put them down, the two sides of that chuck,
+those will more often than not be picked up.
+We can rely on these visual embeddings and these multimodal embeddings a lot to capture
+these really small chunks, exactly what happens within these little areas.
+We also want to determine when the action happens on screen, when there is a prominent
+color on screen, when there is a zoom in or a zoom out.
+A lot of these multimodal embeddings are trained and built in the context of, okay, you want
+to look through these longer footage.
+I want to find where in this footage someone is moving from left to right or where someone
+is zooming out or zooming in.
+These are all things that are part of the training.
+More often than not be included.
+I will give some examples later on, kind of like counteracting that part.
+Any core action or any core visual cue will be spotted by this.
+This is extremely important because this handles with very little latency a lot of the core
+problems with finding something that happens on screen.
+By treating this as the leaf nodes, we can deal with a VLM later on and just deal with
+pure rag right now.
+I guess a good way to think about multimodal embeddings is there are a bunch of different
+ways that they can be trained.
+Some of them with early fusion, some of them with late fusion, some of them just as contrastive
+learning models similar to how Clip was trained.
+But none of these really seem to improve the quality of our embeddings that much.
+We're able to get these core ideas, but there's still really a lot missing.
+We can't just embed a bunch of frames.
+Once again, for example, a lot of these models are trained by just taking in a bunch of back-to-back
+embeddings of images and then trying to throw some attention at it to learn the relation
+between one frame and another frame.
+Which is yes, that is the ideal way to go about this.
+There's so many gaps that you can only get the core idea of what's happening.
+If you try to go more granular, try to extract data that wasn't necessarily a part of this
+training data, you just end up with this huge problem where you just get really, really,
+really vague embeddings.
+So it doesn't really matter what type of fusion you do.
+It doesn't really matter what type of embedding training you do.
+This is a core data problem because there is so little labeled text and video pairs
+out there that makes it really, really hard for us to know and verify this level of information.
+So sure, there's a lot of unsupervised techniques where you can go and you can take these thousand
+YouTube videos and just rely on descriptions from YouTube video as some potential cues
+ask an image to tell me what's happening with this image, what's happening with the other
+image and then reason about what might happen in the middle.
+That is, I guess, the core potential idea.
+That is the ways in which you make it around these problems.
+But that doesn't mean we can rely on the quality of these embeddings.
+I guess here's a really good example.
+As I was studying mind-to-mind-toonship, I went and I just made a really simple video
+of a ball moving from left to right.
+It was a red ball.
+And something about these different multimodal embeddings is the more modalities that you
+introduce, the farther and farther away your text to this modality reference will be.
+So for example, if you have a ball moving right and I input this video and I also input
+the text description.
+When I use an image embedding, I'll get a score for both.
+This is taking all the image embeddings and bringing them up.
+The surprising is when I do ball moving left, I get an identical score.
+That's just because we have the exact same frames happening and so their embeddings have
+no meaning at all.
+Yes, when you want to do red ball versus blue ball, the red ball will score a lot higher
+every single time because those features are there.
+But the core idea of moving left and right is just never there.
+Then a VLAN embedding.
+So this is taking kind of the beginning part of earlier late fusion, taking this embedding
+from the transformer and applying it to your input text in your input video.
+And we get a score of 0.05.
+And when you do ball moving left, you get a score about 0.045.
+This difference is so granular that it is very, very, very hard for us to show a core
+difference between the two.
+You're dealing with text.
+If you have a ball, if you have I am happy and I am not happy, those embeddings will
+be very far apart.
+There will be a noticeable difference at least because of the semantic meaning.
+We are not there yet in the context of VLAN embeddings because of how far away we are
+from a truly universal embedding in that context.
+In this case, it is so hard to justify that we can do a difference between 0.05 and 0.045
+at least at scale that we want to use visual embeddings for the context of a red ball,
+unless for the context of it moving left to right.
+That's not really important to us right now.
+We're getting the cues of a ball moving.
+We're in the cues of red.
+This encapsulates enough for the majority of our research.
+Once again, we still want to find the video of the ball moving right.
+Two videos, ball moving right and ball moving left.
+Which is why we're going to now use a VLM.
+A VLM can do text embeddings of the VLM outputs.
+The VLM would say this is a video of a ball moving right most of the time.
+By indexing that text, text to text embeddings will always be higher than any text to image
+relation.
+Even if a text describing the exact image versus two pieces of text that are relatively
+similar, the text will always be higher.
+So this is a lot better metric when you're dealing with them in the same modality.
+If you're dealing with two different modalities, you have to do a lot of manipulation and a
+lot of relative weights to figure things out.
+If I can determine, if I can index this video and say this is a red ball moving right, I
+can just do text embedding and get the top result.
+This is a big consideration when doing rag and across multiple modalities because there
+are tradeoffs.
+If you want to spend more, you want to use a VLM to get you this description.
+Potentially this description is going to be useful for you in multiple contexts and not
+necessarily just for your embedding but also for other user contexts, then I think it's
+useful.
+But for the most part, VLM embeddings can handle a decent amount.
+In our context, we knew we wanted to do a VLM because we wanted to use text indexing
+to encapsulate what's happening across a large amount of video, which is why in addition
+to visual indexing and text indexing, we also chose to do highlight indexing.
+These are what I call the parent notes of our whole analogy earlier.
+This is going to be a bunch of highlights that represent from 10 seconds to a minute
+of just some core thing that has happened.
+Across however long the video may be, this will describe every single thing that these
+very, very concise description as well as it will have continual context of what's happening
+before.
+So using a VLM, I can across the first 10 minutes of the video, you can check every
+single piece of information you want.
+For example, the video montage and then there's the video transitions to a live stage with
+a large screen.
+So now if I look up a large screen, there are now three ways where I can find large
+screen.
+The first way is if someone mentioned large screen, which is more than unlikely.
+The second way is if you want to visually index that.
+And the problem is, at least in this context, there are just so many videos with screens
+that finding a large screen may not always be the top hit.
+This visual indexing is really important and it tells us exactly.
+And so all of these highlights at the end are then aggregated together to create a parent
+of those parents, which is going to be our root node.
+Our root node is going to be your title and your description.
+And this will encapsulate everything that happens across the video, whether it's five
+seconds or whether it's an hour long.
+And so there is a...
+If you are dealing with a large amount of footage, a very smart thing you can also do
+is do auto tagging.
+We are putting this through a language model anyways, a vision language model, and we are
+also doing structured outputs.
+So why not just retrieve as much information as possible?
+Sure, it can tell you what's happening.
+It can also classify this footage.
+It can also tell you people's names that may have been mentioned.
+If there was a celebrity showing up on screen, if there was some core organization, if there
+was a watermark, these are all things that we can do with VLN indexing that honestly
+make it a lot more useful as a solution.
+For example, from now on, if I want to look up an interview where this happens, I no longer
+have to rely on all these embeddings coming together to index both interview plus what
+I want. Because we've already done this pre-indexing, I can just identify interviews
+and then do my indexing and then focus my embeddings more on the content that I want
+and just reduce our search corpus and our search space.
+That is the core idea of like highlight indexing.
+It's because you have a wide variety of different types of information you can share.
+You can store this information in multiple ways.
+We chose to store both multimodal embeddings and text embeddings for things that are text
+first. One thing that we realized, I guess, going back to this example, when you want
+to deal with multimodal information, you are inherently fusing one modality into another.
+You are teaching your text embeddings that for this text, here is an equivalent video.
+So therefore, from now on, you embed them, try as close as possible to embed these to be the same thing.
+It is extremely difficult and very rare that you achieve parity here.
+Your text embedding for some video is embedded in the same way this video is.
+There's always some differentiation, which is why we get these really weird scores here,
+which is why more modalities you go into the farther and farther and farther away your text will be.
+Even if relatively to another embedding, but be closer, it's still really hard to make the
+differentiation. There's a lot of like hand tuning, which is why we kind of focus more on
+if you are to do a text related search and I've been looking for text information, do a text embedding.
+Those text embeddings are a lot less noisy.
+When you do a multimodal embedding training, you may lose some of the quality you have in your text embeddings.
+So just use text.
+Text is what's known, it works.
+You want to do a visual embedding, a visual search where there's no text reprocessing.
+Of course, use your multimodal embedding or whatever that may be.
+But whenever you can, try using text because it is more battle tested and it works.
+And it is very rare that those existing texts embedding that quality is going to degrade as a
+prolonged.
+And so now we have our visual, our transcript and our highlights.
+We can now do hybrid retrieval.
+We can search across the different highlight text and visual components for basically whatever the
+user may want.
+And this is really important because we are now no longer missing these core.
+If you want to find a piece of, I guess, the most related thing or query, the most related response to
+your query, you now have three different indexes in which you can search for and you can aggregate those in
+different ways.
+Those are highly dependent on the quality of your embedding model plus whatever parameters you want to use,
+whether you want to highlight some more, whether you want to weight transcripts more.
+But this now gives you a bunch of different axes to do search across.
+And by treating it like a tree, we now have multiple different levels of depth that you can search across.
+And I'm looking up for a highlight of Brad's ethernet cable.
+For example, the first thing that shows up, this might just be the entire video that is relevant.
+Or this is, for example, a 45 second clip of a 10 minute video where he's finding the ethernet cable and the rest of it is just
+blank screen.
+It doesn't really matter.
+If you were to use purely visual embeddings or purely tracery embeddings, you would never get this level of granularity.
+And so this kind of brings us back to how we're now treating a video like our initial tree.
+You have a video, there are highlights, those highlights are each broken down into multiple different types of modalities, each as granular as possible.
+And these all go down, down and down and down.
+And so this is really, really useful.
+Because we want to not just search for footage.
+We want to give a language model understanding of your footage, which is why, like, you know, one of the last things that were done was creating chat.
+Chat is how you're able to search through a large amount of footage and ask any question and use these tools really intelligent.
+Part of this was teaching language model to use these tools.
+Obviously, these tools may not be the most intuitive.
+There's a lot of data that's being returned.
+And so there's two parts to generation.
+One is how do you get the best response to language model to understand footage?
+And two, how can we make sure the language model is able to access as much footage as possible?
+How granular it can get?
+How much control do we give the language?
+So I guess the example I'm showing on screen, a couple others will be very, very, very relevant here.
+So, for example, here, when Socratic, there was in this event, there were so many clips of people just mentioning why Socratic was important to them.
+There were interviews that were done.
+There were live interviews.
+There were people on stage saying it.
+Everyone has their own different purpose.
+Everyone has their own different meaning behind what they're saying in the context.
+We want to get every, we want to get every single time this is happening.
+So across this DRR footage, we are showing a combination of verbal and highlight hits.
+Here, these are all a bunch of highlights.
+These are people describing what Socratic means to them.
+And alongside, we can also throw a large amount of transcript context and other indexing contexts around it.
+So the language model can do its own independent reasoning.
+We found that GPT-411 was a great model to use here because of its large context window.
+And because now that we're back in the text domain, we can rely on this context window scaling.
+We can say, yeah, sure.
+As the context window increases by a significant amount, we can just throw this on a very competent language model.
+We could not do the same when we just had videos.
+In the same way, if there are visual cues of when people say something, or for example, down here, Ishan says Socratic can mean love of making.
+That is a visual cue that was hid through a semantic text embedding that is completely different than the way that Faisal said that can be defined Socratic as intersection between creativity and hardware.
+Those are completely two different things, but they both add meaning to our initial prompt.
+Another core thing is, let's say you have a large amount of footage, but not necessarily all of the footage.
+For example, here is a large corpus of text of videos that we had.
+Two of these videos had verbal mention of MIT.
+One of them had a visual reference.
+We wanted to find all videos related to MIT.
+And so you can figure out, okay, if you do a search for MIT, we'll get to the verbal results.
+People mentioned MIT or the Massachusetts Institute of Technology.
+And there's a highlight that looks at the visual cues.
+These MIT on screen puts it in the highlight.
+Now we do a text semantic search on those highlights.
+We can now find the one with MIT's Canvas, as well as surrounding context.
+Why is MIT's Canvas mentioned here?
+What's important about it?
+Well, it's important because they showed military technology, demonstrations, and more.
+And if you want to go as granular as possible, you just mention, okay, where exactly is MIT mentioned?
+And so in the first one, we were able to see the very first shot where the crowd gathers around MIT's Canvas.
+Here we can go as granular as whenever the word MIT was mentioned, between 46 and 51 seconds, as granular as you can.
+Here, between 11 minutes and 54 seconds and 12 minutes and 25 seconds, this is a highlight where people are mentioning things about MIT.
+We want this entire thing.
+This is all incredibly, incredibly useful information for a chat to have.
+For example, if you want to create a compilation of all mentions of MIT, or you want to contribute to an original documentary at MIT, and you have all this archival footage, for example, you don't have that.
+You have every single time MIT was mentioned in multiple different contexts.
+And then also, here's the entire movie DOOM.
+We just threw the entire movie in there, alongside a bunch of other movies.
+And we want to see, okay, does the chat know the plot?
+Does the chat really know what's happening throughout this, what is it, two and a half hour long movie?
+And yes, it does.
+We're able to use this kind of tree context to understand these different events.
+And then across these different events, these events all contribute to some larger plot and becomes larger and larger in terms of depth.
+And so we can ask, does it become the Messiah?
+And we can answer these questions.
+We can answer a lot of granularity as to when things happen and a lot of granularity as to when specific things happen.
+When does the turning happen?
+That's not necessarily just going to be a visual mention.
+That's not just going to be a text mention.
+It is some overall events and plot point.
+And so by using this VLM indexing, we're able to extract this information.
+And so this is like kind of going into more and more detail and to do an example.
+We have very, very, very indexed in depth descriptions between half an hour, 30 seconds to like a minute long, explaining what's really happening between these indexes.
+Not all the indexes have to cover every single second.
+If there is parts that are not necessarily important, we don't want to classify those as moments.
+Those are just visual cues that can be indexed if necessary.
+You don't always have to cover every piece of text as well.
+And so I guess this is a probably one of my favorite examples with, you know, I uploaded a lot of just personal footage on my laptop from like, I think this is from my hackathon that I did two years ago where I first built Portal, the wearable you put on your hat.
+And instantly you can find anything that visually stickers on it.
+You want to find everything that is related to a laptop.
+And in depth descriptions of what happens, what's on these, for example, personal showcases, laptop stickers, identifying origins from each Horta Lou, hackathon season 2023 and a lot more.
+These are very, very, very in depth indexes that you would not be able to get with just visual embeddings.
+The fact this comes from each Horta Lou would be a very contextual thing for a transcription model to find out and would just never be identified by some multimodal embedding.
+We also were able to do some pretty cool experiments with MCP and using that to directly interact with the video editor.
+So you're able to give it a bunch of footage from a hike, asked it to make a compilation of all funny moments with animals.
+And you can do it directly in your video editor.
+And so this is like kind of the flexibility that being using Keynote gives you.
+You can find the exact moments from some millisecond to some millisecond of when videos of animals are there, put them together in a contextually funny way using a language model and then produce these relatively high quality edits that happen in your life and with your footage.
+We kind of break it down into this kind of ingestion pipeline.
+It is more into depth into that.
+But this is kind of like the core idea.
+You store visions, you store what was said, you store what was seen, you store what was highlighted.
+You then have a router, which is able to do sparse indexing on text as well as dense re-ranking on this text response.
+Plus you're able to do visual indexing on the visual cues.
+We do multimodal embeddings for visual cues and text embeddings for verbal or highlight thematics because of the difference in quality that you get with text embeddings versus multimodal embeddings.
+And then we rely on these language models to take in this large context of different highlights and the surrounding text that happens and the surrounding visual cues and give you the answer, tell you what's happening.
+Yeah.
+And so a big part of making Keynote feel magical, as people call it, there's two parts.
+One is ingestion.
+That is something that is somewhere in the call.
+There is Alec, who spent a long time working on that.
+He being able to do ingest footage was really important just to make it feel like you're automatically indexing as fast as possible.
+Some decisions that were made were there, were really important, which was whether to asynchronously or to sequentially, whether to process things in parallel or sequentially.
+And think about it like this.
+Ideally, we process everything sequentially.
+You find out who was in the footage.
+You get the transcripts.
+You take all of that information you get from visual cues, from related footage, and you put it along to the highlight indexing.
+And the VLM is able to index now with a lot more context.
+You can also throw a lot more graph context as well.
+This is kind of hard to do.
+This is not really ideal because it just takes three times the length.
+And so we realized that visual indexing and the idea that creating this aggregate was a lot more useful.
+We also had to account for the case of whether you're doing precision versus recall.
+If you have a very, very recall-based thing, that's if the user knows their footage a lot.
+That's if they know phrases that were said, know what was seen, knows what a person did, what's happening.
+So if they want to search something up, they already know what was said.
+They just don't know where to find it.
+If it's a black box, you have to deal with more semantic kind of problems.
+Know how this person, an individual person relates to the whole plot.
+Using semantic embeddings instead of the sparse text results for text, because I don't really know exactly what it's saying,
+but I want to know when someone mentions the word compute, for example.
+And so for Kino, it's really useful that we focus more on recall because filmmakers know their footage.
+They wrote the plot.
+They know what's happening.
+Editors know from everyone in time what someone's going to say, but they don't know where in the footage that exact moment is.
+There are multiple cuts.
+Not everything is just, I know exactly where the footage is.
+If you're dealing with a black box, focus on semantics, separate visual and text, and focus a lot more on that pre-indexing to make those search corpuses a lot smaller,
+which makes your final results a lot better, a lot easier to deal with.
+You can also do a lot of graph indexing.
+If I have sunglasses and some of my sunglasses, and we can to some degree index this, that's super easy to do.
+You can now relate these two pieces of footage in some degree.
+Auto-tagging is very important.
+Being able to do graph databases is extremely important because you can now relate this vector DB with this vector DB, these two roles.
+If you want to have language models reason, you can teach those language models to continually use these tools in different ways and get as many visual results as possible.
+Then I guess one thing that I experimented with before that we didn't necessarily use, but you might find useful, is prompt decomposition.
+For example, when I would ask the question, when did I talk to Ian about laptop stickers?
+Instead of just throwing this entire thing into an embedding model to get the top results, and then later on into a language model,
+we're able to extract the different core presence prompt.
+When did I talk to Ian?
+So Ian is the person looking for us.
+I can do a filter on Ian, and I can also do a specific search for laptop stickers.
+So now we're focusing on very clear and very signal focused, very little noise for these searches.
+Yeah, and so this is kind of like the core methods that we use at Keenow.
+So it kind of serves through like really, really, really intense footage.
+I think if time permits, I think a demo could be nice.
+If Jason, you want to pitch in whether a demo or whether answering questions or what the best thing to do.
+We only have 10 minutes left.
+Cool.
+Okay.
+Yeah.
+Let me take a look at some of the questions as well.
+Did I hear yes or no on demos?
+Let's do a short demo.
+Let me make it quick.
+Yeah.
+All right.
+Great.
+Just want to confirm that everyone can hear me.
+Yep.
+Sounds good.
+Yeah, sounds good.
+Awesome.
+Do the echo.
+Yes.
+Just fix the echo, I believe.
+Great.
+Well, I think we've got a few fun examples that should hit pretty close to home actually.
+Let me just share one of my screens here and confirm that everyone can see.
+So here we are.
+I have some fun footage here and what I have inside of here is I think a fun example of how a lot of these core concepts that Rajan is
+talking about can come together in a very real example with real footage.
+For example, if I filter by a particular guy who shows up a lot in my footage and then I click on a given example, you can see a lot of what Keno is doing in action.
+Right.
+You know, there's a man with dark messy hair.
+He appears, you know, turns out that I can actually see at a quick glance not only every single thing that he's talking about, but then I can kind of summon that within my larger file system and such.
+Rather than going over, though, a lot of the ways in which Keno integrates with the workflow of our core users and our core customers.
+What might be fun, though, is just to talk about the exact ways in which all of the very fun stuff that Rajan is talking about comes up, whether it's filtering by a particular person, but more excitingly, you know, classic embedding search.
+You know, weird formatting, weird spacing, all that fun stuff can happen.
+Right.
+Anything from particular moments that score really well, because there you go, there is indeed a person on a laptop and so it'll show up.
+I think what's notable here, though, is that you can kind of see visual embeddings doing OK.
+There is stuff where there's people on a laptop, but is that the best way to do it?
+Not exactly.
+Right.
+It's by using taking advantage of transcripts and taking advantage of highlights and taking advantage of what vision language models came up with in order to really see what's going on.
+I think you really get what a lot of people are caring about.
+Kind of intense stuff that there was no expectation that modern vision embedders were able to capture.
+Right.
+By giving the user full access to the different indices that I think a lot of other software would kind of abstract away from you, you can do a lot of really fun stuff.
+And you can kind of compose things together.
+If I want to find all the best moments with a particular person, we can really put ourselves in a situation where we can have a lot of these different concepts that Rajan was talking about come together.
+While we wait on our beautiful cache to pile up in this kind of instance of keynote that we have here, we can see how, you know, through these different concepts, we can have keynote automatically bring things together.
+Jason talking about dismantling online criminal rings.
+I wonder what that's going on.
+Right.
+And then there you go.
+And it will show up.
+You know, I can have an entire map of all my footage as if, you know, I wasn't even there to shoot it.
+For footage that I was here to shoot, I still very much rely upon keynote for, I would say, understanding what happened over the course of, you know, creve vast amounts of things.
+That's a little bit of what I have to share here.
+A little bit of the different ways in which retrieval has come to make keynote feel significantly better.
+Obviously, there's much more to keynote than what I just showed you here.
+But that's a tiny portion.
+Would love to dive into questions for Rajan's awesome talk as well.
+Yeah, I think just looking at some of the questions people are asking, people are really curious about what kind of decisions you make when you are choosing models.
+You know, there's probably going to be ELM selections, text embedding models.
+How did you make those decisions when it came to choosing what kind of models to use?
+I really want to say, I love it.
+And moving example.
+I think that's a perfect example of starting very, very small.
+Right.
+Yeah.
+So I won't really go too much into like some of the choices we made, just like the final model, but I think that's a good example of what we've done.
+We noticed a lot with like visual language models, sorry, with visual embedding models.
+A lot of them were that whole case of image embedding concatenation or averaging.
+You want to maintain these temporal features.
+And so ELM is a very, very small model.
+It's a very, very small model.
+It's a very, very small model.
+It's a very, very small model.
+It's a very, very small model.
+It's a very, very small model.
+It's a very, very small model.
+It's a very, very small model.
+It's a very, very small model.
+It's a very, very small model.
+It's a very, very small model.
+And so a lot of these are honestly pretty comparable.
+You'll find very, very similar results across like, no matter how big or small.
+They all do relatively well, but you want to make sure that there is this temporal feature.
+You want to make sure that it is able to take 10 to 20 seconds of length of the video.
+And we also, there are some that offer up to 30 minutes of embeddings.
+I think that that is inherently unnecessary.
+There is too much context you're losing in those examples.
+And so those stats where they boast the capacity of the context length in those cases,
+I don't think that's as useful as the ability to interpret like an action that's happening in a video.
+There are so many ways to go around indexing footage at a smaller scale that is a lot,
+lot, lot more valuable than it would be just to have this like large, large amount of video
+in a similar embedding.
+And actually it's likely against your favor to throw what's the equivalent of an essay into an embedding
+than it would be a sentence.
+If that's a comparable example.
+Luke may have some more context to like, I guess, other, other model decisions.
+But in terms of using like a VLM, use a VLM that is well known.
+Don't necessarily use a VLM just because it's a little cheaper.
+Do not spare on that front in terms of cost.
+If you order a spare on cost, spare a little on your embeddings and then throw more results at a re-ranker.
+In that case, but when you're dealing with video, it's hard to spare costs and also get quality results.
+It's a switch way to new of an indexing field.
+Yeah, I thought I heard that you called out some re-rankers.
+I think another question I thought was pretty interesting was just how do you think about blending the re-ranker
+across things like verbal, visual cues and transcripts?
+We treat language models with large context as a very good re-ranker for our case,
+especially if it's a smaller language model.
+I think, for example, GPT 4.1 mini and NANA are great examples where they are really cheap,
+but they do have that million context window.
+What I think of it is like, if you have a video at 10 minutes to 11 minutes,
+there is a lot of things that were said.
+There are a bunch of visual results.
+Like in that case, there's also those highlights and those indexing that happens.
+You want to throw all of that plus the preceding and post context into a language model
+and let it determine what's happening.
+The highlights will give you context of what's happening in a video.
+The transcript will tell you what's happening in terms of what's being said,
+but there's still obviously no reasoning that's happening around this footage.
+And so I'm not sure about the current state of re-ranking in terms of search,
+but in the context of a language model, we treat language models like re-rankers
+because we're now bringing everything into text.
+Now it's all just in the text domain.
+That makes a lot of sense.
+I know we're basically at time.
+I also want to make sure we're thoughtful for everyone else's time.
+But as for the slides, will you be able to share some of the slides with us?
+Absolutely.
+Right.
+I'll add some to you and you can distribute them, however.
+Perfect.
+So I think in the next slide or two, we'll be able to put the video out,
+send an email with other resources,
+and we'll be able to share the YouTube video as well.
+Rajen, Lucas, thank you so much.
+Yeah, we'll share all the links at the end with emails.
+Awesome.
+Yes.
+Thank you so much.
+I loved seeing everything come together like this.
+So thank you.
+All right.
+Take care, everyone.
+Thanks, everyone.

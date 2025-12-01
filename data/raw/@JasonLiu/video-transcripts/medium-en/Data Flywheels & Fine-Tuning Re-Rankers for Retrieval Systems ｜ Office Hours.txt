@@ -1,0 +1,560 @@
+Hey everyone, we've been trying to figure out whether people like breakout rooms.
+Cause sometimes I see really positive feedback and other times I see sort of
+negative feedback and this time since we, I specifically said in Slack for those who
+saw it, like you could join in halfway in between, maybe this is our measure of how
+many people are in each camp, but hopefully everyone here actively finds breakout
+rooms valuable, got a thumbs up.
+I also need to find a way to tile the, the video so that I can see how many
+thumbs up I'm getting, huh?
+There we go.
+All right.
+All right.
+It's three past.
+I think everyone has seen the prompt in Slack.
+Uh, I think that that makes sense, but just to give it another one minute voiceover.
+There are many ways you could create synthetic data.
+And if you have a good theory as to what makes for a good match between a query
+and your desired response, then you can make good synthetic data to fine tune on.
+And then Jason gave that example of one person says, I like coffee.
+We want person says I hate coffee and in some embedding space, how far apart should
+those be?
+Well, it depends on in reality for your specific product, do those people tend to
+get along and match well, or do they match poorly and that depends on the circumstance.
+This is somewhere where we are starting to get closer to the conventional machine
+learning of we're going to observe from behavior and then we don't exactly know
+what the rule is for how it all fits together, but we're going to learn that.
+And then it's going to be very customized or specific to exactly your situation.
+Being able to do that on an ongoing basis is a big ongoing competitive advantage.
+You've got, you're going to have a system that just keeps improving over time.
+Even if someone else started a similar service with all the same prompts, if they
+don't have the same data flywheel, their service wouldn't be as good as yours, but
+it all relies on identifying what are the behaviors that you want to instrument for
+or observe that you can then subsequently use in building your fine tuned re-rank or
+embedding model.
+So question is, or the problem you're working on, or if you don't have a problem
+you're working on, I want you to spend a moment thinking about what a product is that
+you hope to work on in the near future, and then think about what are the behaviors that
+you want to instrument for or capture that could then be part of that data flywheel so
+that you can repeatedly build a better model, deliver a better experience, get more
+users, collect more data, deliver a better experience and so on.
+So with that, I will give you guys a minute to ask questions.
+If anyone wants to ask questions, then if not, I will pick off the breakout rooms.
+All right.
+I'll see you guys in a few minutes.
+Sudhir, do you want me to put you in a breakout room or do you want to just wait?
+We got to...
+Yeah, sorry, I'm late.
+If you could just throw me in any random breakout room, that'd be great.
+Awesome.
+Something with amateurs.
+I think everyone else is going to pile into the next 20 seconds, but you can...
+Oh, okay.
+Okay.
+Yeah.
+Because I was like, oh, I suddenly...
+Okay.
+People...
+And since we may have people...
+Yeah.
+Just do quick summaries.
+I think we're room one with Jay and Diversion.
+In the end, we're discussing like how we can...
+What part of the workflow can we log and use as capturing the
+actual usage of the results?
+No.
+Is user retrying the same query, similar queries in the same session?
+Do we suggest other queries and are they using and following that?
+And for example, in my case, the client even wants to know if somebody could be
+pasted, no, copy that is no one of the answer text and I did the way we want to
+know if he pasted back in the system somewhere else, no, it's a closed system.
+It would be possible to detect that.
+So we're kind of looking at things like that.
+Some of the usage of our application are more transactional.
+No, if you said something, you find it, you buy it, you order it.
+It's okay.
+That was fine.
+If you said something else, no, maybe you can use that as a signal, but it was
+basically, you know, what we could know, try to detect that the user is struggling
+in doing something, but you don't have quite clear indicators that no specific
+query was what he wanted unless he follows up a specific workflow or
+it's somehow using the result.
+So that was basically the discussion we had around.
+Yeah.
+I think copy, depending on the circumstance, copy paste button.
+It can't really control what they paste, but having the copy button, it's a, a
+nice feedback mechanism that you can, that you can monitor.
+Cool.
+We got room to Darren Dillon, Florian and Seamus.
+Yeah.
+I'll take this up.
+So a lot of the confusion was, well, first of all, to even like
+approach fine-tuning or like re-ranker.
+It's not something common.
+You, you first have to grab all the data.
+I was a bit unsure on what's the main approaches.
+Like when would you want to fine tune the, like re-ranker instead of maybe
+just focusing on fine-tuning the embedding model as much as possible.
+When is like the best benefit?
+And then the second one was like, how do you, when you got your users data, how
+do you actually separate it and actually focus on what is the key aspects of
+that data to fine tune for the re-ranker?
+So we got Winston through a lot of different case scenarios.
+One of the members was talking about how he was looking at for a baseball
+team to re-rank what he was calling power.
+So he was linking different attributes to it and it was actually not classifying
+certain power attributes, which should be included in the re-ranker.
+And then he was training it for that to get better results.
+But I think a lot of it was just confusion on what points to focus
+on, on to fine tune a re-ranker.
+It was a bit unclear.
+Does that make sense?
+Yeah.
+I think there are, I'll respond quickly and Jason may as well, and then we'll,
+we'll go to the next room after that.
+I think there are a few things you said there.
+So one is sort of when we collect the data to fine tune a re-ranker, if we're
+going to do that, what's the data that we collect?
+So it's pairs of what's the request that we want to send to the model of what
+do we want to have the first, second, third, and that's obviously very domain specific.
+You can see like the, you could see what works in the hardware store example
+might be sort of the irrelevant to how you would do it in some legal product.
+In terms of what is higher value to fine tune, if you are using a re-ranker,
+then the embedding model frequently is just picking one of the top 50 or so
+chunks and that's basically where you can cast a wide enough net that I think
+the ROI on fine tuning the re-ranker is going to be greater than the embedding
+model if you said we're so concerned about latency or cost that we're not
+going to use a re-ranker, well, now you've only got one layer and it's obviously
+much easier, but my view, which actually is on a project getting a little bit
+validated just in the last couple of days is that fine tuning the re-ranker,
+if you can figure out what the right data is, is the higher ROI, this too.
+I don't know if Jason, if you have something to add.
+No, I generally agree in the sense that if your, if your goal is to improve
+retrieval as much as possible in the near term, first understand what good
+retrieval looks like, if we have that synthetic data, we have these sort of
+binary labels, if you use a language model to score things, we can get some
+relevance labels, fine tuning the re-ranker is going to be the easiest thing.
+You're going to take maybe 500 milliseconds of additional latency, but
+you're probably going to see like five to 10% improvements in sort of your baseline
+recall.
+The only time I would think fine tuning your embedding models would make sense
+is if you have much more data, if you have thousands or tens of thousands of
+examples of good queries and chunks, or maybe you have thousands of examples of
+queries to like tool retrieval, if you have, if you have a multiple different
+tasks where you have this kind of relevancy data, and then it might make
+sense to think about fine tuning and embedding model, right?
+Because now your embedding model cannot only compare whether a question and a
+chunk is similar, it's going to be able to compare whether a question and tool
+is similar.
+And what that actually ends up meaning is that the embeddings for multiple
+questions you have, have baked in some of the knowledge of what data is going to
+be retrieved and has baked in some knowledge of what kind of tools it needs
+or what kind of SQL snippets and whatnot.
+And if you go back into week two, where we think about this cluster and topic
+modeling in the beginning, this topic modeling doesn't really make any sense.
+Cause we're saying, okay, two questions are similar of if open AI tells us they're
+similar, what does that mean?
+But if you have an embedding model that you fine tune, now two questions are
+similar if they need the same tables, they use the same tools, they retrieve
+the same data, and so that clustering task also becomes a lot easier.
+So it's also very useful in your data analysis, but you only need to do data
+analysis if you have tons of data.
+And so I think most people are probably not there yet, but the data you collect
+now will still give you some progress.
+I would say like the, the embedding is something that I think about on like a
+multiple month long time scale.
+Whereas V-rankers is kind of like a week long project for, for some people on a team.
+So do you only use the data that you classify from the user's input, or do
+you also classify what it's being retrieved and what the results being sent
+back by your original re-ranker?
+Like, are you just logging all of that out?
+I'm just trying to understand like the best processes for collecting data.
+So I have some more questions and I just need to go to other groups.
+No, this is great.
+It really depends on what can I afford to do.
+So if, if one goal, and I'll talk about this more in next week, where I think
+about, we think about like how you design UIs to collect more data, but generally.
+I would say if you have any signal, maybe, maybe people can star things, right?
+Okay.
+If someone stars things, let's assume right now that like everything
+that is cited is relevant, right?
+And if they, if they don't, if they don't start, maybe it's irrelevant.
+If I can't afford to give them this like star thumbs up, thumbs down feedback,
+maybe the only difference is all the chunks that the language model cites is
+relevant and all the chunks I don't cite.
+Maybe I'll randomly pick one.
+I'll treat that as a hard negative or something like that.
+But you can also imagine a situation where like, if you think of Facebook's
+people, you may know UI, right?
+It kind of shows you five profiles, but it doesn't let you scroll, right?
+And so the only way to see another recommendation is to X one out.
+And so what that means is if I show you five things and you want to see a sixth
+thing, I have to force you to delete something that becomes a hard negative
+that I can use to improve my model.
+Whereas if I show you 20 people and you scroll around, you add one person,
+I only get one positive.
+So now you're thinking about how do we design the interactions to collect that
+data, but that's something I'll talk a lot more about next week, but there's a
+lot of like games you can play in the UX to collect more data.
+Oh, perfect.
+Appreciate it.
+If you send me your example too, I'm happy to jam on, on Slack.
+Oh, I'm not that far along.
+This is still new for me, but yeah, appreciate it.
+Group three?
+So I'd be jumping here.
+Yeah.
+Adam, Dan, Kenji.
+We talked a lot about sort of what is the threshold and that would be a helpful
+thing is like, Oh, we're all fairly early in the process, so like establishing
+data flywheel and all the other things we're talking about is a little bit more
+of a future prospect.
+It'd be great to have a sort of generalized understanding.
+I know it's case by case, but like what's the level of impact in, in sort of the
+full pipeline of the different stages?
+Like say you were talking about fine tuning, embedding versus fine tuning
+the re-ranker.
+And then for, for me, it was important to really focus on chunking and cleaning
+the text.
+It'd be great to have like an understanding of like, what are the
+levers to tune at different stages in the process?
+Like say you're early, what's the most important thing to focus on cleaning
+the data, synthetic data, and then fine tuning or what's, what's the threshold
+for these different things?
+So the way I would, so if I was to come onto a project and say, okay, let's go
+figure out what do we need to improve?
+The first thing again is basically all this week one content, right?
+I need to see some kind of recall at K metric for your embedding search.
+And what I would basically want to look at is, okay, what is recall at 5, 50,
+7,400.
+And so the first question is, okay, in my embedding search, do I even have a shot
+in finding the right information?
+Because if you told me recall at a hundred was 80%, but recall at five was 40%.
+Okay.
+What does this say?
+Well, it means that the embedding is working, but there's no way I can bring
+the good results higher up.
+And then the second constraint might be Jason, I can't afford to put 75 text
+chunks.
+Okay.
+If that's the case, and I know that recall at 75 is very good.
+Maybe the answer becomes, let me recall 75 text chunks and pass them into
+co-here's re-ranker given that what does the recall at K looks like?
+Okay.
+Now recall at, so the embedding model had recall at 75 be 90% after the
+re-ranker to get 95% recall, I get to choose 20 things.
+Right?
+So it's like, okay, recall at 20 with the re-ranker is as good as recall with 75.
+Okay.
+It's going to add 500 more milliseconds of latency.
+Can I afford it?
+Probably because the context window is so much shorter.
+It's going to, it's fine.
+Right.
+But maybe you realize that, okay, recall at 25 is still not good enough because we
+can't afford to put this in because we're actually doing like super large chunks.
+Okay.
+What can we do to make that better?
+We can do two things, right?
+We can either play around with the recall of the embedding model or
+the recall of the re-ranker.
+And generally for me, fine tuning the re-ranker is going to be a little bit easier
+because I'm going to have fewer data and I'm going to be able to have more relevancy.
+I really just look at like, what is the recall at K across multiple K's of the
+embedding model, what are the recalls at K for the re-ranker and tune those
+knobs such as, such as it makes sense.
+Right?
+Cause maybe, maybe 75 documents just takes too much latency for the
+length, the re-ranker to re-rank.
+Like, man, I can only afford to pass in 45 documents into the re-ranker before
+I hit like a one second latency hit.
+That would mean I need to go sign distance model.
+It's also more of a, maybe this is sort of a domain or company type of thing.
+So from the startup side, it's like trying to path find the next
+highest leverage point of work.
+Yep.
+Like we, we done fine tuning a re-ranker in the past.
+And then because we're not like out in the world, we're still developing.
+We're still building features.
+We're still like changing things.
+And so the types of things we might actually be re-ranking fundamentally change.
+So it's almost that like, we've put that off now as a point of
+procedure internally because, okay, well, we're not even sure what we're
+going to be feeding the re-ranker in some sense.
+So it's more like procedurally what steps make the most sense as your path
+finding towards a product that you'd be deploying.
+And in our case, we found that like re-ranking goes or fine tuning
+in all cases kind of goes last.
+Like we have a rig set up to do it, but because models continue to iterate
+as we develop, it's also like we're changing and swapping out tooling along the way.
+Yeah.
+I think that's where the segmentation comes in, right?
+It's okay.
+Do we have any user data that tells us what people are asking?
+That kind of goes back to like the week one and the week two work where in the
+construction examples, like, oh man, like we really just need to be way
+better at searching contracts.
+Like 30% of our queries are contract search queries.
+And the people asking these questions are the general contractors.
+They're super important to our customer base.
+So we want to make sure we serve that segment well.
+And I can justify serving that segment well, because we have like
+50% recall for these contracts.
+We know they're super important and they're 30% of our query usage.
+And it's kind of like the data I present to the team, whether it's like the
+VP of product and goes, I think we need to spend the next three weeks improving
+our ability to do contract search.
+This is going to improve 30% of our usage base.
+These are our most important customers based on the demographics.
+And this is the worst performing thing.
+And then it becomes, okay, well, where are the tools?
+What are you like?
+What kind of capabilities can I build to do that better?
+Can I build the routers?
+Okay.
+Now I have all these evals for the contract thing.
+Let me make, let me now fine tune a model.
+Can't understand contracts a little bit better.
+Do you, do you think there's something that's like stopping you from being able
+to do this kind of segmentation work or data analysis to uncover these?
+Oh no, we, we, we definitely go down that route.
+It's, it's more like we've kind of just avoided the, the fine tuning side
+because things change rapidly.
+And when we alter how routing works and something just like small like that, all
+of a sudden the reranker is faced with a different, yeah.
+And yeah, it feels like a more of like, okay, once I have this in front of like
+thousands of people and like I'm, I'm running it, then cool, we can improve and
+get that last mile 5% improvement or whatever else, and it might actually be
+larger than that.
+And I guess that was sort of the original query is like, if you were to put like a,
+I mean, this is sort of an impossible task, but like level of importance, like
+10% on fine tuning for your reranker and sanitizing the data with chunking and
+then segmentation, what would be sort of the, the level of importance so that we
+can, I guess, half find more effectively?
+Yeah.
+I mean, I think reranking, fine tuning, that kind of stuff, that's the stuff that
+gets you maybe like a 5, 10% improvement in recall, really the bulk of your
+improvements are the new capabilities you develop, right?
+It's like the door shot example where there's just like no Greek restaurants.
+If you just sign up more Greek restaurants, you'd solve that problem.
+It's not really an AI problem.
+And there, that's almost like a, it either doesn't work or you can make some
+simplifying assumptions that allows you to build a search index that does make it
+work.
+And then the only thing you can figure out is, okay, the numbers you're looking at
+isn't whether or not it's going to work like 2% better or 5% better, isn't it
+going to be whether it works at all?
+And then if you go back to the segmentation, it's going to be, well,
+percentage of the population could benefit from this working at all.
+So I would still really push towards basically looking at the segments first
+and using that to justify new capabilities.
+And if you build a new capability and it's like 80% and you wish it was 90%,
+that's where you can think of like the fine tuning step.
+But anyway, the bulk of the work is really figuring out at least in the
+construction example, figuring out that we were really underserving our ability
+to understand contracts.
+It was less of the abstraction layer of like we needed to chunk things better.
+And it was less of a layer that we need to rerank contracts better.
+But it was just, oh, people were asking about like science day.
+We had that, that is the work to be done.
+Yeah.
+We're just like, we don't say you're pre-users, right?
+We're not segmenting user queries.
+We're just sort of, I mean, we tried to do this funny thing and it was, it's
+kind of amusing.
+We made fake users with an LLM.
+Just like, here, you're this demographic and this is a tool.
+What kind of questions would you ask?
+And like tried some things like that to just generate a fake data set of, of
+like fake users and user queries.
+But it seems so ungrounded that like, it was hard to say like, okay, this is
+worth, okay, the LLM thinks this is a good use case, so we should build that.
+Yeah.
+But that's just, again, those are kind of things that you have to sort of
+figure out to more users.
+Like most of those answers do not come from like data analysis.
+Right.
+So what you're saying is I should get users.
+I get users talk to people.
+I'll work on that.
+Figure out, figure out who you need to talk to to get people in the conversation.
+Let's jump into group four, three.
+Group four, that is Alex, Manikanda and Will.
+Great.
+Great.
+Okay.
+Yeah.
+So I can summarize some of the things we discussed.
+The first thing is we don't call it fake.
+Kenji, we call it synthetic.
+You're almost making it sound bad.
+Yeah.
+So one of the challenges, if you create fake queries is you want to know that
+the query has the matching chunk.
+So of course you can go on GPT and give it a chunk and say, okay, come up with a
+question so that the answer is contained there, but usually you get things out of
+distribution or non matching the real questions.
+So one of the challenges we discussed is I guess if you have a seed of real
+questions, you can use the seed in the prompting and there's more, there's a
+whole sequence of more sophisticated algorithms where you evolve, there's
+evolving structs, self-instruct, there's methods where you can improve the
+synthetic data set.
+I don't know how much that works.
+Well, it was unclear to us.
+Another thing he said is for real feedback, all our experiences has been
+users don't give you feedback much.
+And if they give you feedback, it's only when they're really upset or when it's
+really so, so even when you get feedback, it's from a corner case of situations.
+That's probably not the ones.
+So one idea in money's case, I think, and in some cases you just naturally have a
+search so people are clicking on something.
+And when people are clicking on something, you collect the feedback
+from the natural workflow.
+So I guess one thing that we got as a message is you have to somehow get
+feedback from your natural workflow and not hope that they will click.
+And I guess what Jason said with this very clever idea of, Oh, I really want to
+see who will view my profile, but now I'm going to only see it.
+If I delete some of the people I may know forcing the workflow to make the user
+give me feedback is I think a very clever insight there.
+And then I guess the other things we discussed is, okay, sometimes search
+will benefit by adding metadata, which, which we know, and we didn't know if
+fine tuning re-rankers was something that I don't have experience on fine
+tuning re-rankers and it sounded like a more advanced thing to do.
+But, but I guess it depends on as, as Jason has explained, it
+depends on the use case, but yeah, that's kind of what we got from our conversation.
+Yeah.
+I think fine tuning re-rankers like using coheres re-rankers, it should actually
+feel like fairly straightforward, right?
+Because a lot of it is just having even a hundred or a thousand good examples is
+probably going to be enough to give you that like 5% boost.
+I think the nuance really comes into fine tuning and betting models, but I
+think that's because that's my background.
+I'm probably more a little bit biased towards of thinking a lot about those
+situations, because again, it's like, usually when you find tune these
+embedding models, it's not just to make the product better, it's to make your
+data analysis a lot easier too, right?
+Because like the, like the Spotify discoverer weekly is okay, songs are
+related if they're in the same playlist, if they're listening to the by the
+same people or they're from the same album, they have the same like BPM.
+And you have all this, all this information.
+And that's how you make like the Spotify recommendations really, really good
+versus just having some kind of like user ID song ID of your ranker.
+That's usually not enough to get really, really good results.
+I'd add a couple of things.
+So one is, so Jason gave an example of you need to click an X to see the next person.
+So that would be how to get hard negatives.
+I think getting positive examples is much easier.
+So earlier we talked about maybe, uh, you've got a button that could
+not be something to the clipboard.
+If you're presenting data that you expect people to put in some other
+document, so if you've got a mechanism like that on the front end, that's
+actually like, there are many cases where you'd find something that is a proactive
+measure of taking some action and that implicit feedback, you can fine tune
+just on the positive examples.
+And then I, like Jason said, I think using the cohere fine tuning once you
+have the data is pretty straightforward.
+And to add to that too, like a lot of good data science and machine learning
+is done through good practice.
+And so part of it, like, like a part of the work is making sure we have the good
+feedback, right?
+It's almost like if you're building an assembly line, like it, you have to make
+a job that says like someone's job is to take products out of the assembly line
+and then test them, right?
+We can't just sort of wait until there's a massive recall for us to
+realize something's going on.
+Like for example, with, with Zapier, we used to have a very small thumbs up,
+thumbs down button in the top left corner of the screen.
+And we just said, we need more feedback.
+And which, but we did, we just moved her right above the inner button.
+I get any given point, like just the feedback mechanism is just a larger
+percentage of the screen and you like, you change the colors, you change the copy.
+We'll like send you an email afterwards to ask you if you're satisfied, right?
+It's like existing systems, like customer support, for example, like every customer
+support conversation, they send you an email like 20 minutes afterwards.
+It's like, here's the transcript.
+Were you happy with the results?
+That's them like begging and like pleading with the user to get that feedback.
+And so I think it's really important to also really understand that a lot of the
+improvements are external to the system, right?
+Like it is kind of goofy to be like, Oh, I think the answer is to get more users.
+But I think the real conversation there would be how can we make a simpler
+product to get in front of users more quickly?
+Like we might want to have this like massive dream to be able to produce
+something, but can we actually build something that's like six times simpler?
+Just to like understand what kind of questions people are asked.
+Can we build other incentives to get more data, get more labels, et cetera, et cetera.
+Was that the last group Dan?
+I think so.
+Right now we got one more group five Sudhir and Vaibhav.
+Thanks Sudhir joined late.
+I think someone else was originally in that room who's left.
+Yeah, I joined late, but I think the question or the topic discussed was
+reducing latency retrieval and then agentic welfare.
+So I haven't actually had this problem yet because I haven't had a use case for
+that yet with such complex work code, but I actually would, especially having
+the UI, so you have some coding component, you tell the user what the agentic steps
+are being processed with like the fixity does it, such as trans, x, y, z,
+what it's actually doing and also it's passionate, we can use data responses.
+And then we just retrieve that instead of actually processing it.
+Definitely makes sense.
+Yeah.
+I'll talk more about this in next week's, like the last, last session, which will
+mostly just be around like how we think about product.
+And a lot of it is just like making sure we have interstitials, having user
+interfaces, making sure things are interruptible, even just stopping for a
+second to ask for permission, I think is a great way of again, making things feel
+good because like it's less about how long something takes and almost more about
+like how well does the system communicate to the user, right?
+If you think of having an intern or an assistant, a task might take a day, but
+if they don't send you a single update, you just become like impatient and
+nervous and so it's a lot of like how we can do that, but also setting up
+situations where if we're using like multiple tools and parallel tools, we
+can also render the tools in a way that is streaming.
+So not only do you render a response, we can also stream out status updates about
+not only the tool creation and the tool execution, those things are all going to
+make that latency feel a lot, a lot better.
+I know we're almost at time.
+I might have like time for maybe 10 minutes of questions and I get the
+first meal of the day and so yeah, if anyone has any questions, feel free to
+raise your hand and then we can jump to those.
+Sudhir?
+Yeah, just following on that question about the UX, is there any preferred
+UI or do you just own-draw custom React components for things like displaying
+insights into the mind of the user?
+Just like the tech leader does.
+Yeah.
+Everything I've seen has mostly just been like most of what I've seen and built
+have been either React apps or through texting, right?
+They all have, or like a Slack bot and most of what has been done over
+React is just like server-side events or web hooks, but I think server-side
+events is a little bit easier to build out in Python.
+Almost everyone I know has built like very custom components.
+I don't know if there's like a really good like interstitial library that
+is in JavaScript or anything like that.
+A lot of it is just like streaming JSON out from one, from the back end and then
+just making sure we have a good way of rendering that.
+What kind of tools are you thinking about using?
+Well, I currently have a prototype in Gradio, but at this point, when I try to
+add a new feature, like having it almost unusable because you're not getting the
+audio gram response as the tokens are being used in Azure and then you have to
+actually extend and the error hand zone is not there as well.
+At this point, I just need to start building my own components next to
+AS, that's probably a URB expression, but there's so many components by those.
+Yeah.
+Everything I've done is just like using React codes and like use state.
+Darren makes a good call out.
+The Versal SDK for LLM is pretty good.
+So if you're on like the React Versal stack, they have a lot of really good
+like partial streaming JSON capabilities, but I'll give like way more like visual,
+like the examples I'll give next week are going to be all like very visual.
+So you kind of get a sense of like the before and after of improving some of these systems.
+Okay.
+Cool.
+Thanks.
+Anyone else have any questions?
+Cool.
+If that is the case, we can wrap up on time and then, yeah, we'll see you tomorrow.
+And then tomorrow, next week will be the last one.
+We'll mostly talk about UI design and how to sort of coerce feedback from the user.
+It'll be useful for everyone.
+Awesome.
+Take care everyone.

@@ -1,0 +1,845 @@
+I would say that the number one takeaway is to invest in experimentation
+infrastructure early, because that will be your sort of compass for figuring
+how to escape from prompt out and, uh, deliver results for both
+your users and your business.
+This talk is titled breaking free from prompt hell.
+And we're today, we're going to explore a workflow of how to develop a systematic
+approach to improve it, measuring, improving drag applications, and we're
+going to go through four different sections.
+The first one is what is prompt hell.
+It's term we've been using a lot.
+Then we're going to talk about evaluation, then experimentation,
+and finally optimization.
+One of the main things we're going to get out of this is how do we move away from
+the reactive firefighting with customer complaints, people coming and saying,
+Hey, this doesn't work.
+I don't like how it did that.
+And how do we get moved towards some proactive optimization?
+How do we move away from guesswork and go towards data-driven decisions?
+And to start off, we're going to describe what prompt hell is, which is those
+loops of trial and error prompts fiddling.
+And I went to a engineering school.
+I did not finish engineering school, but one of the key things they do say
+is engineering is when you're very specific, you're very meticulous and
+prompt engineering does have some specificity to it, but more often than
+not, it feels like trying to whisper the magic incantations to get the
+LM to do what you want it to do.
+And there are some real, real costs and pains to prompt hell.
+There's engineering time where you spend endless tweaking cycles.
+Sometimes you we've worked with people who've been prompt fiddling until 2,
+3 a.m. to get out of the hell hole they're in.
+There is technical debt in terms of undocumented and untested changes.
+There's a lot of learning that does happen in the active loop of prompt
+fiddling that isn't necessarily documented.
+And other people on the team are not able to benefit from that.
+Trying all these different variations does lead to spending more on API costs
+and spending more on APIs is good in so far as you know, you're systematically
+getting to a better result.
+And finally, there's this massive opportunity cost because you're, you
+spend your days firefighting problems for your users instead of building value
+add functions, but you want to be able to say, Hey, I built this feature.
+I delivered it.
+I squashed some bugs.
+Let's move on to the next one.
+And more, and unfortunately in the current paradigm of building AI apps, you end up
+spending a lot of time trying to support and fix bugs ad hoc, and you get into this
+really frustrating game of whack a mole where you see an issue, you try to fix
+that, and then another issue pops up.
+Then you try to fix that and you just keep trying to whack those moles.
+You spin your wheels and what do you really have to show at the end of it?
+And rag makes prompt hell even worse because now there's multiple steps in your pipeline.
+You might have some ingestion indexing prompts to transform the
+documents as they're coming in.
+The retrieval quality is something to consider.
+You might have a query rewriting step and then the generation as well.
+And making a change somewhere in the system is going to have cascading
+effects to other parts of the system.
+So that's the problem.
+And now how do we get around to solving this?
+This is where evaluation comes into play and everybody's heard of evals.
+Everybody knows about eval.
+I hope you know about evals for hallucination or recall.
+These are some very useful things.
+And the takeaway for this section is that what gets measured gets managed.
+It's that old business school adage.
+And this talk is structured in the form of like, how do you go from zero to hero?
+Right?
+So we're going to start off from the very basic of, okay, you're building some AI
+feature and so what are you going to do?
+You're going to write your best guess at a prompt.
+And then you're going to start running it with some example inputs.
+And one key thing to be aware of here is you want to make sure that your example
+inputs are representative of real use.
+They are challenging and they're edge cases, and there are also edge cases involved.
+This is sort of what you would do if you were building a regular code base with
+some functions that are very important.
+You're going to test the main functionality.
+You're going to test some challenging functionality.
+You're going to test some edge cases.
+Think about the last time you implemented.
+I don't know, test for a recursive function.
+And what if you put an empty list in, how does it behave?
+You put a massive list in, how does it behave?
+You want to make sure that your eval set is representative of real use, that it
+has these edge cases captured and also has some challenging ones as well.
+As you're going through this, you want to save inputs and outputs to create your
+eval set because no one ever regrets creating a representative test set of 10
+examples or more, ideally more, the more, the better.
+But at the minimum, it really speeds up your iteration process.
+If you can capture some of these inputs and outputs into a data set, so that as
+you make prompt tweaks, you can run that eval set again, and this is foundational
+because it sets up the foundation for the iterative learning process that occurs
+when you're developing these AI apps.
+You might go and show your AI app to another key stakeholder and they tell you
+of another input that you didn't fathom.
+You should add that to your eval set.
+You're going to get feedback from others.
+You should add that to your eval set.
+This is super important because I can't think of anybody who has figured out all
+the requirements for their prompt upfront before writing examples, the
+requirements and the edge cases and all of that, they come iteratively as you're
+experimenting with different prompts and trying out different inputs.
+And this is what, this is how often people get to the looks good to me at 10.
+It's okay.
+We've run this with 10, 20, 50 examples.
+Looks good to me.
+Let's ship it.
+Some of you might be wondering, should we use synthetic data for zero to one?
+I would say if you don't know how users would use your system, you have a bigger
+problem, you should understand your users and understand what sort of things they're
+going to be asking of your system so that you can have something that's representative.
+It can feel like it's kind of a roundabout way to create 10 examples.
+If you go and you create a pipeline for creating synthetic data for those, you're
+building a chat with your documents, get some documents, read through the documents
+yourself, wonder about 10 different questions, consider the types of questions.
+Is it about a precise section in the document?
+Is it about multiple sections in the document?
+Maybe you have multiple documents.
+Maybe there needs to be some aggregation.
+Consider all of these different scenarios and user stories to inform how
+you construct your eval set.
+Now that you have your eval set, you also need to have
+meaningful and reliable evals.
+These are two adjectives that I want to define.
+One is meaningful and a really good sort of compass for this is
+what moves the bottom line.
+So in our conversations with Jason, he mentioned like recall is a very
+important meaningful metric.
+Are you retrieving the correct documents or getting all the relevant
+documents to answer the user's query?
+That is a very meaningful.
+If somebody comes to you and says, look, I want this to sound vibier, sound better.
+I would question that and say, okay, why do you want this to sound vibing?
+And then they might come and say, well, I think it's going to create a
+better product experience.
+And then you might question them again and say, why is that valuable?
+And then they might say, oh, it's going to like lead to more usage of this feature.
+And you're going to say, aha.
+So usage is a KPI that matters to me.
+And now I need to be able to think about how to craft an eval that links to KPI.
+And vibes was just some intermediary for that.
+The second property of good evals is that they are reliable and they consistently
+evaluate in the same way.
+A lot of the work that we've done in the past has been around helping people
+create reliable LLM judges based on a scoring rubric.
+So you've got the ones you might have had in school where there's multiple
+dimensions, each dimension has different scores.
+And what we've found is that the more you can decompose this rubric or whatever it
+is into individual LLM as judge binary classifiers with very specific, unambiguous
+like task descriptions that are simple enough that even LLM 8B could do it, the
+better you're going to be because those are going to, it's much easier for those to
+have like a 90% plus quality accuracy or precision or recall or F1 than it is to do
+something a bit more ambiguous.
+One other thing to zoom in on this a bit more is this idea of filtering with F1,
+but then selecting with Kappa.
+And this is important because what we notice is that more, more, most often
+people are looking at F1 scores to figure out, okay, is this like a good judge?
+And that is important.
+That is important.
+That's why we want to filter with F1, but we also want to select with Kappa.
+And what is Kappa?
+So we created a little, little playground for this on Claude and there's two of
+these because Claude couldn't fix it.
+And let's say, let's say you have a agreement of 80% between your LLM
+judge and your human judge.
+All right.
+And so the, if the LLM says it's good, the human says it's good.
+Both of them said like 60 of them were good.
+And then we, we have the slider here, which is like how many of the
+hundred examples did the LLM say was bad and adjust the numbers on the rest.
+As we adjust these, we can see the precision recall and F1 scores for
+the good class and the bad class.
+It really depends on what you're doing.
+If you are a bank and you want to catch fraud and you want to label those
+fraud things as bad, then a recall of a hundred percent is going to be
+more important for you.
+If you're maybe a B2C app and you want to be more sure that when something bad
+comes up, that you're very precise about it, then you want to focus on
+precision on that front.
+And the other thing to notice here is this Kappa.
+So what is Kappa?
+What is this thing you've mentioned?
+Kappa is the measure of agreement beyond chance.
+Your LLM as judge might have just memorized the distribution, but is it
+actually understanding how to agree and how to judge like you're judging on something?
+So if you adjust this, for example, you'll see that the Kappa is now 0.375.
+And the, the observed agreement was 80.
+The expected agreement based on just pure probability was 68.
+And the agreement beyond chance.
+This is what Kappa is measuring is this yellow bar over here.
+There's this interpretation.
+This is the formula for Cohen's Kappa.
+There's also an interpretation of it.
+One thing we have also discovered is that the max these Kappa scores, even
+though it's from negative one to one, they actually need to be normalized.
+There is a max Kappa score depending on what your total agreement is.
+And we have to do the math on that to get back to you, but a more real world
+example of that is this is a, is there, is there too much jargon LLM judge that
+we helped calibrate for a customer of ours?
+And we try, we threw a bunch of techniques at it.
+We tried few shots, the static few shots.
+We tried dynamic few shots.
+We tried fine tuning with static few shots inside.
+We tried fine tuning with dynamic few shots, fine tuning with zero shots, all
+of the above, and we, here we have the F1 scores and just looking at the F1
+scores, you might say, okay, there's, there's this like 80%, 80%, 80%, 80%.
+Okay.
+Let's look at these four 80%.
+Let's come, let's pick from one of these to be our LLM judge.
+Then we want to look at the Kappa to select which one ought to be our LLM judge.
+And over here, we see that the highest Kappa is for those is this 65,5 and this 69,69.
+It's a relatively simple decision here.
+This row has both the highest F1 and the highest Kappa.
+And it was trained with 40, it was a fine tuned GPT-40 mini trained with 40 examples.
+But if this row wasn't there and we hit it, now we have to decide between this
+row of a Kappa of 0.645 and of an F1 of 8.84, or this row of a Kappa of an F1
+of 0.82 and a Kappa of 0.65.
+In some situations you might say that actually, yeah, the F1 is a little lower,
+but I want there to be more agreement between my LLM judge and my human, my human labels.
+So this was a little side quest into Kappa.
+And you want to regularly revisit these alignment scores with human labeled
+eval data to ensure that there is alignment.
+Now you've got some, now you've got your eval set.
+You have some evals.
+You've measured a baseline by this point.
+What do you do next?
+Now we get to experimentation.
+Amazing.
+And you saw here, we tried a bunch of experiments, right?
+We tried zero shot.
+We called it with zero shots.
+We called it with few shots.
+We called it with dynamic few shots.
+We fine tuned in all these sorts of ways.
+Fact is there is no silver bullet folks.
+You just have to try a bunch of things and see what works best.
+That's, that's really it.
+And the way you can really make the most of experimentation is you
+want to get some real world data.
+So whether that means launching or doing some private beta testing, get some real
+world data in your system, experiment and evaluate on that, let users give you
+feedback and once they identify some failure cases, add them to your eval set.
+This way, you know that you're solving those failures.
+Whereas you iterate on the prompts and the models underneath.
+You wanted to have tracking and reproducibility, right?
+You want to version control your prompts.
+You want to know that this prompts and, or this chain of prompts, and these
+this chain of models got me this score.
+And these were the evals that did it.
+You want to have the logs there.
+Sometimes it looks like you're like, Oh, I'm trying to optimize this thing.
+And this is, this has happened to us before.
+Our customer is like, I'm trying to optimize this thing and I just can't
+get it to get better than 89%.
+And then we're like, have you tried looking at your data?
+And then they go into the data and they realized that actually they had a data
+issue and the real number was like 96%.
+So you should be able to, you should go look at your data.
+And this is just best practices for looking at your data and being able to see
+the chain, the cons, the consequence chain of your decisions.
+Another useful thing when you're doing evaluation is to not forget statistics.
+Sometimes slight variations in performance are a result of noise.
+Even with a temperature of zero, these models are non-deterministic.
+So you want to run multiple trials and significance tests.
+If you really want to be confident in the assertions you're making, it's,
+it is a bit harder to do at smaller data set sizes.
+So you might skip them, but once you have enough data, it's
+helpful to bring these in.
+One of the little help, helpful tools we built for this is the
+Neymar sample size calculator, which tells you what the sample size of,
+what the size of your test set needs to be able to derive statistical significance.
+Let's say you have two, let's say you have two binary classifiers
+and you want to compare them.
+You want to make sure that one is significantly better than the other.
+You want to be 80% sure that one is better than the other.
+That's this one over here.
+You expect the new classifier to get 8% of the cases, correct.
+8% of the cases correct that the old classifier didn't.
+And over for the P01, you're okay with the new classifier getting 2% of the
+cases that the old classifier got right, getting those wrong.
+And this will show you that you need to have 219 items in your test set to come
+up with a statistically significant conclusion.
+When you're running a lot of experiments, how do you, how should you think about that?
+You probably should only modify one component of the system at a time.
+So in your rag, you might have multiple steps.
+You might have some ingestion steps and query, you know, some retrievals,
+some query rewriting, all these different things, keep everything frozen, play with
+one, see how it affects things downstream.
+And often you will be able to, but by looking at the kind of failure you see at the end,
+you can infer what step of the chain caused that error.
+It can be helpful to use a gateway or proxy like port key or light LLM with
+semantic caching for those static parts.
+Don't want semantic caching for the part you're playing with, but for the other
+parts, this way you can, you know, benefit, you don't have to wait as long for the
+LLM to generate its outputs in order to have to pay for it.
+And you can also progressively scale from small sets to larger sets.
+So you found some errors.
+Great.
+Just run that error set and see if you can fix it.
+And then once you can fix it, you can go to the other examples you had, see how
+your changes affected those and whether there were regressions, grouping related
+variances, kind of like the same thing as two.
+And now that you've done that, now you have some evals, you know, you, you have
+your eval set, you have your evals, you have a baseline, you have tried a bunch
+of experiments.
+How do you think about the optimization for those experiments?
+How do you think about those things?
+And there are many techniques.
+There is no silver bullet.
+You just, this is what I said at the beginning, you just have to try a bunch of
+different things, but you have to try them in a systematic way that is reproducible.
+One of my favorite techniques here is the validate regenerate method that Jason
+mentioned at some point, I'm sure where you can use pedantic to validate the
+output and regenerate it.
+Healing is always going to be better than evaling at the end.
+Go look at learnprompting.com to see what techniques they offer.
+Isolate that component in your system, try different techniques, see what makes sense.
+If you're wondering, okay, do I do static few shot or dynamic few shot?
+I'd say try both.
+And sometimes even a combination of both is helpful.
+So one of the things we found is that, so we were working on a file on a new
+optimizer for DSPy that did dynamic few shot and static few shots.
+So what it would do is if you said, I want like five examples in prompt, it
+would try having zero static, it would try having one static, two static, three static.
+And then the remainder being dynamic.
+And on the, on the rag test sets of hotpot QA and hover retrieve, we found that
+the optimizer, I mean, the optimizer found that having some static examples was
+actually helpful for improving the scores versus having them all be dynamic or
+having them all be static.
+Fine tuning is really helpful when you have small like fine tuning with open AI
+specifically is really helpful with small amounts of data, you can get some results
+with even 10 examples for the fine tuning.
+You want those examples to be representative of real world usage.
+And when you are fine tuning with open AI, this is hidden in their docs.
+You want to inject the static or dynamic few shot examples into the fine tuning
+JSONL that's going to help.
+You might say, do I do static or dynamic?
+I say try both experiment with both, see what works better for use case.
+For rag specifically, you might want to look at a contextual rag.
+When you're taking in the documents, you want to do some pre-processing on them
+with LLMs to augment them.
+That is very helpful.
+One of the techniques that I was doing pre contextual rag was I take a document
+segmented into sections, take each section, have an LLM turn that section into
+facts that were atomic facts.
+And then another LLM would take those facts and turn them into questions that
+are answered by the facts, and then you'd embed the questions.
+And then at query time, you'd have the LLM ask questions, do an embedding search on
+the questions, retrieve the relevant facts, put them into the prompt.
+That can be helpful for optimizing your rag pipeline.
+And for the retrieval set, for example, you might want to optimize for precision
+and recall simultaneously.
+So you might consider on assembling two different LLMs, one that is really good
+for rewriting the query to maximize precision.
+The other that's really good for rewriting the query to maximize recall, and then
+combining the results set from both of those.
+And I brought this slide again, because these optimizations don't happen in a
+vacuum, you want to get real world data.
+You want to let users give you feedback.
+You want to continually add stuff to your eval sets and measure your iterations
+against the eval sets that you have.
+And this is what, what we've just gone through is I'd say a workflow for moving
+from this like reactive firefighting regime of I YOLO shipped something and now
+users are complaining and now I need to play prompt whack-a-mole to feeling a
+little Zen in how you're building all these apps and it lets you wait one sec.
+And this lets you move from guesswork to data-driven decisions.
+Somebody may have booked this room.
+So we'll see.
+So what are the takeaways from this talk?
+Get your data first, then get your evaluation second, do experimentation to optimize
+and create feedback loops in your system so that you can incorporate learning.
+Awesome.
+That's great.
+You can incorporate learnings from real usage into your eval harness so
+that you can iterate against those.
+Thank you for coming to my Ted talk.
+Now's the time for Q and A.
+Is your room okay?
+The room is okay.
+I got this for the next 30 minutes.
+Okay.
+Perfect.
+So as always, we're going to, we're probably going to do like three or four
+questions from the Slido and then we'll just jump on to live questions.
+Let me just change my windows.
+Can you provide more clarification on how to break from the prompt help loop?
+Can you give some real world examples or case studies you had with customers?
+Oh, okay.
+How do you break from the prompt help, prompt help loop?
+My followup with my first question would be you have, I imagine you have
+something it's out there now users are complaining.
+One thing that you can do here, that is the case is you want to be able to
+take in the user feedback, you can do some clustering or segmentation of that.
+That will identify different eval sets for different problem cases.
+And then you can go and tune your system, experiment your system in your system
+to squash the errors in those different segments, eval sets.
+That is something that from what I've heard, Replet used for their Replet agent.
+So I guess another question.
+I mean, this is almost very similar, but different in some way.
+Is it possible to develop a generalized evaluation framework that can serve as
+a foundation across multiple industries?
+I don't know if you can have a set, a generalized set of evals, but I believe
+you could have a generalized eval generator.
+Can you elaborate?
+One of, one of the things we're exploring at ZenBase is how do you generate
+rely, reliable evals, you know, ones that are human aligned and that, you know,
+how do you have a pipeline for doing that?
+And so that could be general across industries, but I, other than
+hallucination and recall, I don't really know what would be a set of general
+evals that will work in every industry.
+Everything we find often evals are very domain specific.
+So that's why I would hesitate to say there's one set of evals that covers everything.
+Oh, Jason, you're muted.
+Oh, sorry about that.
+How can you build evaluations to be tailored to measure performance
+for subjective user specific tasks?
+I can imagine situations where different users are judging the same labels.
+Yeah, that's a, that's a fun one.
+There's always, there's going to be some disagreement between your
+labelers or your judges already.
+And so if you're trying to calibrate an LLM to judge like them, it's going to
+judge like the intersection of their agreement and not the, that's a fun one.
+How would you do that?
+I think so.
+One of the things we've done is we have one labeler, we have one expert labeler,
+and then we get an LLM to count, to judge like them.
+We have also worked in situations that where there are multiple
+labelers when we did do that.
+We, it worked as well.
+It worked the same in terms of Kappa scores.
+Actually, it was roughly the same.
+I'd have to see more about the problem to offer more targeted feedback on that.
+Yeah, I can add to this as well.
+I think it really depends on whether or not the intra labeler variance is noise
+or that they're actually judging for different things.
+And you can basically figure this out by looking at the alignment across judges.
+So if you find examples where multiple judges label different things,
+ideally two things happen.
+One, you try your best to make labels binary.
+And so agreement and disagreement is very clear.
+And then when you find disagreements, you had to recognize that if they are
+disagreeing, but one of them is incorrect and there is a right answer, you need
+to change your labeling policy.
+If they are disagreeing, but both of them are right because there's some other
+category, then there should be a separate labeling task.
+Right.
+And so this happens a lot in the Zapier example, where in the beginning, like
+all the labels are just like, how did we do good or bad?
+And some people would say it's bad because the answer is too long.
+Whereas some people would say it's bad because the formatting is not correct.
+And you just have to make two separate labels.
+You have to go talk to your labelers, look at your data, go, no, no,
+it's not good or bad.
+It's did it follow the formatting or did it?
+Was the answer too long.
+Right.
+And so you got to figure out like what that case is.
+Um,
+I want to riff on that further, further.
+One of the points I made eval section is to decompose your evals.
+And so if at the beginning you have your labelers saying this was good, this was
+bad, that the bad grades, what was good, what was bad, what are the properties of
+all the good ones of all the bad ones?
+The, the good and the bad is trying to coalesce so many different small things.
+And even though that is a binary classifier, it's not a specific,
+unambiguous binary classifier.
+So from all those good bad labels, you may end up with a set of 12 hyper
+specific binary classifiers is the formatting good or not?
+Was there too much repetition?
+The, these things are all those.
+And what is repetition?
+Even that's not even, that's not even a hyper specific one.
+So you need to be very specific with your LLM judges and also your human
+labelers, and sometimes that starts with just yes, no labels.
+Sometimes you create a rubric.
+There's it's quite an iterative process to come down with very specific,
+unambiguous natural language checks.
+I definitely agree.
+Let's do, let me see how many, uh, photo questions.
+Okay.
+Maybe we'll do like three or four that go live.
+To what extent do you see models improving your prompts versus
+just tweaking them by hand?
+I think here it's mostly going to be around whether we have evals to Hill
+climb, but I'd love to hear your answer.
+I think that improvement is relative.
+I think that the models will generally get better.
+I think that what often happens is that prompts are under specified from expectations.
+And so I think of prompting as the communication of your expectations
+and your intentions for an LLM.
+And if you have under specify your expectations and intentions, then the
+model getting better won't necessarily do anything for you.
+That's a pretty strong, strong answer.
+I would also say here, it really depends on whether or not you have
+good evals to begin with, right?
+I think if 100% is the highest and you have something at 60%, there are going
+to be techniques in the future that help you get to that specification.
+But I think what's happening in real life is just because people only have
+six or seven examples and currently six of them are perfect, too many teams
+want to have very high scores.
+But what that means is you can't actually go climb because you're kind of at the top.
+And so a lot of the work there too, is also about expanding your eval set to
+actually be harder, where if you actually have them, it's like 50% accurate.
+Now you can Hill climb a little bit more, but 50% accurate with a hundred examples
+is very different than 50% accurate because you have two out of four failing.
+A lot of that is going to be pretty important.
+I'd also say the second, the second call out there is whether or not you have
+a good library of few shot examples.
+If you have a library of like 400 few shot examples, there's probably something
+you can do to figure out what is the best 20 to choose.
+But again, most of it is the work that you do to help the model rather than
+the model actually doing the work for you.
+The model is going to solve the problem of search, but you have to give it
+the space of what to search.
+Oh, this question is good.
+So what open source projects do you wish existed that don't exist?
+And where do you see opportunities for the community to contribute?
+Open source projects exist on it.
+And where does, Ooh, I think that it is very early days on this, like
+automated prompt engineering train.
+It may seem very opaque.
+It may seem like it seems very complicated, but actually when you get down to it,
+you'll find some simplicity there.
+And we're at the place where it is a deep ocean that has only been
+shallowly explored and shallow exploration will lead to, will actually
+be industry leading research.
+Optimization algorithms is one place that if I summarize the SPS existing
+optimizers, it's like try random few shot examples to find which are the best.
+That's one of them.
+The other is like, look at the source code and some examples and the existing
+prompts to suggest better prompts with some heuristic ideas.
+It's the other one.
+And then the latest one is like, you're doing classification and here are like
+the examples that were in class A and here in class B in for some rules that
+will help you decide how to classify this.
+Those are very like really simple prompt optimization algorithms.
+When you frame them that way, it's just been wrapped in all of this complexity.
+And so if you can sort of breach that complexity, there is a opportunity
+to do cool things there.
+I think that the ELL library is really cool.
+L is a really cool approach to things.
+And I'd like to see more things like that, but async first, especially
+on the TypeScript side, if you're asking about like what openings are there.
+I know that TypeScript is underserved relatively, Master AI is doing some
+really cool work on that right now.
+And there are some engineering teams that are just getting into AI and
+they are like go users.
+What is, when's the last time you heard about like a new agent library for go?
+So, I don't know, taking Lang chain and having thought code Lang chain core and
+having thought code writer for go maybe taking L and writing it for like, I
+think that if there are these niches that are open, if you just build something,
+you know, intuitive for that language.
+Python is very saturated.
+There's a lot of tools.
+It's probably 12 different eval tools and 42 different observability platforms.
+But on the like go side, there's something, there's a bunch of go engineers from
+Netflix writing back in code that are just like lying a little inside, having to
+write Python microservices for the AI things.
+So that's one side.
+That could be one thing.
+Hmm.
+I think there's, and lastly, I'll save this.
+I think, um, a lot of tools are based on different batch processes and something
+like a iterative prompt development system, encapsulating a lot of what I
+talked about today or different tools, different parts of it could be
+particularly helpful because, and this isn't just me saying this, but I'm
+referencing Shreya, Shreya Shankar is like who validates the validators and
+other papers of that elixir.
+You don't know what you expect until you iterate.
+And then as you iterate, you figure out what you need and nobody really knows
+what prompts you need at the beginning and the end.
+Yeah.
+I'll also add, I do think there's a lot of tools around just like data analysis
+of conversations that are really lacking.
+I think we talk about clustering a lot and how cool clustering to look at data.
+But mostly these things sort of exists in notebooks.
+They don't really have general tools.
+I don't know if like any can exist right now, but that style of analysis has been
+happening for like a decade now.
+So I think I wish I saw more tools on that.
+One last question before we jump into live questions, just because I think I
+called you out on this before as well.
+What does meaningful and reliable mean to you?
+So you say meaningful and reliable evals.
+Yes.
+Okay.
+Meaningful means that it has, if you're trying to go from point A to point B,
+a meaningful sort of compass is one that gets you from point A to point B, but
+it's not meaningful if it's orthogonal to you getting to point B.
+So the evals that you have are supposed to help you get to point B.
+And sometimes those evals can be your best guess at what gets you to point B.
+The prompt I offered is question the eval you are given.
+If somebody gives you an eval says, I want this eval other than hallucination
+and recall, those are pretty like standard.
+If it is, if there's more of a vibe, the eval question it, ask why this vibe
+eval matters and often you will, and maybe you will get to some metric for the
+core business and then that is actually your true eval is my LLM doing things
+to drive the business forward.
+And that is the true eval.
+Now you have to figure out how to break that down.
+Reliable I believe is the combination of an F1 score and a Kappa score.
+So the F1 tells you how you're doing on precision and recall.
+The Kappa score shows how aligned it is with your human graders and
+not what the LLM thinks itself.
+And sometimes we've done this, we get the LLM to output in its grade and the human
+graders are like, wait, actually, I think that's right.
+Like my grade's wrong.
+So you kind of have to find the balance between what the LLM says and what the
+human graders say and the agreement between that, all of those, and when that
+agreement is high, then it's reliable.
+But oftentimes just a bare prompt into an LLM will get the LLM to judge like it
+judges, and that is not necessarily the vector or the angle you want to approach
+things with.
+You want to have the judge or the automated judge judge the thing in the way
+you want it to be judged rather than the way it judges.
+Now you're muted.
+That summarizes a little bit.
+So are you saying that like meaningful is more about like, how does it correlate
+with sort of these outcomes?
+Whereas reliable is more like, how does it correlate with your own decisions or
+your own labelers?
+Got it.
+All right.
+Let's try to open up any questions from the main group here.
+I think we can do some hand raising.
+Otherwise, I think one question I've been asking everyone is like, what is
+the question we have not asked that you wish we asked?
+Can I ask a question about DSPY?
+Yeah.
+If that's okay.
+So do you use DSPY as part of your work?
+So you showed, for example, in a real consulting example, I know you're a
+contributor to it, but when I've looked at it personally, it's hard for me to
+get my head into it and I just wanted your opinion as someone that's worked on
+the project, tell me how to on-ramp A and or B should I bother or should I look at
+using ZenBase?
+Cause I actually, if you could say a few words about your company, I was looking
+online, I feel like you're maybe a rapper for it.
+So maybe just talk about what you're doing there.
+Cause I finally found a DSPY expert.
+I need to ask the question.
+Sounds, sounds good.
+I'd say let's look at, to answer this question, I want to look at the problems.
+I believe DSPY is trying to solve.
+DSPY as it exists today is how do I, as a researcher iterate on system
+architectures to find one that works to accomplish the task I want to accomplish
+and create a state of the art system so that I can publish a paper implicit in
+all that job to be done is this is a tool for researchers.
+The ideal place to be working with DSPY is a Jupiter notebook.
+If you look at some of the defaults in DSPY, it has a bounded cache for LM
+which you don't want to have in production.
+You can configure it to not have an unbounded cache, but a lot of the
+design decisions around that.
+Another of the design decisions for DSPY is you shouldn't be writing prompts.
+You should write these maps, these transforms where in reality, what we
+find is people already have prompts and DSPYs optimizers in our experience
+haven't been the best at taking a prompt and making it better, but they are good
+for taking no prompt and making it into a good prompt.
+So the way we have used DSPY in our consulting is to use it as a prototyping
+framework to explore the appropriate architecture to get good results.
+Because that's, it's actually really good for that.
+I have a multi-label classifier and this isn't doing that well.
+What if I broke it down with the seven binary classifiers?
+Oh, I see.
+Okay.
+Okay.
+And then let me run that.
+And then I see that it resulted in a 15% lift.
+Okay.
+Maybe I should be approaching the problem that way and then write
+specific prompts for each of those.
+Yeah.
+Yeah, that makes, that makes a lot of sense.
+Sure.
+Yeah.
+So that, that's how we've been using it.
+To be perfectly honest, the code example that we have on our website is a sort of
+vision of what an easier to use DSPY might look like.
+That may not, I think what, as we've explored the idea maze, that that's
+not actually what we've built.
+As we explore the idea maze, what we're finding is that one of the key leverage
+points is having meaningful and reliable evals, because if your evals aren't
+calibrated, then what, what are you optimizing against?
+So we've zoomed into onto that problem.
+One solution we found is this decomposition into very specific,
+unambiguous binary classifier.
+And now we're exploring how do you generate those evals iteratively based on.
+Okay.
+So with the, and this will be the last, last question I asked, cause I
+want to obviously, would the rauggest sort of folks be a competitor zen base?
+Like just conceptually, just trying to get my hand around what you're trying to do.
+I think this is very fresh based on our conversations yesterday.
+We're trying to sell to the C suite and not to the engineers themselves.
+Gotcha.
+So selling to the engineers.
+We're selling to the C.
+Okay.
+All right.
+Thank you.
+Appreciate it.
+And thank you very much for, for presenting today.
+Thank you.
+Appreciate your questions.
+Hey, Sarah, thanks for the presentation.
+Question was, are you finding prompt hell to be a same problem across non-English
+languages, are you finding a lot of companies dealing with that or is that
+very early days and if so, are you finding the same kind of techniques that would
+apply to non-English as well?
+That is a really good question.
+And I have not had the pleasure of talking to a company that has, I'd say like
+an esoteric language that they're working with.
+We've worked with English and French.
+So far probably roughly the same.
+You still get this like prompt whack-a-mole thing, but other than that, I
+don't have enough data to give you a confident answer.
+Are you experiencing prompt hell in another language?
+I have a multi-language search app and there's people searching stuff in all
+different languages and I have it posted on things like Hindi AI.com and a bunch
+of other domains.
+So I was just curious, cause you did mention this is early days and I'm just
+trying to ideate a negative one to zero solution perhaps.
+Ah, one idea is always have separate models slash prompts for different
+languages that that can, that could work.
+I mean, if you're prompt, I would imagine that if you prompt the model in the
+language that it's supposed to respond in, it'll get it better, at least for
+pre-reasoning models might be different post-reasoning models, but I have not had
+the pleasure to, or maybe not pleasure, but the experience in that specific domain
+to guide you with something that I'm confident.
+Can I follow up here?
+I'm curious, like what is the, like, what is the main couple of like pains that
+you're, you're facing with these multi-language music cases?
+It's not, I mean, it's not quite a pain.
+I think I'm just trying to, I'm trying to see if there's a market for people
+using AI tools and non-English languages.
+And that's what these MVPs are.
+They're just essentially just LLM wrappers right now.
+And then I'm trying to see if I can find customers for, I guess, an AI
+consulting thing where a non-English documents or reg around non-English
+documents might be a thing.
+Again, it's like very, very early exploratory work.
+Work.
+It's not like there's not a lot of users kind of facing this right now.
+I can make maybe make two and a half comments.
+I think the first comment would be sort of, if you look at the models from Coheer,
+they are the ones that probably care the most about multilingual.
+And so I think some of their, like the IA model, for example, is like
+multilingual, like strongly multilingual, about like 20 something languages.
+They have multilingual embeddings.
+And so search does quite well.
+And so if you kind of know the languages upfront and whether or not they are
+covered by the big models, that's one aspect.
+So in terms of like finding a niche, I think it would be mostly identifying
+languages that are not well described in the training data of other businesses.
+Like, for example, like there was a whole Japanese language, GPT-4 team.
+And when GPT-4 came out, GPT-4 beat the Japanese only GPT-4.
+So even within your own business, it's like, if there's a lot of data,
+there's a lot of Japanese, like the main models are going to beat a
+specialized model too, is what they've discovered.
+And so competition is going to be very hard.
+Whereas if you focus on very rare languages, that might be more of an angle.
+Like Facebook built a Burmese specific language model.
+And that is because the Unicode for Burmese is like very strange and it
+doesn't fit well in like the, like many English languages, right?
+There was like some token inefficiencies where 10 words in English is, I think,
+four tokens, but 10 words in Burmese is 50 tokens.
+I'm just making that number up.
+But so there's some value there in a tokenization.
+I think the second issue might be around dealing with problems that have a lot of
+translation, but usually they just come to their own languages.
+So when I built out a bunch of different meeting taking apps, you know, what will
+happen is you'll go viral in Denmark and all of a sudden, like the Danish
+translations, half the time, the summary is in English, half the time, the
+summary is in like Dutch, how do you figure this out?
+Those end up just being prompting issues.
+And when it becomes big enough, people, you are motivated to just solve that
+problem individually, right?
+If 20% of our traffic is Danish, we can just translate the, we can just hire
+like a translator for 800 bucks and just have them write a good prompt.
+That's generally the case that we've seen.
+It's if you're actually making money, it's just worth having in multiple languages.
+Speak.com, for example, they have custom education prompts in every
+language that they teach.
+That's kind of like something they do.
+Speak.com does like a language learning app.
+Is it language learning app that uses LLMs?
+Yeah, I was familiar with Speak.
+Okay.
+That's good to know.
+Thank you for that insight.
+Yeah.
+I would really see if there's like a rare language to tackle, but then if it's a
+rare language, it's probably not as successful.
+It's not a very big tam.
+Yeah.
+Yeah.
+Were there any other questions that people had?
+Only about five minutes left.
+We can possibly wrap it up early.
+Sweet.
+Cyrus, thank you.
+I think I would love to sort of see, I mean, we can just catch up offline as well,
+but just some of the, some of the more work on just experimenting with few shots.
+I just shared a blog post where most of the optimization I've seen is either
+determining what are the optimal few shots to put into the prompt at once, or
+what is the optimal set of few shots that we can dynamically retrieve at any given time.
+That's generally how I've been thinking about doing optimization.
+And in the near future, some of the things I'm going to be exploring are
+basically data mining examples to find the few shots.
+And so for example, I've been working with a bunch of VC firms that are
+trying to do like due diligence.
+And we might come up with a rubric today that the VC people really care about.
+And to find the rubric and then mine examples out of the accepted and rejected
+candidates, and then we can have the VCs label them as good or bad examples.
+And so it's like one, one thing that we're looking at right now is just, they
+want to evaluate how well the founders know each other.
+Okay.
+Given this rubric of how well do the founders know each other, extract all
+the snippets out of all the accepted and rejected applications, label those as
+like, does it like good or bad on the rubric?
+And now they become the few shots of that rubric.
+I see.
+We should dynamically choose which of the examples to then apply to the prompt
+to create features such that another model can predict like the probability
+that we would invest in them score.
+Makes sense.
+Let's talk about that later.
+Yeah.
+So there's a bunch of fun stuff there, but it's been very interesting.
+We have, we ended up just having these LLMs produce binary scores.
+Then we train like a XGBoost model to predict a probability of interview.
+It's cut down time.
+Did you just put that paper where Llama is a better linear regressor than Scikit-Learn?
+That's a little depressing.
+We should take a look at that.
+That's a, that's a fun one.
+Anyway, thanks for having me.
+I'm here for accuracy, but maybe not for latency.
+I will see.
+True.
+All right.
+Thank you.
+Thanks for having me Jason.
+Thanks everybody.
+Take care.
+Peace and love.
+Take care.

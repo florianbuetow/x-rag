@@ -1,0 +1,366 @@
+So, luckily for me, I was actually able to take an early look at some of these slides,
+and one of the great things you talked about was the fact that most production hallucinations
+that we see aren't really the model making things up anymore.
+Instead, it's the case that these errors are, they tend to be extrinsic.
+The model is given a ton of real context and then making mistakes around how it's reasoning
+about that context, whether in a search context or maybe in the tool using context.
+So this is why I'm really excited to invite my friend Julia today to talk a little bit more about that.
+So she's the co-founder and CEO of Quotient AI and formerly the Director of Data at GitHub Copilot.
+And I think for the most part, you worked on the evaluation system there.
+And so this is a lot of sort of learning that we can probably take.
+And in the next 30 minutes, we're mostly going to go over two really big concepts I think are really important.
+The first one is that we want to break up the retrieval evaluation with the generation evaluation.
+And the idea that we want to use these reference-free metrics because in production we don't have them.
+And the second part is how do we use these kind of judges to monitor this kind of data in real time.
+And so as always, Marian has shared the link in the Zoom chat for questions.
+Julia, take it away.
+Thank you so much for the warm intro, Jason.
+I am really happy I get a chance to meet you all and talk about the challenges that we've seen,
+both with our customers and actually also building our own agents and models and how we we settled on solving them.
+But first off, just a little bit more about myself.
+Jason did already such a great job introducing me.
+But as he said, before starting Quotient two years ago, actually, we just had our three year anniversary this week.
+I was the director of data at GitHub co-pilot and I led the team that built the evaluation infrastructure for that product.
+And that gave us the idea for how to start Quotient because it was 2023 and we had we're just seeing these new applications.
+I don't think agents was even a word back then, at least in this context.
+And we were like, oh, like you get these non-terministic systems that they are harder to measure.
+How do you build a way to make them behave reliably?
+And that was something, again, we had worked on that co-pilot, obviously, in a slightly different context than what we're focused on now.
+That was like co-generation.
+And we set off to build Quotient to help developers build right by products.
+Before this, my background is in AI ML, data science, all the buzzwords at their time, and my experience in tech legal insurance.
+In a past life, I was a physicist.
+And about Quotient, I started 2023 with Freddy Vargas and we're focused now on building the next generation monitoring layer for applications.
+We monitor, analyze, and improve AI systems.
+And we use a combination of foundational and in-house models to analyze data coming from agents and identify critical failures.
+And we focus particularly in I search legal AI and sales agents.
+And that will color the examples I show in this talk, which are actual things we ran into with customers for building.
+So I'm happy to dive in.
+So as Jason hinted a bit, I want to spend a little bit of time just saying the talk about what we define as a hallucination,
+because this is a conversation I find myself having with a lot of people as we start chatting about the issues they're having in their applications.
+I think we can pretty much everyone agrees that hallucination is something that occurs when I model an AI model in LLM.
+There is an output that doesn't really make sense.
+It's either fabricated or incorrect information.
+It doesn't look correct.
+But there are actually two different types of hallucinations.
+And I find myself that a lot of people only focus on the first one, which are intrinsic hallucinations.
+And that's what I define as hallucinations that are due to the model's training data and its representation of the world around it.
+It's basically things like when you when you prompt a model without providing an external context,
+like you just ask a question and you get a response back that's just completely fabricated.
+And there's an example here in the top left.
+I think this circled on Twitter a year or so ago when there were some hallucinations around the James O Space telescope that did or did not take the first image of an exoplanet.
+And there are tons of examples like this.
+Like, I'm sure you all have a favorite one that you've shared with your friends.
+But in general, it's meant to indicate, hey, the model just looked and it's just based on its training data, tried to answer a question, and it really didn't get the right answer.
+But there's this other type of hallucination that it's actually the more common one these days.
+Because we are building systems in which we're providing agents with external context from either search or retrieval or tools.
+And we're providing the models with extra context and the model uses that context in generating the output and then misinterprets information or misuses information from that context and then gets the answer wrong.
+So there's examples, again, circulated in the social media about Gemini looking on threaded threads and answering questions based on that.
+And there were definitely situations in which very interesting information was presented as facts.
+But the idea is, hey, you provide a model with some context and the model output contradicts or deviates from that information.
+And that is actually what we see in actual agentic systems.
+More often than not, and pretty much everyone I talk to experiences this type of extrinsic hallucinations in their product.
+This is also the answer to the question, are we solving hallucinations by training smarter models?
+Ultimately, you are solving for intrinsic hallucinations and you are definitely giving yourself a leg up in having fewer extrinsic hallucinations, but they still happen.
+So most solutions in production are extrinsic.
+This comes from the fact that a model that has incorrect reasoning over real context.
+We've also seen issues like context rot where you have you're based like the more context you have, the harder it is for the model to parse it.
+That's also been a topic of discussion. I think it's very important.
+It's especially hard. And the reason why it's really hard to control for this before you ship something in production is it's really hard to control for this when users supply their own data.
+And I think this is very important because actually most applications right now, most agents rely on data that's extrinsic to their system.
+Either the user brings their own documents or you provide like a web search API to your agent or you provide a new list of tools to your agent.
+It's really hard because you don't have control over that corpus of data to develop a robust system that can handle that diversity of data.
+So for that, then that means you need to test for this and evaluate for this and continuously monitor to make sure that you are providing both.
+You're providing the expected reliability with your agents, especially as users or the agents have access to external data.
+So that's why something I want to talk about first is how to have like a systematic approach to evaluating these systems.
+Like we call an augmented system, retrieval augmented, search augmented, I've seen context augmented, but for these augmented AI systems, how can you find critical failures?
+One of them being hallucinations, and for that, you need to answer two questions.
+One is, was the right information retrieved?
+Like to the extent that you had a user query and you're looking to answer it from a corpus of data, did the search component of your agent even find that relevant information?
+And did it provide sufficient context to the model?
+Because that is the first step.
+If you then give your model the ability to conceivably answer a question, then nothing after that matters.
+Then the second question is, did the model use the information or the context provided correctly?
+Assuming that it had access to that correct information, did it stay grounded in the retrieved context and or did it fabricate some facts or make extrapolations or other issues like that?
+And what's interesting about these is that in order to answer these questions, you don't need actually the ground truth answer.
+You just need to be able to reason a structure through these two steps.
+And this is why things become interesting here, because if we don't need a ground truth answer, that means this is something we can do in real time on the fly in production environments and evaluate agents as they run, which is not something we could do if we needed like a benchmark or something like that.
+So this also opens up some possibilities, has some challenges and a lot of opportunities here.
+So I also want to justify a bit why I'm also talking about the retrieval here, whereas most people focused on, OK, I just need to make sure that my generation was bad.
+And I kind of hinted at this a little bit, but basically the idea is if you don't provide your model or agent with the right context, it will fail.
+It will fail pretty much 100 percent of the time.
+And something that we see in actual production environments is a lot of hallucinations, I would say the 80-20 rule applies, start off with bad data.
+They start off with the data not being available in the upstream system, with the data being out of date, and they start on the or they start a bit later at the retrieval step.
+But in order to catch, in order to know that, you need to look at both.
+So basically to debug the whole pipeline step by step.
+So here's how we do it.
+I mentioned the first step is to evaluate the retrieval.
+What you want to do is break things up systematically and basically say, hey, you want to answer this question in a satisfying manner.
+Did the retrieved documents contain the information you had to answer the query?
+If yes, you're good, you can evaluate a generation of no, you need to dig in there.
+Like, did I have a bad retrieval or did I not have the data available?
+And what you want to do is actually monitor two metrics at this step.
+One is context relevance, which is the percent of retrieved documents that was relevant to the user query.
+You want that to be high because you don't want to provide a model with irrelevant, a ton of irrelevant documents.
+And you also want context usage.
+You also want the model to use most of that context that was provided.
+So if you're thinking about high quality, you want these both metrics to be high.
+And of course, you want to make sure that again, the retrieved documents are relevant to answering the user query.
+And here I share, if you want to go back to the slides later, this is basically like, hey, you want to figure out which of these
+failure modes are to the extent that the retrieved documents were not relevant to the query.
+Did you, was it a bad retrieval, which means that relevant information exists, but it was not retrieved or was it bad data?
+Did you not have the information in the database?
+I will say these are the hardest questions to answer from this entire presentation, mainly because the way to answer them
+means that you have to check the corpus, the corpus of your data first.
+You need to see if it actually contains the information you need.
+And if it actually contains the information you need, then you're just not able to provide it.
+So the challenge here is you can only do this for reasonable corpus of data.
+You can do it for web and you can do it for, I don't know, if you have like thousands of terabytes of data that you can't, it's harder.
+The bigger your corpus and or like if your corpus of data is user defined, as I said, these things become a lot more challenging.
+And I think I'm going to address that in a little bit, but this is definitely a challenge is how do you know that you even have the right information in your data set?
+Now to answer the question about like, how do you evaluate generation?
+Again, this is very, can be very systematic.
+The top line question you want to answer is did the model fabricate information not in the retrieved documents?
+If the answer is no, you're all good. Your answer is granted and supported.
+If you actually did fabricate, the model did fabricate some claims, that means that you probably have some hallucinations.
+And usually hallucinations come from a few things.
+One, there's like poor context quality, which sort of providing the model with context that's noisy, that's long.
+I see a lot of use cases right now with agents that like scrape information from the web or from databases.
+Then that's or like it comes from OCR.
+That can be like problematic in terms of the quality.
+There are also situations which the model misinterprets a query, misinterprets a user's intent.
+Users now are providing less and less instructions to models and agents, so that can definitely happen.
+And sometimes things just get missed out, especially if you provide very long context to the models.
+We do see error rates go up as context size goes up.
+It makes sense. Models need to parse that information and sometimes they miskeep things out.
+Just going back to, and also, so just kind of stepping back, the way to evaluate these augmented systems,
+you need to evaluate the retrieval generation.
+And then you also need to, if all things look good, or if you're still having problems with the retrieval, for example,
+you're going to probably end up spending a lot of time figuring out, do I even have the right data and how do I deal with that?
+And that's both a technical question and if you're building production application agents, that's also a product question.
+Like how do I even get my users to provide better data?
+But this is, and doing this practically actually will help you out.
+Like doing this before you put something in production, doing this during onboarding, for example,
+is something that can help you address problems in the underlying data before you even go through the whole process of retrieval and generation.
+Especially of all those steps happen in production.
+So this is something some folks want to try, which is you do something I call proactively auditing your corpus.
+And you have your full document set, basically what's in your vector DB.
+And you have a set of representative queries with ground truth answers.
+And you can think about, let's say, FAQs or something like that, that you're building like a Q&A agent.
+And then the only way through this is you run an exhaustive brute force search for each query and then you can see whether the query can be answered using the existing corpus.
+Obviously, this is going to be a sub sample of a limited set of data.
+But actually, a lot of folks catch gaps in their data by doing this, for example, as an onboarding step.
+Like if you're onboarding an enterprise customer and the idea is like, hey, you're going to run this Q&A agent in your data warehouse,
+this step could save you a lot of debugging later on, especially because, again, anecdotally, most augmented systems, RAG search, fail because
+the data is not there. And then also fixing the model, prompt engineering, whatever, won't help you if the data is not there.
+This works and doesn't, depending on what your system is. It works if your system is small and focused, if it's like an internal knowledge base or product, docs or things like that.
+It helps if you have an onboarding step when you're, again, like bringing a new user or a new set of documents to your application because then you can do this exhaustive check.
+It doesn't really make sense for a large system and you can strip not do it for anything that's like the web.
+You can, the only way to do that is to basically have things, have your agent running production and then monitor it for metrics like,
+the metrics that measure the retrieval and the search on ongoing basis and then see where the problem areas are as you're running these in production. But it's very hard to do this a priori exhaustive search
+for some of the more complex agents.
+And that's actually what I'm going to talk about in the next section, which is, okay, so I actually have a system where I can't do anything like this. How do I monitor it in production in real time?
+Because that's one, I wanted that anyway, but in some cases, that's the only type of evaluation I can do for my system.
+Before I jump in, I put a bunch of QR codes in this entire presentation. So you also get access to these slides, obviously, but I basically everything I showed in the first section, it's in this educational primary put out about how to detect hallucinations. It talks about that, provides a bit more details and you can read up more on that.
+But going back, how, like, let's talk about something practical where I'm thinking about AI search for context. AI search is when you provide, basically, your agent can access the web.
+It can search queries on the web, it can extract information and you want to make sure that you're building a reliable agent around that.
+And there are a few, there are a few providers for a search APIs. We work with the Vili, but there are a few other providers that are working with the Vili.
+So, I'm going to go ahead and start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili. So, I'm going to start with the Vili.
+So, the challenge is that, as I mentioned, the web is constantly changing, and the users can make arbitrary queries, which are the two, your two nightmares if you're building an agent.
+It's like changing context that you can't control, and users will query whatever they want.
+And if you're thinking about how to evaluate these types of agents and system, we need to solve for these two problems.
+We need to make sure that our evaluation system can keep up with the changing context, and we need to make sure that we can evaluate the generation or the model outputs or whatever the agent does, given this changing context.
+So, we can't have anything static basically and everything has to be real time and everything has to be reference free.
+And we need to have the ability to do it very accurately.
+So, this brings up this need for having reference free evaluations.
+And these are essential basically in this real time production environments because again, when both when your underlying data and context is changing and your user queries are changing, but also if you want to do it at all on the fly,
+because as your agents, as your users are talking to your agents are using your system, you can't rely on having golden answers to your queries.
+So, you need to basically measure, be able to measure things like document relevancy and hallucination rate in real time. And these are actually the flagship metrics that folks are building search retrieval, augmented agents rely on.
+These are the metrics that they track every day. They have their sports and monitored these metrics for because they basically answered those two critical questions I mentioned in the beginning, which is what's how relevant is my context?
+How good is my retrieval working? And am I making stuff up? Is my agent making stuff up? Even when the retrieval works?
+So, this is all theoretical, but I do want to share an example and you're welcome to, I haven't tested these QR codes. Hopefully if you scan that little dinosaur in the query, you will be brought to an ocean page with a work through for how to do this.
+I'm not going to pull it up. I'm going to stick to the slides, but what hopefully you'll find is a walkthrough of how this all works in practice.
+So, the really put together this legal research agent with the users to really for AI search for web search and users and quotient our product for automatically measuring their search and generation quality.
+And this is a very simple straightforward example that highlights one, how can you even provide this eternally changing context from the web to your agent using an API and how you can monitor the quality for the generation of the search and a generation on the fly with reference free metrics.
+And why is this, why did I pick law? Why did we pick law? Because what we see more and more is that there are these applications of agents that are coming on more and more where there's actually a real worth harm or risk from having things like hallucinated answers or relevant citations in your agent outputs.
+And I think law is the perfect example for that because there's this issue of like jurisdiction as this issue of using the case examples correctly in reports.
+And there's this issue of citing every claims that you're making in the reports that in other, I think in other agents, it's they're like nice to house like quality of life type of problems.
+So there's a lot of problems and for something like illegal product, it's existential. You can't have that happening.
+So step by step, how would this work?
+Well, the really has a very simple API.
+You can search legal sources using the Vili, use a natural language query. Like what is the standard for granting summary judgment under rule 56 and you provide with some particular domains you want to search and basically looks around those domains and extract the information it finds relevant.
+That is all very straightforward.
+So in this example, we used open AI to an open AI model. I forget what we used. I think we used 4.0 mini. Yeah, we use 4.0 mini to generate like a memo based on the research that was done for the particular query.
+It has like a little executive summary, legal analysis, and a conclusion. It provides all the sources.
+And you get something like the thing on the right on the output.
+And what we want to do as this agent is running, we also use potion to analyze automatically analyze the outputs coming from that agent.
+And basically we look at these memos and we basically say, is there any information in that output that was unsupported by the information that was provided to the model?
+And in this case, the context that goes to the model are the extracted pages from the websites that the Vili API found.
+And you can actually go back to the memo. You can also see, looking at this memo on the right, there's a bunch of things that would make me nervous.
+I'm nervous. So if I was building this agent, for example, like, are those links in the bottom that I'm providing even correct?
+Because I know that's like a big source of hallucinations in this type of agents.
+And that is one of the things we check for. And again, what's under the hood, and I'll go into a few more details in two slides, is
+we basically analyze and detect, we basically run that analysis from the first section of like, did I retrieve relevant sources given the user query?
+And was the output all supported by the information in that context?
+And this, you can keep track of this in real time as you're running or building. But basically what you end up wanting to look for are those two flagship metrics of hallucination and document relevance, because those will basically give you
+as complete information as they can about your system in terms of, is my search working and is my generation working?
+A bit of what's happening under the hood. Again, as I mentioned, this is just a programmatic way of doing, of automatically calculating document relevance and hallucination on logs.
+But basically what our model does, we have this expert model that takes in the logs and then looks and then compares the user query, which each retrieved document, in this case, each retrieved scraped web page,
+and we make sure that, and we answer the question, did this document, was this document relevant for the user's query?
+And we also provide the information about like reasoning and we make a binary determination as to whether it was relevant or it was not relevant.
+Similarly for hallucinations, we look at the entire context that our model saw. So we looked at the retrieved documents, the user query, and the agent message history, and we look for any facts, any assertions that were not from that, from the outputs, from that memo, that were not grounded in the inputs.
+And again, we want to make sure that is correct.
+And you can try this at home. This should just work. It's a very straightforward agent. You can swap it out and not make it a different type of agent if you want, because the framework is the same.
+And you can basically see, hey, if I'm providing dynamic context to my agent, how, where do things start breaking? Why is this not working?
+And you can use basically this automatic monitoring that's very easy to check for that in real time and hopefully improve your agent over time.
+Jason, should I pause a bit? I'm going to a different section. I think I've seen the chat questions in chat, so this could be a good time to pause.
+Or, yeah, what do you think?
+I'm pretty interested in this. I would love for you to go a little bit deeper and then we can go into some questions afterwards.
+Okay, sounds good. So, another example.
+I'm going to like, those are my two biggest, yeah, I think the two biggest problem areas I see in agents today. One is hallucinations due to dynamic context.
+And the other one is actually hallucinations and tool use, which I think people talk about a lot, but they don't think about them as a hallucination, but that's what they are.
+I think as a team for this talk is hallucinations you didn't know you were having, but you're having all the time.
+So this is on the right hand side. This is actually an example of me trying to put together a Jupyter Notebook cookbook with cursor last night.
+And you get these errors if you've ever tried to use cursor, which is an amazing tool.
+But if you ever try and use it on a Jupyter Notebook, it has problems and basically says, oh, I tried to call tool with the incorrect arguments or I used the incorrect tool.
+It's struggling, right? And you may not be thinking about like that, but that is also likely a type of hallucination.
+Because if you think about it under a hood, there's an LM that's generating an output that has some information in the output that was not correct, given the information that I received.
+So it may be calling the right tool for a job or it may be like sometimes they even fabricate parameter names or tool names.
+So they basically hallucinate them. So this is another problem that can come up. And this is the example, like the first one was non-trivial to solve.
+This one's even more complex because if you try and troubleshoot something like this, like if you're building an agent that uses tools, you end up looking at something like this.
+Where let me see what I put here. So on the left hand side, you'll get something like, oh, sorry, I didn't want to change the slide. You get something that's like, here are your available tools.
+And it's this.
+And it's like a JSON.
+And here's the tools that your agent called. Like here's your message history. And this is even a simple example because you only have like one user query and one tool call. So this is like as easy as it gets.
+And if you're looking at this, it will take you, it took me a while to be like, does this even have a problem in it? And I think the problem was that, I even forgot.
+So, there is actually a hallucination of this output. And if I find it, I will tell you, but now I can't find anymore. Anyway, it's very hard to figure out what the problem is with this tool.
+But if you look close enough, I promise you, you'll probably find that this has a hallucination somewhere in it.
+And this is an example of why this is complicated. And you're actually, I'm pretty sure most people on this call have used a coding agent, for example, or some agent that uses tools.
+You have run into this.
+And as we're having, as we have more agents using tools and doing more and more complex tasks, and again, random users using them in random ways, we're into the exact same problem where you have a system that's getting arbitrary inputs and debugging it is completely
+impossible, because you have complex data in complex data out. And in some cases, you don't even know what went wrong and why.
+But this is happening. And again, if you're building agents that use tools you run into this.
+So we, sorry.
+So, something that my team has been working on is how do you actually catch these tool use issues some of them which may be hallucinations you may be again hallucinating function names you may be hallucinating parameters.
+So actually last week we put out our first model it's all open weights. It's called limbic tool use 0.5 B. Basically what it does is you send it your list of available tools in your message history from your agent, and it tells you if the tool
+is correct, or it's using correct tool or incorrect parameter names or incorrect parameter values. And again, this is another example where we rely on this case, a model at its core, all of these things are judge elements to say, Hey, was there anything that I did them all do something, which information, the fabricated information there that it was not supported from the context.
+And here in this case, part of the context are the available tools.
+And we actually have a few ones to try it. We have an experimental hosted endpoint for this.
+I hope again the little dinosaur points to just for the docs for this and how you want to use it, it's free. If you want to go on hiding face the weights are available.
+If you want to solve host, but this is an example of what, again, like starting the conversation of if you go into these more obscure, but very prevalent hallucinations and tool uses.
+How would you, how would you go about identifying issues in the outputs.
+Well finally, just because we're coming up on again and how to get started.
+I would obviously pay. I am the founder of potion I'll say hey, try this out it's free, you can do it very easily and you can basically have access really good evaluators, as you're building these agents.
+And you can basically replicate everything I showed in the notebook or you can use, you can use like that it's like limbic model that we put out the again.
+It's all open open ways open source, or you can also do all of this yourself.
+And if you're if you're working on smaller projects, or if you're, if you're just trying things out, I strongly strongly encourage you you know what tried yourself first.
+And because then you'll have a way better understanding of what goes into it and where the problems are, and where for example if you're starting to build these evaluators for like document relevance or hallucinations where you yourself start trusting them less.
+And I think that's a really important to issue to have. So, um, you can again start yourself build a judge LM, if you're like, I don't know how to build judge elements.
+We put out this open source judge library called judges, and basically has research back to value there's from the literature, it also has a hallucination.
+Evaluator there, and and you can you can get started right away. If you're like, Oh, but how do I integrate this with other things. We actually put it in GPT researcher which is a deep research agent, again open source hope the dinosaur links to it.
+And basically you can go you can run GPT researcher, an actual deep research agent, and you can undergo measure your hallucinations.
+And you'll get like a confidence score and also some reasoning about, about why why that's working about why, why hallucination was detected or there wasn't.
+But this is again, thinking about hey, I'm building actual agent. How do I check for all these things. You have examples here for, for how to do that.
+You can do it like the next half an hour, very easily.
+I think that's it.
+Wow, I made it.
+Sweet. All right. Thank you so much for that.
+Let's jump into some questions right here I think. So the first question is where can we find the resources to test the real time evalus for hallucinations I think we'll just follow up with an email afterwards.
+And then if there's anything specific you want to call out you can just let us know and we'll put that back in the email.
+Yeah.
+Another question that I think is pretty relevant is from one person. How do you currently reason about the real time hallucination detection methods. How do they balance the precision versus latency, especially in these like higher stake tasks.
+Yeah, so that's why that's a really good question. I think that's when, if you bring up the idea of latency, that is when, that is the point where having some hosted system that someone else took care of that for you becomes more necessary.
+Great. So for example, how we solve for the SAC potion is there are two options. One, you do all these detections asynchronously. So you send a request for a server and you don't hear back from us.
+You don't, sorry, you hear back from us, but the agent proceeds the same way they would. There's like zero latency impact on the agentic flow. And then you get, and then if you do that, you have the luxury of testing for more things more thoroughly.
+So you are like, I care about latency to some extent, but given that my agent is not waiting for this answer, then I don't care about as much and I can go later in the app or pull the results and check.
+So you can take the higher accuracy, probably higher latency trade off. But it's also really good because that's actually the reason, and a lot of people ask me this, oh, like how can your models or your systems like catch hallucinations that a model doesn't.
+And there are two reasons for that. We have the time to check things more thoroughly. Like our system goes, for example, sentence by sentence in the model output and checks every sentence against every piece of context and makes a determination about whether there was information that was supported.
+In most agents, in most applications, you don't have, you don't want to take the time to do that.
+Now, if you do, the other part of the sensor is if you are, we are now at a point where we can actually do that part of in the loop evaluation and correctness.
+And that's actually the reason that our first experiment when that was actually the limbic model, because we were able to train a point five B, a point five B model that does over 90% that has over 90% accuracy in or they was 88%, whatever it was 90% accuracy and tool use evaluation, which is significantly better than the front end.
+And the front frontier models out there. And so 500 million parameter model, which means that I can put in the loop, because when we put in a loop, it has, I know somewhere between 100 and 200 millisecond latency.
+And I think we can even get a lower than that.
+So that is, we're starting to be in the, in the, in the range of, we can train very small specialized value their models that are fast and cheap enough to put in the loop and that's exactly what we're doing now.
+And so I guess here you know maybe if we run this, you know, point five B model and we detect an issue we might just certainly almost put that back into the prompt and ask the LM to try again or is it is it the idea to inject feedback into the language model.
+Yeah, so what, given a week Jason, what we're gonna, we're working on is providing the ability for that yeah agents to call and bake within the loop themselves and then use that information.
+So you don't have, you wouldn't, it also makes sense because as a developer you wouldn't have to be in this process of like prompt, manual prompt engineering or context engineering or whatever ideally you want the agent to figure things out more on its own and that's that's what we want to happen to.
+I think another great question that someone asked is around surfacing to the end users that there's hallucinations that were happening. And so maybe it's a chat bot, it does some generation and then a hallucination is detected how have you found teams sort of address those issues
+I think in the past I've seen text be generated and all of a sudden it disappears.
+So, what about that? It depends. That's such a I think it's like that's such an important product question actually because we have a bunch of available options on the tooling side like for example, you can just do monitoring and say I'll let the hallucinations go through
+and then whatever it doesn't really matter because no one cares that much about my product or they're very rare or whatever.
+So I'll I'll want to catch them later on as like a form of monitoring and correct them over time.
+Or some people are like on the opposite of the spectrum they're like, I can never let anything go through. Like I have a medical application.
+Like, like one of our customers, they're in medical translation, and they have, they absolutely cannot put a hallucination through or any other critical issues through, because people take that and they go and that is a dosage for their prescription in Spanish.
+So that cannot happen and for them they're like, oh, I need this, I need the guardrail. And if they need a guardrail then then we are in this like in the loop correction stage where we, we basically like train guardrails that are extremely fast and extremely accurate and they, I know they decide where they want to be on the ROC curve for those.
+And then and they do something like that. But it's I think the question is like, where are you? Do you want guardrails or do you want monitoring or do you want something in between?
+I see that makes sense. I mean, and then I'm curious for a big enough company like would Ocean think about training like specific guardrails for those applications or do you just have your medical ones and you have the legal ones?
+Absolutely. Like, again, the, the people who are doing this in regulated industries and for agents or like, yeah, API endpoints that they'll go through, I don't know, have like 50 million requests a month or 100 million requests a month or maybe not a many requests, but again, it's a very, very sensitive area.
+We can be in this, like we do decide sometimes to train customer evaluators. Obviously, we won't start there, like it doesn't make sense, but sometimes we do end up there, especially if it's something very specific, maybe something.
+If you look at foundational models as evaluators, some of them work well. They're good LM judges for some use case and for some use cases they're not because they're trained at a strip, they don't have, like they don't have good examples of whatever we want to use them as evaluators for.
+So it's a hundred percent of the case that we work with companies who do one customer evaluators. And I think we're just starting in the last six months where it's, we've just started seeing that be worth it basically, both from an accuracy and the cost and time perspective.
+That makes sense.
+I guess another question someone has is around like citation API's I know Coheer and Anthropic have these APIs where you can do citations. What are your thoughts on that generally? Do you feel like that has reduced hallucination rates or is this sort of almost like a distraction from?
+Oh, I'm very pro that I think we had, I think Dolly we had a citation API endpoint that before, before Anthropic put out there, so I was like, ah shucks, we should have put that up too when we had it.
+But I actually think it's, it 100% makes sense.
+We've been on and off talking about making us public, but I know people prefer, it's still the case that people prefer a lot to have this type of like either go full in or full out.
+Like they're like, I want guardrails or and then I will catch all these like potential like citation hallucinations and things like that or I'll just figure things out later when I look at my monitoring dashboard.
+So that's the long answer for, I think they're really neat and I would use them and I want more people using them, but I don't see it incorporate a ton of workflows still, which is a bit surprising.
+I see.
+Maybe this sort of leads into the question I asked everyone which is, you know, I guess for folks who are building in these like higher stakes situations where hallucinations are an absolute no.
+What is something you feel like folks are not thinking about these days and should really ask themselves.
+Yeah, I think in this context it's, it's about how much, how much the context plays into the final output and I think I picked that the chat for a second and I saw someone say garbage in garbage out and that is 100% correct I don't know who it was.
+But yeah, like their problems, their fundamental problems with the data that LMS won't solve.
+Like, even if you have, I know, we have a GI or something it's not the case that they're going to look in someone's data warehouse and they'll like fix the data for you maybe later but they won't do it initially right so there are a lot of problems with the data
+and I think there's some, I know, people are more comfortable, or like, they're kind of ignoring that because like, oh, the agent will figure things out.
+But sometimes it's basically impossible because the data is incorrect or it's out of date, or, like you have multiple documents in your database with exactly the same document but with three different numbers.
+And people don't can don't look at those and don't know what's wrong what's correct so I think the impact of like the underlying context and underlying.
+Whether it comes from documents or from the web or from wherever is very very significant thing it accounts for 80 to 90% of actual generation problems.
+It's almost never the prompt, you can.
+Everyone's very smart work was working on this you probably did the prompt engineering, it's not the prompt. Most of the time, it's your data.
+But yeah, I definitely agree there I feel like one of the big things we talked about in the course is this idea of absence blindness.
+Right you see tokens come out and so you think about like okay let me figure out how to make the tokens come out better.
+But, you know, people aren't really thinking about what's behind everything else is the search code is the content.
+You know it's like if you just search for red dresses on a store that has no red dresses, and you get no results like it's not really anyone's fault is just that the inventory is missing.
+And it was a big part of.
+Yeah, how we had to think about providing.
+I was, we were working with with a company and they're like, it was exactly this like the model didn't have access to the data.
+But also it was really hard to get to say I don't have access to the data.
+Like I don't have the information. And, yeah, that was.
+That was that was like a problem for them. I think at the end they solved it by fixing the data.
+But how do you tend to detect that like in the past I've looked at things like monitoring like average cosine distance of certain question segments or looking at the re ranker results and saying hey if everything is low.
+Maybe something is up.
+Yeah, honestly that's an interesting point I think that might be a good way of doing in the loop. If you want to do it.
+No, I like that like if you want to do it very highly with higher accuracy but like a lot of like higher cost you can do that brute force force approach that I said where you like take.
+I know whatever accounts for 90% of your user queries and put them through like brute force your database with like a judge alum that figures out something but that's again you can't do that all the time.
+It's actually way simpler to figure it out for tool use because you just look at the list of available tools and you're like, oh, like you didn't you start don't have the tools to answer this in the model.
+I think limbic. Well now limbic can basically say, use the incorrect tool.
+But you can figure it out there because like your purpose is like a little Jason.
+Yeah, I'm glad someone is talking about sort of inventory issues I feel like most companies are thinking about like prompting and like using a better LM but it is very much the case that if you just don't have the inventory, the quality is very important.
+And the easiest way of figuring that out is synthetic data generation, brute force. Yeah, I mean, I know.
+I know my bio that I started when all of this was called data science, and it's the same problems. Like, 10 years ago people like make me a model but their data was not great. Same problem.
+Yeah, yeah. It's like 20 bucks to, it's like 20 bucks to fine tune the language model it's like $100,000 to get the CSV file.
+Julia, thank you so much. Thank you for everyone for joining. Thank you so much. Take care everyone. Bye bye.

@@ -1,0 +1,816 @@
+Cool.
+Let's jump in today.
+I'm really excited to bring on Nicholas Nevin to talk about what
+rag looks like in the future.
+The future is funny because we've had these conversations for a year now,
+maybe eight months ago, I had predicted things like the deep research
+and the illicits of the world.
+You were right about a lot of things.
+So I'm really curious to hear what you are going to be right about in the future.
+Nicholas, take it away.
+Hopefully.
+Thank you so much, Jason.
+And thank you everyone else for your time.
+I was just in this course in the previous cohort.
+So it's quite an honor to be speaking at this next one.
+And I hope you guys find some things insightful today and then learn some
+things new on how to think about these rag systems really today, what I'm
+going to be diving into is talking about beyond question answering systems.
+And looking at the future of rag and where it's already starting to take
+shape is rag for reports and specifically standard operating procedures.
+And so that's what we'll be diving into today.
+There'll be a bit more product focused, like UX focused as well, but we'll bring
+in some technical bits in the end.
+And of course we can dive into more technical questions as well at the end.
+To kick us off a bit about me, just cause I feel like most of you
+probably don't know me yet.
+I'm Nicholas.
+I was born from California, did computer science at USC with a
+focus on machine learning, always loved tech, finance and the outdoors.
+Those are my three grounding columns there.
+And really throughout my college and after I started to pursue a
+career in algorithmic trading.
+So really that's what I found to be the sweet spot to build and iterate in at
+the intersection of tech and finance.
+It was working there at a proprietary trading firm where we were building a
+system for event-based trading, where I started to experiment with NLP models
+and early LLMs for new sentiment analysis.
+And it was during this kind of early exploration where I really started to
+peak my curiosity and interest in LLMs and soon after, obviously with
+tech GPT and really just the whole kind of gen AI wave kicking off myself and
+probably everyone else in this class saw how this technology would be.
+And as quickly as I could left that job and really wanted to go all in on LLMs
+and RAG, and that was early 2023 for me.
+And throughout that year was figuring out where I wanted to build and what
+that was going to be and found my co-founder and we started Vantager
+near the end of that year.
+And Vantager, what we do is we build tailored AI solutions for the
+institutional investor, highly verticalized and specialized solutions
+for specifically limited partners.
+So we serve small family offices with five or 10 people like in the States to
+massive international wealth advisors in Asia and Europe.
+Our AI systems really help them make these better investment decisions.
+Which influences billions and can have lasting effects for years or even decades.
+Those are the main high level points of what we do here at Vantager, but to make
+it a little bit more specific beyond just vertical AI kind of RAG solutions,
+really our platform now really encompasses supporting these institutional
+investors with research, due diligence and portfolio monitoring.
+Some of the kind of flagship features that we have are these kind of like
+AI powered data rooms, as we call them.
+And this is really around all about the document processing here, being
+able to manage and organize these documents across all the heterogeneous
+data sources that investors have access to in private markets and tagging and
+classifying all that data to help them manage it better.
+For the actual analytic side, we provide these dashboards, which allow these
+investors to get this full kind of like global 10,000 foot view of their entire
+investment landscape.
+We allow them to drill down deeply into specific investment opportunities,
+specific assets and companies.
+And finally, we offer the ability to automate really bespoke reporting
+workflows here through we have called RAG native templates.
+And as the talk mentioned, these reports and templates, this is really what
+we're going to be focusing on today.
+This was Vantager's first flagship feature.
+This is what we went to market with.
+This is what we fundraised with.
+This is what we started gaining serious traction around.
+And we never built in the very early days, any chat bot, chat interface,
+or question answering system.
+We really went all in on RAG for these report outputs and decision-making workflows.
+I think this talk, as Jason alluded to at the beginning is well-timed because
+recently, end of 2024 into the beginning of 2025, we've seen a shift in what the
+major AI players are doing and the different outputs and interfaces they are
+building for users to get the most value and interact with RAG and large
+language models as a whole.
+Here, we really think that reports and SOPs are a primary value driver that can
+deliver much more value than any simple question answering system.
+Part of the reason for that is it provides decision support and high leverage outcomes
+over just information retrieval and synthesis, saving time, finding answers
+across heterogeneous data sources, which most kind of QA systems and chat
+bots these days are very good at, but still there's so much more value to be
+created and that's what I wanted to dive into today.
+Why reports and not chat bots?
+I think there's a place for chat bots, definitely.
+And I don't want to say chat bots should not be a thing, but the point I want to
+make here is that there is so much more to interacting and interfacing with RAG
+and large language models and that question answering systems in the chat
+interface as a whole is a very kind of first or early iteration.
+And I think there's so much more that we already are seeing, but that we can really
+develop to create so much more value for the user.
+These basic QA chat bots are really around basic information retrieval and
+this ad hoc question answering, which helps you save time finding that information.
+And that can be very valuable as a starting point, right?
+If you have so much of this data across all these heterogeneous sources, even
+that is valuable, being able to save time.
+But I personally believe here at Vanager and Jason as well, that there is so much
+more to unlock than just saving time.
+Where we are now with the industry and the major players, which Gemini and
+OpenAI kind of released these deep research tools, they've started to come out
+with these report outputs and user experience.
+These reports are a step up from the traditional QA systems because they allow
+for comprehensive and standalone analysis.
+A really good high quality report is mutually exclusive and collectively
+exhaustive covering everything that needs to be stated in that kind of topic
+or information, but it's also incredibly dense and that information that has
+been presented very well can really drive decisions and outcomes.
+And so I think some of the examples here, just thinking about all of the
+like executives and decision makers in major organizations, they quite literally
+have their direct reports and these reports create these literal reports that
+actually communicate the most important information in a very comprehensive and
+standalone way, which they can use to make high leverage decisions, which you
+can't really do in the same way with any simple kind of like chatbot system.
+And to take it a step beyond reports, we're going to dive deeper into standard
+operating procedures and templates.
+These SOPs and templates allow organizations to bring in their knowledge
+and best practices and really easily leverage them in the rag system that you
+created and really makes it frictionless for them to scale that expertise across
+their whole organization and really make that analysis and the way that they
+process the information and make decisions from it, very consistent and standardized.
+To make this more real, I want to give an example of the chatbot rag versus a
+report rag and the packaging of this system.
+You can see the difference in the kind of value that it would appear to for the
+kind of higher ups at these organizations.
+Here for the chatbot approach, we have an analyst asking ad hoc questions to a
+data room, which is basically a bucket full of heterogeneous financial documents.
+And they can ask these ad hoc questions such as what was the performance of this
+asset in 2021, what is the fee structure?
+What are some outlier investments that I should be taking a look at?
+But ultimately here, even if you have a really good chatbot and rag system, what
+you're really doing is saving that analyst time to find those answers manually.
+And so really what that is, it's a percentage of wages and that's how it's
+perceived to the decision makers and to the higher ups and to the organization
+as a whole, the value is really just a percentage of their wages, where when you
+take this report approach, it provides this kind of comprehensive analysis that
+can inform high leverage decisions and outcomes that can make or break an
+organization for my industry specifically.
+These investment decisions, as I mentioned, can last for years to decades.
+And so these are decisions are critical to the success or failure of any one of
+these organizations to build out a rag system that is able to influence those
+decisions, to help them make better decisions.
+It's perceived so much higher value because it's a percentage of the outcome,
+which can be some massive high leverage outcome where again, this chatbot rag
+approach is really just perceived as the time saved.
+So the key takeaway I want to hammer home here is that you should really be
+thinking about building for decision makers, not for the report writers or
+the information gatherers, align your rag outputs and the workflows that you want
+to ingrain your system in to the high value decision workflows and not the
+information gathering and report writing.
+So here I have a quick example of what a report might look like and why it would
+be valuable.
+I think I already mentioned that reports are standalone in nature.
+They are usually exclusive, but collectively exhaustive in all the
+information they present.
+And that really enables a higher up or decision maker to make decisions off of
+this, whereas just from some ad hoc questions, it's less actionable to do.
+And so reports, a simple report can really just be like a rag kind of a QA
+system almost in a for loop.
+But as you start to really look at the highest quality reports that are out
+there and that exist, you'll see they're super complex in nature, not only in the
+density of the information, but the ability to communicate that dense complex
+information in a very presentable way that makes it easy for decision makers to
+going to make those decisions.
+The ability to support really like diverse outputs where you don't want these
+reports to be very flat, long wall of text is ineffective in presenting
+dense and complex information.
+A good report will have kind of breakout sections.
+It will have diagrams and visualizations.
+It'll have call outs and all the kind of culmination of all of this really creates
+this really high value piece that then can influence the outcomes at any
+organization across any industry or domain.
+Going back to the slides, want to dive into standard operating procedures and
+what they are and how that builds off the basic or simple report.
+An SOP is a step-by-step set of instructions that an organization carries
+out and it helps them achieve efficiency, quality output, uniformity of performance.
+I think is a really huge one here.
+So consistency across all of these kinds of different opportunities
+or projects and tasks, it helps reduce miscommunication and any failure
+to comply with industry regulations.
+And these SOPs are what these organizations have been developing
+since the birth of that organization.
+They have been iterating on it, refining on it.
+And it's really like their own secret sauce for how they conduct processes
+and carry out business in their industry.
+It should be finance, consulting, legal, any industry, you will see that there are
+these SOPs that these businesses follow and that really helps make them stand
+them apart because they have superior SOPs.
+SOPs in a RAG system is slightly different, really with this set of
+instructions, but how it applies to RAG and how we see it at Banager is really
+a way to both encode the kind of expertise into the system.
+It allows you to apply it consistently across all of the different kind of
+tasks or projects or information sets that you are looking at.
+And so it creates this very consistent framework, despite all of the kind of
+other variables that you might have in any given project.
+And finally, what this unlocks is it allows the organization to make it
+repeatable and such that anyone can follow it, it could be like a junior or
+a senior at the organization.
+They can still leverage these and follow these best practices, follow these
+standard operating procedures, and it really allows them to, again, connect
+that raw information and really turn that into some decision-making support.
+So what are templates?
+I've mentioned templates and bucketed them together with RAG reports and
+SOPs. Templates are what we have built at Banager, which have been called these
+RAG native templates, which are these implementation tools that make these
+SOPs scalable and repeatable in your RAG system.
+So it's these predefined structures for how you extract that information.
+But then when you have that information, how do you process it, form opinions
+around it and present that information to the ultimate decision-maker?
+And so one example of that can be from Sequoia.
+You don't know who Sequoia is.
+They're like a tier one VC, probably the most known VCs out there.
+They have been a part of every famous startup coming out of Silicon Valley.
+Anyone can be an investor.
+If you have some money, you can find investment opportunities.
+But Sequoia has been consistently outperforming the market and
+its competitors for decades.
+Why is that?
+Maybe it's their capital and their track record, which is opens doors
+and the network they've built.
+But even then that's because of the practices they followed and knowing
+what questions to ask when doing diligence on any investment opportunity.
+Knowing what questions to ask is as important as having the good RAG
+system to ask those queries to.
+If you have this junior versus a senior, the junior might be asking with this
+kind of open-ended black box QA system.
+As you know, garbage in and garbage out.
+You then put the responsibility onto the user to know what the best questions are
+and to leverage the system in the most effective way.
+However, if you can take an existing standard operating procedure, the existing
+questions and templates that these organizations have and allow them to leverage
+that in the RAG system you built, it really creates much more value and it'll then
+again, allows them to really stay above a tier above the rest and is really what
+is differentiating a good organization from a bad organization is the SOPs that
+they follow and it really is what defines these organizations.
+The SOPs and templates together create scalable domain expertise because they
+allow the same rigorous analysis to be applied across every data source,
+investment opportunity, legal case, consulting gig.
+And it's these kinds of rigorous analysis, which is again, the best practices that
+this organization has been developing for decades, allowing them to very easily
+leverage that in a very frictionless and streamlined way, it makes that so easy to
+then scale that value and when you then create that output as that kind of final
+decision support report, then that really will give you so much more value than any
+QA work.
+Three main components we've talked about thus far are reports, which are
+structured outputs.
+That's the new way that you can be presenting this information rather than
+any single kind of like ad hoc answer to a question.
+And these SOPs are what these organizations already have that they've
+been developing and working on that allow them to differentiate themselves in
+the industry, but also follow these best practices that they've developed that
+allow them to perform their best work.
+These templates are really the frameworks that these SOPs can be embedded in that
+and get encode that domain knowledge and the best practices of these organizations.
+And so a reports value is so much greater than the simple QA because the QA system
+is the output is less clear than a high quality report that you can rely on to
+really make these key decisions.
+And up until now, maybe into this talk, you may have not been a hundred percent
+convinced it might be because these were all like financial examples, or it might
+have been a bit too abstract.
+And so I think one kind of point that I want to make here as well is that SOPs
+are really everywhere.
+They're not just in my industry or vertical, but they can be seen everywhere.
+And really the meta example here is the reason that you guys are taking this
+course, the reason that you guys are even here listening to this lecture right now
+is because you're in a course called systematically improving rag.
+And what does that course give you?
+It gives you a repeatable process to continually evaluate and improve.
+And that's exactly what we do at Danager for our clients with our kind of
+report and template outputs.
+So you're not just here for like Jason's office hours as another analogy, because
+you could go to Jason's office hours and ask him kind of any questions that you
+might have, and that could be an analyst to this QA system, but are you even asking
+Jason the right questions about your rag?
+Are you even focusing on the right areas?
+Should you be focused on maintaining your queries or fine tuning your embedding
+model, or maybe just some unknown unknowns that again, might not even be
+asking the right questions about.
+And that's why knowing what questions to ask and what processes to follow is so
+important.
+And when you just give that kind of open-ended black box for any kind of input
+to arrive into, then there can be so much more variance in the value of that output.
+And so just like our clients benefit from this kind of standard analysis, you guys
+all benefit from standardized rag improvement.
+And Jason's course really has encoding, is encoding expertise from all of the
+startups he's consulted to the large companies that he's worked with into a
+repeatable process, which you can follow time over time again, to consistently
+have good results.
+And that's exactly what we believe Advantager high value rag systems should do.
+So to step away a little bit, I wanted to reflect as well on the past kind of year
+and a half or so that I have been working on Advantager and really the lessons that
+I have learned building rag for reports.
+I sectioned this into kind of two main parts, which is I would say like the
+prototyping phase and then really like the scaling phase.
+And I think this is probably a bit more useful for those who are very still in
+that early prototyping phase and that zero to one, but I think nonetheless, these
+kind of takeaways and learnings can be applied to any rag system and to any kind
+of engineering team.
+The first one, and really starting from zero here is that VIBE tests can take
+you very far.
+I know that there's a lot of push on evals and they're definitely necessary.
+And we leverage evals all the time now, day in, day out here at Advantager.
+But when you're in that very early prototyping iteration phase, perhaps you
+may be still exploring the IDMAs or you've already found some direction.
+You can still leverage VIBE tests and they can still get you very far.
+And we were able to build quite high quality reports before we even had our
+first initial kind of set of evals.
+And this is especially applicable to those with very small teams for the
+first nine months or so, it was just me and my co-founder.
+And so I was really responsible kind of for building a whole system end to end
+full stack.
+And so leveraging whatever you have at that moment in time is something I don't
+want to dismiss.
+And so evals are very important, but I think they were even more so important
+when the VIBE tests start to fail you.
+The second point is one that I think Jason and many of the other speakers have
+already driven, but I want to do the same here, which is look at your queries,
+look at the data and look at kind of these golden outputs and the ideal kind of
+quote unquote answers almost that you can get from your system here.
+And it's not just looking at them.
+That is really what's important here.
+It's having a deep fundamental understanding of all three and the
+relationships in mind, because I truly believe that only when you have a deep
+understanding of all three and the relationships, that's when you can
+actually start to understand how to design your system in a way that fits that
+best.
+So with the kind of queries or inputs that are coming in at the top of the
+system, top of funnel, what data do you need to then pull or retrieve or search
+for to go and effectively answer that?
+And then even when you get that data, how are you supposed to be formatting it?
+How are you supposed to be synthesizing and bringing all that information
+together to really create the most high leverage outputs that you can?
+And the specifics and nuances of your data should definitely affect your
+system design.
+With that being said, as you design your system, don't just jump into these
+advanced kind of complex rag techniques.
+I think your system will continuously grow in complexity almost no matter what
+as you continue to scale and grow.
+And don't, there's no reason to accelerate that process more than you need to
+start simple where you can and when you can use deterministic methods.
+If possible, if there's a problem, don't just like blindly throw an LLM at it.
+And also be careful of falling into these kind of, I don't want to call them
+rabbit holes, but can be really big time things, which might not even be the
+right place to be focusing on at this very early stage.
+So if you're very early on and you are like hyper-focused on your chunking or
+something as a bit of an example, I think I would take a step back and really try
+to understand what are the simplest things that we can do.
+And then if those don't work, then that's when you increase the complexity.
+It's much easier to scale up in the complexity than it is to bring it
+back down to simplicity.
+And the final one here for just this very early zero to one phase is just
+log everything as soon as you can.
+You don't need any fancy tools.
+It's simple database can do.
+We personally use Langfuse here at Danager.
+But what I want to say is you want to be logging stuff very early on, even
+while you're still leveraging, perhaps vibe tests and you're not even,
+don't even have evals yet.
+And the reason for that is, is when you want those evals, you really
+want to have that data available.
+You don't want to create that over rely on synthetic data.
+And you don't want to wait for more kind of user activity to sit around and
+wait for that to happen to get enough data to build the kind of eval set
+that you want.
+And so you started logging everything from the beginning, even if it's a bit
+rudimentary, even if it's a bit kind of naive, you should be able to wrangle
+that data and leverage it downstream.
+And that's what we found really valuable for us in that paid dividends later on.
+As things will progress, this is the one to end phase, that one to infinity
+phase of now you're really at the scaling date, you're done prototyping.
+You really want to take this and run with it all the way.
+And who knows what, build a billion dollar company with it.
+At this stage, the use cases of your system and product market fit should
+have definitely matured by now.
+You should have a clear understanding of who you're serving, who's using your
+system and yeah, what are the kind of expected inputs and outputs here?
+I think at this phase is really where I started to find really a lot of value in
+Jason's playbook and really the teachings of this course generally, where now it's
+kind of time to start segmenting your queries and your system capabilities and
+start diving into really start creating that systematic kind of improvement.
+Yeah.
+Like playbook, but you can keep running back.
+So you want to be a, have a little bit of foresight here.
+You want to be able to front run this kind of stagnation that is inevitable
+because it is inevitable that the vibes tests will eventually kind of no longer
+work, you're going to start to lose confidence in this prompting change or
+model change, or if fine tuning these embeddings is actually making any kind
+of moving the needle and making a significant difference, and you should be
+using and building your system kind of day in and day out, that it should be
+relatively easy to have that foresight and start to see, okay, maybe in a few
+months from now, or maybe like by Q2 of this year, Q3 of this year, I feel like
+I'm not going to be able to just go off vibes anymore.
+And that's really where you want to already start building evals so that by
+the time these vibes tests do start to fail you, you already have the evals,
+you already have the data that you have been collecting from the very early
+stage and you never hit that plateau or that stagnation and you just keep going
+up and to the right.
+Some other kind of things that we do here, maybe uniquely or not so advantage
+here that we found really valuable is one is leveraging industry experts
+and bringing them in house.
+And so obviously this works for us because we have a highly verticalized
+kind of solution, but I think for a lot of our existence, you can really
+still leverage the industry experts and those you're trying to serve.
+And we have them label data for us, help us build goldens, work with our clients
+and customers to help them improve and iterate on their kind of templates
+and report outputs.
+And so we found that really invaluable to really bring in as many kinds of
+industry experts that you have access to.
+Finally, as it relates to reports and templates, you really, again, the key
+takeaways of this talk is you want to be able to support these domain specific
+templates and best practices that these organizations already have in their
+organizations, you don't need to like reinvent the wheel here.
+You want to be able to leverage and plug into the best processes that they've
+already established and by doing so, then you can generate really high value
+outputs that again, align with the decision and high leverage outcome workflows.
+Rather than this black box with these ad hoc questions, or depending on the
+question you ask, there can be high variance and kind of the value
+perceived from that system.
+Finally, just a little snippet here is some of the evals that we had run very
+early on that Jason had helped work through.
+This one was one for like query and system capability kind of segmentation.
+So we looked at all of our data and all of the kind of reports that we had been
+generating and we segmented into around 20 topics, but also into different kind
+of system capabilities.
+And so as I had shown in that report example, that a really high quality
+report is very like dynamic in nature and it's not like this flat wall of text.
+And so it's the ability to make these reports convey this dense complex
+information, but in a way that's very digestible, understandable and well
+presented is really like an art in itself.
+And so your system needs to be able to have those capabilities.
+And so here, what we did is we did a heat map across both the query topics
+and the system capabilities of these different output types.
+And it really allowed us as Jason mentioned this course to figure out what
+areas we needed to focus on and what areas that we could maybe ignore or
+prioritize just based off the volume and also the kind of actual user
+satisfaction and answer relevancy from our eval dataset.
+So that's really my talk for today on reports and standard operating procedures.
+If you guys found anything that I had talked about interesting
+and engaging and insightful.
+I think last call out that I wanted to make for this talk is that we're
+constantly hiring and growing our team here at manager.
+We're really trying to push the boundaries of what's possible with
+rag and applied AI, stay ahead of industry trends.
+And we have a small team right now in Manhattan, um, against
+serving these global kind of financial institutions.
+And so, yeah, we're always looking to connect with ambitious engineers who
+are hungry for really difficult data and system problems.
+And yeah, if you found this, this talk interesting at all, or just
+want to stay in touch, I've left some of my information below.
+You can reach out to me on email, LinkedIn or Twitter.
+And I, yeah, I look forward to hopefully hearing from some of you after this.
+And yeah, thank you so much for your time today.
+Hopefully you guys found some of this new and insightful and a new way to
+think about how to build rag systems and how to even just repackage them slightly
+to just create so much more value to the end user and to step away from, I would
+say just the trend of building out chatbots, because I'll be honest, I'm
+quite sick of chatbots.
+I'm sure there's a lot of people have like kind of the chatbot QA fatigue.
+And so to just take a step back, think about what you're building and to really
+think, can I align with these high outcome decisions and these workflows
+for these decision makers?
+Cool.
+Yeah.
+Thank you so much.
+Awesome.
+Awesome.
+I think there's a couple of questions, so let's just jump in.
+I think many questions are down this angle of how do you actually verify
+that the content is trustworthy?
+Right?
+How do you, maybe in two parts, one, how do you build trust with the customer
+and the client that your content is correct?
+And then two, how do you think about things like correctness or factuality?
+You know, I believe that was two questions.
+Yeah.
+So I think for kind of correctness and factuality in these reports, I think we
+initially had a lot of difficulty evaluating reports in that kind of full,
+kind of comprehensive scope for the full output of that report, but really what
+I had mentioned as a simple kind of report generation system can really just
+be a QA kind of rag in a four loop.
+And so in the same ways that you can apply those kinds of verification and
+confidence building in the kind of answer sources there, you can just break
+down your report into these kinds of micro sections or questions that you are
+answering in these kinds of more isolated, granular, vulnerable atomic
+units and evaluate those and then that kind of average across will give you
+the output of the kind of whole report at hand.
+But some other things that we do specifically for our industry, and I
+don't an advantage here, I don't know if it will be applicable to everyone, but
+as I do mention that we do have, obviously we put a lot of effort into
+sourcing and kind of the UX there, but again, we have this data verification
+kind of data validation layer on the actual product, which we allow both the
+clients and customers to use, but we also have our kind of in-house industry
+experts have that.
+So this data kind of validation and trustworthiness, the ability to almost
+sign off on a report is ingrained in the kind of workflow of our product.
+And so being able to say, Hey, this is just a report that I ran and generated
+and I haven't looked at it yet versus something that I've approved, read
+through, it's ready for that decision maker.
+It's ready for that investment committee.
+That kind of workflow is deeply ingrained in our product as well.
+And then I guess, how do you communicate that or at least set expectations
+with the customer and Grok and ChatGP say, LLM might hallucinate, might
+have this misinformation.
+How do you set that expectation with the customer?
+Yeah.
+And so I think obviously one is what you can do from the system, the
+engineering side, and obviously another is just in terms of the expectation
+setting between these clients and customers.
+And I think one thing that we always wanted to really drive here is that
+the manager is not supposed to be making any of the investment decisions or these
+kind of outcomes for the clients, but really supposed to be supporting them as
+such.
+And so really still having that human in the loop or that kind of human
+verification before the kind of decision maker can really fully make that
+decision off of it is something that we found very valuable and kind of
+communicating the expectations for.
+But obviously having really good sourcing just throughout the application,
+depending on if it's reports, these kinds of dashboards we talked about, being
+able to click through any piece of information and see directly where it
+came from in the source is something that, you know, we put a lot of effort into.
+But of course, yeah, at the end of the day, there is the lack of kind of trust in
+any AI system.
+And so doing the best you can there to work with kind of the expectation setting.
+This is probably a pretty common question as well.
+Have your reports tended to follow a very standard format or are they
+customized for every client?
+How much do they know what they want versus is it you leading them to
+generate these reports?
+Yeah, that's a really interesting question.
+I like that one.
+So the short answer is like it's a mixed bag.
+There is a core set of kind of reports and or templates that you could consider
+to be more generalizable across the specific kind of niche or vertical that
+we're in while every organization has standard operating procedures.
+There are definitely some that definitely overlap and have a lot of
+commonality within it there.
+What we do is we provide like defaults or there's almost like temperate library
+in a way that allows users to very quickly leverage.
+Some very like common kind of report outputs that is very likely that they
+would have something similar to in their own work, but to the kind of bespoke
+part, I think that's actually where it gets really interesting because each
+investor and maybe across all these different consulting and legal and any
+other domain, they have their very specific kind of frameworks on how
+they do their processes.
+And so one example of that is every investor has their own investment thesis
+for why they invest, why they're making these investment decisions and why they
+say yes or no, a really easy example of that is a family office might be just
+driven or make decisions based on absolute returns.
+I care about what's going to return me the most money.
+And as long as it does that, and that's what I want to be investing in where a
+large endowment or a pension fund where they're have much more kind of risk
+averse, but also all of their holdings are publicly disclosed and available as well.
+They are much more focused on the DEI nature of these investment opportunities
+and how it looks from like a public perception and they're not care about
+absolute returns.
+And so that's just one example about how every investor has their own reasons for
+they invest their own investment framework.
+And so that's really where we allow them to ingrain that and code their own
+framework into our template and reporting systems.
+And to kind of the last part of that question is do they do it themselves?
+Do we have to guide them?
+It's definitely a meet in the middle thing where they have these kind of
+processes and frameworks that they want to leverage and use.
+We have the rag system.
+And so it's meeting in the middle, making that work and being able to translate it
+into this kind of rag native way.
+Let's do one more question from Slido and then we can jump into live questions.
+So folks can raise their hands and have a question ready.
+We can do that.
+I'm curious if you're actually doing these days.
+So were the diagrams in the sample report also generated by a manager?
+And could you explain at a high level what that could look like for report generation?
+Yeah, I think that was something that we were pushed very early on from our
+initial kind of design partners in the early days of Vantager, which is especially
+as it relates to financial information, the ability to format and display these
+information, this data in a way that is digestible and a very understandable to
+the kind of report reader or audience is absolutely critical.
+And so having just very text heavy reports was the early, early, early
+iteration and version of our system.
+There was a lot of kind of complaints or aversions as it wasn't able to communicate
+the information in the same way.
+And so we've put a lot of effort into increasing the capabilities of our system
+to be able to support much more kind of advanced and analysis, looking at these
+charts, diagrams, larger table extraction and the likes, because again, it's that
+way of creating this non-flat kind of output that's what makes the report very
+engaging as well.
+And so those have been really things that we've been focused on for quite a while now.
+So, Truv?
+Yeah, the talk was really interesting.
+There's been a lot of talk about like usage based pricing and business models
+with AI tools.
+So I'm curious, given that you view the value that you deliver as a percentage of
+the overall investment size, like how does that impact like your pricing model and
+how you go to the customers and enter commercial agreements and like how receptive
+do you think like this part of the market, which is a little bit more traditional is
+to like a usage based pricing model?
+I think in terms of like when you're selling and trying to onboard new customers
+and clients, I think definitely pitching the kind of value in that way, I think
+was a really fundamental shift for us that we realized was really valuable.
+But in terms of the pricing model, I would say that these traditional
+organizations, we've definitely found a version to like usage based kind of credit
+based approaches because there is, although you can have like credit kind of caps and
+usage limits, it is still unpredictable in that sense where you don't know how
+many credits you're going to be using or how much the system is going to be taking
+out of it and having it without any caps or limits is a little bit scary because
+these professional institutional organizations want to have a clear budget that we can
+allocate 50K, a hundred K for this type of software and they want to be very predictable.
+And so we've tried finding a more kind of hybrid kind of tiered approach, but there's
+definitely been a version and we definitely don't do like pure usage.
+Fadim?
+Yeah.
+So my question is a trading algorithm is a decision maker, right?
+It does a hundred percent of a decision and something like Vantager is decision support.
+It supports people as someone who's been on both sides, what are his thoughts on these
+two niches and when is it better to be a decision maker and when is it better to be
+decision support?
+I think for decision maker, it's something we explored very early on, but I think it
+really depends on your industry and who you're trying to sell to, which is does that
+person want their decisions being made for them?
+And for our use case and our clients, that's not what they were interested in.
+That's not what they were coming to us for.
+They weren't coming for us for this kind of rag kind of black box system that outputs
+Oh, investing company A not company B, but they again wanted that standardized way to
+process all the information to help them ultimately make that decision.
+So it's a bit hard for me to have a generalized kind of like rule set or insight across the
+two.
+But I would say that I think you can very quickly find out by talking to your kind of
+clients and customers are these decisions that they want to be offloaded onto them.
+But I think for us, it's the outcome of that decision and how impactful it can be is
+already reports and decision port and AI systems.
+Generally, there's a bit of a lack of trust.
+If you're allocating, have you have billions of dollars under management and you are
+allocating millions and millions of dollars across all these different sectors and
+geographies and different investment opportunities.
+That is not something that you just want to give away and trust an AI system for
+should it maybe even be the best in the world.
+And I think really the yeah, how important and impactful that decision is, the more and
+more impactful it is, the probably the less and less there's more and more kind of worry
+and aversion to giving that trust away to some upon the system.
+I also want to maybe add a little bit, which is that I think in algorithmic trading, the
+feedback loop is very tight and so you have high velocity and high volume of data.
+And so you can make millions of trades and train models that can learn off of millions
+of trades that were happening in the past week to make predictions on the next million
+of trades that happen somewhere else.
+Right.
+If I hit a golf ball, I'll know pretty quickly whether or not it goes in the hole.
+Whereas I think in the decision support systems, I don't really know how many
+investments a firm really makes, but it's just probably not enough to actually have
+enough data to back prop any kind of model.
+Right.
+If you're making like five investments a year on a fund that needs to run for 15 years,
+that signal, I think is just much harder.
+I think that's also probably just a factor of, yeah, what is the velocity and volume
+of data that we have to make better decisions?
+Cause I think if there is a world where we had all the data, we could make a model that's
+better at decision making, but it probably just is the case that it can't be better.
+Yeah.
+I think, and I think the frequency or cadence of that decision making as well, definitely
+as you mentioned, especially if you're an HFT or something, your system is making
+hundreds of decisions a minute.
+And so there it's slightly different than these kinds of massive big capital
+allocations.
+And so it's a bit different from trading than kind of long-term investing.
+And so, yeah, that's definitely something that we see differences in.
+Yeah.
+Thank you.
+Thank you, Nico.
+It's a very interesting talk.
+I have maybe a simple question about, you didn't say a lot about where do you meet
+the user, but I share your frustration with chat interfaces, but at the same time,
+chat interface allows you to course correct easily, as in like you have an ongoing
+interaction.
+What do you do to ensure that the first brief is correct and you get all the
+information you need?
+Any tips?
+And I just want to share something that, for example, open AI deep research, always
+ask you a follow-up question, regardless of what you put in the first prompt.
+Even if you say that don't ask me follow-up question, they will still ask you a follow-up
+question to clarify the big tips like this.
+Yeah.
+I think that the open AI one is an analogy as well, because I think that's part of, I
+think where the SOPs and templates really come in that we don't have in that example.
+I think there's so much kind of variance that can come from starting off with a
+single kind of query or report starting point, or even like the follow-up questions
+that might get asked and your answers to that can all of a sudden completely diverge
+on like completely two separate kind of report outputs.
+And so I think there definitely is this kind of interactivity where reports are a
+iterative process as well.
+And it's not like you one shot a perfect report, but I would say where a lot of the
+initial legwork really comes in is really in perfecting these templates.
+And these templates are like mission critical where they ensure that all of the
+kind of inputs coming in are really high quality.
+And thus the outputs have a much higher likelihood of being also very high quality
+where again, if you have some mediocre or not as good template, garbage in kind of
+garbage out.
+And so that really, there's a lot of emphasis on iterating and improving those
+templates.
+Those take time.
+It's really, again, we see that as really like an edge that each organization will
+have because they will have different templates that they want to apply because
+they think about these processes in slightly different ways.
+I think it would be like a way to structure the brief to your product or maybe
+I'm missing something.
+
+And I can actually, I actually realized I didn't give an example of one.
+So I did actually.
+You haven't, you actually didn't really share how you basically interact with the
+users.
+Maybe if you could show that.
+Yeah.
+So I think what we can, I can show here is an example of a template.
+And while this one is slightly more of a checklist, I think this is the point that
+I want to make.
+And I hopefully this answers your question a bit better, which is here is the kind of
+standardized way that some kind of organization likes to conduct their due
+diligence.
+And so again, going back to that Sequoia example, it's these kind of exact kind of
+queries and or processes that they want to follow.
+It's the way that they do their diligence, which is what we put a lot of emphasis in
+right, because that allows initial output to be very high quality.
+But then as you mentioned, going back to the UX, again, our reports are this
+iterative process as well.
+So after this report kind of output is there, you obviously are able to take that
+as a draft and to improving on it.
+And so there's not just this single shot output that is now, you know, frozen as
+it is, but it is still this iterative process.
+The most high quality reports will inevitably need, but as the reports as well,
+there can be simpler reports and templates.
+This is quite a long one, but there can be simple ones that you can really get right
+on the first time, especially if they become increasingly common and yeah, common
+across all the different kind of users that you have.
+Okay.
+Thank you.
+Let's do one last question with Dave and then we can, I think.
+Okay.
+All right.
+Thanks.
+Yeah.
+It was great presentation, Nico.
+So thank you very much for your time.
+Unless I missed it, I didn't hear the word agent or agentic a single time.
+So my question is, do you use an agentic framework?
+Are you doing anything with the genetic frameworks?
+Cause this seems like it's a perfect use case based on other use cases I've looked
+at, and it seems like every one of the presentations that I participated in, in
+the place I work it's agents.
+So what's happening with agents?
+Yeah.
+I think agents are very interesting because I, there's so much, I think,
+potential and excitement around agents.
+I personally am still not fully come around to their kind of value in production.
+And I think part of the reason is for Ari kind of use case is I still find it.
+There's still too much kind of variance can be introduced with these kind of more
+fully like agentic like workflows and full kind of end to end systems where again,
+you do have this very like standardized kind of procedure that you want to follow.
+And you can get an agent to follow that procedure step by step, but I don't really
+consider that to be like an agent anymore because there's not as much like
+decision making, right?
+It's not looking, Oh, should I go research this or can I go research this?
+It's methodically going through and following.
+Yeah.
+Because you have this so the template, right?
+I feel like that you're, yeah.
+So you're aligning or programming the flow to the templates.
+So that's why it's a good fit because you don't really need the autonomy, right?
+I think what you can, maybe an analogy might there might be is like when an agent,
+a lot of the times must create like a plan for like how to tackle this larger like task.
+But if you're the same agent twice, you could come up with two very different plans
+or there's a lot of variance to that alone.
+So we take that part away from the models, at least to start at least on our current
+system and that kind of is used almost as that, that planning phase is something that
+we work with, with our organizations.
+And then it's much more kind of methodical in that nature and there's less,
+yeah, open-ended and variation.
+And then, so a quick sub question.
+Do you have a language that defines the templates or did you, is it just all just
+the templates we've iterated a lot on?
+We've tried a lot of different things and we have kind of a somewhat proprietary way
+that we like both these templates because they need to both be rag and AI system
+native where your LLM, your agent, your rag system can leverage it, but it also has to
+be have good user experience for the actual end user organization to be building off of
+iterating and improving.
+And so you have to meet in the middle where you let, you know, conserve the system and
+the rag agents, but it can also be very quickly iterated on by the humans as well.
+We're trying to find that middle ground is still something we're still working towards
+as well.
+Yeah, great.
+Thank you.
+And good luck with the manager.
+Awesome.
+Thank you so much.
+Appreciate it.
+Awesome.
+I think that's basically time.
+We nailed the time here.
+You got awesome.
+Awesome.
+Thank you so much.
+I'm going to summarize some of these notes and then post everything on the
+Maven page as usual.
+And I think this Thursday will be the last office hours.
+And then what we're going to do afterwards is just, we're going to keep the slack up
+or to move everything to Maven so people can access it over time.
+And yeah, I think that concludes all the guest lectures.
+Nico, thank you so much.
+It was a really great talk.
+Thank you.
+Thank you for letting me finish up the talks.
+Take care.

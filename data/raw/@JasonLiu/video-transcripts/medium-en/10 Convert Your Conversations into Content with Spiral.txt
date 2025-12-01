@@ -1,0 +1,492 @@
+Start at the top, the title of this is Convert Your Conversation Into Content with Spiral.
+So who am I?
+I'm Danny.
+I'm the general manager of Spiral at Every, I'm based in New York.
+For those of you who are asking, what is Every?
+Every is a media and software company.
+We publish a daily newsletter about what comes next in technology.
+We also build Spiral as software products.
+Like Spiral, we have a few others.
+We offer courses and we also provide AI consulting and training services.
+If you're interested, go find out more at Every, everywhere on the internet.
+But why are you here?
+You're here because you probably want more money.
+And how do you get more money?
+One of the ways is you get more clients.
+And how do I get more clients?
+One of the ways is to prove your credibility.
+A lot of what Jason's talking about.
+And so how do you prove your credibility?
+Well, I think that one of the ways that you can do that is to prove your
+expertise to your potential clients before they've even met you, before
+they've even jumped on a call.
+One of the ways is to have a backlog of content about topics that matter to you.
+And more importantly, matters to your clients.
+It's a lot more impressive to have blog posts and tweets and whatever about MCPs
+four months ago, around the time that Anthropic dropped the protocol than
+today, when everyone's talking about it.
+So what should you write about?
+And I think personally that you don't need new ideas.
+You don't need new insights.
+They're all kind of already here in your head already.
+They're probably already rich in expertise and experience.
+You just lack visibility.
+I would think a bet that you probably spend 10 hours a week talking to clients,
+potential clients, internal meetings, whatever.
+There's probably even gold there.
+And if you're like me, you probably spend 10 hours scrolling onto where
+listening to podcasts, reading other people's content.
+There's probably gold there too.
+But to be a bit more concrete about it, content from meetings and calls, the
+content opportunities in every call meeting you have, what did you say twice
+in that call?
+What did you bring up to multiple clients this week?
+What's something that when you jumped on a sales call with a prospective client,
+they brought up a lot as pushback.
+There's been some really interesting content that you can write from that.
+That, you know, when you get on that perspective call, be like, Hey, I wrote
+about this two weeks ago, check this out.
+I think that's really powerful.
+Content from what you consume.
+Honestly, there's just a world of content opportunities and just sharing your two
+cents.
+Gagson says, right.
+Is that his way to disagree?
+I listened to the all in pod and Chimata drawing about tariffs.
+He had my opinion, but writing content is hard.
+Blank pages are scary.
+Writing can be slow and painful.
+And today, especially with AI, most content like that, it's pretty shallow.
+And you've probably just left with like, if people are going to read this, it's
+even going to do anything for me.
+This is where we think spiral can help spiral helps you start at 80%.
+Instead of a blank page, it helps you take one piece of content and end up with
+10, a tweet becomes a blog post, a blog post becomes a new list, so on and so
+forth spiral helps you create content.
+That actually sounds like you as opposed to just generic VPT for slob.
+And most importantly, the more consistent you are, the more likely your content
+will start to appear in feeds.
+So with all of that, let me actually just show it up.
+We'll do a little demo.
+So we'll start with that first one.
+Meetings into content.
+So I have this transcript between an AI consultant called Danny and a company
+and the guy's called Jason, and you see like in the meeting, a lot of it is, you
+know, talking about what they did this morning and dropping off their daughter
+to school, and we're going to bring it up to spiral.
+Now, the way that spiral works, it's not a chat in first, like chat, you've
+to do a call out.
+Spiral has an atomic unit, which are also called spiraled and it takes in a
+particular type of input, like a transcript or an article, and it turns it into a
+tweet.
+And the first thing that's going to do, you throw it in there, is going to try
+and find what is really interesting in this thing that you've just given me.
+And it's going to turn it into a tweet in this case.
+So if I hit run, I'm moving to look at the transcript, stop buying enterprise
+AI solutions from vendors with fancy demos.
+The best AI transformations happen when you give employees freedom to experiment
+as tools that actually want to use innovation flows from the bottom up, not
+from executive roadbamps and seven figure implementations.
+So there's a lot in this transcript about other things, but it's figured out
+like the most interesting thing here is that companies shouldn't be buying
+expensive AI solutions.
+They should be giving their employees the ability to like experiment and do it
+from a bottom of that approach.
+It's really interesting, but I want to go a little bit further.
+Maybe there's another way I want to write this so I can hit generate multiple.
+But I was going to give you three more tweets, go back to the point of like how
+spiral can help.
+I've already started at 8%.
+I had this meeting, didn't even know if there was interesting content here.
+And I've already got like, it's really interesting idea that could be through a
+tweet, the AI strategy is backwards.
+Don't buy million dollar enterprise solutions with fancy demos.
+Instead give employees budget to experiment tools, actually when you use.
+So I really liked it.
+I think this is pretty cool.
+So one of the things that you could do is literally just copy this, send it out
+to Twitter, see how it does.
+If it does really well, the next thing you can do, not going in from taking one
+piece of content into multiple is to turn it into a blog.
+And as far as we have a public library full of different things.
+One of them is taking transcripts into blog.
+So I'm going to throw the transcript in here.
+And I'm also just going to throw in the tweet at the bottom.
+It's going to add it to the bottom.
+And say, write a blog about the idea at the bottom and let it run.
+It might take a few minutes.
+I'm stuck in.
+And there you go.
+It's going to start streaming it.
+Now the idea is it's not going to be perfect.
+You need to spend a little bit of time with what it is, make it sound like
+actually you make it actually say the points that you want to say the more
+that you're asked for it, the more that it's just going to come up with stuff.
+But already I started with something that I could tweet, see how it does on
+engagement wise and just keep going from there.
+But that's the main one.
+Now, maybe I want to go in here and change this a little bit.
+You can come in and you can edit it.
+You can make sure that it fits.
+Are you all right?
+So that's the meeting, the transcript one.
+Next is podcasts into content.
+Now, again, I think everyone's considering the internet and I'm going to take this
+Lex premium podcast with the CEO of the PexState and throw it into that same
+spiral, it's going to do the exact same thing.
+It's just going to try and find what's interesting.
+We'll generate multiple.
+This is interesting.
+The real breakthrough in AI won't be bigger models.
+There'll be decoupling reasons from facts.
+We don't need AI that memorizes everything.
+We need AI that can think deeply with access and information.
+That's the trillion dollar insight.
+But maybe I actually want to make it more about perplexity.
+Maybe I actually listen to the podcast and I have a hot take that I
+want to make about perplexity.
+Maybe it's most people don't understand why perplexity is raising fat rounds.
+Making a long term that you don't get.
+Let's see what it comes up with.
+So then I took a podcast.
+Maybe I didn't realize that there was a way for me to write something here.
+And now I can like put this out on Twitter and get some, just telling people
+that I'm paying attention to these things.
+Again, you could do this for all sorts of things.
+Here is Shopify, sorry, the CEO of Shopify put out this piece yesterday about how
+the whole team needs to start using AI.
+Just going to copy and paste it into there.
+And already I've got something that could be interesting.
+Maybe I want to say the same thing from before, from that meeting.
+Maybe I was saying in that meeting, it should be a bottom-up approach.
+So AI in companies should be bottom-up approach.
+Not expensive vendors, but team members experimenting.
+Okay.
+And so maybe I actually like this to begin with.
+So let's start with that ending.
+And now I can chat with it, start improving it a little bit.
+This is how you actually transform a company.
+Let's make that hook better.
+Bring in.
+Oh, actually kind of like that.
+No, let's do.
+And also, yeah, I'm just going to tweet that because I like it.
+Hey, the next thing is you can just find content on the internet.
+A lot of you may have seen all the stuff going on about rippling a deal.
+Here's a tech urge piece.
+Maybe I don't even care about reading this.
+I just want to see like what is interesting here.
+I can just throw the link in, have it come up with something interesting.
+So my actual opinion on all this stuff is that startups focus on being good,
+not being great, even not corporate espionage.
+Okay.
+They didn't really listen to me.
+No, let's not do it's a distraction.
+Yeah.
+And I want to tweet that out.
+And finally, I might be reading something that's actually paywalled.
+So this is a great piece that we put out a couple of weeks ago about the founder
+of Nvidia is $120 billion version.
+But I read some of the articles and I've raised actually paywall.
+I've got, we have a Chrome extension.
+So if you download this viral Chrome extension, you can add, use this on any
+type of content, whether it's health copy and paste, or it's behind a paywall.
+And it will ask you in the Chrome extension, what is the opinion that you have?
+And my opinion from this is that, this comes from trying things out, being
+lucky and whatever else is in the article.
+Okay.
+So I really liked that.
+Optimus get rich skeptics, right?
+Newsletters about them.
+So start with that.
+And so as you can see in like what?
+Five minutes, I think we made a couple of tweets based on a meeting, a couple
+of things I've been reading on the internet and a podcast, you do this more
+frequently, you do this with more meetings, you do this with more tweets,
+more blog posts that you're like just consuming, you've got content for days.
+And the whole idea is you've done.
+Try it out, see what sticks, see what resonates with your audience, but more
+importantly, see what actually shows your prospective clients like, Oh, they're
+paying attention to what matters to me.
+Now you might be looking at all of that and say like, Hey, none of that sounded
+like me, none of that sounded like what I want to say.
+And so that big part of spiral is making it sound like you.
+And this is where making your own spiral comes in.
+So when you go to the UI, the top left corner, you can create your own spiral.
+It's going to ask you what's your input and what's your output.
+So my input is going to be transcripts and my output is going to be blog posts.
+Now I'm a real big fan of Seth Dodin.
+I think his blog posts are actually tweet worthy.
+So all you have to do is come in and just give it a couple of examples.
+It could be examples from your content.
+It could be examples from content you really like a bit of both, and it'll help
+spiral, take whatever you give it and write it in the same tone of voice,
+format, structure, and really try and get at the, what is the emotional
+point at the end of it?
+So we'll throw a couple in and we'll let it run.
+Now, just like any good cooking show, I already did this beforehand.
+So here is the Seth Godin one and let's see what maybe Seth wants to say about
+perplexity.
+So this is completely different, the same podcast, whereas before we were saying
+like, it isn't about big models.
+It's about something else.
+Like here it's about answers.
+And again, now that we've got this format and this tone of voice, we can start
+laying it in our own opinions.
+It's not about answers.
+It's about curiosity.
+And letting people go down rabbit holes, not getting them to click on an ad
+straight away.
+And I'll show you one more, which is why don't we tweet like Jason?
+I made a Jason Lou Twitter and we'll throw in the exact same podcast.
+And it'd be cool.
+I used four of Jason's recent tweets.
+So it may not exactly sound like Jason, but it sounds like what he's been
+recently saying, but I wrote in there.
+I'll revamp it because chat bots keep hallucinating and he needed health
+insurance, the solution, false AI to cite everything like academics do in papers.
+Google's trapped in their ad business.
+Well, the best you focus on is discovery.
+Your margin is my opportunity.
+Okay.
+And we'll do one more test with this, which is we'll take that transcript from
+the meeting that we had earlier and throw that in.
+Financial services execs always wants to buy some massive enterprise
+AI solutions for vendors.
+Your employees know their jobs better than you do.
+Give them AI pills and let them experiment.
+Help down AI app permission.
+I'm thought enough, but don't mind.
+So I think.
+Drop that.
+That actually sounded like a pretty good Jason tweet to me.
+Cool.
+So the two other things are important is that spiral works really well when you
+give it examples of how you sound or how you really want to sound, but you may
+not know exactly how you sound.
+And this is where the public library is really important.
+So there's public library full of tweets, LinkedIn posts, blog posts,
+newsletters, everything, and maybe you want to start using it.
+Then after a while, you want it to sound like you.
+So one of the most important things you can do in spiral is you can
+actually clone a spiral.
+And you can make it your own.
+So here's the plan.
+Now, when you go in, you can actually see the set of examples that are in here
+that like make the spiral, what it is.
+And then maybe things that you don't like, like I don't like that.
+This starts with research and all caps.
+So I'm just going to remove it.
+And I'm going to remove this one too.
+Now I'm going to start adding in some of Jason's tweets that way under the
+hood, the model is going to try to, I lost it.
+My bad.
+There we go.
+Take what already makes it great, but hone it more towards what you're interested
+in.
+Now that's something that's something you can play with and that's kind of the
+end of the demo.
+Now you might be asking the question, can't I just use chat, GPC or Claude?
+Yes.
+We're just a wrapper.
+We're using Claude under the hood.
+The reason why you would want to use something like spiral instead, there's no
+prompt engineer needed, just dropping your content and go.
+If you spend the time to give it examples that make it, you know, create
+an actual spiral, it'll sound like you every single time and it'll learn and
+match your tone of voice.
+And the most important thing is that when you start scaling and you start
+realizing that you want to make more content and you want to delegate this
+to somebody, it's much easier to delegate a workflow.
+Hey, go to spiral, click this thing and just copy and paste as opposed to,
+Hey, go to chat, GPC, paste this exact prompt, then paste the transcript
+and then do this.
+It's more about efficiencies in terms of the workflow and being consistent.
+Final takeaways, prove your credibility before they've met you.
+Don't start from a blank page.
+You those going on in your life, meetings, other content to get things going
+and make it easy for yourself to be consistent.
+Use spiral, use AI.
+That's the most important thing.
+Thank you.
+We can jump into some questions, but check out spiral.
+There's an unlimited seven day trial.
+I get 20% off with an annual sub.
+If you use the code JX and LCO, check out every and then follow spiral.
+Follow every, follow me.
+Thank you.
+Nice.
+Now I have tweets that sound like me and promo can be used after much overhandle.
+I also want to love to sort of share one thing on my side as well from using spiral,
+which is the fact that I think oftentimes now I will write my own blog posts or I
+work with the transcripts and mostly spend a lot of my efforts in a single blog
+post.
+And then what spiral has really helped me do is to do two things after in the
+blog post, like promoting it almost as a different kind of job.
+And now it's like, right, I can have a couple of different tweets promoted at
+LinkedIn Pope promote it, but the goals are still have a really good blog post
+out, right?
+That's the goal isn't really just a ship slot.
+I will say the other thing that has been really helpful is oftentimes when I wrap
+up a meeting, I don't really have that much time to think about what were the
+interesting ideas that came out from that meeting.
+It's like, okay, well we had this point about hiring and this mistake that we
+made, we made a point about like prompt engineering.
+I don't really, I don't really know what is worth writing right now, mostly
+because I've just gotten busier.
+And so one thing that spiral has helped me do is if it can just produce four or
+five tweets, I will just put them in the queue and I will just sort of schedule
+them in and then post them.
+And what will end up happening is it won't be the case that all of them have
+the same kind of engagement.
+Usually one of them will get 3000 views.
+The other two get like 500 and they go, okay, well clearly the people reading my
+stuff, they're resonating with this idea around hiring.
+Maybe there's something more there and then I'll go and do deeper work and
+actually go figure out like, what is the hiring blog post I should write about?
+And so Spark has helped me basically just sent be a sensor to sample the, you
+know, the internet, the internet can tell me what they're interested in reading
+about and then I can go produce that article.
+And then the issue then is, okay, once I have something I think is important for
+people, people to read, how do I meet people?
+How do I make sure people click it?
+And the punchy tweet for me has been a really valuable tool just because it
+kind of helps me set the groundwork of a funnel that actually works, right?
+If I write a blog post and then the tweet is just like today, I had a
+conversation with a friend of mine and we talked about hiring and how it was
+really hard, people don't really end up kicking the blog posts anyways, and it's
+kind of like a unproductive use of time.
+But oftentimes the, the punchy tweet has helped me just like get the traffic to
+the blog posts and if somebody actually reads that and that's kind of one of the
+things that has been really big for me is just, you know, understanding that the
+work oftentimes won't speak for itself these days and you do need a little bit
+of a push to sort of get people to click.
+And that's kind of something that's been really helpful for me and Swarov.
+Yeah.
+Yeah.
+Yeah.
+You'll see that a bunch on my Twitter actually, like, yeah, like I do have some
+like spammy tweets and then ideally I have the blog post that has a consequence
+of taking all these, all these measurements.
+Let's go through some of these questions are, I think are covering the, your way
+to create these spirals yourself, but this last question I think is also
+something I'm very curious about because it would really help with my workflows,
+which is will you add the ability eventually like publish directly through
+like an X or LinkedIn?
+I think that roadmap looks like in general, I think is a question
+people are interested in.
+Yeah.
+So I'll answer that question first, cause it's easier and then we can go
+into what is the roadmap.
+Yes, eventually most likely more like to do what you did MCPs with tools
+like type fully or hyperate and like just have it go out like that, as
+opposed to reinventing the wheel.
+There's already these other tools that do scheduling content calendar, all
+of that stuff really well.
+And personally, I'm a big believer in focus and just like work on core
+competencies broadly to get involved with like, what is the roadmap right now?
+Spiral takes one thing, gives you another, but you're kind of stuck
+with what it gives you.
+So the two things that we're going to stop tipping, more sorry, the two
+things that we're going to ship coming soon, one of them is a feedback tool.
+I'm actually going to show it off.
+It doesn't work.
+Don't try to use it.
+But sometimes spiral put out something, but it doesn't even know if it's good.
+So we have this tool here where you can actually throw it a tweet.
+And so I throw it a tweet that I was like thinking about making earlier.
+It's going to ask you some questions.
+And it's like, okay, then I'll see context of what it is.
+You're going to put it out and then it's going to like actually evaluate your
+tweet, like that's your hook and like work with you a little bit to improve the
+tweet and we've been using this a lot, like take some of the stuff that spiral
+puts out and just like double check it.
+Or even when we're writing around to it, it's just be like, wait, am I even
+writing something that's good here?
+And so maybe this UI and this like way that it'll try now isn't what it'll end
+up in the end product and we'll actually bring this back in to the way that
+spiral works and have it think another time before it generates content.
+But the idea is to like make it more of a partner for you to like write content
+as opposed to, you know, just, Hey, give me a tweet.
+It's like, Hey, give me a tweet.
+And let's actually think about for a second, what is it that I'm trying to say?
+And is it good?
+And maybe it will prompt you to all of those things.
+Like, Hey, here's the meeting.
+This is the interesting idea.
+Is this what you want to talk about?
+But be a little bit more, you know, I hate to use the word, but a little bit
+more agentic in that sense.
+Yeah.
+This reminds me of the other example where I think spiral has a really good
+like newsletter introduction.
+Those have been truly helpful where it'll be times where I'll have like two or
+three guest lecturers come in and I want to send the email to tell everybody like,
+Hey, there's been these like five really great talks.
+And then again, spiral is able to just help me write a little intro for each one.
+It says like, this is the thing you're going to learn.
+This is the thing you're going to learn.
+And again, you know, I think if I wrote it by myself, it would just be Danny
+from far, I'll talk to about spiral.
+Danny from every talk about spiral.
+Take a look.
+Whereas again, it'll just capture a lot of the work.
+Gabriella asks, like, how does it handle other languages?
+That's a great question.
+So we have a lot of people who use it in a lot of languages.
+So like English is number one.
+French is actually second, which is surprising to me.
+And then I'm also super surprised, but I'm seeing a lot of Chinese
+and Japanese being used in there under the hood.
+You know, like I said earlier, we're using Claude, so we're only as good as Claude is.
+But if you give it examples in your language, it will then try to replicate in the language.
+You can also say like, Hey, make this Spanish and let's see what it does.
+Write this in Spanish.
+Now, unfortunately, I only speak English, so I can't comment on how good the Spanish is,
+but we have like the second most used language on spiral is French and then it's Spanish.
+But I think it's like most of these models, very formal and you may have to go in there
+and like write it yourself and then approve it.
+Sorry.
+Oh, I guess another question on my end is like, are you able to fork or share spirals?
+Like I actually have, I used to have a spiral that wrote, writes proposals for me.
+So it was a spiral, I had a bunch of different example proposals and it would take the first
+sales call and turn it into a proposal with pricing information based on the conversation.
+Is it possible for you to create one and then share it with the public or how does that work?
+Yeah, top right corner, very similar to Google Docs.
+I can share it with my team and we have like everyone on every right now in my team.
+We can also just share it with the public and then you can copy a link and you can give
+that to another spiral user and they can use it to their health's content.
+In terms of forking, that's what the cloning feature is for.
+You could just clone it and be like, okay, I like this, but actually one of the things
+I want to change is this Seth Godin thing.
+I don't like it anymore.
+I want to use something from somebody else on my own stuff.
+Awesome.
+Let me just double check if there's any other questions.
+If there's any other questions that are not on the slide, if you just say raise your
+hand on mute and then we can do a couple of questions.
+We'll probably wrap up in 15 minutes.
+One second.
+I can't see everybody.
+Well, in that case.
+Thank you so much, Danny.
+I actually learned a couple of things.
+I didn't know there was this extension.
+I think that was going to be really helpful to help me promote some of my own blog posts.
+I guess my last question is, will you ever handle videos?
+Probably not.
+Back to the point before, I think we're going to focus on written content.
+It's still a world for us to do in making sure that we're getting people to write good
+content as opposed to slow and that plus videos.
+I think it's, you know, we'll end up just making rubbish tweets, rubbish.
+Yeah.
+Yeah.
+Makes sense.
+Makes sense.
+I'm excited to get my hands on the spiral writing coach.
+Awesome.
+Thank you everyone.
+Thank you, Danny.
+Well, take care of them.
+See ya.
+Bye.

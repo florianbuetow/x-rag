@@ -1,0 +1,863 @@
+Good morning everyone.
+And I've discovered something very interesting about Claude.
+Wait, let me show you the, let me send you the tweet actually.
+I've been having Ivan take a look at how structured outputs
+changes our ability to reason.
+Okay.
+And basically, 4.0 effectively is like pretty invariant to the
+name, naming of attributes, but Claude is very sensitive.
+So if you do reasoning, colon, list string, GSM 8K is like 75% accurate,
+but the benchmark is 96 or like correct answer.
+String performs better than answer a string.
+That's not necessarily bad reasoning.
+You get what you asked for.
+Yeah.
+Well, it was like a 4.0 is like pretty resilient to that, but I was surprised
+that, and I think is something to do with how anthropic is trained, but
+across the paintings.
+Yeah.
+I feel like it's sometimes hard to reason about what gets lost when you train
+on like a subset of data, and now you're just like in a part of the space that
+hasn't seen as much training data and yeah, how much of what it's learned
+elsewhere actually gets moved to that space.
+Now, I want like correct step-by-step reasoning, colon, string.
+I'm going to do some bootstrapping on the evals to see if I can get
+some like distributions up.
+But
+you got to do it.
+I mean, it'd be super interesting to, not super, it'll be if you made a stretch,
+slightly interesting to have names like answer that will save 1000 kittens or
+answer that will get me a $50 tip.
+Yeah.
+Yeah.
+It's outrageous.
+Yeah.
+That's not ideal, but I wish I could say I was surprised.
+Another thing I've seen people claim to do better is rather than
+generate the JSON right up front, they'll generate natural language output first.
+And then have a translation step from natural language text to JSON just
+because for the majority of the training that has been the output form.
+And it's more accurate to go from a natural output to JSON than straight
+away solve the task with the JSON output.
+Totally agree.
+I think that's been sort of historically our beliefs.
+And so this, this set of evals is my goal is like these set of evals will
+show that it doesn't matter or figure out under what circumstances it does matter.
+And so it looks like for 4.0, it doesn't matter, but for Anthropic, there
+might still be some, some lack of training data, which makes sense because
+4.0 has I think been fine tuned with way more JSON structured data, or as
+a clod wants XML and there's a whole like step that people like Anthropic
+is kind of secretive about, so there's some other rules.
+Yeah.
+It's very interesting.
+Hopefully in another year or so, all this black magic stuff is going to dwindle
+down and then we would have like more reasonable expectations on how these
+things should behave, but right now it's, it's quite a bit of tricks to
+get something really good out of it.
+But it can dwindle either because we improve the model or because we just
+learn the tricks and they no longer feel like black magic, or they can get
+integrated into the system prompt so that whatever weird tricks we do get
+applied by default in a way that's invisible to us.
+Yeah.
+I was just hoping it's going to be the first one, which becomes like, so
+either by training, getting more of these use cases into their fine
+tuning sets or whatever, they just become like reasonable creatures that
+don't have to be enticed with a hundred dollars or kittens and stuff.
+Yeah.
+I mean, you also, I mean, the thing that causes them really to direct how they
+generate output in large part is the preference optimization step and different
+people have different preferences.
+And yeah, who knows if the thing that you want is actually the thing that
+other people have wanted, wanted enough that even if they worked perfect as
+they were trained, like maybe they would still do things that we don't like.
+Yeah.
+To, to add to this point too, we I'm finding that even with a couple of
+few shot examples, few shot examples with JSON structure gets you effectively
+the same evals as what, like what Claude and, and open AI said they are.
+So if asking for JSON drops you 2%, having five examples, but he brings you
+back to the 96% that they reported.
+And so it's kind of promising that like, it's still steerable.
+But then are you, yeah, it seems like then you should compare it to what
+would happen if you had you should few shot examples, but not structured output.
+I would just use instructor to structure it.
+And then I didn't test that.
+Cool.
+I mean, I don't think there's that many people, so we can actually
+keep this pretty, pretty casual.
+But if anyone has any questions first, we can jump into that.
+I think this week we mostly talked about fine tuning and thinking about collecting
+data, then we had a VTours talk this morning.
+All right.
+See you guys later.
+So one of the, before this course started, Jason and I said, at least
+aspired to have to help people who had already started projects.
+And we talked about going from MVP to really viable product.
+So we've got few enough here.
+I'd be interested in a little sort of like for the five of you, where
+are you in terms of projects?
+Do you have one that you're, that you, that you're working on?
+Where is that in the process?
+So I've been working on, in Adobe on the AI assistant that we have.
+And, and so we already have a release product, it's been out in the market
+for a while now, and we have been obviously eye-tracing on both the quality of that
+system, but also adding capabilities and support for languages and so forth.
+So, so there's a, like lots of tracks going on and there's a lot of activity
+and different directions you want to take the product, improve it, get
+learned from feedback, those sorts of things.
+So it is, it's, it's been quite a journey.
+And some of these things that have been discussed, like we also faced things
+like around routing and the trade-offs with routing, how, how it impacts accuracy
+because if the router is wrong, then then onwards, it's a, it's a challenge.
+And see to a whole lot.
+Yeah.
+So I think so far the course has been really practical.
+The one thing that is a bit of a challenge that I'm not sure has been
+covered is that we work with documents and those are really, really general,
+like the kind of things people want to get out of documents and the nature
+of documents themselves, like the domains, the lens, the language,
+the constructs that they have.
+And in order to build something that works for a large group of people,
+it's a really broad space to like slice and dice it into like small, like small,
+either based on constructs or based on kind of questions people will ask.
+It's a really massive space.
+And so that to some extent, obviously the corresponding part of it, the
+evaluations of those things have been a bit of a challenge as opposed to like
+something that is, they like give a more or less a closed system and compartmentalizing
+the kind of questions people are going to ask or the things that you are expected
+to support is relatively narrower versus with documents, anybody can bring their
+like tax form or their contract or whatever else and have a very different
+kind of expectation on how the system should behave or what it should be able
+to do, that sort of thing.
+So that is, I think the only the biggest challenge I would say, as opposed to
+the other examples that were considered in this course.
+Do you, do you have an ontology for document types so that you can break down
+and say, maybe I would imagine it's even like a hierarchical ontology, but like
+X percent are forms and 20% are publications and do you have some ontology?
+Yeah.
+So both on the, on the document type, like both with respect to like the
+semantics, also the structure, like what kind of a document is it?
+Like you can have presentations in any domain.
+You can have like forms in any domain.
+So there's a domain sort of thing.
+Then there's a more like a layout based ontology.
+There's obviously ontology on question types, like the kind of questions
+that people are asking, but there's also stuff about like, what are they achieving
+to do, right?
+So a lot of people are trying to, let's say, understand something better.
+A lot of people are trying to create something out of what they are reading.
+Right.
+So, so there might be different kinds of end goals in mind that the people
+might have as, as they use the system.
+So, so yeah, all those things exist.
+The problem is obviously the combinatorial explosion.
+And by the way, I think the other big one is languages.
+Like, is it an English document versus French?
+So that's another big one.
+Length is also a pretty big one because some documents could be just like, most
+documents are less than like 10, 20 pages, but they are quite a big number of
+interesting documents that are running to hundreds or 200 and so forth.
+Plus is it a single document they want, or it's like a group of documents.
+So there's, there's like an dimensional of this complexity that kind of piles up.
+And, and we do try our best to cover good ground with respect to what's the most
+common ones and so forth, but it is still a challenge, like even for automated
+things, I mean, to what degree can you even attack a small fractions, for example,
+is like French contracts that are greater than three pages, like just identifying
+some real world data like that is hard.
+And obviously we don't expect LLMs to be able to generate coherent things in that
+very niche domains either.
+So, so there's data challenge, there's evaluation challenge.
+There's also the generalizability challenge that to what extent will the
+system even kind of usually does tend to hold up, but it's kind of crazy that
+it's through Adobe.
+It really is just all PDFs.
+Yeah.
+I didn't mention one other thing, scans is another one that that gives me behavior
+once in a while with all the OCR works and also tables is another one, which is,
+yeah, sorry, I won't keep going on, but, but there's a, like a 10 of complexity
+even like just, just with documents.
+Yeah.
+I'm surprised there hasn't just been some kind of announcement that says like
+Anthropic and Adobe are partnering up.
+Cause I think a lot of what Anthropic has been doing has been around this
+like generic processing where one workflow they demonstrated was having
+Opus write prompts and being able to map, produce Haiku tasks over many, many PDFs
+or, you know, being able to take screenshots and say, oh, they only map
+Haiku across all the PDF images and sort of find the right information.
+Yeah.
+I guess maybe in your situation, especially in like the Adobe situation,
+really there might be a good reason to think about models like copali and
+stuff like that, because everything is just ultimately just an image.
+Right.
+I think that language component is going to still be relatively unsolved.
+I really don't have any even inkling as to how to address that without
+addressing the foundation model.
+Yeah.
+And those are all like good directions that some of them we have been looking at.
+Like I last I checked, I think it's primarily English only also the license.
+I don't think it's very friendly, but yeah, but yeah, those are really good
+directions and I think the thing we are on, right, the path we are on, I think
+it'll just keep getting better as the foundational models improve.
+So that's a good situation to be in, but there's all this variability of when
+it's going to land and what works it will bring.
+Like GPT-4 has not been all like awesome.
+Like it has its own twists and turns to get, I think some of them were also
+kind of mentioned by other participants in this course.
+So yeah, so there's all of that, but yeah, it's just part of the game, I guess.
+Oh, definitely.
+Matthew, did you want to...
+The question was you guys wanted to know like where we're at, what we're building.
+Yeah.
+So we are also operating on documents and we're kind of creating a pool of
+contexts that people can use to be productive, if I can just state that simply.
+And oh, I lower my hand.
+Sorry.
+Yeah.
+So that's kind of what we're doing.
+We're pre-MVP even, we're just like prototype and our RAG is the RAG that
+you would implement if you didn't really know much about RAG, it's like very,
+it's like, I mean, we've done, one thing we've done is a lot of things from
+scratch, like we're doing our own processing of Markdown, our own parsing of that.
+We did some TV and film scripts and stuff, and that had its own logic and all that.
+And then vector similarity search.
+And, but every week that passes in this course, I get more and more frustrated
+because I see this robust approach that you guys are offering us and I don't have
+the time, I haven't, I've been so busy, I haven't had the time to actually do it.
+But I see it all and I see it, I'm like, yes, yes, yes, every week.
+And I want it so bad, but just we've been, we're doing investor stuff and I
+had just been so busy.
+So my apologies as a bad student to you guys, cause I know what you're
+offering is really valuable.
+So yeah, that's where we're at.
+And one thing that I have a question about is like, what are some strategies you have too?
+I started to work on some of the notebooks and an experiment with kind of translating
+what I learned there into our own synthetic data and everything.
+But like, how do you keep that close to your actual, your actual production
+implementation or like it's our prototype implementation?
+Like those are some strategies I'd like to ask more about at some point.
+Cause I feel like I can model this.
+I can do it in Python and like for chunking or whatever, like I want to use
+what we actually use instead of some copy in Python, something similar.
+So that's kind of where I'm at.
+And I feel like it's like holding me back a little bit because I'm nervous.
+I'm like, I don't want to get so into this that then I have to figure out, okay, how
+do I actually make sure that my chunking these different things we're doing
+resembles what we're actually doing?
+Yeah.
+I mean, really the machine learning data scientists in me mostly thinks about sort
+of what kind of logging do I have in place and does that logging give me the
+right shape of data, right?
+So yeah, our examples are in Python.
+We have our own like search tools, but really the thing that matters in the
+first sort of two weeks is going to be, we need to somehow track a string and we
+need to somehow track a list of chunk IDs.
+And our only assertion is whether or not the chunk ID that we care about is being
+returned in our search system, right?
+So as long as in your prototyping, you still build some unit that retrieves
+chunk IDs and tracks that somehow.
+That's where you can say, okay, well, as long as I send this to a
+dataset and brain trust now, maybe three weeks from now, I'll finally have time.
+Then I can start doing this analysis offline.
+We should be having chunk IDs when we do this returning the results, because in the
+next step we might want to do re-ranking and the next step after that we might
+want to do citations.
+And so we're never really in a position where we would want to ignore the tracking
+of that information, right?
+So I guess my follow-up is like why, like in this example of doing synthetic data,
+why couldn't we just say, let me randomly sample some chunks from my database,
+generate a question, and then pass that question through our prototype system?
+Like does our system not return chunk IDs?
+Right.
+That because we've made a simplifying assumption.
+And if we don't return chunk IDs, how could we think about citations or building
+UI to collect citation data in the future?
+But I would mostly focus on the abstraction of just like, what are the
+logs I have and what are the artifacts I'm saving, right?
+And then in terms of the implementation, yeah, I do agree.
+Like we should almost always be just hitting something that looks like
+production, whether it's staging.
+We really shouldn't be sort of building a thing in JavaScript and then having
+some Python code that does like lookups in LanceDB, if that's not what we're using.
+That drift is going to cause huge issues, right?
+So for example, is it, is it kind of a good practice if we do, we're using PG
+vectors and if you do a vector similarity search and we do that in an API route,
+for example, or in an edge function on super base, you would do that same
+implementation, a very similar, just the using the same cosine distance, but use
+Python and that would be acceptable.
+Like that as long as it's the same basic formula for like doing the cosine.
+Ooh, I mean, at a large enough scale, the implementation does change how you're
+recalling, I guess the question is like, why wouldn't you do your tests in PG
+vector too?
+Well, we would, but I would imagine like we would be using Python to do those
+tests and using the same function, same approach to getting to doing that, that
+similarity.
+Oh yeah.
+Yeah.
+The Python code would just hit PG vector and then, yeah, I think that's
+definitely the right way of doing it.
+And that's a common practice.
+Like we say like, okay, these engineers are building this app a certain way.
+We know we just need to make a Python version that does that cosine similarity
+search similar in the same way.
+Exactly.
+Yeah.
+We just want to make sure that it's not in production.
+We don't like run tests and like slow down prod and some like really
+straightforward stuff, but
+I started looking into something called the observable framework.
+Have you, have you heard of that?
+I feel like there was a couple things called observable, like the JavaScript.
+Yeah.
+It's like they have JavaScript notebooks.
+Yes.
+Yes.
+Yeah.
+So like, and they also have something called the observable framework where you
+can make like data-driven apps, data apps.
+And I was hoping that could be a way that I could bridge the gap between like the
+Python world and our app and kind of pull on some of the same resources.
+We have this monitor repo that like we use all kinds of packages and stuff.
+And I wasn't able to get like the JavaScript connection really to how I
+think it could be, but I don't know if you guys have any idea about that or
+something similar that would kind of let me bridge that gap.
+So for, for some of the work that I did with Limitless, all of our
+tests were in JavaScript.
+It was just running a Node.js.
+We like, I mean, for, for us, like the app was in Node, but our tests, I just
+like ran in Bun because it was easier just to like run test.js files.
+And then all of our tests ended up just being like jests.
+And then as long as like for Limitless, we used a vendor called Gentrace at the time.
+But again, it's the same thing, right?
+Like it would give us an API that says, okay, let me fetch a data set.
+Once I had this data set of question IDs and chunk IDs, let me loop over each
+question, make an API call to Postgres, get the chunk IDs back and do that
+comparison.
+And then when I get those scores, you write them back into Gentrace or to
+BrainTrust and that like the, the, the observability, the data set, eval
+management stuff that can be pretty much like language agnostic.
+I wouldn't force yourself to use Python if, if you already have a good
+monorepo, it might make sense to just have some kind of.
+Yeah.
+Yeah.
+Yeah.
+A question that I was like, okay, should we, cause I like the idea of staying
+in Python in some ways because LanceDB, I didn't see they have, he mentioned it
+with TypeScript API, for example.
+And I'm pretty sure they do.
+I think the, the annoying thing, which is a very specific technical detail is
+JavaScript does not have good support for arrow format.
+Like you just don't really like often save tables.
+Right.
+Exactly.
+Yeah.
+But I think the solution is you just kind of, you write the data to one of
+these tests, testing for modders like Gentrace and BrainTrust.
+And so what it just looks like is you just make one get request to get the
+data set, and then you write a bunch of post requests to write the individual results.
+I wouldn't let the availability of, I wouldn't let the choice of what database
+you use drive the rest of your stack.
+Like the difference between PG Vector and LanceDB is just not great enough for that
+to be the thing that shapes what language you use or something like that.
+I think you should figure out, do you have developers who like writing
+JavaScript or developers who prefer Python or that you want your friend
+and developers to be able to switch over easily to work on your backend
+or you don't care about that.
+And I would, I would use that as how I determine my language.
+And then you can make PG Vector or LanceDB or Chrome or whatever else work.
+And most of our, like all of the workflow can be run on almost any of these.
+Right.
+And so then the actual implementations of these flywheels, then that is,
+it can be whatever you want.
+Right.
+I mean, yeah, I think, I think that's kind of the lesson that I'm taking here.
+Yeah.
+Yeah.
+I wouldn't really like marry ourselves.
+So, okay, we have to use LanceDB or have to use Baintrust.
+Right.
+A lot of these are just tools.
+Again, like the abstraction I mostly focus on is what are these test data
+sets that I can preserve because those test data sets are language agnostic.
+Right.
+I can load that question, question string, chunk ID pair.
+That's, that's saved in Postgres.
+I can load that in JavaScript.
+I can load that in Python.
+Right.
+It's just ultimately going to be what languages do your, do people on your
+team feel comfortable with.
+And the benefit again, is like with these new observability tools before you
+might say, well, if I do it in pandas, I can do data analysis and visualization,
+but now they're, they're usually handled by other vendors.
+And so even that isn't much of a constraint.
+Yeah.
+Okay.
+I would hate to sort of have to have the, have your team have a go fully JS
+modern repo and just some random like slash eval repo on GitHub.
+Right.
+Cause then what's going to happen is chances are today things are in sync, but
+six months later, someone joins, someone leaves and that, that, that maintenance
+of that repository is something that might fall behind.
+Yeah.
+It's like almost when you think of building a new feature, the first thing we
+should be thinking about ideally is to add in some evals, build a feature out.
+It's almost like thinking about your unit tests, right?
+Maybe you think about it that way.
+It wouldn't make sense to have unit tests in Python if your
+application is in JavaScript.
+Right.
+So you're the type like build, start building your evals right alongside your
+feature.
+Yeah.
+Yeah.
+Like in the examples before it's like, Oh, the team says we needed to be, have,
+we need to have better image search.
+I'm going to just hunt down the product manager and tell them to find me 50
+examples of things that should be returned.
+I set that up, right?
+We already have the question image ID set up, but we don't even have a search
+engine yet, but then when we build one, we'll go, Oh, it's like 15% accurate.
+This is terrible.
+We really have to invest a lot more effort into building this out.
+Yeah.
+I can go next.
+So I think I've already mentioned like what I've been working on.
+So we are mostly working on like customer feedback analytics and building a chat
+application or a system on top of it.
+It's already live in production, but we still have it in beta.
+We haven't recorded and said, it's ready for production use cases.
+Because we feel like it does mess up a lot.
+Sometimes like there are corner cases, which you don't do a good job on.
+And it's a bit slow.
+So those things need to be addressed before we can put it in production and
+say, okay, this is like ready for use, but everyone has access to it.
+So it's like an open beta and everyone is still using.
+So we do get feedback from it.
+The thing we're struggling with right now is like figuring out what
+are the issues that are happening.
+So I feel like we are not spending enough time looking at the data in a sense,
+especially in terms of like the production use cases that are happening.
+And that is something that was quite insightful from yesterday also that
+the VITROS team basically spends time and just sits and goes through
+the production runs just quite nice.
+So I was thinking that we can also adopt something similar.
+We could do it async or synchronous, but try to look at the data a lot more
+and see what's going on.
+Other thing I was curious about is how do you guys think about drift detection?
+So period of time, the user pattern change and the questions they are
+expecting you to answer will change as well.
+So how do we, the system where you're able to capture those kind of
+nuances over a period of time?
+I mean, I can try to answer a little bit only from my experience from the
+e-commerce side of things where, you know, because we had all these different scores,
+we would have real-time monitors of sort of the average COSIN distance or the
+average re-ranked distance across different query segments.
+Right.
+And so in the e-commerce sense, we know what the average probability of sale
+prediction is based on COSIN distance is across multiple departments.
+So we just have like a time series of like, this is men's pants and this is
+women's dresses, and this is like everything that's red and this is
+everything that's like down or whatever.
+And we would have like seasonality trends and we could monitor.
+And then what we just had said was, okay, if there are significant jumps in that,
+that's one way of thinking about segmentation, thinking about drift, right?
+It's like, has the scores, if the model is fixed, has the scores drifted?
+Right.
+And then with the same work, it's like, okay, again, it's like, okay, are the
+average number, is the average image similarity dropping over time?
+If that's the case, has inventory changed or are the queries different?
+How could we do some segmentation and figure that out and stuff like that?
+And would like semantic similarity be enough or could we like think about
+like elements as judges or something along those?
+That's tough.
+Cause I don't think I've built a system yet where we've successfully
+identified like a significant piece of drift, right?
+Like we, we noticed, we basically only noticed when we add new features and
+we can see that like with a new feature, usage of a different time has been
+camera a lot cannibalized because like with COSIN distance, really things would
+only, you would only detect sort of catastrophic changes in your system.
+I think it's like the COSIN distance for open AI, eight to three is like 0.7
+and plus or minus 0.2, that's the kind of variance, right?
+So I think, I think more importantly, regardless of what score you're using,
+it's likely going to be more important to think about what segments are
+we slicing up the data, but Dan, I don't know if you have any thoughts.
+I feel like you're the expert here on drift.
+Yeah.
+I mean, I have a few thoughts.
+So one is the one I'll give you the least satisfying one last.
+That's probably the most important one.
+The first thing, which is sort of actionable is to look at shift in the
+distribution of how many queries are landing in each of the segments.
+And if you see that shifts, then that tells you that there's probably a
+change in other underlying factors as well.
+To go back to the analogy for classical ML or classical ML in many circumstances,
+especially where it takes a long time for the ground truth value to come in.
+So you make a prediction and then you don't see whether that was accurate or
+inaccurate for some period of time.
+We typically look at covariate shift or shift in the distribution, basically
+of the X's and actually like that shouldn't matter if you see that the X is
+like, we used to have a lot of people who applied for a loan that were low credit
+score, but now there's more people with high credit score, like that in and
+of itself shouldn't matter.
+Really what you should care about is does the Y conditional on the X change?
+And we always did some like incredibly hand wavy thing of saying, if we have
+covariate shift, then we think that the data generating process for the Y's
+has probably shifted too, but there's nothing rigorous about that.
+And you could also have the data generating process of the Y's shift,
+even with the covariates not shifting.
+And so everything that we do is really just proxies for the things we care about
+and proxies that aren't that good.
+Or we just use our intuition about whether they're good or not.
+And I think that we would have found that very dissatisfying.
+And the only reason that we thought that monitoring covariate shift was typically
+good enough was a lot of cases there actually wasn't that much you could do.
+You're not going to take your model out of production.
+So my real question is you want to detect data drift to what ends it so
+that you can retrain your model more frequently.
+If retraining a model or updating, updating your reranker is cheap and easy enough.
+You're probably doing that pretty frequently anyway.
+And so if you're saying we're going to detect data drift, but we're not sure
+what we're going to actionally do about it, then I think say we've got a couple
+of proxies in our case, average distance is actually a quite good proxy, but then
+shift in what segments we're observing is a kind of crappy proxy, but it's some proxy.
+And then say like, we're just going to keep an eye on those, but we can't
+do that much about it anyway.
+I would view that as good enough.
+I guess the only time I look at covariate shift, especially in the startup
+sense is just when our, like as a startup, you're just growing very fast.
+You're aggressively just trying to figure out who wants to use your product.
+And so the covariate shift did we onboard like an interesting cohort that might
+tell us to potentially build in a different direction, or are they using
+the product in a way that is not in the direction that we care about and we
+need to sort of fix that, right?
+One of the examples was like, I think, yeah, we, we onboarded a bunch of founders
+for free and they were using the tool, but in a very different way than we wanted
+sort of the regular, regular folks to use it.
+And so we had to say, okay, let's, let's ignore their accounts and distributions
+of things because they're not really paying for the product the way that we
+want our customers to use the product.
+If you're very early stage, then it's not that you have so much growth and you're
+just adding new cohorts and after you observe what you've added, you're going
+to build more functionality for them.
+You're probably very frequently for, if you're very early stage at any given
+moment, you actually don't, you have very few returning customers and you instead
+have a hypothesis about who you want to support next.
+And then even before you have data for them, you're just going to build out
+like, here's the thing that, here's the thing that we think we need in order to
+even get them to try the platform.
+And now, yeah, you kind of sort of look at data drift, but you just actually are
+relying on your intuition about drift that hasn't happened yet to proactively
+build those boards.
+Yeah.
+Build what you think they're going to want so that you can test whether
+you can get them on board.
+Another interesting idea I just thought of was we could also like start
+product metrics.
+Like we capture things like how many people are copying our responses or how
+many people are interacting with their responses.
+And then basically the percentage, if that starts to fall off and that could also
+suggest like, where is it happening or something is basically not working as it
+should be.
+That was also something that is not quite an interesting approach towards
+building something that can help us monitor this.
+Yeah.
+Ultimately it's going to just be group by segment, count queries, kind of like
+mean, mean and variance, cosine distance.
+And then maybe probability of engagement.
+Maybe that's a thumbs up.
+Maybe that's a copy paste.
+I think those are kind of the only three things.
+Like again, most of the work is in the segmentation.
+I feel like you guys would be experts in that given, given the nature of the
+product.
+Not yet.
+Not yet.
+We haven't really spent enough time setting up cohorts yet.
+Initial focus was like just getting to a place where the product was working and
+everything was like wide checks and just building on top of that.
+And then now that the product is at a place that we feel comfortable with it,
+and now we are investing more towards how do we scale it over a period of time?
+Now, what is our roadmap for the next year or two years?
+I sort of just focusing on the, I really think there's a lot of possibilities.
+If you start thinking about like, because in the ramp example, we talked about
+like transaction embeddings, right?
+That does a world where you can sort of start fine tuning feedback embeddings
+and then see if kind of like hierarchical clustering will be helpful.
+So like I did this stuff in like 2017, 16, 16, 17, where we were embedding both
+product images and product feedback.
+And sometimes you can find like some reasonable clusters across time that says
+like, Oh, it just seems that like everyone's complaining about the buttons on this
+jacket, right?
+Oh, they mess up the manufacturing.
+Like this leather jacket is just like very low quality or has, you get stuck
+up a lot.
+So we could identify those, those topics.
+What we didn't have at that time was the ability to name topics, right?
+Because we were just using like LDA and PCA to factor matrices.
+I think now there is a possibility where if you discover 400 clusters,
+something in some hierarchical way, I'm surprised there's not more literature
+on sort of naming topics, naming clusters these days, but
+makes sense actually.
+So we already do something similar for feedback.
+We could apply a similar pipeline for our queries as well.
+Therein we cluster them, then try to identify like groupings of clusters.
+We get a hierarchy out of that.
+Then that should help us segment those into which of these buckets are we
+actually serving right now?
+And which of these buckets would we invest into actually going forward?
+Yeah.
+And then what we did was we just took these embedding models, got the embeddings,
+and then just train XGBoost to predict some kind of like critique or issues.
+Like, Oh, was this a merchandising issue?
+Was it a delivery issue?
+Was this a product issue, quality fit, all that stuff?
+We ended up doing quite well, but it is hard to sort of make embeddings reliable.
+Cause then you end up like when you retrain models, do you like, how do you make
+sure the embeddings don't drift or how do you like lock in, it just, you were just
+kind of trading one problem for another.
+Yeah.
+So for like embedding issues, what we have tried to do is integrate LLMs and
+embeddings as well, like the clusters we create are like reviewed by LLMs so that
+the actual output of the cluster is a lot better compared to just relying on
+embeddings only because embeddings have a lot of noise, so it doesn't make
+sense to rely solely on them.
+Yeah.
+One thing, one tip, which was really important for us when I was managing
+human labellers is it is very, it is a bad idea to ask a human to label a single
+cluster because the label becomes incredibly generic.
+Right.
+So what you have to do is you have to create labeling jobs where you use
+humans to tell you what is different across clusters.
+Right.
+Cause if you had just one cluster, maybe the comment is like, these are shirts.
+And then cluster two is also shirts.
+Find two similar clusters and you say, tell me what differentiates them.
+It might become, oh, these are plain patterns and these are more colorful
+patterns and these are small patterns with big patterns.
+And so I bet in your prompt engineering, there might be a world where instead of
+doing like a single cluster at a time, not to say that that's what you're doing,
+but trying to distill out differences between clusters because you're likely
+going to get much more high entropy labels.
+Faraz, I don't know if you're, you're able to speak right now, but if you have
+any thoughts on the question.
+I work with Weibo itself.
+Yeah.
+There's a lot of fun stuff to do with the embedding models.
+You can always just run a TSN plot and impress your boss.
+We are at the stage of building the probability of success of queries
+equation that we are showed, right?
+We are trying to build the evals on top of it.
+So we have this, as Weibo mentioned, we have the rack pipeline and we have
+a lot of components over there.
+So we're trying to measure how well each of the component is doing so that we can
+iterate on and try to improve each of those components individually.
+So most of my work deals with building evals right now.
+Have you been convinced by Vtor to make the buttons bigger and
+start doing labeling parties?
+Yeah.
+The buttons bigger is still a product decision.
+We can't really work too hard on that, but we do plan on another idea that we
+have had is that we can go ahead and add, give the users the option to, instead of
+sharing feedback as a text, you can just speak and we'll record that.
+That's tough.
+And then let's see how the adoption changes and we can transcribe and share
+that with you if you want to make any edits or something, and then submit that.
+So make the process of actually providing feedback a lot easier and see if people
+start leveraging that a bit more.
+Right now, the percent of feedback we get is around like 0.1%, 0.2%.
+It's like barely anything.
+You get like one or two feedback per day.
+So not really helpful right now.
+Yeah.
+I think copyrighting is going to be such a huge impact on your ability to get the
+copy to get the feedback well.
+Like what is the copyright now?
+Oh, we haven't really spent time on that.
+Right now the copy is just a thumbs up and thumbs down.
+I feel like right next to the answer.
+So like similar to how Chad GPD does it.
+So we took a lot of inspirations from there and designed it day back, like
+eight months back, not like six months back.
+It has been the same since we are planning to invest on that a bit more, but we also
+don't want to make it very aggressive because then the users might start to
+feel like, why is it all in my face all the time?
+They want to find a middle ground, which gives us like a bit more feedback as well.
+But product also needs to be happy.
+Got it.
+Got it.
+A V test that I feel like, I feel like in five X, the amount of data I'm okay with
+making some sacrifices to get that feedback.
+Let's see.
+Product product decision is also there.
+Like we need to get the bio from product team.
+Okay.
+This is something that you can do.
+So that in itself will be a battle.
+We'll have to fight, but we'll try to get it done and see what will be the
+best trade off we can make there.
+We are also rethinking like how the application itself should be designed
+because what we have noticed is that our platform lends not as much towards chat
+or towards dashboards, so it might be better for our application to like X has
+an approach of creating dashboards.
+We could also learn from them and basically build us application where
+then you can create dashboards using chat.
+So that could be another approach of doing it.
+They're still like figuring out what is the best solution for our use cases.
+Yeah.
+I'm curious if there's any kind of like favoriting mechanism or like show more
+similar feedback mechanism that could just like get you to get more clicks.
+Yes.
+That is an actually a feature request that has been there for a while.
+And we are, we actually have built it like recently last week only I built it
+and we are still figuring out their latency trade off state part.
+What we are doing is basically that given a set of reports can ask for more similar
+feedback and we'll try to like look at the purpose and get you like more feedback
+so that you can leverage that in your research.
+Yeah.
+Cause that's an example where you can sort of do the same kind of UI tricks as
+like the people you may know where maybe if you want to see similar, we show you
+10 things, you know, add them, see more things.
+You have to like delete them to see more.
+It's like there's, there's, yeah, you're going to do that.
+You might, you're, you're going to go from two a day to like a thousand a day.
+Right?
+Yep.
+Exactly.
+So what we are thinking is that we give them an option to basically get
+suggestions and then you can choose which of these suggestions are actually
+relevant for you.
+So you add those to your collection with the risk get discarded.
+And that way, basically the positive and negative both we get feedback on.
+These were the positive ones that got accepted and the rest got rejected.
+Totally makes sense.
+Yeah, I guess, you know, I don't think I don't think I have a question.
+I was going to ask about fine tuning, but I think that's maybe too far from
+what most people are working on.
+So adding to that, actually we had tried fine tuning our components, right?
+In the rack pipeline, we started off with fine tuning, synthetic queries,
+get some answers to them and then try to find a model, but that didn't really
+go well for us.
+And then when, when the GPT-4 pricing dropped down, we were like, let's try to
+use off the shelf models itself.
+And then now we are on the journey.
+Like once we have these models and production and we are getting a lot of
+user data, we started thinking of using that data and fine tuning models on top
+of it in the sense that we can build an evaluator LLM and try to evaluate the
+responses that we already have in production, only fine tune on the ones
+which are right, which the LLM says they're right and get the model production.
+So actually we had a very similar journey to what Zapier Wittor mentioned
+yesterday, like when there was GPT-4O, whether we need to swap our models
+with GPT-4O or not.
+So that was a big question for us as well.
+And that's when we realized that building evals for each of those
+components is very crucial for us.
+Because in this LLM space, every now and then there will be a new model coming up
+and there will be always a question of whether we should use that or not.
+So yeah, we're taking a step back.
+Some of the folks are working on evals, some folks are working on building new
+features, so that's the journey right now.
+Yeah.
+And also I think building the evals and building new features almost is very aligned.
+Right.
+If you think about how, for example, Hex builds their products, the evals are
+actually part of the project and feature requirements.
+Right.
+So like in the proposal doc, there's kind of like, what is the product for?
+Who's the user?
+What's the user story?
+And as part of that, they have to produce, the PMs have to produce evals and examples
+to demonstrate what the actual requirements of the product look like.
+And so making that cultural shift also has been very useful for a lot of
+the companies I've spoken to.
+So I think, yeah, like it was Zapier, like when I was working with them, it
+really was just like, oh, we need to make rag better.
+It took a long time to really figure out, let's split this out into multiple sub-problems.
+And then which sub-problem should we tackle first and how do we prioritize
+that kind of work, very, very enlightening.
+Yeah.
+Like even the thing that Vito mentioned wherein they moved from a normal agent to
+a planner, same thing we did, we had like a very normal agent wherein it was just
+planning on the fly and figuring out, okay, given these tools, what to do.
+A planner, because the agent itself was like very non-deterministic.
+Planner still became a little more deterministic in nature.
+But now the problem with planner is it doesn't really interact with the user.
+It just plans without looking at the users without interacting with them.
+So how do we make sure that it is able to ask questions?
+Then we get feedback from the user and leverage it for something we are
+still trying to figure out.
+This makes me ask one question as well.
+Then what kind of tools do you think are necessary for a planner to be
+actually able to plan properly?
+So like the user's queries can be very ambiguous.
+They might be missing details.
+And how does it basically figure out, okay, this is something that I need more
+information on before I go ahead and plan my execution.
+That's hard.
+Cause I don't even know if I have a full taxonomy of all the
+different kinds of failure modes.
+It's like, like some of the smaller sub-problems I've been looking at are just
+at Zapier, for example, we were just trying to measure how often is the language
+model selecting the right columns.
+Right.
+It's like, is there some kind of like precision recall on not only tables,
+but columns and code snippets.
+Right.
+And then the question is like, okay, again, if it's a failure, like if we can't
+answer this question, can we identify whether it is inventory in the sense that
+we just don't have the column or is it because of like in a, in Zapier's
+exam, I saw examples where just column names are not specific enough.
+And so what we lack was just descriptions for those columns.
+I don't really have my full theory of like what it means to not know or not have,
+sorry, I don't have a like what is under specified, but that is something I'm
+trying to work on and see if we can just break it down into like five categories
+that we can just evaluate, but I'm still a little bit far, far away from that.
+And one thing I was thinking about is that what we could try to do is to give
+the, there an option of basically interacting with the user directly as well.
+If it feels like that given the plans that I've seen, these are the details I
+would need to actually answer a similar question, then let me ask, go ahead and
+ask the user or perform a search for this particular thing that I'm missing.
+So it could be that you are interacting with the user.
+It could be that you're interacting with the data underlying data as well.
+And you don't normally get access to because you are not sure what to do here.
+I'm not sure whether the planner would be smart enough to pick that or not.
+That is something we'll have to experiment on, but would be something
+interesting to experiment with and see how that looks out.
+Most of what I've seen there has been sort of reasoning about the nodes as
+kind of like forms you fill out, right?
+And the question is, okay, how many forms are optional versus how many of the,
+or how many of those attributes are required?
+And if they're required and they're missing, is there any way that
+we can fill in those things?
+And then if they're optional, does the form processing, is that, is it able
+to communicate the fact that, okay, if you, if this attribute was not, if the
+attribute is optional, your results could be better if they were present.
+Right.
+But again, that's kind of my, my like glimpse into sort of figuring out what
+the, like the, like the categories of failures are, but is it a missing
+mechanism, like analogy?
+I'm not really sure Dan, I don't know if you have any thoughts on that, but.
+Yeah, I feel like this is an area that we're still trying to figure out.
+Yeah.
+My goal is I just want to have like a three by three, like chart that says
+like it's either this, this, this, this, this, that, but because we, we have
+that in like standard data science.
+Like there is like a missing mechanism, right?
+Is it null at random?
+Is that, is there a mechanism that induces the nullness?
+Like we have some notions, so we just had to re-derive it for, for this LLM case.
+Something to experiment with for us.
+That is something we do want to spend some time on.
+How do we improve the planning?
+Yeah.
+I'll keep thinking about this, like missing mechanism stuff.
+It hasn't been like the highest priority, but did anyone else have any other
+questions? I know we mostly just had like a conversation today, but cool.
+All right.
+As always, if you have any other questions, feel free to like post in, post in
+this, the Slack as constructor and yeah, otherwise you can like DMS for
+anything more specific.
+Awesome.
+Thank you guys for staying up late.
+You got it.
+Take care.
+Thanks a lot.
+Bye.

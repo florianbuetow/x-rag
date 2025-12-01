@@ -1,0 +1,838 @@
+Started out in aerospace engineering, soon moved to search relevance and ended up
+getting the opportunity to write a book, which changed my life.
+And I decided never to do that again.
+I was fortunate enough to be an early engineering co-pilot.
+And then I wrote another book, which is ridiculous.
+So here I am again.
+And then just recently, a half year ago, I started ArcTurus Labs.
+And of course, please visit us at ArcTurusLabs.com.
+To jump right into it, I need to make a caveat.
+Lexical search is my hammer.
+And the world is my nail.
+So there's a lot of stuff I'm going to say that's just like in your
+phase, like lexical search is the best.
+I know it's not really the best at everything.
+And we'll get to that at the end.
+But yeah, we're gonna, we're gonna make the best case we can for lexical.
+And then when I get it wrong, you guys hit me up later and say,
+there's this other thing too.
+We can do that as well.
+I like to learn, but lexical search is everything.
+All right.
+I feel very sad because in today's world, semantic search is how you do rag.
+And it's easy, right?
+You, you take your documents.
+You chunk them, you stick them into an embeddings and get the vectors out.
+There's plenty of database options for storing and efficiently searching these
+things, and that search time, you've got your search tool that your assistant gets.
+And you do the same token as the same vectorization of the search.
+It goes to the vector database.
+You get your vectors out and it's just easy.
+And the extra cool thing is that it's not searching based on just tokens.
+It's searching on the meaning.
+Cause isn't that what you're after?
+The meaning, the informational need of your users.
+That's great, but there are problems.
+Some of the problems are that it is impossible to find exact matches, ID,
+the products, people's names, stuff like that.
+If you're looking for a specific phrase that you've heard before, you know,
+it's somewhere in there, you want to have that exact match, but that, that's,
+that's not easy to do with vector search.
+And finally, if you have jargon that was not available or it's a niche jargon
+that wasn't in the embeddings training, it just not going to know it.
+It's going to give you the wrong answers.
+Another whole genre of things is relevance is very opaque with semantic search.
+If you're looking for a doc and you can't find it, there's very little way to trace
+back and figure out what's going wrong.
+And fixing it often means training models and doing things that are very
+challenging and still black box.
+And finally, and this is one of the focuses, filtering is really clunky.
+It's hard if you really want to take a big set of data and slice and dice and
+then do relevance within whatever is left matching, it's really hard to do.
+And let's, so let's take a look at that.
+Cause that's the crux of it for me.
+There's a couple options with semantic search to actually incorporate filtering.
+One thing that you can do is do the search and then the filter.
+If you do this, there's a decent chance if your filter is very constrained that
+after all this work, you will have removed all of the items in your search results.
+And so then what, I guess you go back and get a larger set of semantic search
+matches, matches, maybe do this several times.
+It's quickly going to outgrow feasibility.
+The other thing's equally bad, just for different reasons.
+You can filter first and then do semantic re-rank.
+Now notice I said semantic re-rank at this point, you are brute forcing all
+the vectors to find the closest match.
+You can't use the same data structures with this method.
+And if your filter is fairly permissive, then this is going to be a lot of
+vectors that you have to work through.
+So this is also uncomfortable as well.
+So in this talk, I think I've stuck about two hours worth of
+content in the next 40 minutes.
+We're going to learn light school search really quick.
+We're going to talk about how it can be applied in RAG and underscore some of the
+benefits, but then I'll lower my caveat a bit and discuss some of the problems
+that that are still present for sure.
+Lexical search and at the very last slide, we'll point towards hybrid search
+and mostly point to some of my frustrations that I, that I hope the
+industry as a whole figures out how to solve in the next few years.
+Let's go.
+Time to learn lexical search really free and fast, three bullet points,
+indexing, searching and results.
+Now, when you set up an index with most types of lexical search, thinking
+elastic search or open search or the solar, if you're old school enough, you
+have access to all of the data types that you're comfortable with.
+It's not just text.
+You got numbers in its bullions.
+You can get some sort of some of the more exotic types, bounding blobs and
+the time interval and compound types.
+But the star of the show is definitely the text and in particular there's
+keywords, which basically they go in is like categorical values.
+It's just the keyword.
+But then there's also text, which gets tokenized and chopped up into little
+pieces and that's the secret sauce that makes a lexical search fast and.
+That's it in its own way.
+And to chop up those tokens, we use analysis, a process called analysis.
+So the easiest way to understand it is to look at an example, the quick
+brown Fox jumps over the lazy dog.
+The first step we go through is character filtering.
+This takes that string doesn't chop it up, but it normalizes it.
+In this case, all I've done is lowercase everything, but you might remove diet
+criticals above letters, you might use Greg X if you wanted to filter stuff out.
+The next thing is tokenization.
+A very common thing is just to split on white space and punctuation.
+So you're just left with the words and the sentences stop wording.
+If you choose to use it removes all the super common words that
+don't add much to the meaning.
+And the most important thing, the secret sauce for improving the recall
+is stimming, or basically you take verbs jumps, jumping jumped, and you chop off
+the ending, you take same type deal for adjective, anything that can, that has
+multiple forms, you normalize all forms.
+So if you're looking for anything, you can match it.
+All right.
+So now since every document in our index is tokenized as a bunch of individual
+tokens, how do we actually stick it into a very fast index?
+Let's look at document 43 here.
+This is the document that we just dealt with.
+Every word that we've tokenized gets pulled into a dictionary.
+It serves as a key for a dictionary.
+And the values of that dictionary is a sorted list of every ID that token appeared in.
+And so you can see here how I've highlighted that 43 is in all of these.
+And we'll get to why this is so cool in just a second when we get to searching.
+But before we get there, let's take a moment and look at the
+differences that are occurring so far.
+With semantic search, docs usually need to be pre-chunked so that you can deal with
+a very tightly constrained semantic of this chunk.
+With lexical search, there's no chunking necessary unless you've got books and
+stuff like that, that divide by chapters.
+Semantic search index can often be larger because these floating point vectors are
+hard to compress, whereas that structure, the sorted numbers in the inverted index,
+that could be compressed extremely small.
+So that has benefits, practical benefits when you're actually serving these models.
+And the data on the semantic side is fairly opaque, vectors that I don't understand.
+And lexical search, at least the remnant of the word is there.
+So once you get down to it, fixing problems is a lot easier to do.
+Next up is value search.
+So this same data structure makes it really easy to find things quickly.
+In effect, we have done all the searches we could possibly do in advance.
+Consider a search for all Fox documents.
+That's easy.
+You just go look at that term in the dictionary, find the vector, and that's
+literally all they ask for your question.
+It's not much harder with complicated Boolean searches.
+So I could do Brown and Fox.
+You get those two vectors and you union them together.
+And Fox or dog, similar thing, two vectors and you intersect them.
+I said that in reverse order, you union them for, you intersect them for and,
+but you get the picture.
+It's really not that hard at all.
+And the cool thing is it's not just fast.
+This is not just SQL, but there are really battle tested notions of relevance that
+have been out in the industry for 20, 30 years.
+Predominantly, the easy way of saying this is all the documents that are in
+this matching set, whatever factors you've ended in or together, they are
+scored as they're processed by TF IDF.
+TF IDF means term frequency divided by document frequency.
+And those words are a little opaque.
+So break it down one more time.
+This really means the number of times that a word appeared in a document
+divided by the number of documents where that word appears.
+So if you have something like Brown Fox, and you have a document that has the
+word Fox a lot of times, then that's going to be more important.
+Makes sense.
+Right.
+But if Brown is in the document a lot, but it's also in all the documents for some
+reason, we just got lots of documents discussing color, then this term will be
+decreased in its power to influence the score.
+So there's an intuitive feeling for how scoring works.
+When is BM 26 coming out?
+I don't know that it ever will.
+This thing is really called BM 25.
+That's a slightly more nuanced version of TF IDF.
+And finally, whenever it comes to dealing with multiple fields, you can process all
+this stuff just as easily as just as fast.
+And you can easily weight the strength of the different fields.
+You can use the different fields as cutoff filters, and it's super fast to
+process and modify the notion of relevance in these documents.
+All right.
+Let's we've accrued some more differences between semantic and lexical search.
+Semantic search searches by approximate nearest neighbor.
+It's it's all vector based, whereas lexical is all token based.
+I've given you a hint about how it can quickly find the documents with those
+tokens, because it's basically figured that out before your search ever happened.
+Searching and filtering and semantic search necessarily so far as to take
+place in different steps, either this before or after.
+One of the awesome things about lexical search is all these vectors in the inverted
+index of all these lists of matching IDs.
+They can be processed in tandem.
+It doesn't matter if you're really looking for a number or a word or a geo location,
+all this stuff through convoluted means gets turned into this list of IDs that
+is super fast to process simultaneously.
+Semantic search relevance in a distance.
+That's your only choice.
+Basically you can, you can do cosine, but you don't have too many knobs there.
+Lexical search in situ, you can change the weighting fields.
+You can change the math that is used to evaluate search.
+And it's really neat to be able to play with it without indexing anything else.
+And our final chapter in our PhD on lexical search is how the
+results come back to the users.
+The obvious thing is the results of itself.
+Got these matching documents and here is how many documents matched.
+And here is a list of them.
+By the way, this is the user interface per paper pile.
+It's a good example.
+What is I think really cool when you start thinking about how you could use this for
+rag is the aggregations and then analysis that you can do with the matching set.
+So like right here, I returned a set of like three documents.
+There's probably some more below the fold, but of the 267 documents, we can quickly run
+these through and do facets accounts to figure out what else might be hiding.
+If we only filtered it down and you can do anything else.
+If it makes sense in your application, you can do averages of price, max, min,
+histograms, cardinality, and look up the documentation.
+It just, it's, it goes really deep.
+Snippets.
+I haven't decided quite what I think about this as compared to vector search.
+With vector search, you have to chunk before you do the indexing.
+Oftentimes with lexical search, you can have the engine effectively pull out
+snippets that it thinks are appropriate out of long documents.
+So index the whole document.
+Give me the five snippets that are most relevant to this document.
+You can concatenate them, glue them together if they're next to each other,
+but it's not quite as free is what you can do with when you're just chunking by yourself.
+You can do anything when you're chunking it by yourself, but it's like search time.
+Chunking highlights, say for completeness.
+Basically, if you type anything in, it'll highlight we're in the document that appears.
+It's cool.
+If you type in search and something is like searching, then that should also be matched here.
+So it does a little bit, but it's not quite as good is vector search of
+highlighting the sentence that has the same meaning.
+That's a really cool application of semantic search.
+Differences occurring.
+Semantic search, you get back the chunks and the metadata in the result.
+Lexical search, it's the same content, but divided up differently.
+You get the full document and all its fields.
+That would be its metadata.
+And if you want to, you get snippets, which might be useful, right?
+But the really cool thing about the results is where it is semantic.
+You just get the results back.
+And if you wanted to post process everything else that might match, that
+doesn't really make sense with lexical search, it's just super easy.
+The data is already there.
+You can slurp down everything you need to get counts and men's and max and averages.
+How would you apply that to rag?
+All right.
+So now let's see how this could apply in a rag application.
+The first thing we need is a document set as a good example.
+And for this, I've chosen Wands Wayfair annotation data set.
+It's a benchmark data set that came out a couple of years ago for e-commerce products.
+There's all sorts of home items, appliances, furniture, stuff like that.
+And it's something that it's, we all deal with this type of stuff.
+It's not like insurance documents or SEC reports.
+So just seeing how this works will give you a good feel for how
+lexical search might, might be applied.
+There are almost 43,000 items in this document set and there's several fields,
+but the ones that are of most importance to our discussion today are product name,
+product class, product description, and rating count on the right hand side of the
+screen, you can see it's not important to details, but you can see where I'm
+sticking in, I'm creating effectively a schema for our index.
+Here's the product ID.
+It's, we're just going to save it as a keyword, no tokenization.
+Here's the product name.
+We're going to treat it as with an understanding that it's English.
+We use one of the canned analysis steps that, that knows how to chop
+the ends off English words, product class, product description, rating count.
+It's an integer, but it's still is going to get stored in that inverted index.
+And I added an extra one just because I thought it demonstrated an
+interesting point in a little bit.
+I pretended that every item in the inventory has an availability,
+which I pretending that there's brick and mortar stores throughout the continental
+U S and so it lists which of the 50 States are available.
+So before we do any meaningful search for our customers, we have to already
+have the dataset filter down.
+That's one filter that always has to take place.
+All right.
+Indexing from that is pretty easy.
+I just take all the documents and woke up loads them to last search.
+So that brings us to search itself, actually making the search from a
+API perspective, I'm keeping it really simple here.
+the search involves a query string from which we derive our actual relevance.
+There is the availability, which will be filtering out first.
+What state the user lives in.
+There is the product class because for each one of these products, it has
+a word or a list of words.
+This is, this is kitchen items.
+This is bathroom items, stuff like that.
+So there's a product class minimum average rating.
+If you wanted to filter out based on, I just want the really high quality stuff.
+And then number results were just, I'm not really going to touch that, but
+it's we're assuming 10 results.
+And probably without going too deep into details, this is how elastic
+search would allow you to query for stuff.
+I'll give you a sense about how you would build a relevance
+query in, in elastic search.
+A Boolean search allows you to join a bunch of different terms together.
+But instead of joining searches with ands and ors, you have these two
+keywords, which have similar effects.
+Must is like an and, you must, if there is some query in here, you must absolutely
+match the document must absolutely match that query in order to be a valid result.
+But we get to control relevance too.
+So in all of this set that must match, we're going to give it bonus points
+with everything in this shit.
+The things that must match is I'm casting the widest possible net.
+I'm saying if the user is looking for a blender kitchen, kitchen blender, then
+it's going to look in these two fields.
+These are very generously analyzed fields.
+So it's everything is as loose as possible.
+We're going to catch as many items as you can here.
+And then in these bonus point queries, if the document happens to have the
+exact phrase that the user used, that's an extra boost.
+If the document had matches the exact words that even though they're not
+tokenized, even though they're not analyzed and stemmed, if that matches
+and that's an extra boost.
+So ideally you take the same set from this and you group together the ones
+that are better matching towards the top.
+And also TF IDF is still come comes into play.
+Then there's the filters.
+If the user has specified, if the API has availability specified, then I add that
+in as just a term filter, no scoring.
+It just cuts off the matches.
+Same deal for product class.
+There's a lots of different types of filters that you can use.
+For example, right here, if the user specifies the minimum rating, then we
+can say, let's look at this numerical field.
+It's got to be greater than or equal.
+But imagine any type of filter you could possibly want.
+It's very permissive.
+Now our search results don't get presented in anything pretty API UI.
+So we're just presenting them back to the rag application itself, but it's pretty
+simple, straightforward.
+We have a list that's because from here to down there, and here's just one
+item in the middle of the list.
+All these fields are probably pretty self-explanatory, but this should give
+you an idea of how things look inside the index.
+All right.
+And the last little bit in our search application before we stick it
+into rag is the response.
+And I really wanted to take advantage for our demo of aggregations.
+Really easy to set up.
+It gets, it's specified as part of that same big giant JSON document that you
+issue with a search, you say, I want to do aggregations in particular for the
+field product class, I want to catch the top 10 terms.
+I'm going to do a faceted count over all of the product classes that are most
+popular within the matching set.
+And I can present this back to the rag application is something like this.
+This is what the rag app will see.
+It says that within the matching documents, we have this list of lots of
+desks, a few other things that are less popular down to top 10.
+Okay.
+So that's basically it for lexical search.
+It's time to shove it into the rag application itself and see what
+we can do with it from here.
+All right.
+You guys are probably all very familiar with this type of stuff here in the
+screen, we have the JSON schema tool definition in tiny microscopic text.
+I apologize, but basically there are three fields of interest, query string,
+product class, and min average rating.
+And that's what the model sees, but when the model actually reaches out to use a
+search, it's going to get something that takes my high level search and I've
+partially applied the function by saying, okay, rather than just searching for
+anything at all, let's assume that we're only searching for whatever products are
+available in this user state, whatever the rag application will use already has
+it filtered down to just states that match.
+symbol it into the full rag application.
+Pretty standard stuff.
+The system message, which I won't read aloud here is basically encouraging
+the model to be exploratory.
+It's saying you can do more than one search in series, figure out how to
+narrow stuff down for the user, figure out what the index looks like for yourself.
+And then this gets stuck into your typical concierge assistant type application.
+User says something, the model optionally can choose to use the tool or not.
+When it's accrued enough information, then it sends that information back to
+the user, which gets printed onto the screen.
+All right.
+So let's look at it in action.
+Everything you see here, I've typed this in with my hands, but I've got a demo app.
+So this is, this is analogous to stuff that I saw when I was
+playing with this application.
+So we start out with our friendly assistant saying, hello.
+How can I help you?
+And our user says, my back hurts from sitting here all day.
+Now the application is going to use the search tool right now, but it's
+already doing something that is neat.
+The search application behind the scenes knows that this user is from Tennessee.
+So it is already filtered out that the query so that we only get
+information back from Tennessee.
+It's none of that filter then relevance or relevance and filter.
+It is traversing that inverted index all at the same time.
+And it's going to get the most relevant results that are from that state.
+Now, whenever it searches, I've seen a lot of different variations.
+This is one that comes up a lot.
+It does two parallel searches or two things that really makes sense for helping
+our user, our economic chair and standing desk.
+That's great.
+Nothing special here for lexical search yet.
+It also, here's another variation I'll see.
+It'll say the obvious thing to do for that is a standing desk.
+And then once it gets results back, it'll read the description and say, ah, okay.
+There's genres within this.
+So I'll modify the text itself and look for adjustable standing desk and
+standing desk converters.
+It's gathering all the information under its own bowl edition to
+satisfy the user's request.
+The cool thing when it comes to large, how large language models can influence
+these applications is that the results of this query returns the facet list.
+So the model itself, and I've encouraged it to take a look at this in the system
+message, the model itself can actually peruse.
+I've got these 10 results I can see, but in the remaining results, I've got 553
+desks and then I've got like TV stands that is like 200 something.
+That's a little weird.
+And so the model will, when appropriate, choose to do things like filter down just
+to the things that are more relevant.
+And it will actually clean up some of the relevance itself.
+And so then you get to the results.
+May I recommend the Stantastic adjustable standing desk?
+So this shows that the model itself can actually learn from the filters
+and influence what it does.
+So the conversation goes on in a RADI application.
+The user says, I only want the best desk.
+So the model itself can further add more, more constraints to the search space.
+And it's at this point, we've piled on three different filters, Tennessee desk,
+and the minimum rating of four and a half stars.
+So it's a very constrained search problem that if you have any size of semantic
+search index, it's going to get finicky with like how you keep eating out the
+performance, depending on how you do it.
+I did not play past this, but one thing that I think would be interesting to try,
+it's probably pushing the limits of what large language models can confidently do
+at this point, but as they get better, it might be neat to have them also tune
+the relevance score.
+So if the user says, I'm only interested in lower price desks, that's a filter.
+But if the user says, I prefer lower price desks, then that's a boost.
+And maybe you could incorporate that into the tools that the model sees itself.
+But the cool point there is you've got search and you can just completely change
+the way that relevance works.
+Institute there's no notion of having to like re-index or anything like that.
+All right.
+There are limitations to my poor hammer of lexical search, and maybe it's
+hybrid search that will come and save us.
+Limitations of lexical search.
+I know that this is a dress and you know that this is a shoe to tennis shoe.
+And we both know this is a dress shoe.
+But elastic search thinks that this is a dress shoe.
+This has been the bane of my whole career is trying to convince elastic
+search that a dress shoe is just a shoe that happens to be shining black or brown.
+Lexical search uses bag words with a little phrase matching if you
+want to sprinkle on top.
+But that's that, that's confusing, right?
+If I took every word in my presentation today and I just put it in a box and shook
+it, you wouldn't really get too much of this presentation.
+You lose a lot of the semantic there.
+Let's go search doesn't understand at all that you can have different words
+that have the same meaning.
+Lexical search doesn't care that the same spelled word can have very different
+meanings, but if you say not something or never ever in a million years, something
+like school search just cares about something, doesn't care about the negation.
+And there's a lot of context clues that these, the embedding models will easily
+pick up it's what they do that you can't do with just bag of words.
+These are the very things that semantic search excels at.
+I think we're where we at.
+Maybe hybrid search can help us.
+I want filters and facets and boosting from lexical search.
+I want to be able to take a confusing result and be able to turn the knobs in
+and change the way search works without having to think very hard without having
+to change the way that a model retrain model, but I don't want this bad words
+anymore.
+I admit it.
+I want search by meaning something where I could say, no, really I want not the
+penguin.
+I want dress shoes.
+I want stuff like that, but here's where we're stuck today.
+It looks like, are we really stuck here?
+Semantic search and filter are filtered then semantic re-rank.
+Maybe we're stuck here, but at least we're working on it.
+And just to go through some of the things, one of the things that has actually been
+around for quite some time, but is friendly to semantic re-ranking is lexical
+search plus re-ranking.
+Basically you use your lexical search as a filter and it's filtering everything,
+but it's also sorting by relevance.
+So you got a pretty decent set of maybe the top thousand or whatever.
+And then you take that and you stick it through re-ranking and re-ranking used to
+be the now old school models of learn to rank, but it could just as easily be
+something that incorporates semantic vectors.
+It's the tried and truth thing, but it's super complex and really it's just the
+same thing as this.
+So we, it's, it lessens some of the problems with this by adding on complexity.
+There's another method I've blogged about this recently.
+I don't think this is the end all, but there's splay, which is basically a way of
+taking a language model.
+So let's look at your document and pick out words that kind of like synthetic
+synonyms, not quite synonyms, but the words that probably should have been in
+this source text, but they actually weren't in the source text and they come out
+weighted.
+And so you can use this, you can take this big bag of words, still a bag of words
+and shove that into your lexical index in another field.
+This will give you maybe in your lexical search at re-ranking, this gives you
+another way of casting an even wider net, but it's still not quite right.
+You lose the nuance, you lose all the things that you lose with bag of words.
+And you gain some, you hit precision by introducing words that maybe
+shouldn't have been in there.
+One that was introduced to me two days ago is that I was writing this course,
+but it looks very promising is the work that we be is doing with academia, with
+this, this, this approach called Acorn, which effectively it takes what is
+very similar to the navigable, navigable small world data structures, or it's
+takes exactly them or something very similar to them.
+And while it's traversing the structure, it also takes a look at, is this a
+match to a filter?
+It seems very promising.
+I don't think it's been like battle tested yet.
+And there seems to be like some nuances there, complexity being one of them.
+I don't know if there's nothing about this, except it's a really cool product
+idea that has piqued my interest.
+And I am on the point where I need to go look at this more, but super linked is
+apparently taking, using your embedding structures and using different embeddings
+for different data types, numerical or text or geographic or anything, and
+basically taking different embeddings.
+Somehow magically concatenating them into one, one big vector, storing them on
+remote third-party databases like MongoDB.
+And then using MongoDB search, nearest neighbor search to somehow come back with
+things that act like filters, act like boost, you can change the boost and stuff.
+I've thought about how this must happen and I have fundamentally baffled.
+So I need to look into it, but I think it's a really cool idea that that should,
+that is at least the combination of semantic search and filtering.
+It's not one and then the other.
+All right.
+So I got through in under two hours.
+Thank you.
+And I guess, is there any questions?
+Great.
+Let's go over some of the questions on Slido and then we can go over so many live
+questions we have, not that many.
+So I think we can do a good job.
+The first question from anonymous is I found the concept of knowledge graph
+and AI powered search book, which is based on indices.
+Do you have any experience with this in the context of RAG?
+It's maybe just semantic knowledge graph in general.
+Okay.
+So I don't know, is the semantic knowledge graph a H in SW graph of
+like just the ideas, the vectors.
+So it's not lexical search.
+Is it a graph database?
+So it's not lexical search.
+So I might need to have a little bit more information about what
+we're getting out of that.
+I haven't read AI powered search, which is really unfortunate because the
+co-author is co-author of my first book.
+Maybe we can just bring Doug in sometime and see if he needs comments on this.
+Cool.
+Yeah.
+Whoever asked that just DM me on Slack and then I can make sure we
+can see if we can get Doug online.
+I know he's just working a new job.
+Within these search architectures, do you often see things like biograms and
+trigrams or has it always been the case that we just use unigrams for better
+performance?
+Oh, it's all the above.
+Maybe not so much trigrams, but rather than, okay.
+So what are you looking for when you're looking for biograms?
+You're looking for the tokens, but the order of these two tokens are important.
+So there's two ways of doing that with a lexical search.
+One way is to, when you tokenize, I lied a little bit and the information about
+the position of the tokens is also shoved into this super compact data structure.
+And so you can run a phrase search and you can peel out all the tokens that
+happen to be one token away from the phrase, the two gram you're looking for
+or three gram or whatever.
+And you can even do cool stuff like slop.
+You can say this token is one or two spaces away from that.
+A lot of cool stuff you can do with phrase searches, but it's a little bit slow too.
+So one thing that people opt for is if you're always going to want to look for
+biograms, then you take a hit at index time by making your index decently larger.
+Especially we get into trigrams, but at search time, you can immediately
+imagine those things and that field can be weighted really high.
+So yeah, biograms and trigrams are often used in practice.
+Yeah.
+Hopefully biograms would be able to solve the gesture problem.
+I'm sure you've seen crazier and crazier cases that doesn't make sense.
+Yeah.
+English language is full of problems like that.
+Oh man.
+I think I could talk to you about that all day.
+What are some of the limitations and gotchas of things like elastic search
+and open search and hybrid search?
+What other databases do you recommend?
+Referring back to my third slide, lexical search for much of my
+career has been my hammer.
+And I worked at Eventbrite and built out their search and recommendation system.
+You can do a lot of really cool stuff with lexical search.
+I at GitHub, my first project before I was fortunate enough to work with
+Co-Pilot was on code search.
+So I got to build out the next generation of search two generations ago.
+But I don't know as much about MongoDB and Postgres.
+They all have offerings that ostensibly overlap with elastic search and open
+search is not only greet the question again, is this quite answering what you want?
+I'll answer what I thought you're asking.
+And then I see the word hybrid.
+So I'll modify it in a second.
+So with you get all the knobs for tuning, like relevant stuff with Postgres,
+with MongoDB, you're going to get whatever they give you.
+And you might find that you hit a wall.
+Now, what are the limitations gotchas of open search, hybrid search?
+What are the DBs do you recommend?
+When I'm thinking of hybrid search or how I would typically use it, I'm still
+thinking betraying my background.
+I'm still thinking, okay, index everything in elastic search and do some sort of
+re-ranking, go to a feature store and get out the information you need.
+You can do that within the confines of elastic search.
+They've got amenities now where you can post process with a model that
+you've given to elastic search.
+But a lot of times I think people just figure out what they need.
+They do it outside of elastic search and build hybrid search on their own.
+So I, and that's a big world.
+So what gotchas do you have?
+It just depends what you've actually put together for your hybrid search.
+Cool.
+This question might be, I can probably try to make this more general, but what
+tips would you have for legal search problems where you're compiling an answer
+based on information across multiple documents?
+I guess the more interesting question might just be, are there different ways
+of improving your search and retrieval based off these domains specific documents?
+Is there like any kind of pre-training that you can do or anything there?
+I don't know if there's questions.
+So every, I'll make up something.
+So every, every search is, every search project is alike and different.
+It's because you're probably dealing with text or in, at an extreme case, you're
+dealing with something that is text-like.
+It could be like musical notes or geography sometimes, but you're dealing
+with something that gets tokenized and used as text, you're also dealing with filters.
+And so I think the 80 percentile of any search problem is getting the box out
+and opening it and dumping the data into it.
+Now, when you want to improve information, when you want to improve the application,
+then there's a number of things that you can do, which gets, it gets more expensive,
+but effectively you start collecting information about what should match as
+opposed to what like actually is matching.
+And it's not just good stuff at the start.
+Everyone is looking at their pet quarry and like turning the knob of the boost
+until they're happy with that quarry.
+And then it's whack-a-mole.
+We realized that the, the 5,000 quarries you haven't looked at have all suffered.
+But as you get more mature, then you start paying attention to the e-commerce.
+You can pay attention to click logging and figure out here's what the users are
+searching for, you have like your long tail of common to uncommon searches.
+Here's what to focus on.
+I've been through Jason's class, so you can figure out these, these top 10
+quarries account for 50% of the traffic.
+Super important to focus on.
+And then you can look at the clicks and say, every time they see this, they're not
+clicking on this document ever, they're clicking on this one.
+You can start using that information to, to build models, to tune it, turn the
+knobs, and then you can use humans, just brute force humans have, have content
+curators that are familiar with the legal space or whatever space come in and say,
+here's what you give them the list of common queries in some of the long tail
+quarries, they look through all of them and say, here's, I know the data set
+is better than anyone, here's the, this is the best result, here's the next.
+And you can use this information to do things like learn to rank, basically
+re-ranking type algorithms, explain models to figure out how to automatically
+change the knobs or just resort them brute force.
+So that's a brained up of everything I would do in there for your legal search
+problem and all the other problems too.
+Awesome.
+Let's jump into some live questions.
+Bottom.
+Do you have a question?
+Yeah, I'm the person who couldn't fit the questions for the text box, but
+I promise it's not that long.
+So basically if I take a semantic search pipeline and I reduce the
+chunk size to one word, right?
+So every word we embed as a vector, then we pretty much get a lot of the
+advantages you've talked about, right?
+Very good exact match recall.
+We will be able to highlight the keyword.
+So your argument in favor of lexical search, is it in favor of lexical search
+or is it just in favor of small chunk sizes?
+You've taken a little bit of a hit if you go down to chunk sizes, the size of the
+word, because now you're using a bag of words model because the chunk size of
+just one word has no context for what's around it.
+Also, that's going to be a big index.
+Every one of those chunks is what 2048 floating points or whatever
+you choose to embed it is.
+Well, they can have smaller word embeddings, but yeah.
+Sure.
+That would be an interesting theoretical thing to do, but I think it would just,
+you lose the best of both worlds.
+Lexical search is going to do a lot better than that because you at least have
+some context strung together there.
+Yeah.
+I don't know.
+Where do you want to take the idea?
+I think it would be interesting, but reckless to chunk that small.
+Yeah.
+Generally, I would also say that for most of these embedding models, they're not
+really trained to only embed short sentences.
+So even three word phrases tend to perform very poorly.
+I think a lot of the time when we do embeddings over tweets, because tweets
+are so short, retrieval ends up being pretty, pretty poor.
+So yeah, I definitely found that to be a challenge.
+And most times it's actually the issue that we actually want longer chunks
+rather than shorter chunks.
+Uziel, next question.
+I think.
+Yeah.
+Thanks, John.
+I really especially appreciated the idea about boosting.
+That was something I hadn't really thought about before.
+That was really cool.
+I guess my question was just, what are some common like softwares or tools
+that you use, like you should paper pile?
+Like I looked it up.
+That was cool.
+Yeah.
+Like any common technologies or softwares that you might want to highlight.
+Thanks again.
+Yeah, sure.
+Paper pile is interesting because it doesn't actually, it has specific
+per search application.
+It is very nice way of organizing all the papers that I will never read.
+Unfortunately.
+I don't know.
+I don't know.
+I'm not big into tools and tools.
+I feel we're all in a space right now that's firmly wearing its sorting hat.
+And we're trying, it's trying to figure out what tools are going to be
+meaningful in the future and what tools.
+So in like school search space, the standbys for me are going to be
+elastic search these days, old school.
+If you go old school enough solar was, it was really gross.
+Everything was XML, but you could actually pull apart the system
+and reprogramming it.
+So it was cool.
+I haven't used it so much, but then there are tools for allowing
+curators to rummage through searches and results sets and establish judgment
+list of what is good and what is bad is its name.
+It was built by a company I used to work for.
+So if you're deep into search relevance, that would be good.
+Yeah.
+And then everything else I'm waiting, like when we get back to LLM side,
+I'm honestly, most of it, I'm waiting to see what shakes out in terms of LLM
+evaluations, starting to see something, some names come up multiple times for
+LLM application observability, Langfuse, Langsmith, human loops, stuff like that.
+So there's a bunch of random words go and do likewise.
+Thanks.
+All right.
+Let's do one last question.
+I think we only six minutes left.
+Albert, do you want to ask a question?
+Yeah.
+Thanks, John.
+I really like the boosting part as well.
+I had a question about click logs.
+How do you gain insights from those click logs?
+For example, if you're for giving search results, the users are only clicking,
+you know, the third result, does that mean your search is off or how exactly
+do you formulate how you gain signals from the click logs and then for learning
+to rank, what parameters are you adjusting once you get those signals?
+If you're just doing a lexical search, are you adjusting parameters on BM 25?
+Or if you're doing hybrid search, which parameters are you boosting or adjusting?
+So for like, click tracking, click models, effectively, what you're trying to
+back out of the data is your judgment lists.
+A judgment list is a bunch of search and document and a score for how a
+appropriate it is, so you take your top most common queries, you take potentially
+all the documents in your index, you have a curator and you figure out this is the
+one they should have picked or this one will give them the score of one.
+This is not as good.
+We'll give a score of two, something like that.
+That's a judgment list.
+That's a pain in the butt.
+Humans are actually not very good at making judgment lists.
+We just keep throwing them at it as if they were.
+And so click tracking is basically a way to excuse the humans from that task.
+And you're doing basically what you would expect.
+You're saying for this search, we've got logs, how many times this search occurred.
+Every time it occurred, we've got logs for who clicked on what we can sessionize them.
+And effectively you back out this one occurred and of the 50 times that it was
+seen for this query, it was never clicked on.
+And so that's a little data point.
+Order matters as well.
+It's building depending on which click model you use.
+Assuming that the top is going to be more relevant anyways.
+And so if you don't click on the first one, it's even more surprising, but
+click model itself has problems.
+No matter what you do, you can't get over the human bias that we
+can't click on what we can't see.
+And so the most relevant product you have might be top of page two.
+And so you can only learn so much through click modeling itself.
+So this is just a struggle we face.
+Synthetic data and synthetic judgments actually are a really new, hopeful
+alternative, they got their problems.
+The sorting hat is firmly on.
+We're trying to figure out exactly how large language models judge my work.
+Now to the second part of your problem, your question, what, what are we changing
+whenever we have these click models and really the judgment list in principle,
+you could change anything you want.
+Like you could parameterize your search to elastic search.
+You have a wait for certain fields, you have different filters and stuff,
+and you can optimize that.
+But what I think people are more comfortable with and it's more common is
+basically you optimize you.
+You get the top results from elastic search from open search.
+And instead of just assuming the top 10 are good, you get the top 100 top thousand,
+maybe it's hopefully sorted so that in the lexical search dumb version of
+relevance, it's pretty good.
+And then outside of that, you go to your feature store and for each of these
+documents, you get the embedding vectors, even you get anything you want.
+And what model do you choose to rerank them?
+You can choose any model that you want.
+You can train Bert or finding Bert or something on that.
+And then you can use methods like Lambda Mart is nice because it's so easy to
+wrap your mind around and it's agnostic for the model that you use.
+It's a way of, it's a way of specifying data to effectively XGBoost would be a
+great way of implementing Lambda, Lambda Mart search.
+It just gives you the data that you plug into it to make it work.
+So I don't know if that answered the question quite how you thought, but
+basically it's up to you depending on what model that you choose.
+You can tune it however you want to.
+Nice.
+Yeah, that definitely answers it.
+What is the second part where instead of adjusting the filters or the boost, you
+like adjust the model, is that specific field or technique or how can I look more
+into that or look at Lambda Mart maybe?
+That's the word.
+Yep.
+Look up Lambda Mart and just realize it's agnostic of whatever model you can plug
+in XGBoost or something into the data that Lambda Mart helps you create.
+Gotcha.
+Thank you.
+Oh man.
+I think just hearing out the, hearing the call out for XGBoost kind of threw me
+back in time a little bit.
+I feel like these days, most of what I've been doing is just to go hear
+your anchors, but it definitely correct.
+Like if you have different features, it actually makes more sense.
+For example, if you have features like price or even some other brand
+categories, XGBoost probably might work better than these token based re-rankers.
+But yeah, I think we're at time.
+John, thank you so much for taking your time and preparing this lecture.
+I think I learned a ton about some of the configurations for Elasticsearch,
+especially the faceting and the boosting.
+And I'm personally pretty excited to try out how we can use faceting for improving
+things like tool use in the future.
+Again, thank you and we'll see you guys next time.
+Thanks so much guys.
+Take care everyone.
+Thank you.

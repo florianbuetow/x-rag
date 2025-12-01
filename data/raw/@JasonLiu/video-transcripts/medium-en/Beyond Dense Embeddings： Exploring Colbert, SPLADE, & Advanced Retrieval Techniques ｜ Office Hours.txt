@@ -1,0 +1,494 @@
+dance methods are very practical, very easy to use, but they generalize quite
+poorly and they have a lot of edge cases inspired by all of this.
+So the idea is we encode a document exactly like how we would with a dance
+embedder, but we remove the pulling mechanism.
+You just give the PDF to it and then you can query it.
+Okay.
+So after I told this, rag is more than dance embeddings because
+JSON's go block post that's called rag is more than embeddings, which kind of
+focuses on the very product oriented stuff.
+And I'm going to give a more like retrieval model slash research view on
+this and so rags more than dance embeddings.
+If you don't know what dance embedding is, I'll define that in a second.
+If you do know, you probably do know what I mean.
+So first thing about me, I do research and development at nsir.ai
+and Jeremy Howard, who you probably know for fast AI and a bunch of other
+like really cool people, my background's mostly NLP and retrieval, mostly
+legal retrieval, I'm most famous on, I'm only famous on Twitter really for
+raggedy and rerankers, which are basically libraries to make respectively
+Colbert and re-ranking models easy to use.
+If you don't know what Colbert is, this is the right talk because
+that's like half the slides and I'm pretty unwell today.
+So sorry if I'm like slowing a bit, et cetera, like the brain fogs not amazing.
+I'll try and make it as clear as I can.
+And with that being said, the agenda is a mini reminder of what dance embeddings
+are, then a small section on lexical retrieval, which is likely the ancestor
+of semantic retrieval, but also something that is very, very relevant today.
+And we're going to see like a quick example of why this is something
+that's been covered before.
+So it shouldn't be that new.
+Then it's beyond dance embeddings with multi-vector methods Colbert.
+And that's, we'll not be brief.
+That's how the thing then called Palai, which is something I'm very excited
+about, which will make more sense once you know what Colbert is,
+but brings Colbert to images.
+And then there's code content, but I might share like my fuller version
+of the slides later, which was about two-stage pipelines and how we rank
+us work and how you can make your bank or work really well with your first
+stage model.
+This is just a teaser.
+I promise there's no slide on this here.
+Yeah.
+With that said, then some buildings.
+So then some buildings are called dance because they are a single
+vector and that vector is dance.
+That means you've got a thousand dimensions, seven, six, eight dimensions.
+And every single one of them is a full floating point number, the full
+integer, if you've quantized it, it's like that vector is a full vector.
+And that is mostly, I'd say a pedantic distinction nowadays, because when
+you see them referred to in just about any blog post or anything, that
+just called embeddings.
+When people say embedding search, vector search, they mean dance embeddings.
+It's not always what this means.
+Likely the arc of turning text into a single vector or an image into a single
+vector is creating a dance embedding.
+There's lots of pros to this.
+They are very simple to use and get started with.
+I think you've all seen the sentence transformer example.
+You've all done RUG.
+You know, how is it is to just text in vector out that simple.
+They have a low storage footprint.
+They're very intuitive.
+It's quite easy to be like, okay, it was these numbers capture the
+semantic meaning of your document.
+And that's why they're everywhere.
+That's why you use them.
+That's why they're so powerful for RUG.
+And I won't cover everything here because obviously you know what they are
+probably if you're taking this course and they've been discussed a lot.
+So why we'll talk about the bit more here are the shortcomings.
+Why do they fail?
+Why am I even advocating for other methods here?
+And one of them is that they are very powerful, like I said, but they're also
+given a completely impossible task because you're asking them to compress
+information from hundreds of tokens or even thousands of tokens if you're
+doing long context into a single vector.
+And what that means is even if you have, I don't know, a thousand floats,
+three thousand floats, you're not going to capture the full meaning of the
+document, there's going to be some information loss at some point you're
+going to miss out on something.
+And what you're going to miss out on is going to be extremely influenced by the
+pre-training of your model, because what will teach the model what information
+it should keep because compression is basically the act of choosing what you
+keep, choosing what you see as representative and what will be representative.
+What will be kept by the model is something that will be relevant to the training
+queries.
+So your single vector is extremely influenced by this.
+And what that means is that it will probably not match your data.
+And Jason's a huge advocate for fine tuning.
+And that's why, because if you don't fine tune your model, that aggressive
+compression will result in information loss, which will result in information
+loss for your specific use case.
+And you will also nearly always lose fine grained details.
+And I have an example on that in a couple of slides.
+So I have taken a slide that you might remember here with permission from Joe
+Berger, which is the missing baseline called BM25, more on that in a second,
+which is just statistical analysis of your data.
+There's very little to index.
+There's no models.
+It's very limited.
+It's something that you should be doing.
+It's something that people often don't report in their papers because it's so
+good that it makes your very computationally expensive method look a lot,
+a lot worse when DFIDF does so well.
+And so the first question is why is it called BM25?
+And it's because it took the authors 25 tries to get it to work.
+Like there is a series of methods called BM1, BM2, up until BM25, which
+produced good results and BM26 was worse.
+So they decided it's best match 25.
+It's our 25th approach at making this work.
+We've been using that name since the seventies.
+So they did well.
+It's what it is, don't really matter.
+If you're familiar with NLP, you will know what DFIDF mean, which is term
+frequency, inverse document frequency.
+All you really need to know in practice because those are scary words
+about its term weighting.
+So it's going to look at your entire corpus of documents and look at every
+single word that ever gets mentioned there.
+And it will basically rank them by importance based on how unique they are.
+And then when you query the documents, you will type in a query, which will
+have a lot of keywords in it.
+And it's going to just try and find those keywords in the documents and see which
+one of the highest weighted relevance score.
+This works really well because we really love keywords.
+If you ever like take a look at your user queries, you will see that.
+I don't know if it's a natural human behavior or if we've been Google trained
+from birth to the point where now we kind of type with keywords, like
+we're always going to use one or two.
+So you should always ensure you've got some sort of lexical approach
+built into your pipeline.
+And that's one of the most common representation methods that kind of gets
+a lot less publicity than your methods, but it's very useful and a good example
+as to why it's very useful, why you should use it, even if you've got the
+world's best embedding model is this situation.
+So let's say your query is what's the ULESS Texas shop profit for FY24.
+So you've got a lot of keywords that sometimes, which is ULESS Texas and FY24.
+But then you've got two documents or a hundred documents.
+Don't matter.
+One of them is Houston, Texas, FY23 profit.
+And one is ULESS Texas, FY24 profit.
+They both have like content.
+We don't care about the content here, but to a semantic model to your
+embedders, those like Houston, Texas, FY23 and ULESS Texas,
+FY24 are virtually the same text.
+Both of those titles will score 99 point something for your query because
+semantically they are virtually the same.
+ULESS is the suburb of Houston, FY23 it's FY followed by a number.
+This looks identical to BERT or to like an embedding model.
+However, to BM25 or to any form of lexical matching, this looks extremely
+different because the score for FY24 in the first one is zero and the score for
+FY24 in the second one is very, very high and likewise for ULESS and Houston.
+So lexical matching is something you want to have just to handle those simple cases.
+It will often come up, not necessarily in this easier form, but it costs virtually
+nothing to add to your pipeline.
+So why not?
+This is why I mentioned earlier, this is from the BERT paper and BERT is probably
+best known as the retrieval part of the MTEB.
+So if you ever check the MTEB leaderboard, that is this benchmark.
+And on the original paper, they included a bunch of fairly heavy duty
+transformers based models.
+And you can see a BM25 or something that came up in the seventies is remarkably
+good and gets better as you go to longer documents because the more tokens you
+have, well, the more words you have in your documents, the easier it will be
+to match at least one keyword.
+And this is the first of two academic tables in this, and I do apologize.
+I know latex don't look amazing, but it's useful.
+And then a quick, well, this is a section where I had to cut quite a bit, but
+something that you will also come across or might have heard of.
+So I thought I would mention it quickly is SPLADE.
+And SPLADE is a neural network based approach.
+Like dance embeddings, but it learns sparse representation because it's
+basically using BANI transformer, but most commonly BERT, to create sparse
+representations and what the transformer does is provide it with an expansion
+mechanism, so it's able to infer like relevant vocabulary, which is not
+actually in your query, but has strong overlap with your query.
+And so it avoids cases like this one, which is in the, if you take our example
+before with FY23 and FY24, or FY24, sorry, twice, but one time you go
+FY24 with a space in it and the other, you have FY24 all attached.
+For BM25, those are two different tokens.
+So FY24 has a similarity score of zero with FY24.
+PLADE has a learned expansion mechanism where it kind of will learn this overlap.
+And this is an example from the paper or the screenshot here, where for BM25
+Indonesia question mark is entirely different from Indonesia, no question
+mark, and this happens a lot.
+So SPLADE basically like why if we use the fact that transformers contextualize
+token representations to expand on our terms and create BM25++, this means
+that it captures some semantic content, but it's not very good at
+actually understanding meaning.
+So sparse methods, be it BM25 or SPLADE are not something that you're
+meant to use on their own.
+If you include them in your pipeline, it should be either as a first stage model
+to then rerank documents or to use in conjunction with embeddings to do what
+we call hybrid search and Joe mentioned this, where you will just combine the
+score of your cosine similarity with embeddings with the score of SPLADE or
+BM25 to create like sparse dance representations, which works pretty
+well in a lot of cases, like it's one of the things that you see all the time
+in the literature.
+And that is the end of frankly, this intro section on the two things that
+I will talk about without really talking about.
+Call bear and light interaction.
+So if you've heard of me, you know that I love call bear.
+I think it's a great idea.
+I think everyone should use call bear.
+It does have trade-offs.
+I'll cover them.
+The other thing, and that's one of the many reasons why it's obscure, at least
+up until relatively recently, is that it has many, many names.
+The main mechanism is called multi-vector representations.
+So if you see multi-vector somewhere, it's called bear and that's because it
+uses multiple vectors to represent documents.
+You will also read light interaction model and I'll try and explain this, but
+it's basically because it keeps both query and document tokens so that they
+interact at the latest possible time.
+As in the only time where they will actually interact with each other before
+being modified is at the very end when you score them.
+When you do normal dance embeddings, they don't have this light interaction
+because they've been pulled a long time ago.
+Like they've been turned into a single vector.
+So the tokens are never aware of each other.
+Well, when you use call bear, they do beat each other at the end at scoring time,
+which is why it's called light interaction.
+It's not the most intuitive name, but you'll probably, if you use it, you'll
+probably come to see how that works.
+And then there's a why call bear.
+Like we have lexical representation.
+We've got sparse models.
+We've got dance embedding that captures semantic relationships.
+Why do we need this?
+Why do we need a new method?
+And it's essentially because all the methods that exist have drawbacks.
+So sparse methods, they are very strong at keyword search.
+Like they'll find the keywords.
+They'll match like obvious terms.
+They're not very good at any sort of semantic relationship.
+Like they will not really understand the meaning of a document.
+That's not what, that's not what they're here for.
+Dance methods are very practical, very easy to use, but they generalize quite
+poorly and they have a lot of edge cases and they'll never be perfect because
+they're just so much compression.
+And then the other thing is re-ranking methods.
+So like cross encoders, which is essentially you give the same model,
+the document and the query together.
+So it gives a score for this document query pair are very powerful and
+they're always the best scoring on benchmarks.
+But the problem is you need to run it for every single query document pair.
+So that's one model in France for each candidate.
+So if you have a million documents, you cannot do that.
+And so Colbert is inspired by all of this.
+So the idea is we encode a document exactly like how we would with a dance
+embedder, but we remove the pulling mechanism.
+So like instead of putting it all into a single vector, if your document has 500
+vectors, then that's 500 tokens.
+Your Colbert output will have 500 vectors.
+This obviously is costly in terms of storage and we do have ways to alleviate
+that, but the first thing we do is add a turn casting layer and that's been
+studied quite a lot, you can comfortably even turn down a thousand dimension
+vector into 128 or 196 and that will still work because while the vector
+itself is really small, its only job is you have to represent this one token.
+So the task is much easier.
+So that also gets under in training and the output is that every Colbert
+represented document is a bag of vectors.
+So if you have 300 tokens, you have 300 vectors and that will make scoring
+much easier and how do we score this?
+So it's always cosine similarity.
+Every time you need to score something, it comes down to cosine similarity.
+We hate it, but we don't have anything better than that.
+And more precisely Colbert uses MAXIM which stands for maximum similarity.
+And that is for each query token, we compute its cosine similarity
+with every document token.
+Then for each of those similarities, we will keep the highest one,
+which is the maximum part.
+And then we will sum all of those token level maximum scores.
+So the final score for the query document for the events is the score of that sum.
+And in practice, it looks like this.
+These both happen at separate times, like the encoders are completely separate.
+They meet very late in the MAXIM operator and we would put a single
+similarity score at the end.
+I wasn't very clear about that, but the lower dimension projection is just a
+single linear layer at the end of the network, the way you would add a
+classification head or a pooling head, which is add a single head at the end
+that does like 768, if you're using BERT to 128 and that's BERT training.
+And that can be added to basically any embedder, like you can train for
+about half an hour to turn any embedding model into a Colbert model because
+all you really need to learn about projection.
+The other thing there is storing so many tokens.
+Those seem quite impractical and it is because if you have 512 tokens in your
+documents, then you have to store 512 vectors, which is 500 times more
+than if you stored one vector.
+This is pretty simple math and it does not look good for us, but the good
+part of that is we do have the done testing layer, so those vectors are much smaller.
+Then the second one is aggressive quantization.
+That's actually quantization has become a hot topic now, but Colbert since
+2021 has been quantizing to just two bits.
+And that is because when you're doing token level representations, it's pretty
+easy to actually delegate a lot of the token information to residual that will
+like kind of represent this family of tokens, and then you only have to
+store two bits for the actual document, for the actual token representations.
+And there's also recent work from us, which has shown that you can
+perform small scale pooling.
+So instead of doing the whole like everything into a single vector, like
+you would in a normal dance embedder, you pull tokens two by two or four by four.
+And you manage to keep most of the local information still, but like reduce
+storage by up to 75% without really losing any ritual performance.
+And I'll get to that at the end, Jason, because we do have vector DB support now.
+The answer is quadrant and we have yet and lands DB if you want to use it as a
+rerun, and so this is kind of what it looks like at the start is terrifying
+because you only got 300 tokens and somehow it's three megabytes or 3.6 megabytes.
+You're not going to do that with dimension reduction.
+You're already done to 0.6 megabytes, which is not a great way you can do it.
+And if you introduce pooling and then to be quantization, you end up with around
+kilobytes per document, which becomes quite accessible.
+It's a third of 1024 single vector would take.
+So this is much more heavy handed, but you can do it.
+It's the message here.
+And how does Colbert find the real world?
+That's a question because I think we all know, or we all learn at some point that
+there's a massive difference between an academic paper and something looking good
+in a paper and then something looking good in your pipeline, because it's easy
+to work with on benchmarks, et cetera.
+And Colbert has been a weird paradox because it's been a favorite at all
+IR conferences.
+There's like around five to 15 papers talking about Colbert, studying parts of
+it that like SIGIR every year.
+And it's been very strongly adopted by like search startups, like Algolia uses
+Colbert and Tannady a lot, things like that.
+But up until earlier this year, very few people were using it.
+And that's mostly because it's a fault from usability issues.
+The original repository worked, but was really not friendly to use in any
+sort of production setting.
+And all the reproductions were equally academic code.
+So nobody was really interested in putting it into production, except people
+who are making money putting into production.
+So they were interested in other people being able to do it.
+So you kind of had this, if you know, you know, and if you don't, then we're happy
+you don't because we're making more money.
+Because earlier this year there's been, so there's been ragged too from me and
+there's been Vespa having a strong Colbert push.
+So adoption went up a lot.
+We have yet is about to release Colbert support.
+I think it's due this month, actually late in September.
+Quadrant has Colbert support.
+LensDB integrates Colbert as a re-ranker.
+So it's not ideal because you still need a first stage retriever, but you can try it out.
+There's a new backend framework named Pylate, which produces a local vector
+DB like thing where you can create an index in memory for about 500 documents.
+This will be in ragged to light in a couple of weeks.
+So it will be a little bit easier way to try it.
+So we're making progress on usability.
+The Colbert V2 model, which is now four years old.
+So it's very clear and antique in machine learning terms.
+Went from, I think 50,000 downloads in January to now four to five
+million a month on hugging face.
+It's actually the most downloaded virtual model right now, which is quite cool.
+So Colbert is seeing a lot of adoption because there's been a lot of recent
+activity, which has made it like both more practical and more performant.
+And that shows with the model we released recently at answer.ai, which
+is only 33 million parameters, but basically beats all existing mini
+models on the bare benchmark and even out of the main benchmark and it's
+competitive with even large variants.
+Like it's better than E5 large on all benchmarks.
+So do give it a try as a rerun car.
+If you're using LensDB, it's just a single thing to add at the end.
+You can use it by using Colbert ranker.
+I think it's called.
+And this really cool thing, which I think Joe briefly mentioned in this talk, but
+it did not crazy enough is that Colbert also does long contacts without anything
+trained for it, and this part's a bit misleading because the only way to use
+this right now is Vespa because nobody has a public implementation of it.
+But since Colbert works at the token level, what the Vespa team does when
+you're trying to embed a really long document is basically apply a sliding
+window to the encoder and stores a token if needed for a given document.
+Then does max him over those.
+And that is basically state of the art for long document retrieval, at
+least on a few benchmarks.
+And it does a lot better on M3 or even like LLM based embedders.
+So that has been really amazing work done by the Vespa team and done by Joe himself.
+And this real world thing is something I want to segue into Colpalai because
+Colpalai or Colpalais, I'm still not sure how to pronounce it.
+The whole team's French, so we all say it with a French accent, which doesn't help.
+It's a very, very recent development, which is basically a month old and it
+uses Colbert like the late interaction approach to image tokens.
+So if you've been following what's been happening, people are really
+bullish on the vision language model.
+So LLMs that look at images, look at videos and treat an image or video
+token as just a token, so it's for us when the model is encoded, it is just a token.
+Meaning you can manipulate it like a token.
+And that idea is a massive step towards document understanding pipeline,
+the very simple ones, like for proof of concepts in that 10 minutes.
+And so right now, if you're processing documents, you are playing retrieval
+to documents in a really extensive pre-processing heavy-handed way.
+You're probably using unstructured or similar thing.
+And that's a lot of steps.
+Like you have to OCR to extract the text.
+You have to clean up the output.
+If there are images, how do you represent them?
+Do you get an LLM to describe them?
+So we do like textual retrieval, do you use clip embeddings?
+If you've got tables, how do you represent the table?
+Generally, I think most people would give it to an LLM and be like, please,
+for the love of God, give me a very accurate description of what this table
+is so the user can query it.
+It's a lot of steps, a lot of steps that can break.
+And more importantly, and it's something I don't like, it takes quite a while
+to go from zero to 0.1 and 0.1 is generally where you want to test things.
+And you will often need some custom components, which is even slower.
+The other way people try to do it is that embedding documents as
+images is not a new thing.
+We've had clip for a few years and more recently we've had C-clip.
+And those are basically just a way to embed images into a single vector.
+But like we were discussing earlier, single vectors compress everything.
+And it can work okay to compress text because ultimately text is not that
+information down at the token level at least, but images are because so imagine
+it, if you're doing text in a single vector, you need to plan the text.
+If you're doing a page in a single vector, you need to plan exactly where on
+the page the text is, what formatting is used, what the table looks like, what
+the image looks like, and that has to all fit into one vector, even if there
+are three images, one table and two paragraphs.
+So in practice, all the ritual methods on documents showed strong information loss.
+And that's kind of sad because vision language models can read.
+Like it's been shown if you use Sonnet 3.5, Haiku, GPT-4.0, Quen 2.0, VL now.
+They're very good at reasoning across a document that you give them as an image.
+So that means that they can understand the content.
+What's sad is that if we try to use that understanding as an embedding, it doesn't work.
+Like it always does poorly and the Colpalai team tried a lot of things
+and it always did poorly.
+And their theory was basically that the degradation is just too much to overcome.
+If you try to do it single vector, it's not going to work.
+And they just kind of had the thing one day, but they are like, yeah, but
+Colpalai works at the token level.
+So maybe we can do image tokens at the output and it's worked really well.
+So that's the second academic table.
+All the ones in blue are the output of pre-processing the documents, like
+putting your PDF through unstructured, some OCR, some captioning for the images
+and tables in orange, you've got single vector image embeddings.
+And then in green, you've got Colpalai, which again, Colpalai has no
+pre-processing step whatsoever.
+You just give the PDF to it and then you can query it.
+And what's pretty interesting is it does really well across
+every single benchmark they tried.
+So it does well if you ask archive questions, but it also does well on
+financial reports or medical reports.
+So VLMs can read and Colpalai can use that reading to query documents.
+But then the question you might have is in the wrong slide.
+So I'll change what I'm saying.
+The way it works is every part of the document.
+So when you're using a VLM, it creates patches.
+If you're using a Colpalai, it's 28 by 28.
+And so you have to put 28 pixels by 28 pixels and we store a single vector
+for each of those, and then when you query the documents, it allows you to do
+like very powerful scoring again, those patches.
+So here, if you're asking which how of the day is it over electricity generation,
+the generation thing will match some aspects of the query.
+And here we see what match the how token, which is this part of the document.
+So we can see exactly all the hours being represented.
+And this is what brought up this document as being relevant to this query.
+And then the last step, because we're doing retrieval of wanted generations.
+So you need some sort of generation.
+And a question that I think people have with Colpalai a lot is you need to
+steal extra information, like, okay, it's cool if you can do retrieval on images.
+But then what do you do with your LLM?
+It takes text as input.
+And I've been finding a lot of people have been finding that the newer
+VLMs are very, very good at reading.
+They really understand pages.
+So if you're doing a proof of concept, all you need to do is embed your PDF and
+then literally pass an image version of that PDF to your VLM in context.
+And you can ask your query as normal and be like, use this provided context.
+And the context just happens to be document tokens of text tokens,
+but to the model, it's the same.
+And then yeah, it turns out your query based on that.
+That's as simple as it is.
+We had a use case recently where we were working with people who wanted to query
+a 600 page documents and getting the production ready V0 for them to try.
+It took about 20 minutes embedding time included and passing it to cloud.
+Since we had absolutely nothing to do to the PDF except embedding it once.
+There is some issues with Colpalai, which is that right now the storage is
+around two megabytes per page.
+So they are working on reducing that.
+This is very much a V1, but it's a very promising approach.
+And I think it's likely the future of document understanding.
+And yeah, these are all the resources I mentioned.
+If you want to refer to them at the end, a lot of papers, a lot of libraries
+and a small Colpalai section.
+And yeah, thank you for humoring my propaganda.
+Sorry for the brain fog.
+And I also want to stress because a lot of the time people take one extreme view
+or the other as in dense vectors are useless or other models are too complicated.
+So I'm sticking to dense vectors.
+And I think neither of those are true.
+I think multivector is better, but I think you're still better off starting
+with something off the shelf, like Nomic embeds or VG embeds.
+If you want to try something really quick and basically like Jason likes to say,
+don't fix why it's unbroken, start with a simple pipeline, see what is broken
+and then improve on that.

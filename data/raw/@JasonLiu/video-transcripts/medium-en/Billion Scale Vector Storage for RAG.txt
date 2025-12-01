@@ -1,0 +1,628 @@
+So, you know, I think one thing that people always talk about is doing vector search,
+right?
+Doing vector search at scale.
+And when I think of databases that are truly being used in production, I mostly think of
+TurboFlocker.
+They're the tool that Linear, Cursor, and Notion all use in the back end to do search.
+And I think in conversations with those folks, it's always been the case that whatever provider
+they were using before was very expensive, you know, very slow.
+And I think in the past year or two, people have realized that, you know, TurboFlocker
+has been a great solution, especially because it's backed on object storage, right?
+It's a tool that gives you full text search, vector search, and as we talked about earlier,
+you know, filtering and aggregations.
+And these are all the ingredients you need to do search really well for the context of
+RAG.
+But also, I think in the future, a lot is going to happen in the context engineering
+facets and aggregates allow you to give context to the language model to make more search
+queries in the future.
+And so today's guest, Simon, is the CEO of TurboFlocker, previously leading a pretty
+big engineering team at Shopify.
+And we're going to talk about some of the design choices that he's made, right?
+How do you think about billion scale search, you know, bringing some real case studies
+from the companies we mentioned before and how we think about things like tuning, recall,
+and latency.
+And so as always, if you have any questions, please ask them in the Slido link that we
+shared on Zoom chat.
+Upload the questions you want to see answered.
+And with that, Simon, take it away.
+Awesome.
+Well, hello, everyone.
+So when I proposed this talk, I called it a billion scale vector search on object storage.
+Slightly revisited here now.
+TurboFlocker is at a trillion scale now of not just vector search, but search in general
+on object storage.
+Today I want to talk a bit about the sort of the founding story of the company.
+Like why did I decide to build the first version of this and then bring on my co-founder and
+the rest of the team later on to productionize this a couple years ago?
+We'll talk about how people use it and why they've decided to switch over from other
+solutions and other storage architectures to this more novel storage architecture.
+We'll talk about the storage architecture that makes TurboFlocker special.
+It's the first completely object storage native database that exists and why this type of
+architecture is so suitable for this era of search needs.
+TurboFlocker at a glance is a search engine on object storage.
+It can do semantic search, so classic vector similarity.
+And we can do this on trillions of vectors that we have in production today.
+It can do full-text search.
+So it's not limited to just semantic similarity, but can also do traditional BM25 search.
+And you can combine those two types to do hybrid search, which many of our customers
+today are doing.
+But TurboFlocker cannot just do semantic search and full-text search.
+It can also do aggregations and group buys for facets that Jason and I were just talking
+about earlier.
+What makes TurboFlocker really special is that it has a new storage architecture.
+In the storage architecture, all of the data is by default stored on S3 or GCS or Azure
+Blob Storage, one of those three.
+And then all of the caching is put in front of it.
+So it works a little bit like a JIT compiler, where the more you run it, the more you query
+it.
+The faster it makes it up into the cache hierarchies.
+It's literally the reason for the name is that the pufferfish inflates all the way from
+deflated in object storage, where queries take maybe around 500 milliseconds, into disk
+query, take tens of milliseconds, and into RAM, where they can take less than 10 milliseconds.
+So that is the general architecture of TurboPuffer that makes it special.
+And we'll go into that in a second.
+So who's puffing?
+We have lots of customers that we've worked with very, very closely to productionize and
+make them successful in production.
+Cursor was the first customer of TurboPuffer.
+We've been working with them since they were a small team in 2023 and grown alongside them.
+We feel we've grown really tremendously with them.
+Notion, Linear, and others also work with them.
+Superhuman recently went to production as well.
+We've worked with one of the top AI labs and many other customers, hopefully some of which
+you know and use.
+There are many other logos.
+You don't always get the rights right away, but this list will continue to grow.
+So I want to talk a little bit about why you build a new database.
+Many of you are likely aware there's been search engines since the 90s.
+You had Sphinx, you had Elasticsearch, you had Lucene.
+There's lots of different search engines that are all great for particular types of workloads.
+I fundamentally believe that if you are building a new database and you're going to make it,
+then you need two key ingredients.
+The first one is that you need a new workload.
+You need a reason for people to adopt a new database in their stack because it's a serious
+commitment to adopt a new database.
+It's a very sticky product.
+It's difficult to migrate.
+And the feature surface area can be something that is very varying across the different vendors.
+So you need a new workload.
+And the new workload today is to connect LLMs to enormous amounts of data.
+And in some instances, also users to a lot of data.
+But connecting LLMs to new data is really the newest workload.
+Like in Jason's course, you talk about RAG, and that's literally what RAG is.
+One thing that's also very interesting about this is that the new workload in particular
+is very large.
+If you have a kilobyte of text, it easily turns into, after chunking into four vectors of say,
+20, 20, 1024 dimensions, which means that you have now 16 kilobytes of vectors from one kilobyte of
+text.
+It's really inflating the size of the data we call the space storage amplification or size
+amplification in database parlance.
+And some people even use dimensional vectors that are much larger than these in cases to get more
+recall, more precision.
+These are enormous.
+And it means that one company, the company that I work with, where they were spending three grand
+a month on their Postgres instance, and they wanted to vectorize all of their unstructured text and
+put it into a vector index in another database, and it would have cost them 30 grand a month when
+their Postgres was costing them three grand a month, which is prohibitive for their use case.
+And it has been prohibitive for a lot of other use cases around the world, because when you do
+this workload, you want to earn a return on the product that you can shift with that.
+So the economics really become important.
+The second thing is that you don't just need a new workload.
+You also need a new storage architecture, because if you just have a new workload, then you can tag
+it onto an existing database.
+The reason why, say, this is not a great fit for something like Postgres and others is just because
+of the enormous amounts of data that this is to store on a traditional storage architecture, which
+we'll get into in a second.
+Some workloads are suitable for this, which are, for example, vectors.
+You need a new storage architecture to make it economical so that companies can earn a return on
+it.
+But some are not.
+For example, when GeoSearch really blew up with mobile in the early 2010s, that didn't need a new
+database because its coordinates are tiny, right?
+And they fit it fine with all the existing databases.
+But vectors in particular require a new type of index, and a 10x cheaper storage architecture
+can really unlock new use cases.
+The storage architecture that we can have today, that we couldn't have 10 years ago, and that no
+other database is designed to take advantage of in the same way that TurboPuffer was when it launched,
+sort of builds on three features.
+The first one are NVMe SSDs.
+These SSDs are incredibly fast.
+They are only about maybe five times or four times slower than accessing memory if you use them
+correctly and you drive for a lot of throughput.
+But they're about 100x cheaper than DRAM.
+So if a database really can take advantage of NVMe SSDs instead of DRAM, well, then you can
+drive really good economics.
+The second thing that you needed for the new storage architecture that TurboPuffer has is
+that you need S3 to be strongly consistent.
+What this means is that if you put an object on object storage, then you should be able to
+immediately read it back and you know it's the same object, which you can probably guess is a
+very nice primitive if you're building a database to avoid having a whole other coordination layer.
+And then the third thing you need is for S3 to have compare and swap, which they only launched
+in December of last year.
+What that means is that you can get an object, mutate it, and then write it back and be guaranteed
+that it wasn't modified in the interim.
+This allows you to build a database that is completely object storage native and has
+the economics that we'll go into in a second.
+The architecture that you end up with is something fairly simple.
+You have a client that connects to a binary.
+That binary is the database and it accesses a cache.
+It has a tiered cache into RAM when the puffer fish is fully inflated into SSD,
+and then finally into object storage.
+That is the overall very simple architecture of TurboPuffer that it's been since day one.
+Let's talk about the economics because this matters because like I said,
+you need those two raw ingredients to build a successful database company or why there's
+room for a new database business.
+RAM is expensive.
+Costs about $5 per gigabyte, give or take with some error bars,
+but around $5 per gigabyte is a pretty reasonable amount to pay per gigabyte of RAM.
+Databases don't run entirely on RAM unless it's fully a cache because,
+of course, you shut down the machine, the data is gone.
+So generally, you store it on three SSDs, three copies, because even if one machine goes away,
+you still have two other copies.
+That costs about $0.60 per gigabyte of data stored.
+This is how most traditional databases like Postgres and others will store data.
+But if you store the data just in S3, well, it's $0.02 per gigabyte.
+It's 20 times cheaper than storing it on three SSDs yourself.
+And if you can then take the data that's in S3 and cache it with an SSD cache in front,
+you're still a lot better off, but maybe not all of your data is even active so that
+a percentage is always in S3 and a percentage is in SSD and a percentage is in RAM,
+and you're paying exactly for the performance characteristics that you need
+as the pufferfish sort of inflates on the subsets of the data sets that you need the most.
+So these are improvements that are an order of magnitude better on real production workloads.
+And we see some of our customers migrate and cut their first bill from their last bill with
+their past provider by up to 95% by realizing this architecture with us,
+simply because their workload is a really good fit for it.
+We happen to think that most workloads are.
+The thing that you need to do, and I alluded to this earlier,
+to build a database that takes advantage of this is that you have to build an
+object storage first database that is also round-trip sensitive.
+What this means is that when you go to, for example, S3, the P99 on accessing an object on S3
+is maybe 200 to 300 milliseconds depending on which object storage you use.
+But in those 200 to 300 milliseconds, you can max out the network.
+You can get an enormous amount of data back, but every single round-trip takes around that long.
+This is very similar to how an NVMe SSD works.
+It's just a lot faster than 200 milliseconds.
+Every round-trip is around 100 microseconds, but you can drive a lot of throughput in every single
+one of them, but you can't parallelize across a lot of reads.
+In RAM, it doesn't matter as much.
+Random read in RAM is very, very fast.
+Of course, sequential is faster.
+If you build a round-trip sensitive database, then it will work very well with S3 by going,
+getting some data and then a little bit more data and then serving the query,
+rather than doing lots of round-trips that are very slow and not getting a lot out of the data.
+Works really well in SSD as well.
+If we talk about vector storage and building this object storage round-trip sensitive data,
+then we have to be very careful about how we lay out the vectors to do the vector search.
+If you search in raw vectors and you just do an exhaustive search, it becomes very slow.
+Because if you have a billion vectors, you have to search terabytes and terabytes of data
+sequentially, either from object storage in disk or in RAM, which is very expensive.
+Even if all of that is in RAM, for a million vectors, it will take you hundreds of milliseconds.
+You can maybe squeeze it down, but it becomes very difficult to do
+in an economical fashion if you're doing a lot of queries.
+It becomes extremely prohibitive for doing cold queries on object storage.
+A graph index is the very traditional way of doing vector search. It became very popular
+as the first wave of vector databases arose. A graph index is also not suitable for an object
+storage first or round-trip sensitive database that works well for disk and works well for
+object storage. The reason for that is that when you navigate a graph, you get dropped in the middle
+of the graph and then you navigate the graph by edges. Every single time you do that, it's 200
+milliseconds at the start, then 200 milliseconds to get to the first layer, 200 milliseconds to
+get to another layer, and so on as you navigate the graph. That's very good in memory because
+you're not reading that much data and the latency is very low. But for disk and for object storage
+where you're much more sensitive to the number of round trips versus the amount of data per round
+trip, it's not a good architecture. This is actually the first wave of
+vector indexes even before they became popular a few years ago, which are the clustered indexes.
+What you do in a clustered index is that you try to do a natural grouping. You have a close cluster,
+a food cluster, whatever the semantic grouping is, and then you put those adjacent on disk.
+If you think about it very simply, you can think about it as on S3 there's a file called 1.txt,
+2.txt, 3.txt, and 4.txt. Then for every one of those clusters, we take the average of all
+of the vectors in the cluster and we create another file called centroids.txt or cluster.txt.
+Now we only have to do two round trips to serve the query. We get all of the clusters from clusters
+of txt, find the closest, say two or three, and then we download just those files. Imagine that at
+a much larger scale, we can now max out the network neck to get all the centroids, then max it out
+again to get the clusters, but only do two round trips. We can look at a lot more data with this
+architecture and it works very well for disk as well. It happens to also work great in memory.
+There's some chat here. I'll answer those afterwards. Of course, every database comes
+with tradeoffs and we try to be very transparent in what the tradeoffs are because I spent the
+majority of my career on your side looking at these databases all the time. The first question
+is always, what are the tradeoffs? What are the limits? What is it suited before? What does it do
+and what does it cost? The tradeoff for an object storage first database is that cold
+queries can be slow. Once in a while, you'll hit a server that doesn't have the data in cache
+and you have to go to object storage and no matter how much we optimize it, it's still going to be
+hundreds of milliseconds, maybe half a second for that first query while we then start hydrating
+the cache, inflating the puffer fish for that particular set of data. You can mitigate that
+and still make it cheaper because you have a very cheap canonical source of truth for two cents per
+gigabyte and you could always have it in cache and it would still be much cheaper than any other
+storage architecture. But once in a while, you will have that cold query. The other limitation
+is that you will have high write latency. Every time you write to TurboPuffer, you write directly
+to object storage and you cannot beat that that's going to be 100 to 200 milliseconds of latency.
+There's some economics with doing very small writes that are a little bit disfavorable to
+some workloads, but it's not something we see very much. Those are the fundamental limitations.
+They trickle into some other limitations like certain types of transactions being difficult,
+but really these are the only fundamental limitations with this architecture. It means
+that doing something like a very high transactional workload like Shopify where I worked before,
+doing some transactional workload like that, would not be suitable to do a checkout system on a
+database like that. But it is extremely suitable for indexing lots of data to search or letting an
+LLM search because it's low cost. It's very simple, right? We're not the storage layer as the
+hundreds or thousands of whatever amount of people work on S3 working on that for us. And same for
+GCS on the GCP side. These are some of the most reliable, horizontally scalable and durable systems
+on the planet. So we can focus on the indexing and the database itself. Warm queries can be just as
+fast as in memory database once it's in cache. And we can get extremely high write throughput
+and give this serverless experience where you don't have, where people don't have to think about
+node types, how many servers there are and things like that, because that's really an S3 problem
+that was solved a very, very long time ago. And this gives us this advantage where we see
+write peaks of 10 million plus vectors written per second. And it works great because we can
+scale as far as S3 can scale, which is, I mean, we haven't found the limitations yet.
+So the architecture that you end up sort of building around this, it really also just the
+simplest you can imagine. Every time a query comes in, it gets routed to the query node that is
+responsible, that subset of the data with a consistent hash. And then if the query is cold,
+we will go to obx storage, take a couple of round trips to get the data and serve it directly to
+the user. It might be noticeable, but it's not going to be so slow that you're sitting in front
+of the search box for a long time. Probably still be fast in a lot of searches that you find on a
+lot of websites. As the cache hydrates very quickly at a gigabyte or more per second, then the
+queries get much, much faster. For some of our customers like Notion, when you open the Q&A
+dialogue to work with your data, they will send a request to TurboClub first to start hydrating
+the cache for that particular namespace so that the subsequent queries are fast. Lots of companies
+can have this kind of pattern where they have a hint that you're about to access the data and then
+the cold latency goes down even further. On the right, you go to a query node as well, the same
+query node, and then we just write directly into the cache to increase the probability that the new
+data is also in cache so that subsequent queries are faster. One of the things that's unusual about
+TurboPuffer's design is that all the reads are strongly consistent. So once you've made a
+write to the database, it's immediately available on the next query with strong consistency
+guarantees, which is also the kinds of guarantees that S3 operates. We think that this makes
+systems more predictable and easy to reason about. You can turn this off for better performance, but
+that's the default. When you write, we write into the namespace directory on S3. You can think about
+a namespace as essentially a prefix on S3 or a table or something along those lines. And we write
+into the write ahead log. The write ahead log is essentially just 0.txt, 1.txt, 2.txt for every
+write that you're doing, and we do a bunch of batching to save on costs. Once we've written
+enough data to update the indexes, then we will in the background use these indexers to compact and
+move the full-text search, the vector index, the attribute indexes, and all the various indexes
+that we build for the data to keep it fresh. The query nodes will then update the data
+and the query nodes will then reach for the new indexes they get built and sort of page those new
+keys into cache as they get queried. The performance of this ends up being really nice, right? When the
+pufferfish is fully deflated, we still get really good cold latency. We can get as low on the P50
+to almost 200 milliseconds for full-text search workloads. And the P99 even is around 500
+or 600 milliseconds. This depends a lot on S3 and all of their caching and things like that,
+but we do a lot of things in the background to do hedging and so on to try to keep this latency
+down as much as possible. When it's in cache, it's as fast as many other systems. The majority
+of the time here in the variability is really that for every single query we go to S3 and make sure
+that we have the latest data, right? Again, SuperPuffer doesn't have any other metadata
+to make sure we serve consistent queries. If you turn this off, all this latency goes down and I
+think even the P99 is probably less than 10 milliseconds if you're okay with eventual
+consistency. I think we can talk about this if anyone gets into it. Let's cover some of the case
+studies here and then we'll turn it over to Q&A in about five minutes. So cursor is one of our
+use cases and I'll talk a little bit about how they use TurboPuffer. So with their previous
+solution, they were using an in-memory vector database, which is really the first generation.
+In-memory and always in-memory makes a lot of sense even for something like Shopify where
+you're going to have the entire catalog being queried all the time. Well, you might as well
+have it in memory and the economics of TurboPuffer is still a lot better, but you might still be able
+to earn a return even on it being in memory on a more traditional storage architecture.
+But for something like cursor, not every code base is active all the time. At any point in time,
+some percentage, I don't know, like 1%, 10%, I don't know what the real number is, but some
+percentage of the code bases are active at any point in time. Those can be in memory or on SSD
+and then the rest can be in S3 or GCS or wherever this code base is stored.
+So every single code base then in cursor is just a prefix in S3. That can be tens of millions of
+these at any point in time before they get GC'd out. So this pufferfish architecture really lends
+itself very, very well for a cursor code base where as soon as you open a code base, we can
+start hydrating the cache for the namespace and then all of the rag that cursor does will become
+faster. If you use cursor today and the agents and things like that, you will see that it often does
+semantic queries like, hey, where in the code base does it do this? And that's using TurboPuffer
+behind the scenes that cursor is keeping up to date that uses embeddings and re-ranking and so
+on to draw the right context in. So this helps cursor both optimize their inference by finding
+the relevant context and as little of it as possible, but also find things that can be very
+difficult to find with grep or even letting the agent grep around. So in my experience using
+cursor agent, it's very good at these kinds of tasks where an agent might need a lot of attempts
+to grep because they can find it right away with a semantic index. Cursor has their own embedding
+model and yeah, are very good scale. When they move to us and move to our storage architecture
+from the previous provider, they cost their cost by 95%. One thing that excites me more than cutting
+the cost for our customers is for them to realize the most ambitious version of their product. And
+in cursor's case, this allowed them to index much, much larger repositories than was economical for
+them before. The other thing was that before on the traditional storage architecture, they had to
+be very careful about which servers had what code bases and do all this bin packing. With TurboPuffer,
+they don't have to do that because it's horizontally scalable into as many namespaces as they want to.
+Notion is another customer of TurboPuffer and they saved millions and millions of dollars when
+they moved to our storage architecture. It's also very suitable for a Notion. You have a lot of
+workspaces and some subset of them are active at once and now you can realize those economics.
+They have more than 10 billion vectors, they do really large right peaks and have millions of
+namespaces for all of their data. One of the things that I really liked was that once Notion
+moved to us, they removed all the per user AI charges and they've been really, really good
+partners to us. The last use case I'll show here is Linear, another one of our customers.
+They were dealing with Elasticsearch and PG Vector before and they wanted something that
+was really hands-free where they can just bump in all the data, they didn't have to worry about it,
+they don't have to think about machine types and they didn't need anyone to operate it and be on
+call for it. They got the cost reduction but that just made them more excited to connect even more
+data into the LLMs. They really think about us as this foundational search layer. I think every SaaS
+is now expected in the same way that 10 years ago we expected all of our SaaS to ship a mobile app.
+Well today we expect every SaaS to have a semantic search. We expect them to have some kind of
+agentic mode, research. We're going to expect a baseline of AI features as these SaaS platforms
+evolve and for Linear they really thought of us as the foundational search engine for all of that.
+With that exactly on the 30-minute mark, I will hand it over to you, Jason.
+Oh you know that. I mean you're free to continue any other sides. I saw some pretty interesting
+slides in the appendix but let's jump into some questions. Yeah, I definitely sort of see the
+case for these cost optimizations. Maybe not in 2025 but I remember in 2023 I was talking to some
+companies where they were using some sort of quote-unquote like legacy vector search systems
+and it was the case that they could not go GA until they moved to typical cluster and those
+kind of stories is kind of what really caught my attention earlier on in those days. Just looking
+at some of these questions, I feel like a lot of these are actually just comparisons against other
+search systems. People are really curious about tools like Elasticsearch and Quadrant. I think
+you know generally when I think about things like TumbleFuffer, I think about the fact that
+you know Notion, Linear, Cursor, they have these really well-defined partitions. There's like a
+workspace, there's a repository. But what would it look like for TumbleFuffer to power something
+like a Twitter or e-commerce where there's just no natural partitions here or maybe there are. I'd
+love to hear your thoughts on that. Yeah so the petitioning was really a go-to-market move right.
+Every startup's weapon is focus and our focus is that the only thing that scales even now is
+sharding. I learned that at Shopify we shart on shock for everything and so we felt that a really
+good way into the market was let's give people unlimited sharding and give them a really good
+experience with lots of many shards right. That was cursor and notion. When we used to not be very
+good at large shards right. If you were in 10 million we would actively tell people no go use
+something that's been around for a while, go use pine cone, go use quadrant, something like that.
+We are not that is not our ICP. Now we're very good at that. We have customers that run in
+production that have namespaces that are in the hundreds of million. We're working with customers
+on basically building Google right. Like they want to search a hundred billion documents all at once
+and that's what we're working on. We have customers that are searching one billion plus documents
+and we are getting very very good at this. The trick here is that we when you search and this
+is the same with elastic search any system that's scaled does some kind of sharding right to use
+multiple machines. The trick is you want the shards to be as large as possible. A small shard is like
+when I ran elastic at Shopify we were targeting our shard sizes at around 30 to 50 gigabytes
+and so if you have a data set that is in the hundreds of terabytes which billions of products
+easily is you have to search you know m times log n or whatever the whatever the complexities
+of your searching that's not actually the complexity of an inverted index but let's say it's
+log n well if m is very high you're spending a lot more computational resources than making the
+m smaller and the n higher so you want the larger shard sizes you can and that's what we're trying
+to work that's what we're working on right now to get very very large individual shard sizes.
+So in order to do 100 billion you have to do probably 101 billion indexes but we will continue
+to make those as large as we possibly can. I think in terms of implementation of this
+for very high throughput and in-memory quadrants implementation seems like something that
+some of their customers that I've spoken to have really good success with. I think where it starts
+to get difficult to maintain an HNSW at that scale is if you have a lot of churn in the data
+and you're doing very high write throughput so we'll get there it's not a fundamental
+compromise in our architecture we won't get good at it I think we're going to get exceptional at
+it and I think the results of the POCs right now are quite good. To compare us to Elasticsearch
+it's really that traditional storage architecture right I was I've been on call for Elasticsearch
+which it's probably the worst database I've operated in my life and part of this company
+is my vendetta against it so I do have some bias but it's probably gotten a lot better since I
+worked on it almost 10 years ago but it has a more traditional storage architecture right of two or
+three SSDs you run those at about 50% utilization and the shards are smaller so it can be difficult
+to realize the economics you need right. At the end of the day an infrastructure decision is a
+set of trade-offs and then economics you can earn a return on so if you have a per user cost
+of your elastic cluster whatever cluster you're using of $10 per user and you're charging in $20
+well that's not a good return right and so what we want for you is to increase the ambition of
+your product index more data and have a better return so you can get to your the gross margin
+that you need to get to. Yeah we're practical I definitely like that a lot um I guess one question
+that came from adam actually is around cache controls the question is what kind of cache
+controls do you hand over to the user and how much tuning typically goes into achieving these
+cost and performance goals? So by default we don't really want you to think about it um so for example
+if you use s3 or or in gcs you can you can turn on auto classing what that means is basically if you
+don't access the data for a while then it just goes you know somewhere else you access it again
+then it goes to a lower storage class that's how we think about turbo buffer as well so we want to
+default to really good cache behavior we don't want you to have to think about it we don't want
+you to have to configure a namespace to be cold or warm um so you don't have that many controls
+because generally our users don't need it there's very specific edge cases like this case I'm
+talking about about searching 100 billion web documents well if you're doing that then yeah
+we're gonna like work with you a little bit on the caching before we know the heuristics to get this
+right at that scale because it's a difficult bin packing and cache problem but for most other
+workloads the default behavior is phenomenal the main control that you have is that you can send a
+hint cache warm request to turbo puffer if it's not in cache we will charge you one query and start
+hydrating the cache and if it's already in cache it's free um that's the main trigger that you have
+today and it works great that's um oh I wasn't aware of this one but one of the questions is
+will you remove the minimum spend requirements at some point for these smaller use cases
+I don't know if that's yeah it's it's a good question so I think that if you have a very small
+use case and you already have a postgres database you should like you could probably get away with
+pg vector I think as as as we mature our product and think that we can provide you um that we're
+less of a knife and more of like you know um a drawer of tools to help you do your search then
+I think that it makes sense to do this the main reason we have the minimum spend requirement is
+because we really want to give people a really really good experience we take it a take it as
+an extremely serious commitment that you are trusting us with your uptime and scaling a support
+team and an on-call pager and all of that to be extremely responsive if there's any issue even if
+it's not by us um that's that's why we have that minimum spend requirement it is not an infrastructure
+minimum it's nothing like that it's really just to guarantee a good experience um and over time
+people we will lower it we definitely will um and it's not that we won't have a free tier ever um
+it's just not the right choice for us right now uh to to have a free tier and supported with the
+high quality support that we've come to pride ourselves on I think that makes sense um I guess
+another question I'm also curious about because I noticed this in cursor sometimes which is that
+you know maybe for notion documents and for linear tickets there's not much editing
+of these of these data objects but you can imagine in cursor if you change a file very quickly and
+make another query um how do you think about refreshing the index and how should we think
+about designing such a system and maybe like a little more right optimized yeah so I mean
+first off turbo buffer is very right optimized it's partially very right optimized because
+cursor does a lot of rights and notion does a lot of rights um I think there's there's there's
+a couple of angles to to talk about this question from so the first one is that and this is a
+realization that many of our customers have made and the first time was explained to me it's like
+oh yeah this makes a lot of sense um if you're doing full text search you'd kind of almost want
+to re-index on every keystroke um because you know you you change from turbo to turbo puffer and
+it matters the semantic meaning of a chunk doesn't change on every single keystroke in the same way
+especially if you're using hybrid search so we've seen some customers that um also because
+creating the embeddings is often much more expensive than than storing it in turbo puffer
+right so we see customers that find some compromise that makes sense to them they do the
+vibe check of like how many characters how many bits what's the added distance before we have to
+re-embed and the semantic um has has has um semantic meaning has captured enough and then
+debounced by some time right after some time you always make the change that's very common I think
+it's a very interesting observation um the second thing is just that there there is an economical
+like there's an economics piece to it right do you want to do this like all the time or do you want
+to do this every minute or how how's your pipeline set up um it costs money to keep these a and n
+indexes up to date and so you have to make some reasonable compromise here that you can earn a
+return on um I think we're very sympathetic to users where um that that want to do a lot of
+rights and so the system is heavily optimized for it um but it's a it's a choice made by by
+by the users and it's not something that we really provide any particular constraints on
+lots of our customers do it close to every keystroke and it's generally driven by the
+economics of creating the embeddings. Makes sense um on the top of the embedding this is the question
+that a couple folks upvoted which is uh is turbo puffer sorry is turbo puffer optimized for late
+interaction like models like culbert where you're storing like multi-vectors per chunk
+so so um it it is and it isn't it is in the way that one of the largest challenges with late
+interaction models is what I you know this is like my pet peeve today apparently it's very hard to
+earn a return on because it's an enormous amount of data it is the best or some of the best um um
+precision that you can possibly get you can do it with turbo puffer um I can I can I can share a
+share a gist or I can send it to you Jason and like kind of a paceman on how to do it with turbo
+puffer right but like fundamentally all it is is that for every token you send a top k of let's
+say a thousand you do like you know like let's say you have 10 tokens in the query then you do like
+all of those you can do a multi-query turbo puffer you get that back and then you do a second layer
+of queries you don't have to get all the vectors and then you have your late interaction result
+the question is whether the you can live with the economics of it right you can squeeze the squeeze
+the embedding small enough you have 16 and all of that and we will continue to optimize the economics
+um I've had that pace been around for six months I haven't seen anyone who's put it in prod yet
+I think someone here should put it in prod and we would love to work with you because we have the
+multi-queries and it's totally possible to do in turbo puffer now what you need for realizing
+late interaction in in performance and part of the reason why it's not adopted is really just
+comes down to economics right how much are you willing to pay for that extra 10 to 20 percent
+of precision that you can get with late interaction over like some of the late
+chucking techniques and other techniques that you can otherwise use but if you have something where
+you have a small amount of data and you just care about precision I think you should try it and
+in turbo puffer probably by far be the most economical way of doing it um but no we don't
+have a here's here's like all the vectors do late interaction you have to string it together right
+but it's very simple to string together on the side of economics with embedding models one of
+the questions here is around uh quantization does hyper buffer do its own quantization internally
+how do you think about optimizations on that front or is it the sort of developer itself who's
+responsible for writing these vectors up in the type of offer yeah so we do we do we do quantization
+and like clustering and all kinds of things right to to optimize the performance of your index
+um if you send us smaller vectors then uh we'll index the smaller vectors at this point we don't
+support like int8 or binary vectors but we will the smaller you will be able to send them the
+better the economics and the performance is going to be because if you send us a you know f32 1024
+dimensional vector I have to store that in full precision because you want to be able to export
+that later on at full position so I have to charge you that way right so if you can pass on something
+quantized well then you don't have to store the full position one so it sort of becomes a bit of
+like I guess sort of an API problem but the other thing is just like getting all the SIMD
+instructions right for all the all the different architectures and things like that for all the
+different quantizations is just what takes a bit of time and we find that most of our customers
+are very happy with the economics of f16 but we'll continue to quantize smaller and smaller as our
+users request it but I think fundamentally the way that I look at it is that um quantization
+I think quantization and the number of dimensions is I mean maybe I've talked to the embedding
+providers around this and it's like roughly right but it's like what matters is like how many bits
+of information are you passing right and one lever for that is how many bits you have per dimension
+and then the other lever is how many dimensions you have and so whether you have an f16 that's
+like 100 dimensions or you have a binary vector that's like you know much many more dimensions
+but then you know one bit per dimension it's the same number of bits that are there to compress
+and project a learned representation into so you should be able to fundamentally get away with an
+f16 that's a lot smaller if the embedding model is is optimized enough and that's what we've seen
+from some of the sophisticated users they just drain on f16 because it's extremely optimized
+in the q2 pipelines performs really well and then they do the like the truncation and normalization
+with the metrioshka learning um to get a really good representation um but yeah that's probably
+a way longer answer than they wanted okay now this is all very great I feel like this is the
+first time again this is a great technical talk um this question's pretty good so you know they
+said this might be answering the session it wasn't answering the session uh they have a lot of
+questions around turbo flippers facets and aggregates and how they're actually useful for
+text-based rag right maybe in the legal context um given that you are shopify could you talk a
+little bit more about like how maybe facets could be used in the traditional context and then we can
+maybe extend into the like agentic context yeah I think you should talk a bit about the agentic
+context because I know that's something you're very excited about and we share the e-commerce
+pass so I'll talk about it there um I don't know if this is still the case but actually I was actually
+part of the team that shipped facets at shopify and we actually did it on my sequel because in
+all the collections in shopify were not powered by search they were powered by my sequel collections
+and then the search facets were different um so there it's just a big you know select group by
+union that's like really what it is um so how are facets used well I mean in an e-commerce concept
+right it's it's used as like okay um I'm doing this search and I want the I want like all the
+different colors so like blue orange whatever right so it's really a like select count from
+table group by and then the facet whatever you want to facet on so you might want to facet on
+color you might want to facet on size and then there's some really weird ones like um faceting
+on price because with price you want to roll this up into some like distribution that makes sense and
+the card analog is very high but fundamentally it's really about like when you go to an e-commerce
+site and you do a search on that left hand side you want to have some relevant filters popped up
+I'm sure all of you have seen really bad faceting where it's like they have every single price
+listed on the left side and like every size and there's like red burgundy maroon and it's just
+like no I don't care like I want this to normalize right um the the form of faceting that's in
+turbo puffer today is like very simple and it doesn't support every single one of these cases
+like faceting on a vector search is like kind of funky because a vector query has a result
+for every single entry in the data set so you kind of need to like pass a threshold and then
+facet on that um so you might want to facet on the full text search as part of the hybrid search
+so it's it all gets a little bit funky but we're sort of expanding that with feedback so if any of
+you are turbo puffer customers are about to be um you should drop that kind of feedback into community
+channel um but Jason I think you should speak about it in the agentic context
+yes totally so I think you know one of the things we think about in terms of like what is the
+difference between like as traditional vector search versus this like context engineering
+is the fact that in the context we're trying to give it clues give the agent clues to make
+better use of tools in the future right so you can imagine the a simple file search might just be a
+text input and then I return 10 chunks right but what if I could also go back and say you know what
+of these 10 chunks you know actually 45 percent of the chunks that would have been returned come
+from this file or this directory right if we include that in the context and then we tell the
+agent you know what if you make subsequent queries we can return you full pages from a document right
+if we if we think this is useful we can return for you whole documents from a like whole pages
+from like a pdf you might be able to load better data in the future right a simple example encoding
+agents could be something like using grep or using find if you make the find command really what you're
+doing is you're kind of counting the number of files or how many files have how many occurrences
+of a certain keyword and then the next tool you call is a read file tool that recognizes that the
+find query has resulted in some file that is really relevant right and this is because we've
+designed a portfolio of tools with a range of parameters that you can use to against filter
+against and do all these other interactions and so by having more information in the search result
+in the form of facets we can then use those facets to make better searching searches in the future
+this is the same thing in e-commerce right maybe i am searching for shoes and so my first query
+is just shoes and then maybe i get two facets maybe i get a brand facet and then i get a you
+know stars rating facet and i realize oh what i actually want is i wanted five star shoes for
+nike under the 50 dollar price point i can click those three facets and make a new search query
+that's just you know maybe you know find me running shoes filtered by nike filtered for stars filtered
+by price and you could imagine a sophisticated agent could have done this in one step but the
+truth is we didn't have that context right i did not know there were so many nike shoes i did not
+know i had the ability to filter on stars i did not know what the reasonable price filter is but
+by providing that in context you can whittle down your search right and this is really going down
+to this idea that even with worse search tools because these agents are so persistent as long
+as you give it more context and the context can be used to call the tools in a better way you're
+going to get better performance and i think that's one of the things that many of our databases allow
+which is the ability to provide additional context around data that wasn't returned
+and that's a pretty long-winded answer but that's kind of why i'm excited about some kind
+some things like this because elastic search provides them but not many meta databases
+i'm curious if you have any thoughts on that no i mean i think it makes sense i mean i think i had
+this in one of the slides but it's like every every successful database ends up implementing
+every query um i think one of the unfortunate thing about the the way that the query language
+has evolved in elastic search is that it's very very difficult to use and it's very difficult to
+understand what's important and that's one of the strengths that we have right and in working closely
+with our customers and feedback from people like you jason is like um we can have some opinions
+but by just way of whatever order we ship features in of what matters to the context um and i like
+this i i like the framing of i just want a summary of what's important about everything that wasn't
+in the top k like that that just like you as the database person um know that could be done in a
+reasonable latency estimate right um and so i think i think that's great and really interesting feedback
+yes i guess i mean to answer the question the legal domain you can imagine an example where
+maybe i am searching for some clause in a legal context and so i return 10 text chunks that have
+the clause but maybe what i actually recover is that the fact that i have some facets on the
+file name and i realized you know 90 of the clauses came from three files the agent might then say you
+know what i'm not going to do my semantic search query next i'm going to just load the whole damn
+pdf right because the pdf says this pdf id has been referenced 10 times by the semantic search
+just read the whole damn file right and it's a separate cool tall read file versus a search
+chunks tool and that could be another example of that i think in legal i mean i i don't know
+anything about legal other than um like my the contracts that i have to read right but like i
+could imagine that i if i'm searching in my contracts i want to know like by customer right
+and then be able to filter to that because i have like a custom dpa a custom msa i might have like
+some amendments to the agreements blah blah blah right um i might want to search for like what
+lawyer worked with me on this right who was involved who was the signatory right like all
+of these different things that are just essentially these follow-up filters that both a human and also
+an agent would find really interesting to discover in the data um that i mean at the end of the day
+right like what the new that what something like turbo buffer really just needs to do is to allow
+humans and agents to converse with the data so we need to provide all of the queries that can do that
+and so faceting is a part of that because there might be hundreds or thousands of different colors
+right in a collection and we can surface some aggregate that makes sense because it doesn't
+make sense to load a billion records into a context window right the computations required
+on the attention to do that is just not possible to earn a return on so what does that database
+look like well it's going to have some kind of fuzzy search but it's also going to have some
+other massaging of the data that you can do to pivot the data around and massage it uh to explore
+interesting things about it that's correct that's correct all right we have four minutes left you
+know the question i generally ask everyone at the end is you know what is something you feel like
+folks are not thinking about when they are thinking like reasoning about these kind of systems um
+yeah i'd love to think yeah when people are building these things what's something you think
+people are not thinking about these days that they should i think they're not thinking about
+the latency of the embedding model um there's a lot of embedding models out there and um i'll just
+pull a very concrete example because it's one of the most widely used the open ai testing getting
+text embeddings are great but the problem is that they have very high p50 latency the p50 latency you
+get is 300 milliseconds well it doesn't matter that the turbo puffer latency is eight milliseconds
+when it takes 300 milliseconds to create a query vector so we've seen from customers where they
+create hundreds of million billions of embeddings with and it's not just open ai there's lots of
+these um with an embedding provider with it latency is very high and then they use it fine
+for these agentic and q and a workloads but then they're like okay it's time to like do real-time
+search and it's too slow and they've already like created all these embeddings and again it's not
+like people are not right now limited by the turbo puffer cost they're limited by the embedding costs
+um and re-embedding everything to switch models like it's like it sucks and so don't fall into
+that trap make sure that if that's a use case that you care about that you do that latency
+we've seen we've seen great latency from from from models like cohere and gemini
+i think voyage has also really gotten very good at latency and last i tested vagina they also had
+pretty good latency but there are some of the models that really just don't have very good
+p50 latency um so just make sure that you test it because um and it it matters for you to test it
+and not just take blanket advice because the latency from the region that you're in to whatever
+region that they're in also matters because that's the region where they get the cheapest gpus so
+that they can earn a return again you know that's what it all comes down to so you want to do that
+testing for yourself it's very easy to do you can ask cursor or whatever coding agent of choice
+you're using and it can do this test for you in like five minutes but you've got to do it so you
+don't paint yourself into a corner that's actually a great answer this i should just go out and like
+make this run script that people can just try out and benchmark everything against you should
+you should do it in your course because legally you can't do it on the public because
+all the tos's prevent you against it perfect yeah we'll do that as the next action item um
+with that said you know if there's any other message you want to have for the audience if
+you just share that now and then i'm going to follow up with you afterwards get some links
+and we'll distribute them in the uh the reader notes yeah i mean was yours no not not really
+come puff if uh if any of this resonated everyone else thank you for tuning in we'll send the
+recording the notes afterwards and again simon great talk learned a lot and you know see you around
+thank you all

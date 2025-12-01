@@ -1,0 +1,275 @@
+Look across the 15 companies I've consulted for in the past year to improve
+the rag applications, every single one has used a Cohere Ranker.
+And so today I'm really excited to invite Alexander from Cohere to talk a little
+bit more about how they think about building great rag applications.
+When we pull back the veil when it comes to rag, but we're building a tool that
+kind of puts everything together and lets you be as tinkery or as little tinkery
+as you like.
+I wanted to talk about today quickly how we think about rag complexity at
+Cohere and what tools we offer to minimize that complexity for an end user
+and really like iterate quickly on building successful rag applications.
+And so in addition to just giving a brief overview of rag, which many of you
+probably are familiar with already.
+I'll also be talking about this tool we have in beta right now called Compass
+that we'll talk about a little more and get a quick demo of.
+Let's start with rag basics, right?
+I've got a very simplified overview here of a typical end to end rag system, right?
+Where let's say it's a chat bot style rag system where we've got a chat history,
+we make a request, our LLM might do some sort of query transformation, hit a search
+query against some information retrieval system, most likely a vector database,
+let's say, in a lot of the cases that you folks are probably working on.
+Given that retrieved information, that same LLM can use that to ground
+its response directly.
+And one thing I want to point out quickly here in this little diagram is one thing
+that we are really bullish on at Cohere is grounding directly on sources.
+So we train our models to cite directly from the sources that are provided from
+this stage three here.
+And that's just like this tiny little toy example here where we actually provide
+like citations from document chunk one, two, and three in our responses, which
+we think minimizes hallucinations across the board.
+So moving on, let's talk about a very basic scenario, right?
+So the simplest way you could do rag, because here this information retrieval
+piece is doing a lot of heavy lifting, right?
+Extracting away a lot of the customization and complexity you can have in rag system.
+But in its most basic form, let's say you had a single document and you want to do
+question answering over that single document.
+What you might do is take that document text, chunk it up naively, let's say, into
+the token sizes that would fit into some model like Cohere, rerank v3.
+You then pass your query into the rerank model along with all of your chunks.
+And you get a nice answer.
+It's really nice.
+That works for a simple case, like a single document, but we can start asking more
+questions, right?
+We can start asking questions like what if you want to do question answering over
+multiple documents with lots of different file types, or maybe something even more
+complex, like tool calculators, Python interpreter, right?
+There's more you can do outside of just single document question answering.
+So why don't we pull back the veil a bit here and take a look at what we can do with rag.
+So I want to talk about the general schema that we see with information
+trivial right now that's that goes beyond just the initial re-ranking stage and
+works to not only maximize speed of response, I'd say, but also like really
+focuses on honing down information to prioritize the most relevant pieces to the LLM.
+What we first start with is as document corpora grow, we have tons of documents,
+tons of chunks, right?
+And we need to be able to filter that down to the re-ranking stage.
+And so we have this concept of like first stage retrieval, which is
+built around maximizing recall.
+In other words, the goal here is given a huge corpus.
+All we want to do is get the relevant information in some large top K, right?
+We don't care necessarily about how it's ordered when it comes back.
+We just care that we're pairing down, let's say from a million documents
+to a thousand documents and those thousand documents are maximized for recall.
+Right?
+So they're, they are relevant to the query.
+This is really great because it's faster production use cases.
+We can like pre-compute indexes on before we actually do query time.
+We also have like very efficient interaction in simple cases with like
+dense vector retrieval, where we're really just doing like the inner products.
+And there's lots of technology out there built around this kind of vector
+retrieval, right?
+Places like QDrand, Pinecone, they're all building optimizations around making
+this type of retrieval as fast as possible.
+Outside of this vector retrieval, there's other things to try, right?
+There's sparse retrieval as well, which kind of works more on a typical keyword
+matching objective, where that's something closer to TF-IDF, if you've
+something like that, the M25 is another very strong, what we call like lexical
+method to get this kind of first stage retrieval.
+Dense vectors is what I was already talking about, where we have something,
+some vector in some dimension, let's say a 1,024 dimension, dimensional vector,
+where we're calculating some sort of inner product to get a similarity metric.
+We also have some other technology like sparse neural vectors like Splayed,
+which I won't go too much into detail about now, but if you're interested,
+there's a lot of good papers out there discussing the Splayed method.
+Anyway, outside of the drawback of, or rather these vector methods have an issue
+about information compression, especially towards like a limited context window.
+When we do this first stage retrieval, we need to be like smart about how we chunk
+our documents to maximize like information interplay, because you can imagine a
+scenario where you might have a long list of things that are exclusions from,
+let's say like an employee handbook about benefits and the exclusions are this
+long list that don't apply for your benefits, right?
+If you don't chunk things up smartly, you could have one chunk that has your
+exclusions with the first five items in the list where the next 10 items in that
+list don't have any interplay between the fact that those are exclusions at the end of the day.
+We need to be a little smart about how we structure information in this first stage
+retrieval, but what we can do to like really maximize relevance to our LLM is the
+second stage retrieval, right, which is re-ranking.
+I think you folks have probably come across this already, but given the top K
+chunks that we just retrieved from that first stage retrieval, we want to now do
+a cross attention calculation where we're actually doing a direct attention calculation
+between the query and the context of the chunk to surface an even smaller number
+of extremely relevant chunks of information to the original query that are
+also ranked in terms of the relevance as well.
+It's really strong.
+And again, like I said, if you're building a proof of concept, you can skip the
+first stage retrieval and go straight to re-ranking because you don't really
+care about speed.
+It's not a production application, but generally these are slower, but obviously
+much more precise since they're trained on maximizing this precision of
+ranking information.
+Additionally, we do have a constraint for neural methods, like neural
+re-ranking methods that we still need to chunk information to properly bit that
+information into the model itself.
+But generally re-rankers have a larger context window than for
+stage retrieval algorithms.
+Let's jump into generators really quickly.
+This is fairly straightforward.
+Given what we get out of the first and second stage retrieval process, we feed
+that into your LLM of choice and hopefully that LLM has been trained to
+cite from sources and produce an answer.
+One thing I want to mention quickly is RAG.
+I think even as generator context length gets longer, obviously we've seen
+context like get longer and longer.
+I think RAG will always have a place at least in the immediate future, just
+because of a few things that these are, there's more reasons than this, but the
+two that I want to prioritize it is positional bias is still like a really
+big thing in long context models.
+There's some research around it.
+Lost in the middle was a paper from a few years ago examining how placing
+documents in a large context length changes the answer quality plus a lot of
+other research.
+That's a great paper if folks want to read it.
+But generally the gist here is that given that you could pass in a thousand
+documents into a large context length of a million tokens, but eventually there is
+some loss of focus from the generator itself where in a RAG setup, if you have
+this kind of information filtration system, you're always focusing on the most
+relevant information and not adding distractors.
+And then additionally adding chunks directly in some format, especially with
+our models allows the model to cite directly from those chunks, which helps
+minimize hallucination and also tie information sources directly back to the
+chunks that were where they were extracted from.
+Hey, are your RAG applications falling short despite using the latest
+frameworks and models?
+You're not alone.
+I'm Jason Liu and I've helped a dozen companies improve their AI applications.
+I've developed a systematic approach that delivers results.
+If you want to check it out, join my free six week email course and learn the
+techniques I use in my own consulting practice.
+That way you can stop guessing at what works and measure what matters.
+Just check out improvingrag.com.
+So Compass is putting this all together, right?
+Introducing a lot of this complexity, right?
+When we pull back the veil when it comes to RAG, but we're building a tool that
+kind of puts everything together and lets you be as tinkery or as little
+tinkery as you like, but basically when we think about NJ and RAG, it's truly
+a sum of all its components, right?
+You have pieces you can modify and customize at every step of the pipeline
+and then build your own setup.
+You have to control that and that's fine.
+Consource tools like Mama Index and Langchain have a lot of like really
+great tooling built around this already.
+And if you want to get started and if you want to tinker, that's really great.
+Compass goes a few steps further where we basically provide all of these tools
+plus a nice SDK wrapper and a good amount of secret sauce that we've been working
+on internally to maximize this kind of idea of smart chunking that I was talking
+about and which embedding models work best in which scenarios.
+Anyway, that's the main gist of Compass and I'll just give you guys a quick demo
+here and it is pre-recorded just because we're still in beta and I wanted to make
+sure that everything worked properly.
+The directory financial documents in the form of PDFs.
+This could be anything from 10Ks, 10Qs, 8Ks.
+The gist is that I've got a lot of financial information, across multiple
+different documents, potentially even document types that I want to synthesize
+using something like an end-to-end rag pipeline.
+Now Compass allows us in one single SDK and just a few lines of code to parse all
+of these documents in a bulk fashion using say VR techniques that include
+computer vision models or OCR amongst other things and an indexing pipeline as
+well that is obviously proprietary but involves things like lexical indexes,
+dense vector indexes, parse vector indexes, really combining this complexity
+we've already been talking about.
+Why don't we take a look at the code that we might use to upload these documents?
+As you can see, like I said, really simple, just a few lines of code,
+let's say about 10, right?
+And we use the Compass Client SDK plus the Compass Parser Client SDK to queue
+both these jobs where we have the parsing step and then indexing step after
+the documents have been parsed.
+So I'm not going to run this code now because I've already uploaded it.
+I do promise that it's quite fast in this batch upload setup.
+Why don't we come back over to our directory and take a look at some
+of the documents we have.
+So in this example, I want to take a look at my ID.
+Within 10Ks and we've got Item 8, which is where companies will often put their
+financial information and Item 8 is usually the section of 10Ks that
+people really care about.
+In this case, for 2033, we've got revenue numbers for the past three fiscal years.
+But let's say I want to look further back, right?
+Let's say I want to look at something like 2018 and compare and contrast
+revenue numbers between those fiscal years.
+But notice that we also have a 2018 10K, right?
+And similarly in Item 8, we do have this information.
+And of course, I knew where to find this.
+Most people who know how to read a 10K will know how to find this.
+But for someone who's not well versed in 10Ks and doesn't know which of these
+hundreds of pages to look through for this information, could be a really good
+start to ask a generator in a RAG pipeline like Command-R plus where this information
+lives, what this information is to get the juices to the library.
+So why don't we come over here to Coral, which is our interface for communicating
+with Command-R plus and Command-R.
+And you'll see down here that I already have a connector set up to our Compass
+index, and this is just one way we make integration super seamless with our
+generation models, but I won't go too into depth about how that works.
+Instead, why don't we ask this question we were just talking about, right?
+Where we're comparing revenue figures from 2018 to 2023.
+All right.
+And let's see what the model says.
+It's going to start banking and it should come up with a few queries to ask of this
+index, and now it's going to retrieve from that index and synthesize all that
+information into a nice little answer.
+We've got our answer.
+Like we already saw in item eight, we had that 36.4 billion number and then 51.4
+2023, and the really cool thing about Command-R plus is it's trained to sighted
+sources, so that maximizes clarity and minimizes hallucination, and we could see
+exactly where this is coming from, which is really nice, but why don't we take it
+a step further, right?
+So like I said, we're trying to get the juice flowing and this was an easy
+kind of lay-up question, but we might do something more complex where we really
+want to dig into the multi-document reasoning capabilities that Command-R
+plus and Compass is able to do.
+So we might ask something like, what are the three main reasons that revenue
+increased over the five year period?
+And so Command-R plus is going to come up with another set of queries that it
+thinks it should ask of the Compass index, right?
+So reasons for Nike revenue increase 2018, 2023.
+So yeah, now it's going to give us a nice little explanation of what it thinks
+after reading a few of these sources on how revenue has been trending over this
+five year period, and the same thing again, which is really nice about Command-R
+plus, I'd say, is this citation component where we can literally look in and say,
+okay, Jordan was mentioned X many times in the 2023 10K, which means probably a
+pretty big component of revenue for that fiscal year.
+Anyway, that's the demo.
+I just wanted to get the juices flowing on exactly what we've been talking about
+building up to in this workshop with kind of stepping out of simpler rag cases
+where we might be doing single document question answering and really leading
+into more of this complexity where we've got multiple documents that we want to
+reason over, synthesize, and produce like meaningful content with citations.
+I hope that was informative and I'll be happy to answer any questions.
+That's the demo.
+I know we're running very short on time.
+I do have a quick, this will be very quick.
+I just want to revisit what we were talking about with the original
+diagram of how we view rag.
+I want to talk about where this is headed next, right?
+Where we can view the exact same structure, but revamp each of the actions
+in that kind of flow chart to be much more generic.
+And instead of working like directly with simple information retrieval, we
+can turn this into any tool request.
+Instead of query transformation, the LM will identify a series of tools that
+it should use to retrieve the answer.
+Right?
+So that's, it could be a search engine, which is just the kind of original
+information retrieval step, but it could be something more complicated, a
+Python console calculator, any API, right?
+Like a weather API or something.
+Instead of just thinking about this as documents coming back, it could be
+like any tool result and the same kind of concept applies where then we, the
+model is still trained to cite directly from each of these tools that it
+uses to get to the answer.
+Thanks for watching.
+If you liked that video, make sure to like and subscribe.
+And if you want to learn more, check out improving rag.com.
+We're going to talk about the foundations and not frameworks.
+Over six emails, you're going to learn how to overcome absence blindness, as
+well as how to fine tune language models, understanding diverse query types,
+improving multimodal rag, and ultimately smart question routing and build up UX
+that collects user feedback.
+Just check out improving rag.com and fill out this quick email address at the bottom.
+Thanks.

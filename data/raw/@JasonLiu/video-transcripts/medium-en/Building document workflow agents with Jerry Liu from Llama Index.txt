@@ -1,0 +1,814 @@
+Just a quick introduction.
+I'm Jerry, co-founder, CEO of Lama index.
+And then I'll talk about what Lama index is in the next slide.
+You might've known us as like a rag company, especially from the open
+source days back when we started in 2023.
+Since then we've evolved our messaging a little bit and Lama index.
+We think is basically we want to position it as the most accurate, secure,
+and easy to use way to build custom knowledge agents over your enterprise data.
+We're one of the leading developer platforms and communities for
+drowning.
+I were used by companies like Rakuten, KPMG, like Samax, Salesforce and more.
+All right.
+Let's get started with just like some high level, like a macro perspective.
+We are really excited about agents, but actually specifically about
+this concept of knowledge agents.
+And so what we're really excited about is the fact that a lot of unstructured
+data has been locked up within different enterprise companies, when different
+data silos in file formats, like PDFs and PowerPoints, it's usually created by
+humans, shared by humans, and then also consumed by humans.
+So for the first time, LLMs have the capability to actually automatically
+inhale and just read all this information from unstructured data, and then use that
+to basically translate into insights and also action taking.
+And what we're really excited about isn't necessarily just rag chat bot, but also
+like deeper knowledge automation.
+So I would characterize the last two years as people were building like
+simple rag chat bots in production, just chat over any type of data.
+And the typical like orchestration algorithms you're using with LLMs
+would be quite simple.
+And the end result is that you basically give like a little bit of a glorified
+search engine to a knowledge worker for them to use, which is still useful.
+But I think really the opportunity here is to basically create these agentic
+workflows that can do multi-step reasoning analysis and in general lead to
+like greater efficiency gains for like basically knowledge workers
+in different fields.
+And so some of the form factors of what we're actually excited about include
+like document research, extraction, processing, and report generation.
+More on that in just a bit.
+I think if you think about some of the technical capabilities, I mentioned this
+like a simple chat bot prototype might have like smaller scale data, simple
+user tasks, like not a super high accuracy bar, you might be asking very
+simple questions over the data and it generally gives back the right result.
+I think what we're seeing the world evolve into is basically these more
+advanced agentic workflows that can read across diverse sources of data, actually
+take actions on it, do multi-step reasoning, train of thought, and then
+also like some innovative UXs that are extensions beyond like the simple chat
+bot.
+And in terms of just two high level categories or two high level components
+of the stack that you might need to basically build these types of use cases.
+One is some sort of actually like a knowledge management layer, the ability
+to centralize process and parse all your data and make it available in a format
+so that all agents can access it.
+And then the second is of course, like agent orchestration.
+We have an open source framework that we are defining as an agent framework.
+I'm sure you're familiar with like other agent frameworks out there too, but
+basically there's like a set of tools where you just DIY yourself to basically
+build a set of different agentic workflows over your existing data to
+basically ship some of these use cases I mentioned on the right.
+Here's just like some high level pain points that we've seen across both
+like developer teams throughout the enterprise, as well as like both from
+an individual developer level, as well as like team level.
+One is some of the pain points actually shift to production include like
+inaccurate data, and this leads to the garbage and garbage out problem, where
+if you have like bad quality data, it's like your data is not parsed correctly.
+It's not indexed or stored.
+Then it leads to your LLMs can't really reason over it, even if the LLM reasoning
+capabilities are very good when this leads to bad end to end accuracy.
+There's also generally like a lack of consolidated agent architectures to
+build and ship some of these use cases.
+I mean, especially once you get to the team level, especially we talked to some
+of these like very large traditional enterprises with just like generally a
+lot of people, but you start thinking about just organizationally, if you
+have a large Geni team, can you actually employ that developer team to ship
+multiple use cases very quickly and have a centralized architecture so that they
+can all build off of it instead of reinventing everything from scratch.
+This goes into kind of three high level components of this talk, which is
+to build an advanced knowledge agent.
+First, I'll talk about like high quality knowledge management and just that
+layer and what that means, we'll talk about some of the stuff that we have.
+And then also things that are on the roadmap.
+Number two is agent orchestration and deployment, which is basically just
+a run through of how we think about orchestrating agent workflows.
+And then also how you can use that to build different types of applications.
+And that three is actually deep diving into certain use cases and walking
+through some example architectures to actually build these use cases.
+So to start with, we'll go into high quality knowledge management.
+If you've known us for basically the past year, you've seen that we're
+very passionate about unstructured data and especially what we call complex documents.
+So a lot of documents can be classified as complex.
+They can have embedded tables, charts, images, and then they can have regular
+layouts that they can have headers and footers scans.
+Some tables that we've seen across earnings reports, forms can basically
+just be really complex in nature and actually just figuring out how to
+extract that in a way that's interpretable both by human and as well as
+a machine can be a pretty challenging problem.
+And I think we set our sights on actually tackling this first back when we first
+started working on some aspects of our commercial service, but basically this
+is one of the first components of what I call a knowledge management layer.
+You need a good document parser basically.
+And basically you need a good document parser that can actually understand
+the content within the documents enables you to then extract out structured
+information into a standardized schema.
+This needs to be robust across different document types can handle.
+There's a long tail of different issues across most like human creative file
+formats, and then also feed it into some sort of downstream workflows, whether
+you're trying to ETL it into snowflake, or you're trying to index it into a vector
+store, and this is just a high level sketch of what we see as a knowledge
+management layer connect to some sorts of data, do some parsing extraction,
+and then also indexing, maybe diverging from the slides just a little bit.
+I think, especially with the advent of VLMs that can also do
+multimodal indexing and retrieval.
+There's an interesting kind of combination of both techniques that you can use where
+instead of just like parsing a document into text, and then also feeding that
+through a text embedding model and putting it into a vector store, you can also
+screenshot the page and then feed it through some sort of either image
+embedding model or some late interaction model store that, and then put that into
+some storage system and do retrieval from it.
+You can do that.
+I think we actually do some of that in our commercial service too.
+And in fact, I think we probably do both.
+There's challenges to actually figuring out like the right fidelity of
+screenshots actually take when you're dealing with documents of that complexity.
+But there is obviously a lot of interest in using multimodal
+LLMs for parsing and extraction.
+We have the service called LamaParse.
+We launched it last February.
+There's companies that use it.
+This is part of the credits I think we gave you as part of this course.
+So I think we gave everybody some number of credits to use LamaCloud,
+which includes the parsing capabilities.
+So if you have pretty complicated data, I would throw it out LamaParse and see how it does.
+Here's just running through some example use cases with LamaParse.
+And so one, this is a pretty basic example, but this is just running
+through an example, like 10K document where, you know, I'm going to go into this right here.
+Like this is just like the Apple financial filings, right?
+So if you go into an example of this PDF, you can see, I'm sure many of you
+have seen these types of docs, but there's a bunch of text.
+There's like charts right here.
+There's also like tables.
+And so what we do is we are able to, uh, the tables and to all structured markdown
+like this, and if you build a rag pipeline over this type of data, we're actually able
+to give you back like the right answer because our lens generally have the ability
+to interpret markdown tables as long as they're formatted correctly.
+The issue with most off the shelf parsers is that they don't format them correctly.
+If you look at the baseline, this is where, if you ask about like deferred
+state income tax, et cetera, like you've got the wrong results in the baseline
+versus like the rag pipeline that actually uses LamaParse.
+Another basic example here is just being able to build like a multimodal rag
+pipeline over like a slide deck.
+I'll run through the data in just a bit.
+In this example notebook, what we did was basically do this technique called
+contextual retrieval, which was a technique proposed by Anthropic.
+They popularized the name, but the core idea is very simple.
+All they do is for every chunk of a document generate like a contextual
+summary that takes into account that chunks positioning relative to the entire document.
+And in this case, we use LamaParse or like the parsing module to actually process
+all the information within the slide deck into chunks per page, even if you
+have like graphs and charts, you're actually able to process that into
+well-parsed text, then you actually generate a contextual summary
+for every chunk of that page.
+What we do is after you generate like this text chunk for every page,
+you also screenshot the page.
+So you have both the text and image chunks.
+And then you like jointly link them together and create like some sort of
+embedding based off of that joint representation.
+So then during retrieval, you actually fetch both the text chunk as well as the
+image chunk, which is the screenshot of every page of the slide deck.
+And then you feed it to a multimodal LLM.
+And in general, like I think there will be more and more rag pipelines where
+you're not only, again, generating a bunch of metadata on text, but you're
+actually combining it with an image representation of the page and using that
+to basically create more information content that the LLM can use to reason
+to better answer the question at hand.
+There's notebooks linked in all of these examples.
+I think if I go into this one right here, okay, this is the iconic report.
+Anyways, basically I'll just go screenshot.
+You can see an example of a slide deck is basically this.
+It has bar charts and the, you're dependent on some sort of like document
+parsing technology to actually process this in a way that's like ideally well
+formatted in a good reading order.
+So then you can feed it to any sort of LLM.
+And of course, screenshotting this page is also the way to basically
+maintain full information fidelity.
+And if you're uncertain about it, you could just do text
+parsing and then also screenshotting.
+In general, I think there is a certain set of use cases within certain
+industries that depend heavily on being able to use LLMs on top of really
+complicated data, but I think some data types include just in general slide
+decks, which tend to be very visual in nature and have a lot of charts.
+Approach that we've consulted with other companies is being able to
+parse those documents and to parse text.
+And then also being able to generate screenshots of those pages.
+Number two, being able to process common public filings, like annual reports.
+Number three are Excel sheets, which I acknowledge, I think we have a basic
+version for this in LLM parts, but it's still a work in progress.
+Excel is super complicated.
+I think it's basically some combination of a semi-structured 2D representation
+of something, but also you can have multiple tables for every sheet.
+They don't necessarily need to align in the same position.
+And that's something that we're dealing with as a problem.
+And hopefully we have some feature releases on that soon, but also forms.
+There's many different types of forms and questionnaires where you like fill
+in like a line or a box and be able to parse that into a set of key values.
+It's also something that we do.
+This is just like a general algorithm to think about once you like,
+figure out the parsing piece.
+And it's just like a simple algorithm you can use to basically do
+rag indexing on top of any sort of a complex document.
+So basically assume the PDF parser is pretty good and you actually get back
+like a decent representation of every text chunk of where the tables are on
+the page, where the images or diagrams are on the page, you can basically generate
+like an intermediate representation from every single one of these elements.
+So you can generate like an embedding.
+And there, you can do that in a variety of ways for text chunks.
+So you just feed it to a text embedding model for tables.
+You can also feed it to a text embedding model, or you can feed it to an LLM first
+to generate like a summary of the table and then feed that to a text embedding
+model for diagrams or images.
+And you can use a multimodal LLM to generate an image caption or directly
+use like an image embedding model.
+That's aligned with the same embedding space as the text model.
+And so basically then you end up with a bunch of embedding representations
+and then you index those.
+And then during retrieval, you obviously retrieve those embedding representations
+and then you reference it back to the source element.
+I think in general, I, we see a lot of rag pipelines becoming a little bit more
+multimodal in nature as these capabilities improve.
+So like the elements you're dealing with during synthesis are actually not just
+text, but some combination of texts and also images.
+Cool.
+So that was like on the knowledge management piece.
+I think in general, especially for this class, you have access to one cloud and
+especially the parsing capabilities.
+So I just play around with it and yeah, open to any feedback and questions.
+And hopefully it actually helps you build some sort of
+pipelines over complicated data.
+The next piece is agent orchestration and deployment.
+And so now that you have your data processed and set up, how do we think
+about like building agentic flows over that data?
+Uh, one concept that we basically came up with is this idea of what's
+an extension beyond rag, and we just called it like agentic rag, which is,
+but you have a rag pipeline where inherently it doesn't actually do reasoning.
+You just feed data to a vector store and you're mostly using the LLM to
+synthesize the information from the vector store to generate a result.
+If instead you treat the vector database as like a tool that an LLM can
+call through an API interface, and then you combine that with a set of other
+tools that the LLM can also call.
+Some of these other tools I'm sure you're familiar with, they include
+like structured data, like SQL databases.
+They include like web search.
+They include just like generic actions of a calculator or something that you
+might encode in a function, then you can separate like what the responsibility
+of the tool is with some sort of like higher level agent reasoning or planning layer.
+And so the concept of an agent isn't necessarily like super well defined,
+but there's just like some general patterns that people have come up
+with in that like agent planning layer.
+This includes some sort of like general orchestration of how
+that agent reasons through things.
+Uh, I'll walk through how we think about those reasoning workflows in a bit.
+But yeah, there's some ability to iterate through the set of actions to take.
+There's also some sort of memory or state management.
+And of course there's the ability to do function calling to actually call some
+of these tools through an API.
+But if you think about going back to the previous section, the knowledge management
+piece is really structuring your data in the right format.
+And then the goal is to basically create a set of really nice tools for an agent to
+then use, then the agent is basically like the orchestration or planning layer
+on top of these tools that can solve different tasks.
+We have a pretty flexible definition of what an agent is.
+And for us, it's really less about a single definition of an agent and more
+just about something that's like a little bit more agentic versus less agentic.
+Less agentic flows are things where, you know, as a computer program, you're
+basically defining it with a lot of constraints, but you're defining the
+if statements and while loops and conditionals and the overall control
+flow of the program, and you're maybe using the LLM to make certain decisions
+throughout that flow, but definitely not all the decisions.
+So here is just an example where maybe you have an LLM powered router that
+decides between two tools, but the overall flow is that everything will run to
+completion.
+There's like a linear, roughly linear sequence of steps, and there's not too
+much like branching or other logic going on.
+And so you basically have some sort of guarantee that it will complete
+within a certain number of steps.
+And then you have like unconstrained flows where you basically, this is just
+the pattern of a general orchestrator agent with a ton of tools, but doing like
+a function calling or a react loop.
+And then you're both like giving the agent control over what tools to call at
+every step and also giving it the control of like how long to actually
+run for until completion.
+And in that sense, you're like giving up like human control of the program and
+really letting the agent decide for itself.
+There are certain benefits to this type of approach and that was actually pretty
+general.
+If you just think about a general reasoning model, it has access to a set
+of tools, it can basically just figure out what to do on any new task.
+And so it can generalize to more different types of inputs, but of course,
+there's concerns around like guard rails and it can be less reliable.
+I do think over time as like reasoning models get better, context windows get
+bigger and they get cheaper.
+There will be a consolidation of agent architectures.
+So that actually probably goes a little bit more into the space versus defining
+like super custom workflows in certain settings.
+Though of course there will be like space for both.
+And I think one of the core areas of investment for us, besides like everything
+on the knowledge management piece is actually agent orchestration.
+We basically have evolved the open source framework into something that enables you
+to basically build agentic workflows at different levels of abstraction.
+I'll run through, I think some basic examples, but at a high level, it's
+basically like an event driven system where you can decompose any sort of agent
+to program as a series of steps.
+Every step can listen to some sort of input events that come in.
+You write the logic within the step.
+So if it makes LLM calls, if it does some sort of conditional logic or reasoning,
+or if it's just like regular Python code, and then you decide what output event to
+emit, and then you can of course, compose different workflows together.
+You can piece together granular workflows into higher level workflows.
+You have the full flexibility at the base level to write whatever code you want.
+And it integrates with some of the leading observability tools like weights and
+biases arise and ML flow and so on and so forth.
+And then we're also working on ways to enable you to deploy that into a
+production service and the overall flow of how we see building an application is
+you compose a workflow using LLM index workflows with some of the core components.
+We have this additional project that we're iterating to make more production ready
+called LLM deploy where once you set up these event driven workflows, you can
+actually deploy them as a set of microservices.
+They have full support for a human in the loop state management and also the
+ability to like execute an async and then translating that into a full stack
+application template here.
+I know maybe this isn't the best a screenshot, but I basically tried to give
+you a sense of what it's like to actually build a workflow from scratch.
+I think maybe a better example is I'm just going to go into this web link right
+here, where in general, the way a workflow works is you can just define like a
+Python class that has a series of steps.
+Every step can listen to an input event, emit like an output event.
+And then here you can basically write whatever logic you want within the step.
+So it's a pretty core layer of orchestration.
+If you're familiar with like temporal or I guess like airflow, it's not that
+dissimilar from it, but instead of like a graph based approach, this is very
+much like event driven and the benefits there is that you actually don't have to
+define a bunch of edges in the graph.
+You can just write all the orchestration logic in every step and then just choose
+which events to emit.
+So basically the edges are implicit in the code that you actually
+write within every step.
+This is just like a starter tutorial.
+So obviously this is like very basic.
+This example right here is how you actually build like a full React agent.
+So a React agent flow is something where you define a series of steps.
+It takes in a message, does the react prompt to basically do train a thought
+on the input, figure out what tool to call, and then it actually passes a
+message back to the beginning to basically create a loop of reasoning until
+it decides that it's actually complete.
+So this is basically an example of how you actually build a full React
+agent from scratch.
+And it's also in our docs.
+We started off with that base abstraction just because I think that is like a
+pretty nice, like core layer for people to get started.
+We also, I think started to recognize the need that folks have where there are
+certain agent patterns that are emerging where, and oftentimes for certain use
+cases, you might not really care about rewriting everything from scratch.
+And so we're just going to create like some sort of higher level layer of
+abstraction that makes it a little bit easier to think about agent as just like
+a unit instead of you having to redefine the Python class.
+And then this is actually like a higher layer, a higher workflow abstraction on
+top of the core workflow stuff.
+And this is basically like our multi-agent like orchestrator.
+So the way it works is it's actually very simple.
+It might be similar to some other frameworks that are familiar with, but
+basically you have an agent workflow.
+This is the definition that we use and it's our multi-agent orchestrator.
+You can define a set of functions, give them to an existing agent.
+So calculator agent, retriever agent.
+And then you basically just, instead of you having to figure out how they
+communicate with each other, you just give it to this agent workflow and then
+the agent workflow will figure it out.
+So you trade off probably a little bit of latency and control for just ease of
+use and also the ability to dynamically process different inputs.
+The request is routed to like the root agent.
+There's some master agent.
+It can then delegate a task to an existing sub agent, like one of these
+agents that are described right here.
+One agent can decide to actually directly hand off the task to another agent
+instead of going back to the orchestrator.
+And then whenever the task is fully complete, the final
+response is returned to the user.
+And so basically you just give it to a pack of agents, let it figure it out.
+And then we give you back the final response.
+That's some of the overview on the agent tooling that we have.
+Uh, and now to put it together, we will talk about just like three core
+architectures and actually around like knowledge agent use cases.
+And I think a general theme probably throughout this course is just like,
+how do you build stuff that's more agentic beyond the simple rag chat bot.
+And for us, uh, again, the three core use cases are document research,
+extraction, processing, and report generation.
+I'll start with document research.
+I think this is something that is basically just like the agentic rag
+chat bot, but instead of being able to only answer simple questions, it can
+do multi-step research over your documents, pull in the right context
+to answer the user query.
+There's a few elements of like agentic rag patterns that we find actually useful
+and building something a little bit more sophisticated than basic rag.
+Uh, more on that in just a bit, but some of the use cases that we see, especially
+both among users and customers include like being able to do financial due
+diligence over different types of documents, product documentation, search,
+being able to have a search assistant for regulation compliance and also
+customer support operations.
+Here's just like an example workflow of building like a research assistant that
+does a little bit more things than like a naive rag chat bot, specifically one
+thing that we found to be relatively useful is to not just be able to retrieve
+like specific chunks, but actually retrieve entire documents.
+The reason is depending on the nature of the question, some questions actually
+do require access to the entire document as context, uh, whereas some questions
+are pointed enough in that you can basically find that answer in specific
+chunks.
+And so I think there's a set of different notebooks in the advanced rag category
+that basically deal with handling these different types of questions.
+In this example, what we do is we process the user query, do chain of thought on
+the user query to break it down into smaller subtasks.
+And then within a sub query, we have a router that depends whether to basically
+do document level retrieval or chunk level retrieval, depending on the
+properties of the query to make that router really good.
+What helps is basically a few shot examples of both existing queries that
+have worked as well as like snippets from the source data so that the LLM has
+enough context to reason about how much information actually needs to help
+answer the question.
+And then once it feeds it to one of these two retrievers, then we can try to
+either return specific chunks or like the entire document, synthesize the
+results and get back a response.
+The second use case here is report generation, which I think you guys have
+talked about, but part of this idea is that instead of just getting back like a
+chat response, actually using an agent to generate like an entire artifact.
+Part of that, just like intuitively from a use case perspective, you're like
+a knowledge worker, you're like typing on your computer with TragiBT, you're
+still responsible for not only figuring out the right inputs to ask TragiBT, but
+then translating the outputs into a final thing you're actually creating.
+So what if the agent can just do that final thing you're creating end to end?
+And that's really the direction that report generation is going for.
+It can be actually relatively domain specific, but could generate like a
+document, for instance, in healthcare, it could be like a clinical progress
+report of a patient in engineering and product.
+It could be like generating a PRD.
+It could be generating like an RFP response, but it could also include
+like filling out an Excel spreadsheet.
+It could include filling out like a questionnaire and just making sure that
+you're able to, yeah, address a set of context and then like output that data
+in some sort of sort of structured way that fulfills like a task.
+We have a set of example agent architectures that enable you to
+basically build or get started building a set of different report generation
+use cases.
+And again, I think this somewhat depends on some of the core capabilities
+around parsing extraction and then also building the right agentic workflows on top.
+The first is multimodal report generation.
+What if you could generate a research report that also that both includes like
+text, but also sites, like certain diagrams and images from the source document.
+And there are some examples here where we leverage the parsing capabilities
+to make sure that you extract out the right text from the source document so
+that you have the right context to write a research report, but you also need
+image extraction capabilities so you can cite specific images or charts
+within that source document.
+And then the overall architecture is something like a researcher writer
+setup, where you basically have a researcher workflow that is responsible
+for retrieving the relevant chunks and documents, and then the writer that can
+use the researched data to then synthesize a final answer.
+There's ways you can, of course, make this more complicated with like
+human in the loop and also have the reviewer self reflection step.
+But the, this is just like a way for you to get started.
+Another kind of interesting use case that we're working on with some customers
+is basically RFP response strategy.
+So being able to actually generate a response that adheres to like
+guidelines outlined in an RFP.
+So first you need some sort of parsing extraction algorithm to read like an
+RFP document and then parse out some of the core requirements, translate those
+requirements into a set of questions.
+You can basically do some sort of like structured output extraction to
+extract out some of the core clauses from these documents, get back like some
+answers, and then for each of these questions in this notebook, you can break
+it down, try to look up information from a knowledge base to try to answer those
+questions, do some human in the loop verification, aggregate all the QA
+pairs, and then generate a final response.
+There's some other use cases too, which are interesting, just being able to
+fill out like an Excel spreadsheet.
+I think some of the patterns are similar, given some sort of inputs, like
+process the stuff that you need to fill out, look up things in a knowledge base,
+get that information, and then fill out like the final spreadsheet.
+This is something that could be relevant in like finance, could be relevant in
+basically any industry that requires like outputs and a bit more of a
+structured representation.
+And then I think the last category, which honestly is pretty related to some of
+the stuff I talked about is basically just like more general architectures that
+can automate like document workflows.
+I think when we think about like certain use cases here, we think about basically
+like a generalization of an entire industry that's centered around like
+document processing and extraction.
+So if you think about like an invoice processing software, that's an example
+of something that we think LLMs are just going to totally transform.
+But like for the first time, instead of crafting very like hand-tuned
+heuristic algorithms for domain specific documents, you can actually just create
+general agent architectures, assuming you have the right pieces in place that
+can just automate an entire business process from existing data.
+So some of the use cases include like invoice processing, being able to extract
+out like line items in a standardized format, put it into some downstream system.
+Like contract review, being able to give an illegal documents, the equivalent of
+just like throwing it into tragedy, but actually grounding it in your own
+companies, like regulations and procedures.
+Being able to like process insurance claims in an automated fashion and more.
+And so like a lot of, I would say administrative or back office operations
+teams across IT, legal and more basically deal with certain types of operational
+work that can definitely be accelerated with kind of high accuracy AI agents.
+An example here is basically like contract review, given some sort of like
+vendor agreement, make sure you can actually process, extract it correctly,
+do some sort of extraction to look at like the key terms, for instance, in the
+MSA and then ground it against your own, both company and also public regulations
+and guidelines, this is where retrieval comes in and you have a knowledge base
+that's indexed, maybe also have a structured database, you have an agent
+that can look up knowledge from your knowledge base, pull back the right
+information, and then generate like a final structured output to determine
+whether or not it was actually compliant.
+You can see through a lot of these patterns where if you think about
+RAG as just retrieval plus like synthesis retrieval is still like a big thing.
+And all of these types of agent workflows, but it's just like one
+step in a multi-step process.
+And so to some extent, a lot of these are basically just like generalizations
+of what a RAG chatbot is.
+That's basically it.
+I, yeah, I'm happy to share the slides.
+There's like kind of links to some of these notebooks there and happy to go
+more in detail on any of this, but also I can leave time for questions.
+Yeah, I think I have a link to the slides.
+I'll just share them in the, in the notes as we publish these videos.
+Are we able to see the Slido event?
+Otherwise I can just read out the questions one by one.
+Cool.
+I guess the first question is, I think a lot of people want to answer this question.
+What are your thoughts on the best methods to map relationships across
+multiple sources and files?
+I think a lot of time, a traversal is an issue.
+Yeah, that's a good question.
+To some extent, I haven't actually, I think there was like certain
+techniques we use already, but I think general like construction of
+a knowledge graph ontology is something that I haven't actually thought
+super deeply about yet, and maybe this doesn't quite answer your question,
+but I do think this is one example of something that's a pretty popular use
+case, so give me one sec, trying to find.
+We recently refactored our repo, so I'm trying to go into this right here.
+This is an example of a notebook where it's not inter documents.
+So it's not like mapping out relationships between documents, but a
+popular request is to actually figure out like the right section hierarchy
+within a document and assuming you first just have the parse text within a
+document, you can go through every single page and basically extract out.
+If that page contains like a section heading store that as like
+metadata within each chunk.
+So then during retrieval, if you wanted to retrieve like contiguous sections,
+you can basically do a first pass retrieval to just do vector search on
+relevant chunks, and then from there use metadata filtering to actually do a
+second retrieval pass to basically try to retrieve adjacent chunks nearby
+that form a contiguous section.
+And that's actually an example of almost like how you can simulate like a
+graph rag like algorithm to return like an entire like contiguous chunk.
+I think the answer to some of these questions around like mapping
+relationships across sources probably comes down to some sort of like
+metadata standardization and then, and tagging, and then being able to
+retrieve that in a contiguous fashion.
+Sweet.
+The second question is about evaluation.
+So how can you talk a little bit about how your platform evaluates agents
+and tools performance and the handled errors in particular?
+Yeah, it's a popular question to be honest, but we intentionally did not
+build an eval observability tool.
+We do integrate with a lot of great partners that I can refer you guys and
+weights and biases, length views, like, like Databricks, et cetera.
+I think it's like a hard problem.
+I think I don't have unique insights into it.
+And I'm sure all these like eval providers probably have more.
+I think some of the core things you basically need to do is to like the
+general recommendation I have is just build the end to end use case, evaluate
+that first before trying to break it down into sub components.
+It's typically just a little bit quicker to iterate if you just
+build the end to end thing first.
+And then in terms of like how you actually measure the end to end thing,
+the first thing you do is just have an Excel spreadsheet with
+20 inputs and then just eyeball the results.
+And then you can figure out all the base evals after.
+The second question is the one I asked, which is how do you think
+about ingesting data over time?
+I think a lot of times, a lot of the folks here have issues where
+data documents are changing, documents are growing,
+yeah, things are being updated.
+Could you talk a little bit more about that?
+Yeah, for sure.
+So there's actually two things.
+I think the first thing that we do, and this is like the data pipeline
+issue, the most common data pipeline issue is like when you do updates,
+you don't want to re-index the entire files.
+And so you basically just, what we do is especially in a lot of cloud,
+like our commercial service, we store like the hashes of the documents
+so that upon re-indexing, you can see if there's any files I've actually changed.
+If they have shifted, then you basically just make sure that you propagate
+like the updates and deletions.
+I think that's step one.
+Step two is sometimes there's like issues with permissioning.
+And I think that's something that I think everyone can build.
+If you had enough time, it's just annoying to build.
+But for instance, like the permissions on the document can change.
+And I think one thing there is oftentimes one, when the permissions
+on the document changes, like for instance, in Google Drive or SharePoint,
+then you oftentimes want that to propagate immediately instead of on a batch setting.
+Number two is you also don't want to necessarily re-index the document
+because the content itself didn't change.
+It's just the permissions.
+So you basically need a way to separate the metadata that actually like
+changes the semantics of the document and then metadata that doesn't affect it.
+And so if you can separate the two, then you can just propagate updates
+to the metadata without having to re-index like the source.
+Oh, I'd never even thought about this example where like permissions are changing
+and things actually need to update in real time.
+So again, you're just like updating SQL or updating something in like Dynamo.
+Yeah, exactly.
+You almost need like a separate data model for it.
+It's actually annoying to build out because you also need to integrate
+what the data source is for every data source that you connect to.
+So it's actually an interesting problem because I think every enterprise company
+deals with this.
+Nice.
+This is a question that I just get asked a bunch and so I'm really curious
+what your answer is, but what are your thoughts on long context of a RAG?
+I think most of the students here definitely already have an opinion,
+but I'm curious to hear an answer from you.
+I think if you have a 5-10 documents, you can just stuff it into TragiBitEa.
+I do it.
+I just use, I am an active user.
+I pay the $200 a month for O3 and I copy and paste a bunch of text.
+And then I try to get back the results.
+I think what we're dealing with is basically just like your knowledge
+basis where it just doesn't really make sense to upload like a million documents
+into the context window anyways, for a variety of different reasons.
+And also the UX like form factor isn't there.
+So I think for us, it's really long context windows.
+Fantastic.
+It's great.
+You can actually use it to do more things.
+We want to use that to index like larger volumes of data.
+That makes sense.
+I almost feel like your answer here almost point to the fact that maybe for
+consumer use cases and for more like hobbyist use cases, long context is great
+because you don't have to think about RAG, but it is the case that in these
+enterprise use cases, you need RAG even more because now you have a million PDFs
+or like a hundred million pages of financial reports.
+Yeah, exactly.
+I think the other way to think about it is like, when do you actually
+need like a search system?
+There, as long as we assume there will be some need for search, then I think
+there'll, a RAG is basically search.
+I quit.
+I guess one question here is what are the advantages of these constrained
+workflows that you're talking about?
+And what do you see that going as models get better and better?
+Yeah, it's a good question.
+I think I touched upon this.
+I think more people are actually building the constrained workflows right now,
+maybe just out of, because it's like easier to think about.
+It's just a computer program where you add like a sprinkle and like an LLM
+call for a specific use case here and there.
+It's almost like a way to demonstrate like a POC of an agent for your boss.
+I think as models get better, there will be more consolidated agent
+architectures that can do more things in a more general setting.
+The hesitation around fully adopting those is that historically so far, those
+are harder to introduce like guardrails around and that they might not actually
+give you back the results that you want.
+I do think though, as models get better, there'll be more general architectures.
+And actually I think, I know we have a low level of abstraction and that's
+great for just like full customizable models, but I think that's a good
+thing for just like full customizability eventually, especially as you even
+get to like low code or like there will be a set of people that are totally
+fine creating agents and like a high level of abstraction, but just like
+some of the core capabilities.
+I think this is a perfect transition because the next question is around,
+are you seeing any successful common patterns that the companies are having
+when it comes to scaling the number of agents that they're deploying?
+I think, let's see.
+It's a good question.
+To be honest, not really.
+I'm going to fully copy out this by saying like a lot of the production
+customers that we work with are also like larger companies that typically
+take a little bit more time to figure out the right pieces of their stack.
+I think if you talk to AI startup in San Francisco, I think it will be very different.
+I am seeing like emerging patterns around being able to actually
+do governance of agents.
+I think even from a VP or CIO level, like that's something that people are
+concerned about just being able to actually track what's going on and making
+sure everyone has full visibility into a set of agents.
+I think deployment maybe is just a piece of that, being able to serve it via an API.
+I think the higher level question is just like how do you actually track all
+these agents and make sure they're working well and that they have the
+right permissions attached to them.
+I actually want to ask the third question first, which is you mentioned the need to
+extract data from unstructured sources into a standard schema.
+Do you tend to see these people using things like standard SQL instead of
+these more like no SQL databases?
+Yeah, there are for sure.
+I think, yeah, how do I say this?
+Yes.
+Basically there's a certain class of use cases around like document
+extraction, where instead of like vector indexing on the semantics, it's more
+about normalizing the data in a certain structured format and then putting that
+into some sort of like data warehouse.
+In general, I think there'll be a need for both like structured and also like
+semantic search and the agent should have access to both.
+I see.
+For an example in manufacturing or like very like hard tech focused companies,
+you have these like technical data sheets and specs and you need to
+extract out the data from those data sheets into some sort of like standardized format.
+And then let's do maybe one last question before we wrap this up
+just so I know where to go.
+How do you think about this agentic rag system and whether or not it's
+worth the added complexity versus this like naive rag?
+I think most people, I think in terms of like value to the use case, like the
+value to the end user, I think more people are just doing agentic rag.
+I think every default chat interface is effectively agentic in nature.
+Anyways, if you ask a question to O3, it basically does train
+a thought under the hood.
+Now I think that's almost like a baseline of expectation from the user.
+I think the issue with just doing naive rag is that it like the end user will
+inevitably ask questions where it's getting back not the right results or
+an incomplete result and they won't be like super happy with it.
+Let's also just do one more like live question before we wrap up, just because
+I know I'm sure some people have a more complex question to ask.
+Does anyone have any live questions before we jump back into the slide up?
+Hey Jerry, thank you for the talk.
+I had a question about where do you see the future of chunking going?
+I think I recall Gina creating a very complex regex function to parse text
+data, but it seems like a lot of the new chunking methods are using LLMs to chunk.
+And a follow up to that is what do you think about augmenting the chunking
+data that the LLM produces with Raptor with possible questions
+that could be answered by this?
+Yeah, just the trend in that.
+Yeah, that's a good question.
+It's interesting.
+This might be a hypothesis and I don't really know if it's true, but I'm just
+going to say it anyways.
+I think a lot of chunking like the need to like carefully tune chunking is going
+to go away because I think what actually matters is you can actually do a pretty
+simple chunking algorithm, like page level chunking.
+And then as long as you tag stuff with the right metadata, then you can solve
+the issue of having fragmented chunks.
+I illustrated a little bit of that in the notebook that I showed with
+dynamic section retrieval.
+But the idea is that you can start off with pretty basic chunks.
+Let's say you just retrieve pages from a document and then as long as you
+can do a second pass retrieval to then expand that context to then include a
+contiguous context within an entire section or a document, then I think you
+actually solve the issue of having a fragmented chunks.
+I don't know if that makes sense.
+The other part is that as context windows get bigger, your top K can just
+increase and your chunk sizes can increase.
+So then the retrieval performance will just go up or the synthesis
+performance will go up.
+Gotcha.
+Nice.
+Yeah.
+So it seems like it's a good bet to test out LLM power chunking.
+Yeah, I think you can try out simple chunking first.
+And then as long as you tag it with the right metadata, you can always do a
+second pass filtering after.
+Gotcha.
+All right.
+Sounds good.
+Let's do one last question with Christopher before we wrap up.
+Hey Jerry, I saw that you also offer on-premise deployments for
+Lama Cloud and Lama cars.
+I was wondering what is your minimal business use case that you
+require in order to offer this?
+Because there are many clients smaller, but very interested in data
+privacy and all that stuff.
+Yeah, it's probably a better fit for larger enterprises.
+And this is more a question around pricing and stuff, but I think we
+deploy within Kubernetes, anticipate minimal document volume, and then
+hook up to some of your existing systems.
+It's typically offered for some of the larger enterprises with higher
+doc volumes.
+
+Happy to try it offline if there's interest.
+Cool.
+I would have one follow up question if I'm not mistaken.
+Cool.
+I would have one follow up question if I'm allowed to.
+Yep.
+So you, I saw you released a multi-modal embedding model, the
+multilingual embedding model for...
+Oh yeah.
+And I was wondering what is your experience?
+So how it compares to text only embeddings, because you always have
+that option to basically turn a document into some sort of text.
+And I was wondering if the simpler variant just uses the model is better.
+That's a good question.
+That was like a fun model we just released to the public.
+The honest answer is I don't really know yet.
+So I think that's for running those benchmarks like right now.
+And I think if it ends up doing better than the text-based
+parsing, we're going to include both.
+Okay.
+Thank you.
+I think that just gives us two more minutes and then we can just wrap up.
+Yeah, Jerry, thank you for sharing your knowledge and thank you for
+answering some of these questions.
+If you feel like there's any other good answers you have from the slides, I'm
+happy to receive them and then share them with the cohort after, after,
+after we publish the videos.
+Yeah, no problem.
+I just feel free to share the slides.
+Let me know if there's any questions.
+I hope that was useful.
+And then if I didn't answer some of these questions, I know there's a few in
+the Slido, just feel free to reach out and then yeah, thanks for having me.
+Sweet.
+Take care everyone.

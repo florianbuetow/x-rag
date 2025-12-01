@@ -1,0 +1,898 @@
+Well, good to meet you all.
+Obviously there's a bunch of folks in the room, so we can't like hop around the horn
+and get everybody intro'd, but love to meet as many of you as possible.
+And yeah, excited to talk about how to not screw up launching
+your AI consulting business.
+My story starts out having screwed up a different kind of business.
+So I was a, I got really excited about generative AI when GPT-3 came out with an API.
+I decided, okay, I'm going to start a SaaS company.
+First time ever trying to do anything like that.
+Really didn't know what I was doing.
+Had worked in product before I have an engineering background, but I pivoted
+through like eight different, almost radically different use cases.
+Everything from a perplexity clone, which at the time I didn't know as cloning
+perplexity to a legal question answering bot that was a lead funnel for lawyers
+to something like a custom GPT builder before there was custom GPTs.
+Anyway, didn't really work out for me, but I learned a lot.
+specifically I learned how to build stuff with generative AI.
+And I'd come from an agency background.
+I was a Drupal developer for many years.
+How like has to say it's like a very, Ooh, Drupal, BHP, but that was my early
+career for like about seven years right out of college.
+So it was very familiar with this kind of agency world.
+And I had eventually worked my way up to leadership in those kinds
+of companies selling software.
+And so I figured, well, maybe I could just take that model and try and run a,
+an AI consulting software business.
+And it basically worked out.
+Can you still see my screen?
+I feel like something got switched, but it works.
+It works.
+Okay.
+All right.
+Great.
+Here's what I got on the agenda for you.
+First off is just a little bit of my, a little bit more about the story of a
+merge house, the company I started after the one I just told you about and what
+we're up to and the goal there is just to show you, you know, if I can do it,
+you can definitely do it.
+The second thing I want to talk a little bit about the opportunity I see for
+these kinds of businesses, cause I do think there's a ton of opportunity.
+Then we'll cover some tactical stuff on actually getting clients, some more
+stuff around once you get clients, how to find high ROI, AI use cases for them.
+And then setting up some client expectations for success.
+Once you land a project, lots of material to get through.
+I'll try and get through it in the next 20 or so minutes here.
+And looking forward to the Q and A after.
+So if I can do it, you can do it.
+I started the company a little more than a year ago, just before, well, December
+2022, and so these are our, I'm sorry, summer 2023.
+So these are our 2024 numbers.
+As you can see, like down here in January, February, I made nothing
+January a little bit for this first quarter and going forward, it was fairly
+flat, even for the first six months.
+And then it really started to pick up and we were able to clear a million in our
+first year and this year we are on track for at least three and we're
+hoping for more like four or five.
+You know, I'd love to say that this is due to all of my amazing prowess as an
+entrepreneur, but I will tell you a lot of it is just the work is really
+falling off the trucks, the demand for generative AI consulting services is huge.
+I want to give you some examples of real clients that I've worked with.
+Cause I think that can help when you're starting a business, just
+understand like, what the heck do you actually end up building
+with these kinds of businesses?
+So I'll give you, I have three examples.
+So the first one here, Hope it AI.
+So I got this client on X I made some posts.
+I can't remember what it was, but it got reasonably some reasonable popularity.
+And the CEO of this company reached out to me, they were a startup.
+They needed to get serious about AI.
+They were currently, they had an app that was built.
+This company is like a sermon company.
+So you upload your sermon after preaching on Sunday, and then it turns it into a
+bunch of supplementary content after that, like emails and blog posts and
+other stuff for your congregation.
+But they were using like a third party API, which then called a foundation
+model directly, and they wanted to build some other features.
+And so they found me on X reached out.
+And before he knew it, I was in with, in with them and I brought in one other guy.
+I, that was, I think the second engineer I hired, but anyway, we, as you can
+see, we got written up in Anthropic eventually for the work that we did there,
+which was awesome.
+This company ended up selling.
+So when we started working with them, they were valued around 2 million.
+The sound, the founder sold it in about six months for, I think over 7 million.
+I, you know, you probably will get stock offers for your services.
+Something that I wish I had done with pulpit was to say yes to a stock offer.
+I did not.
+And I probably walked away from a million dollars.
+I, well, it's actually, I did walk away from a million dollars.
+That being said, I will tell you one of the ways you can definitely
+fuck up a consulting business is getting too many clients who want to,
+it wants you to trade your trade cash for stock and instead take stock.
+That's a way to screw it up.
+I'm actually the fact that we lost a million dollars is a bummer, but I kind
+of think the strategy we have of sticking to cash being an agency is probably
+the longer term, the right bet.
+So I'd say that's something to watch out for.
+I won't force you to watch all of these videos, but here's a quick video.
+What I would say is talking about what it's like to work with us.
+The wild west and everyone is claiming to be able to do this or do that.
+And honestly, I've loved working with the merge house for a lot of reasons.
+They're so pro like they're just created what they do.
+They're phenomenal communicators, you know, in under a year, well under a year,
+probably in about 10 months, Andy and the team were literally able to not only
+build our product, help us scale it, but also have it in a position to get acquired.
+So that's the CEO of pulpits.
+And I think the kind, that kind of story, if you can end up working with startups,
+it can be a great place to land and you can get stories like that under your
+belt fairly quickly because there's so much, so much investment happening in
+this space and that's just been a huge asset to us to be able to tell that story.
+Another client we worked with called local Falcon.
+They are local SEO platform.
+They had, you know, this has been an interesting play for us where it's like
+a SaaS company that isn't super AI focused or isn't really doesn't have AI at
+all, but they're already reasonably successful and they are looking to
+add AI into their roadmap.
+So that's something we helped them do.
+And here's a quick little hit from CEO there.
+Any type of business that is exploring generative AI would benefit from having
+a merge house come in and scope out that project with them, whether they can do it
+or not, at least you're going to have an awesome roadmap and a plan for the idea
+that you, you know, that you wanted to bring to the market, you know, there's
+that age old triangle of like saying you want quality work, you want it done
+quickly and you want it done for a good price and you can typically only pick two
+of them somehow these guys have managed to hit all three of those elements for us.
+And it's, it's been awesome.
+I don't know if we quite live up to the claims he made there.
+Project triangle is probably fairly immutable.
+They're probably always trade-offs, but he's very kind in his words there.
+Something I would say, if you heard him say that at the beginning is like,
+Oh, working with these guys, we at least got a roadmap, even if you don't end up
+working them with them sort of down the road, what I will say is our model, what
+we do essentially get paid to scope.
+So what we say is, Hey, if you want to work with us, put some money down, we're
+a bigger agency, we can charge a little more.
+So we say put 25 K down as a deposit and we'll credit that to your development
+budget when you get, get started, but we'll do this scoping for you for free.
+And what that means is, you know, we get investment from them.
+They're serious.
+They have money.
+They're, they're ready to play.
+They feel a little bit safer about making the investment.
+They're not signing up for the whole enchilada at once.
+And then we're totally covered.
+If the client doesn't end up wanting to work with us, we will get paid for
+our time out of that 25 K.
+Um, and so if you can figure out a way on a similar model to, to get paid to do
+scoping, we've found that to be incredibly successful.
+I'm going to skip through this other one because we just are a little bit low on time.
+Okay.
+So what do I see as the opportunity?
+So I took this open AI's framework about the five levels of AGI.
+And so if you, if you're not familiar with it, it's, it's great, really worth
+checking into here are the five levels.
+One is chat bots, you know, classic chat to PT level two reasoners.
+So Oh, one class models that are doing thinking third level is agents thing.
+AI's that work autonomously, right?
+Fourth level innovators, superhuman intelligence and fifth level AI that
+can do the work of organizations.
+And I did a deep dive into the field of innovation economics, which studies
+economic transitions based on innovations, like the industrial revolution
+and other similar scale innovation events.
+And what I learned is there are some models in that discipline that can help us
+understand and frame the generative AI revolution.
+And so the most important model that I took away from that is this idea of the
+S curve of adoption, which is, you know, at the beginning of a technological
+revolution, you have low uptake.
+But then over time you get this reasonably fast takeoff period,
+and then it matures out.
+And the thing that I've learned one frame to keep in mind is although
+capabilities may come online quickly.
+In order for those capabilities to diffuse through the economy, it requires
+companies to invest in complimentary innovations, as well as just make
+complimentary investments into things like integration services.
+And so what I'm getting at here is I feel like we're in for a much longer haul
+than maybe if you're in the X world, you might think if you're in the X world, it
+feels like, you know, the singularity is at hand and the whole economy is going to
+collapse in two years or less.
+And that's actually not my thesis.
+I think it's actually going to take quite a while for these various S curves to
+diffuse through the economy.
+And what that means is we have a lot of opportunity as AI or AGI service
+providers to do the integration services.
+And so the way I see this is cascading S curves that correspond to each of these
+levels. Now, these numbers here might be a little conservative.
+I think they could go faster than this easily, but I see five to ten, probably
+more than that, years until we reach something like maturity on AGI diffusion
+through the economy.
+So I think the opportunity in front of us as AI service providers is absolutely
+massive. According to my research analyst at McKinsey, aka Chatchabuti Deep
+Research, we landed on 7.2 trillion as the global TAM for integration services on
+AI over the next 15 years.
+There's a huge opportunity.
+The work is falling off the trucks.
+All right.
+How do you actually get it?
+So I'll share with you some outbound tactics, things that have worked for us.
+Number one, this is what I call the bitter lesson of services marketing.
+So if you've read the bitter lesson in the context of AI, if you haven't read it,
+go read it. It's worth reading.
+But if you're familiar with it, you'll understand the concept that there are
+these certain bitter lessons that may not feel good to learn, but that are
+actually probably true in the case of services marketing.
+The truth is, it is your biggest way to get more work is to do good work.
+And it feels like it's not maybe moving as fast as you want.
+You're not necessarily pushing a lever by doing that.
+But here's why this works.
+You do good work.
+And if you do it really well, the CEO of that company, the product manager, the
+CTO, whoever you're talking about is going to mention you to somebody when
+you're there at some networking event or dinner or whatever, and your good work,
+the news of your good work will start to spread through your professional network.
+We have spent a lot of time and money on all kinds of other tactics.
+And I will tell you still, I think probably 70% of our business, especially
+today comes from referrals or word of mouth.
+So it's not something that's like super scalable.
+You can't push on it, but it is true that if you do good work, that is
+actually the best way.
+That being said, I would not want to be running an agency where our
+only tactic was to do good work.
+I think it's wise to invest in other strategies as well.
+So something I would recommend is posting what I say, cool work.
+Like a lot of, I think there's a lot of success to be had for folks on Twitter
+who just built like vibe code, something over the weekend.
+That's interesting.
+Post a video of that on Twitter.
+I see those tweets go viral all the time.
+I've done those tweets and they've gone viral and I've gotten bites
+from prospects based on that.
+And if you guys are building something cool, like I would post that to X,
+maybe even LinkedIn, and that can really attract attract business.
+Maybe more than you think cold emails.
+So this is something we experimented with early on and we are still using.
+As, as Jason mentioned, we are, when we do this, we offer a whiskey.
+So what we say is, Hey, we'll send you a whiskey.
+If you have a discussion about what we can do for you with generative AI,
+something along those lines.
+And it works reasonably well.
+I've also just talked to another gen AI consultancy owner and he told me he was
+having a lot of success, something like 7% reply rates with the podcast approach
+where you say like, Hey, I'd love to interview you about this, about generative
+AI in your field as part of my podcast.
+Frankly, it appeals to people's vanity and is somewhat of like a not over
+saturated tactic and can work really well.
+Here's a sample email that we send this particular person in swap your bottle
+of whistle pig for one opportunity to walk you through our cutting edge
+AI working contact centers.
+That's it.
+Not terribly complicated.
+Sometimes we'll put a little bit more in there, but yeah, the key with cold
+email is you've got to get to scale.
+When we've really got this humming, we're sending around 10,000 emails a month.
+And so it's, you know, it's very, very intensive.
+And so we use, so we hired an agency to do this for awhile.
+Now we switched over to doing it on our own.
+We use clay.com, which is great because you can dump AI into the actual body
+of the email to like personalize it more.
+I won't say we've had much luck with doing that yet, but we are
+experimenting with it for tactic partnerships.
+So consider partnering with a larger agency or a connected player.
+We've had incredible success with partnerships.
+Some of the biggest accounts we've gotten into, we got into Anaconda, the company
+that puts out Python and R through a, through a partnership we have through
+another partnership, we have access to over 800 enterprise clients that are
+very ripe targets for generative AI.
+So partnerships can be a great way to get started.
+Okay.
+So let's say your outbound tactics are working or some version of your tactics
+anyway, are working and you've got some clients or you've got some nibbles.
+Here's what I, from my experience, which you probably run into some clients will
+have a very particular idea of what they want to build right away.
+And I think when you first start out, you're probably going to run into more
+of these where it's very tactical focused.
+Hey, I need a gen AI person to do, you know, build this rag implementation.
+Here's the spec sheet or the PRD.
+When can you get started?
+But there are plenty of other clients who don't know what they want to do AI.
+Right.
+They have some sense that it's important for them to do something, but they're
+maybe not too sure what that is.
+And so you can kind of take this strategic strategic role with them.
+And, you know, something I found is that people are really confused by
+generative AI, right?
+It's like, it's so paradigm upending that they don't kind of don't know where to
+start and it feels like people forget some of the most basic principles of
+just frankly business.
+And I found that tying people back down to the basics to kind of first
+principles on this stuff can really help.
+And I don't mean first principles on ML.
+I mean, first principles on business.
+What is value?
+Very abstract philosophical question.
+Well, it's most fundamental level.
+The basic idea is it's return minus cost.
+So the value of an investment, which whoever is hiring you is going to make
+is equal to how much they're going to get in return from that investment minus
+how much they're going to pay you.
+Very simple, right?
+But people forget it.
+And what can happen is they get focused on bells and whistles.
+Wouldn't it be cool if we built this kind of a feature or that kind of a feature?
+Wouldn't it be cool if we had a chat bot?
+I will tell you, you do not want to be in a situation where you built a cool bell
+and whistle for somebody that does something neat, but ultimately doesn't
+solve a problem or ultimately provide value because they will then look at the
+work that you've done after it's all finished, even if you executed perfectly
+flawlessly and say, like that, I'm not sure it was worth working with that person.
+And so that's not the vibe you want.
+When you're looking for value on AI projects, the return side of the
+equation usually comes in these forms.
+It can be a service tier of charge.
+Oh, if we build an AI assistant into our SaaS product, maybe we
+could charge more for it.
+Maybe actually don't think that's a great strategy, but similar kinds of features.
+What if we launched an AI agent that's X, can we charge more for it?
+Maybe it's a new product altogether.
+That is certainly something I've run into where SaaS companies are
+a little behind the curve.
+Maybe they don't want to work within their current existing SaaS framework.
+And they want to start something separate that can eventually connect up with their,
+with their current SaaS.
+Well, that's a new product.
+So there's revenue there.
+Something I will say, given the fact that we seem to be headed into a little bit of
+an economic downturn, unless the financial political decision coming out of our
+environment, coming out of the white house changes its tenor, if we are headed into
+that kind of an environment, I think the best way to position AI services is
+reduced headcount or basically reduced labor costs.
+We don't all don't love the idea of taking people's jobs.
+That's no fun.
+On the other hand, it's undeniable that AI when properly deployed into internal
+workflows can actually reduce labor costs.
+And so there, I will say the key is you need to work with somebody who has this
+scale, if you walk into a company that's less than a hundred million dollars and
+say, I can save you, you know, whatever $50,000 a year on this person's time.
+It's not going to be as compelling as if you walk into a place with a $500 million
+company and they have 20 of those people on staff and you can say, I can reduce
+50% of their time.
+Now your time becomes extremely valuable to them.
+So scale is important there.
+Part of the return can also be a creative output or just output in
+general, larger throughput.
+Okay.
+On the cost side of the equation, it's important you help your clients
+understand the costs development, the initial development.
+There's also maintenance after you launch.
+There's also enhancements, right?
+And then of course, on the AI side itself, there's fixed costs for hosting any
+particular platforms and then variable usage costs.
+So it's important to help clients kind of understand all of those.
+What you're really looking for is a workflow within a client organization
+that you can speed up by three X or more.
+You can speed it up by three X or more.
+It's probably really worth the switching costs for either internal or external
+users.
+If it's not hitting that mark, it may not be as compelling.
+Some of the use cases that we tend to see reporting and content generation,
+AI assistant slash AI co-pilots, rag, a question answer type of applications,
+AI agents, of course emerging and then multimodal AI.
+When we walk into an organization, sometimes we'll ask them to go to a
+workshop and the basic idea is we'll sit down with you.
+We'll generate a bunch of ideas.
+Then we'll rank those ideas for you.
+And then you, Mr.
+Client can select the ideas.
+What that actually looks like is we'll outline the revenue in terms of a
+teacher size, outline the effort in terms of teacher size, and then give a no go
+or go on technical feasibility.
+So that's how you can figure out what to build.
+I may take about another five to seven minutes here, but I promise we'll get
+Q and A in soon setting up client expectations for success.
+So something I think it's easy to forget when you're running a services company,
+especially if you're new to this is you exist to delight clients and that is all.
+So no matter how cool the solution is you build, no matter how well you deliver to
+an estimate, if the client does not feel delighted by that experience, you will
+not get more clients, they will not necessarily renew with you.
+And so your ultimate goal is to delight them, to delight somebody.
+You have to exceed expectations.
+You can't just meet expectations.
+So it's important that you frame your engagement in a way that gives you the
+latitude to exceed their expectations.
+And that's, that's something that we really focus on.
+There's about four phases.
+You can chop it up into kind of as many phases as you want, but we see
+four phases for project work.
+I'll just walk you through some quick bullet points on how you can delight
+customers at each of these initiation sales and initial contracting.
+So delighting a customer in that phase looks like responding within 15 minutes
+when they inquire to work with you.
+It looks like showing up to the meeting prepared and it looks like being able to
+provide some initial value in a discovery call, not in a way that's kind of forcing
+your ideas, but hopefully in a way that saw that listens to their pain points and
+solves their problems or kind of gestures at some solutions.
+Number two, planning, scoping estimation and statement of work.
+And you don't have to run your agency according to these phases.
+This is how we do it.
+They're the biggest thing we're doing to set client expectations properly is we
+are giving an, a reasonable number that we know we can hit in terms of an estimate.
+Every client wants to know how long is it going to take and how much is it going to
+cost the very first time you answer those questions is the only number that the
+client will ever remember about the entire relationship is if you hit that number,
+the very first time you say a number on how long it's going to take or how much
+it costs, how much you modify that answer going forward, no matter how much they
+agree, they're always going to remember back.
+Yeah.
+But I remember he told me it was only going to take a month and it ended up
+taking him three, so be extremely careful not to say a number until you have
+something solid and be careful about your estimations.
+We don't have time to go deep into estimations, but the very quick version
+of that there, the highly unscientific way is make sure you double them at the
+very least.
+Number three, third phase execution.
+The main thing you want to worry about here is just being able to execute within
+whatever parameters you've set for the project.
+Waste is the enemy.
+Always be watching out for building kind of additional features or additional
+work that doesn't get the client to their real goal.
+Sometimes a client can say they want X and really what they want is a, and only
+halfway through the project, you may realize what they really want is a, don't
+be afraid to go to the client directly and say, Hey, I think what you really
+need is this, or I think what you really want is this.
+If there's a way to do it, you know, on this particular thing, 80% faster for a
+very little scope change, usually a client is like very open to those conversations.
+So that's a way you can delight in that phase.
+And then fourth maintenance and it's all about proactive ownership.
+If you launch a solution and they have a maintenance contract with you, if
+something goes wrong with that solution, you should be telling them, you should
+be the one to know first and say, Hey, there's an issue, open AI is down or
+whatever the app crash and be able to monitor and set the, again, be the first
+to tell them that's how you delight them in those cases, a typical project
+structure for us.
+I just thought I would go through this so you can get a sense of like how we
+run projects and how you might chart out your phases of work as you're talking
+with clients, we'd start with a scoping engagement.
+Like I said, then like a key thing is you want to have some prototyping or
+exploratory data analysis phase, something where you can really try and nail the,
+I would say like de-risk the most complex technical part of the project.
+So whatever is the trickiest bit, you're not sure AI can do try and tackle that
+first in a prototype.
+And the other thing is try and use real data.
+Don't wait till the end to get data that's real and just work with sample
+data or contrived data at the beginning.
+That's always a bad time.
+You don't want to wait until the end of the project when everything's supposed to
+be done to realize that your solution isn't going to work with the real data
+from real customers or real internal users.
+So get that data upfront.
+Build phase, you know, we do weekly touch points with our clients.
+We do daily internal touch points, but it is, I think it's important to me with
+your clients at least once a week.
+Deployment, testing, infra, all of that stuff.
+Don't discount that phase in a lot of work that can be 50% or more of the project.
+And so this is a huge thing that you often forget about when you're doing
+estimates, don't forget about it.
+And then maintenance.
+I say this is a consolation prize because ultimately what I hope to sell to my
+clients is an ongoing sort of monthly subscription to a kick-ass gen AI solutions
+team.
+And so if they do want to downscale that velocity to maintenance only, it's, it
+is a loss for us, but it is a
+consolation prize in the sense that we still get to have a continuing
+relationship with these folks.
+And the way I like to think about it, a maintenance contract is a hunting license.
+You have your hunting license to continue your relationship with the
+client to continue and try and find things that you can do with generative AI
+that's really going to help their business.
+And so you can continue to pitch.
+Of course, you can also stack these up to like quasi passive income, which is nice.
+All right.
+That's it.
+It was five minutes over the 30 that we planned, but I'd love to hear some
+questions.
+Awesome.
+Thank you.
+We're going to first jump through some of the questions on the slide.
+Uh, I don't know if we have time for live questions this time, but let's, let's
+see what we get through the first question, which is I'm also very curious
+about is just how long is your sales cycle for some of these things?
+Oh, good question.
+Gosh.
+It's all over the map.
+I've gotten an enterprise contract within three weeks.
+That absolutely blew my mind.
+We were pushed through procurement in a way that I've never seen happen.
+That's extremely rare.
+Usually if you're working with mid-market to enterprise, it's more like a four to
+six month sales cycle.
+Now I would say most of our contracts is probably more in the one to three
+month range typically.
+That makes a lot of sense.
+I think it was just doing a lot more like bigger companies.
+Yeah, exactly.
+Startups are super fast.
+And this is something I love about working with startups is like you meet
+the CEO of the startup or the CTO or whatever, and like you're in there the
+next week, you know, if they like you, like it's one and done, they like your,
+don't your inner you out and it's great.
+Totally.
+But then sometimes they don't know what they want.
+Yeah, for sure.
+She's got to figure out a way to keep billing while they don't know what they
+want and help them figure it out.
+Exactly.
+This is a great question as well.
+Cause I think about this all the time.
+How do you see yourself moving back to a product focused business?
+If at all, right?
+Yeah.
+I think about that.
+You know, are we thinking about moving to SaaS in the future,
+building a product, et cetera?
+Bonnie, you should say that.
+So yes, we are absolutely considering.
+I shouldn't say considering.
+We've made the product product pivot at our company.
+We are adopting more of a Palantir services and product models.
+So the idea is we're now using our services to be R and D for
+products that we can build.
+So there's a lot of pain points that we keep running into on projects where
+clients will repay or will pay us a hundred to 200 K to rebuild the same
+component over and over, not prepared to announce any, make any product news
+today, but we are working on a product internally that's designed to meet a
+lot of those needs and that we can then deploy to our clients.
+It's an open question for me, whether we're really going to be able to
+generate a lot of momentum on that on its own, or if it will be something that
+we end up just selling to our clients directly through our services engagements.
+We'll just have to see.
+But I think there is absolutely a very valuable model, a model that BCS and
+Silicon Valley in general is waking up to, which is that services companies,
+especially in the AI space have a deep insight into the market and, and that
+gives them a competitive edge.
+You know, every time we walk into a project, because we're not pushing our
+software, at least not yet, we're using the best available.
+We're totally agnostic, like whatever is the best solution, we'll use it for you.
+And so then every time we're doing that, we have the best available state of the
+art, everything, and there are still pain points.
+So that's actually a great direction on where to build product.
+This is a question I have a lot of thoughts about, but I'm curious, how do
+you develop your web presence based on who you want to target?
+You know, you guys are targeted mostly as a company rather than as an individual.
+And I think about that in particular, I think a lot of the questions
+that follow this is on LinkedIn versus X.
+Well, I would not say I figured out LinkedIn or X our web presence.
+I mean, look, if you're just starting out, I think these zero.dev that shift
+and like you're good, but we started with a positioning that was quite broad.
+And then we actually narrowed it down to startups in particular.
+I actually just relaunched our website last week to remove that focus.
+And we are now, you couldn't really tell who we work with from the, except for
+maybe the client list, but we are more geared now towards mid-market to enterprise.
+So yeah, I don't know that there's a silver bullet there.
+I would say the one thing to watch out for is if you do niche down your company,
+just make sure you're really happy with that vertical and you can succeed there.
+Or at least you have a reasonable shot.
+I have niche down a services agency into a vertical.
+We were not prepared to win in and it was a, it was not a good situation.
+And so I'm, I'm cautious of doing it.
+On the other hand, there's tons of success stories of people who once they walk
+through the door of niching down have just had enormous success.
+So it can definitely work.
+I don't know.
+Those are all the thoughts I have.
+How much would you say niching down is like a one way door versus you can kind
+of just try a niche and then.
+Exactly.
+Now it's a great point.
+You can, you can definitely back out of it.
+You can back out of it.
+It's maybe not as easy to back out of as you think, because you, if you've done a
+good job, you've kind of messaged that to a lot of folks and they sort of thinking
+of you in that way, but like, whatever you can change it for sure.
+How do you, how do you think about doing capture on an X and LinkedIn?
+And so I think in the beginning for me, I used to just tweet like a call link.
+It gets too busy.
+You make a form.
+What does that look like for you guys?
+Yeah.
+I think I, I mean, on X I'm like, I think I have my DMS open, which is a little
+bit crazy, but it's manageable.
+We have a, of course on our website, we have, you know, contact form.
+I will say this, like the most important thing is to respond quickly wherever your
+capture is, is set up and however it's working.
+We did a little bit of research on some competitors in the gen gen AI consulting
+space and what we found was a lot of agencies really struggled to even respond
+to an inquiry on their website.
+Like, Hey, I'm a client.
+I would like to pay you money days, days until you hear anything.
+And so just some basic like urgency and professionalism goes a long way in this
+space.
+It's definitely a different issue.
+A lot of people, even with the startups, sometimes it's like, yeah, the CEO of
+like a billion dollar company will reply to your text message within five minutes.
+A regular person takes like four days to reply back.
+It's like, Oh, this is exactly, this is why.
+I guess this is really interesting too, because a lot of what I've been teaching
+in this cohort has been around at least shifting your mindset to going from hourly
+rates to like either milestones or value-based pricing.
+But how does that work?
+Especially because I work as an individual, but you work as a team.
+Yeah.
+Yeah.
+Look, I think value-based pricing is the Holy grail for services companies.
+And I have not mastered it.
+I'm uncomfortable with it.
+We do time and materials.
+I'll tell you why that, why we do it and why I think, you know, value-based
+pricing is, is better if you can pull it off.
+But the reason we do time and materials is it's lower risk, right?
+So one of the big problems in, in software projects in general is it's very hard to
+estimate, right?
+But then if you do generative AI projects, even harder to estimate, because
+in software you sort of, you know that it will work, but you just don't know how
+long it's going to take you to build in generative AI.
+You don't even know that it's going to work and you don't know how long it's
+going to take to build to figure out that it's not going to work and then have to
+read orient.
+So that's very tricky to estimate.
+And so that's why we do time and materials.
+We do estimations that have big error bars on them.
+You know, when a client comes to us and says, Hey, ballpark, can you give me a
+cost on this project?
+We'll give something with the range of like a hundred to 200 K or 50 to 100,000
+out of giant ranges.
+And then we'll say, we can work with you through scoping engagement to narrow that.
+And so that approach has been successful.
+But then, I mean, I think value-based pricing is great because you can go in and
+if you can prove the value and tie them down to those numbers and then say, okay,
+we'll take a percentage of that.
+Like, I think that probably has more money on the table than, than the T and M
+approach.
+Yeah.
+That would make sense.
+I think, you know, in the example with the, the sermons, you know, value-based
+pricing would have been a majority.
+Yes.
+But then it's like, you know, you, you do 10 of them, only one of them pick off.
+Right.
+Just like gambling.
+Yeah.
+Yeah.
+But I will say like, you know, figuring out creative ways to participate in the
+upside with clients, I think is, is a very interesting approach.
+And like, it does give you skin in the game with the client and it does also,
+like, I think you can take a bet on your, it allows you to take a bet on your own
+ability to solve problems with AI in a way that you really can't as an individual
+contributor.
+And that can be very valuable because if you're good at solving problems with AI,
+you probably will get it done.
+Yeah.
+I will say another way I think about it is just, you know, if, if it is, if it
+does feel risky, it probably means that I am personally not charging enough for
+the project.
+It's like if a project was going to be something that's like $50,000, but it's
+very risky, maybe I would actually say, you know, $120,000, but I'll give you
+half of it back if it, if it actually isn't feasible and this is, this is the
+loss that we can take.
+Yeah.
+Yeah.
+It is, it is very hard, but very exciting as you sort of climb that, climb that.
+I don't know, maybe have another conversation about this.
+Yeah.
+At some point.
+I'm really curious what, what else you've run into.
+I think we have time for maybe one more question.
+And this is something I'm very curious about as well, which is how are you
+hiring?
+Right.
+Hiring, by the way, I forgot to mention, we are hiring, we're hiring a project
+manager.
+So if you are a project manager ish type and you're, you decide not to start your
+own AI consulting agency, but you're interested in working with the cool and
+let me know we're, we're in the market.
+But I will tell you actually these kinds of engagements speaking, showing up to
+kind of community stuff has been the most successful way for us to, to generate
+leads.
+Actually, we're also on your job board, Jason, which I will give a shout out to.
+It's great.
+We get some good leads from that every month.
+Yeah.
+Yeah.
+But just being part of the community, I will say this too, like sometimes I'm
+shocked that people will come to me and say like, well, I've got to offer from
+Metta, but I really would rather work at your company.
+I'm like, really?
+Like we're a 24 person little tiny, you know, but the reason they want to work
+with us is because we're right in front of real customer problems.
+It kind of is where the rubber meets the road with AI and there's just so much
+freedom to like really get shit done and see it affect people's businesses very
+quickly.
+And so don't discount or underestimate the amount of folks out there who find
+that really exciting.
+And you may realize you have more sort of buying power on recruiting than you.
+Then you imagine.
+Makes sense.
+Makes sense.
+I guess if you have 12 minutes left, I want to ask you a question, which is,
+yeah.
+What is the question you wish we asked you?
+Right.
+Ooh, that's a good one.
+If I could, if I could, there would be one more thing maybe to cover, which is
+estimation.
+I think estimation is a topic that is really, really deep because it goes into
+like psychology very quickly.
+Like why are we all terrible at figuring out how long stuff will take, but it is
+probably the number one way that people can screw up their client engagements is
+just thinking stuff's going to happen sooner than it does.
+I would encourage you guys to think about it this way.
+I did a deep dive into this earlier in my career and yeah, it just turns out
+there's just a bias.
+All humans have it that we just think we're going to get stuff done way faster
+than we, than we actually get it done.
+And there's reasons like, you know, if you, if you imagine a project, you try
+and basically figure out how all the buckets of work that are involved with it
+and then put numbers by him.
+And the problem is you forget about buckets.
+Like, Oh, I forgot.
+I didn't plan on this bucket.
+I didn't plan on that bucket.
+Right.
+And also when you're putting numbers in the buckets, you may estimate that
+based on best case scenario, like, Oh, this is the most senior dev I have or me
+doing the work, but maybe a junior ends up doing the work or things again, just
+always take a little longer.
+So that method of estimating, you're still going to do it.
+It's still part of the work, but I would say pair it with another method, which
+is called reference class forecasting.
+There was some Nobel prize winning work that came out by Danny Kahneman
+and Amos Tversky on this.
+And basically they came up with a method that kind of gets around human bias on
+this and what you do is you, you take a project that you're in front of that
+you're trying to estimate.
+And instead of doing the, what buckets are in here and how much hours per bucket,
+instead you look back at all the previous work that you've done and all the previous
+projects, and you say, how complex is this project compared to those?
+And then you use those as anchors.
+So it's like, Oh, okay.
+This is 20 probably roughly 25% more than this project over here, which was sort of
+similar and this project took me, you know, whatever three months.
+And so this probably I should estimate 3.75 or whatever the math works out to
+that method is usually just like way, way, way more realistic because it's
+based on real data for how long it took you to do stuff.
+You're just getting started on day one.
+It's hard because you don't have that previous data, but as soon as you can,
+I would, I would do that.
+Honestly, I think in my practice, that is one of the things that's made us more
+successful than, than if we didn't have that approach.
+That definitely makes sense.
+I think even on the value-based side, it's, it's also very challenging to sort of do
+you still got to give them a timeline.
+Yeah, exactly.
+Yeah.
+Especially there was this one example where a friend of mine is like being
+asked to teach like 30 engineers how to use cursor and they're like, would you
+do it for like eight grand?
+And I was like, so that makes no sense.
+Right.
+It's like, and then, but to him, it's like, Oh, eight grand for the hours is,
+and I was like, you know, and then I coach them through this conversation of,
+okay, 20 engineers, how much of that is your payroll?
+Oh, that's, that's like a couple million dollars.
+Like if they learn cursor, how much better would they be?
+Like maybe 20% better.
+And the team, the team leader was like, I think they'd be twice as good.
+Right.
+And say, okay, well, how much would it be worth to you to double the
+effectiveness of your payroll?
+And it's like, Oh, yes.
+Okay.
+Like 50,000 dollars.
+Right.
+And that, that became a way to anchor the conversation is like, for $50, I'll
+I can offer you so many more services.
+If I was able to get that price.
+And even then that's a hard thing to choose, you know, cause why didn't you say
+a hundred thousand dollars or something like that?
+Right.
+Right.
+Right.
+But you know, it's a great point because also we've just found there's a lot of
+interest in teaching engineers to code with AI more effectively, and that is
+something we're starting to get more into, we're just spinning up a little
+training program around that.
+And we see it as a potential wedge in, because if you're brought in as the AI
+expert, you know, there there's a shocking amount of, or a lack of AI engineering
+expertise, a lot of organizations.
+And so if you're brought in as the AI expert, even just to train the team, you
+know what we were thinking about this AI feature, do you think you could build
+that like it's a great Trojan horse into the organization?
+So yeah, I think there's a lot of possibilities there.
+Yeah.
+I'm actually going to, I'm actually going to plug a lightning lesson that is
+happening like sometime next week, which is another friend of mine, Dignesh,
+you know, the AI consultant who's been doing as like, I think 20
+implementations a year at this point.
+Yeah.
+Yeah.
+Just like how, how people think of using cursor.
+Nice.
+Cool.
+Do you have time for one more question?
+I think I don't want to run too long, but I also have to prep for this next
+talk using cursor for copywriting.
+Let me go back to the question list.
+That'd be fun.
+Yeah.
+I mean, I've been surprised at how much more effective copywriting
+can be when done well.
+Yeah.
+Let me go through some of these questions that could be interesting.
+Actually, can you talk a little bit more about this like hunting license concept?
+Like how do you then get like sort of re-engage some of these customers?
+Right.
+Yeah.
+So the way that I pitch our engagements is I will say, Hey, you know, so with
+my agency, our positioning is AGI transformation partners.
+So we're coming in with the idea.
+We want to have these deeper, longer relationships with clients that exceed
+the scope of a single or a couple projects.
+And so I actually show them a timeline with four quarters on it, representing
+a year, then each of those quarters, I have a star that says opportunity
+mining workshop, and the idea is at every quarter we'll meet to take a larger
+look at their organization, what they, what, what investments they should be
+considering making with generative AI.
+And then we will work from that.
+So that's our, that's our general approach.
+And I, and I try and bake that in from the beginning.
+I've only started doing that recently.
+So I can't tell you for sure.
+It's going to work miracles.
+I hope it will, but we, but what I can say for sure is I've been bitten in the
+butt by being seen as the project firm that can get it done, execute quickly.
+That's that's great for a little while until the project's done and then cool
+down to maintenance contract by, by 40 grand a month or whatever.
+And it's like, wow, that sucks.
+If only I had done a better job of like teeing up the next batch of work.
+Right.
+And so I think that's, that's why we're trying to do it that way.
+However you do it, I don't, you know, I don't think it matters too much, but just
+making sure there's a next next tranche of work that's being talked about at
+every, at every stage.
+Yeah.
+I think a lot of the tactics that I've seen with big agencies is sort of making
+sure they're just part of the like planning for the budget year and then
+just making room, there's always going to be some implementation that the
+team is responsible for.
+Yes.
+Cool.
+I think that's basically a lot of the questions are pretty similar, but I don't
+know if you're also on the circle community, but I'll make sure you're invited
+to that and then we can share some of the notes there.
+Um, great.
+We're gonna leave four, four minutes so people can take a break and then we'll
+jump onto the next guest lecture in at 2 PM Eastern.
+Let me just share the link one more time.
+And then, yeah, Andy, thank you so much for your time.
+I feel like I learn a lot every time we start this conversation.
+Same, same.
+I think we should really have another conversation about value-based pricing.
+I'm totally down.
+Yeah.
+I've, I've, I've met some people now doing like $2 million engagements and it's
+like, yeah, well on the call, they said they think they could make a hundred
+million in the next four years.
+And so we just said, Oh my God, like this is like, how do you guys do that?
+Love it.
+I love it.
+It takes you to some of the, some of the larger agencies as well and
+see what they're working on.
+What I need is a salesperson who grocks this and then, and I'll be off to
+the races, but yeah, but you know what?
+Like that's the thing, right?
+Like, cause there's this salesperson likely will have some like
+success-based component to their.
+Totally, totally.
+Yep.
+Yeah.
+That's one of the one things I learned too, where it's like the fact that you're
+setting your own prices is almost adversarial because we are like
+underestimating our own value.
+Yeah.
+Fair enough.
+Yeah.
+Fair enough.
+All right.
+Well, great to meet you all.
+And thanks.
+Thanks Jason for inviting me.
+Of course.
+We'll share your LinkedIn over email and then we can have everyone
+connect over that way.
+Okay.
+Sounds good.
+Awesome.
+All right.
+Catch you later.
+Cheers.
+Take care everyone.
+See you pretty soon.

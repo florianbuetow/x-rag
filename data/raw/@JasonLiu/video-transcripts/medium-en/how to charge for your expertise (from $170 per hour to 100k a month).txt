@@ -1,0 +1,781 @@
+So the topic of today's conversation is really charging more for your expertise.
+And this comes from a lot of my experience in the past year, just really
+struggling with pricing and understanding how to make this business something that
+is profitable and make this business something that I enjoy doing.
+And a part of that has been understanding really about how pricing works, because
+pricing and thinking about pricing also brings into the conversation, this ideas
+of what am I worth?
+Do I deserve this?
+How do I feel like I've earned this?
+And maybe near the end, we can talk a little bit about that as well.
+So the overview is going to be three things, right?
+If you want to charge more, it really helps to be a thought leader and build proof.
+If you want to charge more, it's very important to build a sales flywheel and
+understand sales a little bit better and ask better questions.
+And then ultimately your ability to charge more is going to be about how
+accountable you are for the final business outcomes.
+And we're going to go over these three ideas.
+And then I'm going to share a little bit about how I've applied this in even just
+the building of this course, right?
+Because I think building a course effectively is charging for your expertise.
+So my background has been mostly in machine learning, right?
+So I saw a lot of the research in computer vision and recommendation systems.
+And two years ago, I basically had this hand injury that prevented me from typing
+as much as I used to.
+And so as I pivot from learning how to be a good developer and a good technical
+engineer, learning the side of consulting was very difficult for me because I was
+always someone who just did the work and didn't have to think about sales and
+marketing, but now I've really successfully grown out this business.
+I've been doing a lot of rag consulting with a lot of different companies that I
+think some of you will recognize, and I just want to share what I know.
+And just an example here, there's some companies I've been working with in the
+past.
+So I've worked with companies like Zap, you're in HubSpot, some larger companies
+like Interpret, as well as some smaller companies like New Computer or Limitless
+AI, you might actually recognize some of these companies.
+And the reason I did this, and I think the reason many of you also want to do
+consulting is primarily because it's very exciting in the beginning, right?
+You're just working on many projects, many different verticals.
+You get to develop both hard and soft skills.
+And on top of that, you get to one, monetize your expertise and two, get time
+freedom when you want it.
+And obviously when you start out, when you start working, it's going to be very
+long hours, like the first three or four months.
+It was very difficult, but once you plant the seeds of how you think about content
+and how you build proof, things get a lot easier.
+And I'll tell you a little bit more about how that feels when you hit the inflection
+point.
+And I just want to share my first pricing error.
+I forgot that.
+The first consulting job that I had was basically a director of mine.
+And this director knew that I was not working that much and wanted to see if I
+had some free time.
+And I said, sure.
+Yeah, I'll help out.
+And they asked me, okay, Jason, this is, this sounds really good.
+We love to do some kind of hourly engagement with you.
+How do you think about fees?
+And nervously, I said, oh, maybe 150, 170 an hour.
+I'm not really sure.
+And within two seconds, they just go great.
+170 is totally fine.
+Just send me the paperwork.
+We'll get you sorted out.
+And when that happens to you, basically know that you charge too little, right?
+I didn't even give them permission to give me more money.
+They just felt bad and paid the highest number.
+Right.
+And that will be something that happens way more often for all of you.
+I'm sure where you just give a range and they're just okay with it.
+And that's when I realized I really needed to figure out how I think about
+pricing, right?
+And the advice I always hear is pretty bad.
+They're just like, oh, Jason, you should charge a thousand dollars an hour.
+This is just look in the mirror and keep doubling it until you feel uncomfortable.
+But that advice is really hard to implement.
+It does not feel very grounded.
+And a lot of the earlier contracts I work with are people who knew me.
+They were an old director, an old coworker, an old manager.
+I don't, it doesn't feel right.
+I just, oh yeah, I charge a thousand dollars an hour.
+Now I've been able to charge two or $3,000 an hour, but it's not really by the hour.
+And that's one of the mindset shifts I really wanted to think about.
+And so the goal here is not only to give you feedback, but give you feedback from
+my firsthand experience, my failures and successes as well, sorry, as well as all
+the hours I spent just studying this, right.
+And just struggling with it.
+And ideally, because I'm only probably one or two years ahead of most of you guys,
+a lot of this feedback is going to be very helpful and grounded in some of my own
+experiences and early 2023, most of my work was about 170 to $250 an hour.
+And tracking hours was a pain.
+You cancel a meeting and you feel like you're asking them for money to reschedule.
+It doesn't feel very good.
+Now in 2024, near the end of this year, most of my engagements are between 50 to
+$100,000 per engagement.
+And some companies pay 50% upfront and 50% on the backend.
+And a couple of companies even pay 85% upfront because I offer a 15%
+discount if paid upfront.
+The average engagement is about three to four hours long.
+And some of the work time commitments ends up between one to four hours a week.
+And so this is a very big shift in how I thought about charging for the
+sort of services I provide.
+And when you think about this, I think the first question most people ask is
+how do you actually get customers?
+Right.
+And there's only really four things you can do to customers.
+There's warm outbound through things like referrals and you just talking to a friend.
+There's cold outbound when you send a bunch of emails using like AI services and
+fill up their spam inbox, there's free content and there's paid ads.
+And obviously the first company I worked with was an old director that
+effectively looks like a warm outbound.
+Cold outbound is something I'm not most experienced in and it's very
+successful for agencies.
+But between free content and paid ads, you're going to realize that paid or
+freed ads, free content is the most effective one for those who are experts.
+Right.
+Because buying ads is something I can do now for like the newsletter, for courses,
+but free content is where it really sticks.
+And the thing I really want to think about, and this is the one thing I want
+you to remember through this entire session, is this idea that the content
+you create is the sawdust of your expertise based consulting.
+So the idea is that if you think about a lumber yard, the first lumber yard,
+they're just selling lumber and they have all this waste product.
+And it turns out that if you collect this sawdust and you turn into particle
+board, that industry is as large of an industry as the sawmill.
+Right.
+And even now at the end of 2024, my writing and sort of education business
+is as big as my consulting business.
+It takes a long time to spin up, but once you are able to do that, it's going
+to be very helpful in both getting leads, but also thinking about building out a
+portfolio of products across different price points.
+And this idea that the content is the sawdust of expertise is relevant if
+you're actively consulting, because if you're helping people now, you should
+be writing about it.
+If you're working a day job and want to prepare yourself, you should probably be
+taking the time and say, you know what?
+I can start writing about my expertise while getting paid.
+And if you want to change how you write to charge more, again, all you have to do
+is change how you think about writing, what kind of things that you write about
+and figuring out how we can capture that value.
+And this is relevant for any business as well.
+So I've also helped companies and agencies figure this out because ultimately
+writing is the proof that you know, you're talking about and everyone needs more
+proof.
+If you think about what are the best ads, for example, the best ads are ones that
+have testimonials that have before and after pictures.
+And that's what's really going to help you understand and close a lot of your
+leads.
+And good content also addresses a lot of the pain points that are issues for
+businesses, right?
+Good content can help you figure out who you're writing for and who your customer
+is.
+Good content can help you generate leads and practicing writing will help you
+pitch better and capture case studies.
+And lastly, as you start writing about this content in a way that is more
+outcomes focused rather than inputs focused, those same skills will take you
+to write better proposals and those proposals are going to give them permission
+to pay you more.
+And so the first thing I want to talk about is this idea of being the thought
+leader and building proof.
+So there's two things you have to do when you think about writing, right?
+The first one that is really important for the sales process is focusing on
+outcomes, not inputs.
+And the second thing, which we'll talk about later, is demonstrating your
+ability to be an oracle.
+And the reason we want to focus on outputs and not inputs is because ultimately you
+want to be charged.
+You want to be charging for the value you create, not your labor.
+So if you are writing about the inputs, you will be seen as someone who has paid
+on inputs.
+The second thing that is a big mindset shift for me at least was understanding
+that businesses are looking for a return on investment.
+And again, that is an outcome of the problem that you solve.
+And lastly, as you practice writing, a deep understanding of the desired outcome
+changes how you will eventually approach sales and present proposals.
+And we'll talk about this at the end.
+And so one thing I really want to challenge you today with and think about is
+what kind of content do you actually write about?
+For example, I think a lot of technical blogs write about things like how to
+build a caching layer or maybe a blog post on how I conducted five interviews
+and what I learned.
+But if you think about the outputs, the same blog post with a different title,
+with a different intro and a different conclusion could be about how to improve
+performance of your services by 20 percent, how to attract and hire great
+talent.
+So even just changing the title can help you be responsible for something very
+different in the process.
+And if you're already consulting, then you can write a bunch of questions about
+articles, about the questions you get through your consulting.
+You can write about open source tools that you've built or ship prototypes and
+write about what you've learned and what kind of problems you have to solve.
+And with that, you can collect testimonials and proof to put that on your website.
+If you're starting out, one of the things I did the first three months of consulting
+was just taking a bunch of free calls.
+And I would just mine these calls for different ideas and different blog posts.
+And what I would do is I would use a bunch of different tools like Circleback and
+Sparrow Computer and Cloud Projects to basically help create ideas for blog posts.
+And then lastly, you just got to make sure you publish a lot.
+In the full course, I'll actually talk about most of my workflows and some of the
+prompts and projects I used to do this automation.
+Now what happens is every time I have a meeting, I have an outline, proposed blog
+post ideas and proposed tweets and different content that I can test through
+different platforms.
+And learning to write about your expertise, again, just, I'm going to just repeat
+this over and over again across this entire conversation is understanding the
+desires of your customer and being persuasive and showing proof.
+And then what we'll talk about in the course will be around specific ideas on how
+we write different hooks and different frameworks and how we actually think
+about writing.
+But I'll give a preview of Ada in a bit.
+So once you have this content and once you're focused on writing about the
+outputs and the outcomes of your skills, then you can start building out a sales
+flywheel, right?
+Because as long as you write content that has a call to action, which might be a
+book, a call with me, let's have a conversation.
+Let me help you see if I can answer some of your questions.
+And then that's when people come into the door and that's when you can think
+about selling.
+And when the content pipeline works, sales feels very different.
+So in the beginning, a lot of it has been, Hey, so do you want help with your
+AI business?
+Can I help you solve this problem or that problem?
+But near the end, so almost one year into writing more content, a lot of my
+conversations feel like this.
+They just say, Hey, I'm the CTO of this company.
+I don't really know who you are, but a couple of your blog posts, I've showed up
+in my Slack for the past couple of months.
+And I finally clicked your blog post and I realized you were available for
+consulting.
+I don't want to keep paying my engineers to Google the stuff you wrote for free.
+Can you just help us out?
+And the idea is if you have a large library of proof and of evidence that you
+know, we were talking about, what I often do is I just say, Oh, if you're
+running into this problem or that problem, here's another blog post you can
+read before we actually start an engagement.
+Here's something else that I can help you with.
+And at some point they'll go, I just want the answer.
+I just want to be able to buy my team's time back and start moving forward.
+And what you're going to realize is if you write content that is lower level
+and more inputs focused, you're going to attract a lot more ICs.
+It's going to get much more views, but they won't be the buying decision, the
+buyers of your service.
+Instead, if you write outcomes based content and you write towards folks who
+are thinking about building versus buying and decision makers, then it becomes a
+point where they are thinking about how to best allocate their resources and
+make investments in their business rather than just thinking about, okay, how
+much does something cost, right?
+What am I going to get out of this?
+And as you target the smaller tam of readers, right?
+You want to make sure you have both.
+As you figure out the outcome based writing, the conversations will change.
+It's going to change from how much does something cost to whether or not we have
+the budget for something, whether or not we can fund this project, whether or
+not we can make this investment at the highest level, if you're talking to the
+C-suite, really the only math that matters is the ROI.
+And this is where you want to get to at some point in your career.
+As you start writing about different content, having a better sales process
+and improving the way you write proposals.
+The biggest mistake I made earlier on, maybe in the first three or four months
+of the business was just spending too much time with unqualified buyers.
+Right.
+And these are the, again, the folks who may be coming through your blog posts
+just to have a bunch of questions they want to answer, but they don't really
+have the ability to allocate any funding or any kind of budget to pay for your
+services, right?
+And again, that's going to be a function of what kind of content you write
+about and who you're targeting.
+And again, remember that your goal for this content is not only teach, but to
+demonstrate expertise.
+And this is a slightly different in how we think about writing content, right?
+It starts to come in how I can do this thing or how I did this thing, but it
+becomes how you can get some value out of solving this problem.
+How can you do it in less time and less effort?
+And we'll talk about the value equation a little bit later on, but the idea is
+that you want to demonstrate enough knowledge that you can actually help them
+with the implementation and the execution of whatever plan or idea they have in
+mind.
+And the best way I think about doing this is using the ADA formula, right?
+And what the ADA formula says is there are four variables that you have to
+capture in a specific order as you write content.
+The first thing you have to do is you have to get their attention.
+Does the title and the intro attract the attention of the reader enough for them
+to stop scrolling on Hacker News or stop reading?
+Then you have to give them information, right?
+Can you actually prove that you know something?
+If you, if I stopped to read something, you had to reward me with some kind of
+information.
+Can you identify the problem that your reader has and outline the solution?
+So this is usually what I think most technical blogs get up to, but what they're
+missing is the last piece of desire and action.
+Not only can you create some desire in the reader to solve their problem, you can
+also create some call to action to specifically say, book a call with you.
+And I'll give an example of how I did this with this lightning talk.
+So again, the call to action is going to be booking a call, it might be joining
+the newsletter, but we basically want attention, information, desire and action.
+And for the majority of the marketing for this lightning lesson, it basically was
+this, how I went from $170 an hour to $100,000 a month.
+That basically gets your attention because you don't know how this happened.
+Then when I share my background about the hand injury and the companies that I've
+worked for and how I think about pricing and structuring, then you can go, okay,
+maybe this person knows what they're talking about.
+And then the last thing, I don't know how many people here came in from the
+newsletter or through Maven, but the idea is that if you want to learn more, given
+what I've told you, if you want to learn more about how to scale your business or
+charge for your expertise, join the newsletter sign up for the lightning lesson.
+And that's a simple example of how we think about using the, the ADA formula in
+our writing, but that just demonstrates your ability to understand the outcomes.
+I think another part of demonstrating your expertise and being valued for it is
+also demonstrating your ability to be an Oracle.
+One of the best ways I think about pricing now is I just asked the customer,
+okay, if we were to work together and we were able to solve this problem for you,
+what would be the return on investment?
+Like how much would your business be able to benefit from, from the solution?
+And then I'll maybe say, you know what, I think we're going to be able to
+raise like a $20 million round.
+Maybe the product is going to make us 10, $20 million.
+And then you can come back and say, okay, what percentage of that would you be
+willing to pay to make that more likely?
+1%, 2%.
+1% or 2% of the final outcome is still such a large number that we're not even
+going to have to charge that if 1% of the return on investment is $500,000, a
+$50,000 engagement is very cheap.
+Right.
+But this is again, because we're comparing it to the outcome, but also what we're
+showing is that we're able to lower the variance of this outcome and being an
+Oracle's way of doing that in your writing.
+I would also challenge you to think about what are the problems that can help you
+encounter in the future and what are the problems that can help you avoid?
+What are the mistakes you're guaranteed to make if you don't change course?
+And how often times will someone read a blog post a little bit too late and then
+you're able to give them this, I told you so moment, right?
+One of the great things about writing is, is one thing to answer someone's question
+as they talk to you during the initial sales call, it's another feeling to go,
+oh, this question that you have today about something you're worried about in
+the future, here's something I wrote about six months ago, and usually when they
+see that article, they basically look back at me and go, man, where were you
+six months ago?
+I should have hired you six months ago.
+This would have saved me months of effort with a team of five or 10 people.
+This is way more than any number that you're going to be asking me for.
+And as long as you understand what is at stake in their business and what is
+actually costing them money, you want to start comparing yourself to the ability
+to reduce the variance.
+And then once you can do that, they basically have this feeling of like,
+regret of not having hired you earlier on in the process.
+And then they can start asking questions like, when do we start and how can we
+charge? And again, it's going to be a function of your ability to reduce the
+variance and the risk, but also your ability to understand actually what
+they're looking for.
+If you think about building a house, it's one thing to be thinking about like
+laying bricks as quickly as possible.
+But if you start comparing it to the cost of tenants moving in two months late,
+the cost of that revenue loss is so much larger than just being able to say, I
+lay bricks like 20% faster than everybody else.
+It's a different ballpark in terms of how we're comparing our abilities and our
+leverage.
+One of the best ways to think about not only how you should give an offer to
+somebody, but also how you should think about writing your own content is through
+the value equation that Alex Hermosy came up with.
+And what it says is that the value you can deliver to anybody is equal to the
+dream outcome times our probability of success divided by the time and the
+effort it takes to get it.
+And so a simple framework that you can use to think about writing is what is the
+dream and can I write about understanding that final dream?
+What is the probability of success and how can I demonstrate that I can improve
+the probability of success?
+Having testimonials, having references, having big logos on your website, those
+are all in the domain of probability of success.
+Then you can start thinking about how can I write content about how to make it
+faster, right?
+How can I make it less effort?
+And once you start writing offers and writing content that capture one or two
+or three or even four of these variables, that's when you get stuff that really
+goes viral or closes well.
+And I want to give a very simple example of that.
+So imagine you're like a gym and you want to sell a membership or maybe as a
+service based industry, because we're experts, maybe you're a personal trainer.
+So a really bad offer or a bad blog post or bad anything could be, we have weights.
+Right.
+It says nothing about the dream outcome.
+It just says we have some kind of thing.
+That's like me saying like, I worked at Facebook.
+The entire comment was about me and not what the customer wanted.
+But if you say, get your dream body.
+Now I'm slowly communicating what you're looking for.
+If I say, get your dream body in six weeks and now I'm giving you a time
+constraint, you know what you're signing up for.
+If I say without changing your diet, now you say, OK, not only can I do that, I
+don't have to increase my effort when I do this.
+And then once you add like your before and after pictures, now you go, OK, not
+only do they understand that I have a limited amount of time and I'm not
+willing to change my diet, I've seen other people get the same results.
+Right.
+And this is not only how you should think about writing your blog posts or your
+proposals or your case studies.
+This is generally how you want to present offers to the customer that you have.
+And this works not only for services, it works for startups, it works for
+businesses, it works for everything.
+And ideally this makes a big mindset shift in how businesses think about
+your own expertise.
+Right.
+It goes from my team can Google and research and solve our own problems to
+basically not having enough time and wanting to unblock them as quickly as
+possible.
+Right.
+Goes from my team can figure this out and maybe I don't need your help to how
+much does it cost somebody to be stumbling for three or four months and feel like
+there's low morale because progress is slowing down.
+Right.
+And then what happens is instead of going from a cost center, instead of going from
+how much Jason costs, it becomes what am I going to get out of this?
+And can Jason help me de-risk the project?
+And does Jason understand that what I'm really looking for is this specific
+return on investment.
+Right.
+And if you can do that, then writing proposals and charging more becomes much,
+much easier.
+So I want to tell you another story on accountability and thinking about pricing.
+So earlier I said the first job I did was like $170 an hour.
+It was a little bit embarrassing because they had said yes so quickly, but slowly
+I started just increasing my rates.
+And by I would say April, I was charging about $700 an hour.
+And to me, that felt like an amazing amount of money.
+This, I couldn't believe that companies were willing to do this, but companies
+were willing to do this because what I was doing was I was doing job interviews.
+I was hiring for senior AI engineers and VPs and head of AI.
+And so I knew this was very important for them.
+And what happened was I charged on inputs.
+I basically said, I will do interviews for you.
+And as long as you put me on interviews, I'll keep charging you money.
+And by the end of it, I basically earned about $30,000, which again, felt like an
+incredible amount of money at the time.
+But what I realized was after talking to the team that had done all this hiring,
+the recruiter made five times more.
+It turns out that the recruiter charges on outputs.
+What they say is if they hire somebody that they find, they take 25% of the
+salary as long as the hire stays longer than three months.
+So what they've described is they actually know what the company wanted.
+The company did not want more interviews.
+The company wanted to hire the team.
+And what happened was I didn't really understand what was at stake.
+I didn't ask the good questions and I didn't really understand how I could be
+responsible for the biggest dream possible.
+And ultimately it had, I asked the answer was to build a team and the
+reputation to raise a series B.
+And what happened was we hired the team.
+We found the head of AI.
+They raised a series B.
+Like I was the person that ended up being paid the least across this entire
+project because I was only thinking about the inputs of doing these job interviews.
+Whereas I should have tried to leverage my social network to find better talent.
+I should have been making introductions to investors.
+I should have been trying to figure out how a better roadmap could lead to
+closing stronger candidates that might've just gone to open AI instead.
+But then you might ask, is the answer just to charge more?
+Do I just ask for $14,000?
+Do I just ask for $50,000?
+Not exactly.
+I think the ultimate goal is not just to ask for a larger number, but to be
+more accountable for the success.
+And ultimately your ability to get paid is directly proportional to how well you
+understand their final dream, your ability to demonstrate control over that value
+equation and how you can demonstrate accountability for that success.
+And all this you can practice through writing.
+Right.
+And the idea is that the act of writing not only gets you lead leads, but it is
+like the wax on wax off moment to figuring how to do sales and to write proposals.
+And this is a line that I basically got from like a $600 book on pricing, which
+is you should price yourself like an airline instead, right?
+If you are a commo, if you'd price yourself like a commodity, if you're
+just selling your labor, you will always be treated as a function of your labor.
+You will always be treated like a commodity.
+Instead, if you price yourself like an airline, you have many options.
+You can show them what economy class looks like.
+You could show them what first class looks like, but you should always show
+them what like a private jet looks like.
+And it does two things.
+As you're charging more, you can collect more of the interest and more of the
+accountability for success, but also this is just another pricing tip.
+The private jet price anchors everything else.
+So everything lower, it feels much cheaper.
+And I'm going to give you a feel of this basically at the end of this.
+And the idea is that like both the jet and the economy class gets you from point
+A to point B, but the level of service and who you are as a customer and your
+willingness to pay is completely captured.
+My mistake of just offering this tiny band of 150 to 170 an hour meant that if
+they wanted more work from me, if they wanted more accountability from me, I
+didn't even give them permission to ask.
+And you should always give them a permission to pay more money, right?
+And if there is a service that you think could be higher and your
+unwilling to do it, chances are what's happening is you're just not
+charging enough for it and more.
+You should always believe that there is actually a price where both you and
+your customer will thank each other once the work is done.
+And once the money is exchanged, if you think of a simple example with
+maybe like an agency, right?
+Maybe you, someone agency can come back and say, Oh, Jason, they
+want me to build a basic demo.
+The basic demo might be $20,000.
+It might be $40,000.
+Maybe that's economy class.
+But if I knew that your goal was to not only make the demo, but to make the
+demo in a way that could help you raise a seed round and recruit technical talent
+and to convince investors, it was a good product.
+That's not where it stops, right?
+Maybe first-class could be not only building the demo, but doing user
+interviews and building out test suites and also hiring out a software team.
+Maybe first-class as, or maybe the private jet is not only hiring and
+training the software team, but going out and doing your recruiting.
+Right.
+Maybe it is speaking to users and building this thing out.
+And maybe if you're a big enough agency with a big enough brand, you can start
+making introductions to different investors or not only that, but help
+you find the VP of engineering.
+All these things are within scope.
+As long as you are not treating yourself like a commodity.
+Right.
+And you can do that by asking a couple of really good questions and building
+out what I like to call the situational assessment.
+If you understand what the objectives are, if you understand what the metrics
+of success are and what the values and outcomes of this, you can present your
+customer, a sliding scale of accountability.
+And I'll give you a very specific example that ties directly with
+the material that we're covering.
+Like on my website, after this call, I'm going to just email everyone with my
+actual like free little document of how I think about situational assessments.
+But we're going to go over a live one during this call and mostly through
+the format of slides versus a document.
+But the idea is that once you start working on writing these documents,
+not only is it better for the customer because they have an
+understanding of what you know, but it also helped me personally understand
+how to change my own limiting beliefs.
+Cause I'm someone who is like very uncomfortable with charging people
+anything, like I just work for free for often way too long, but through the
+situational assessment, just demonstrating how much you can help somebody and how
+much they'll will they're willing to thank you afterwards has really
+changed my own perspective on this.
+So let's just jump into that.
+And specifically, I think it would be fun and a little bit cheeky to do it
+through this lesson, right?
+A month ago, I decided to create this material to practice what I preach and
+also to figure out and just talk to more people who are running into the same
+problems as me and attract a community of like-minded folks.
+So I said, okay, I'm going to build this out.
+And the first thing I did was I revamped a lot of my AI consulting content.
+I had about six blog posts.
+They talked about the tools I use, the pricing mechanisms I had, how I think
+about marketing, whether or not I want to show my price on the website and all this
+content pulled into a newsletter.
+Like if anyone was like coming in through the newsletter, if you just like
+reply newsletter in the chat, I would love to know like what percentage of people
+came in through the newsletter versus through like the Maven website or through
+Twitter.
+But what I had done is I had a CTA that pulled people in a way where the call to
+action was described to the newsletter, right?
+The second call to action was described to the Maven page.
+And by doing this and just by creating this content, you're building out your
+proof.
+Then I just shared all of my embarrassing stories of just every time I didn't
+charge enough money, like every time I lost a customer, I'm sure people have
+seen a bunch of these and I provided a bunch of different tools.
+So the newsletter built proof.
+I provide like proposal examples and contract examples to help more people.
+And all of this is effectively the ADA formula, right?
+How I scaled my business.
+This is what I did.
+This is what I did.
+If you want to learn more, check out the course, check out the newsletter, et
+cetera.
+And this kind of puts you in that mindset of the thought leadership.
+Hopefully just by attendance, it worked.
+Then I just started helping people out for free.
+I basically took about like 20 different calls.
+I work with different folks and I got a bunch of testimonials back out.
+So this guy, Shaw, I think he's like in the chat now has a plan to go from five to
+twenty thousand dollars a month.
+Another friend of mine, his agency business went from forty thousand MRR to like
+one hundred twenty thousand MRR.
+And really, I have to build the confidence of increasing his prices.
+A MRR increases monthly income by 50 percent and a buddy of mine who works at a
+larger agency.
+This is crazy.
+He was going to quote five hundred thousand dollars for a six month project, but
+ultimately quoted one point two million dollars instead.
+And it was accepted.
+Right.
+I can't take full accountability for that, but even one percent of that as a, as a
+kickback would have been great.
+But the idea is that you, I did all this work in the beginning to build out the
+flywheel, but the funnel in order to start thinking about doing things like say
+sales and nurturing and all that kind of stuff.
+And so the idea is that once you build out this network, now you can think about
+starting to do sales and the questions you should ask during the sales process
+are the ones I have listed out right here.
+These are my favorite questions to ask.
+So the question, first question is just what's at stake for you?
+Why now?
+What do you think is the ROI and what are you willing to invest and make that more
+likely?
+And the last question I ask is if we meet up a year from now, what are we
+celebrating?
+Right.
+There's a very little chance that if I really help you out, that if you meet me
+at a party a month from now, a year from now, you're not going to introduce me as
+a person who just is on Twitter.
+It might be, Oh man, Jason gave me the confidence to quit my job.
+Jason helped me double my income.
+Right.
+Jason let me double my income and then half the amount of time I'm working.
+And now I just have a healthier lifestyle.
+That's what we want to celebrate.
+And the question would be how much would that be worth to you?
+And this is how you want to start thinking about selling your services when you
+think about having the situational assessment.
+And so this is very cheeky.
+Maybe this is not the right thing to do, but I'm basically going to write a
+situational assessment as if I was doing pricing consulting.
+So as a disclaimer, I don't actually do this.
+So I get people emailing me about this.
+I won't be doing this in the near term, but it is like a very fun idea and a
+very fun exercise to show you.
+Cause I'm sure some of you will actually be interested in a service like
+this.
+So maybe I talked to you and I figure, okay, this is what you want.
+You really want to just have the ability to quit your job and go independent.
+And you want to be able to make a living while building out some SAS AI products.
+And this is actually what I write in the assessment.
+This is a notion document.
+And the first thing is just situation.
+You are this.
+If you can queue up a few clients and make a few sales, you'll have the
+confidence to quit your job and move forward with being independent.
+And if you can hit your first $90,000 of revenue and you can break even,
+then you're good.
+You're currently charging a hundred dollars an hour and you want to move to
+larger ticket projects and you're struggling with marketing, but you have a
+few great projects under your belt from your day job that can help you get
+started.
+So notice that this is how this is structured.
+None of it is about me yet.
+It's all about what you want and me telling you what you want.
+Then you can go outline objectives.
+In order to do this, you're going to need a couple of things.
+You're going to build a landing page, book your first five or six calls, come
+up with a content strategy, roll your social media, collect testimonials, and
+ultimately shift from hourly to value-based pricing.
+Metrics could look like getting your first five blog posts out or five calls
+and ultimately hitting your $90,000 target in revenue.
+And if you can do that, you can build out a nest egg while you work on your
+SaaS product, you'll have the freedom to travel and the ability to scale up and
+scale down as you need it.
+So now all I've done is I've basically told the customer, look, this is what I
+know you want.
+This is what needs to happen to get you there.
+This is how we can measure it.
+And this is how your life is going to be different after we work together.
+This is what we're going to be celebrating.
+Now we can think about the products and the offering.
+This is the airline.
+So the bus might be the newsletter and the lightning lesson.
+They're free, right?
+But if you just follow those along, you just reply to some of the emails I send
+you, I will answer back and I will help you when I can.
+The Maven course is like economy.
+It's three hours of lectures, three hours of office hours.
+We're going to go over things like your landing page and content strategy and
+the tools I use.
+We'll talk about pricing and all this other stuff.
+You're going to have access to a community of engineers to collaborate with.
+And we'll help you review some of the work that you're putting out.
+But this is where things could get much more interesting.
+What if I had a direct coaching service?
+Maybe on a bi-weekly basis, we just do an hour together.
+We talk about all the issues you're running into and I can help out when I can.
+I'll introduce you to other businesses that make sense and other professionals.
+And then the private jet could look like everything we talked about above, but I
+will literally sit with you and review every sales call.
+I'll help you write proposals and review blog posts.
+I'll introduce you to my writer.
+I'll find you potential collaborators and promote your content and drive leads
+from my business, if it makes sense for my business to work with your business.
+So now I'm showing you a spectrum of how I can do it.
+Read my free blog posts, check out the course.
+Maybe we should do a weekly one-on-one or I will literally help you as much
+as possible because what I know you want is $90,000 and the ability to quit your job.
+Then we can go into pricing because as you build out this model, what you're
+really doing it is you're asking, what do I get first?
+And then what does it cost second?
+Right?
+Cause you could say, here's a bag that's $500.
+Do you want to buy it?
+That's a very different feeling than saying this bag has 25 kilograms of
+gold in it and it costs $500.
+That's the shape of the conversation I want you guys to be having in order
+to be able to charge more.
+Great.
+So I tell you what you want.
+I tell you some of the ways to get it.
+And now I'll tell you what is the investment you need to make to get those results.
+This newsletter is free.
+The course is 75 to 750 and it's 25% off during the promotion.
+The coaching might be $3,000 a month.
+And maybe you can throw in some kind of discount if paid up front, if cash is
+something you personally care about getting upfront, right?
+And then the comprehensive is where things get really interesting, right?
+It would be, I think it would be very fun to build a business where I just get
+20% of the incremental income over the current hourly rate of your business.
+Right?
+And again, this isn't real, but you could imagine that if I just said there was no
+fees and all I collected was 20% of your incremental income over a hundred dollars
+an hour, exactly, very clearly that I know what you want and I want the same
+thing as you, because if you are making $90,000, I want me to help you make half
+a million dollars.
+If I can help you get the confidence to make $2 million, like I will be rewarded
+and you will still be very happy about it.
+And that's the idea.
+That's the feeling I want you to be able to give the person you're working with.
+It's, I know what you actually want.
+And to add to that, to de-risk much of this work, because you can, and this part
+is real as well, both the Maven course and the coaching is guaranteed because I
+know what you want.
+You want to make more money.
+So I can, you can say, you know what, my work is guaranteed.
+If you feel like you do not increase the revenue in a way that can offset my fees
+within three months, I will return your entire investment.
+Now it's just a matter of whether or not you think you're actually good at your
+job, but that is something you should play with as you figure out how accountable
+you want to be for success.
+What does that success look like?
+And I'll just say one thing before you wrap up, which is a lot of people will
+come back and ask me, Oh, what if I can't get the result?
+My answer would be if the result is that hard, you should still be
+charging way more, right?
+Cause that's just, again, how that's how, there needs to be a price where both of
+you guys thank each other.
+And I think that's again, the thing that I want you to think about as well.
+If it's too risk on, it just means that the expected value is not high enough,
+in which case you should be charging more.
+Right.
+You can imagine a world where I could ask for $200,000 if you raise your series B,
+but maybe 80% of it is once you raise.
+Now our incentives are completely aligned, right?
+Whether I take nine phone calls or a thousand phone calls, it doesn't matter.
+You know that I know what you want.
+And so this is basically what I do with businesses, right?
+I give away all the alpha and I only charge for the implementation.
+And as long as you can demonstrate the understanding of what you think, the
+final outcome is you can capture a percentage of that outcome, but you can
+only ask for it if you know what you want and you can tell them what you want.
+And this is again, why writing is so important because everything you write
+about is just practice on understanding what the outcome is and what the ask is.
+And so for the remainder of the actual Maven course next month, the goal is to
+basically figure out how we can work together with all of the class cohort
+to review proposals, navigate these conversations and follow-ups and more
+specifically also share things like specifically on how I think about writing.
+The cloud projects that I use and all the workflows and the tools that I leverage.
+So I can create as much volume as I do.
+Again, the past year I've basically written 60 blog posts and I would say the
+top four have driven like $300,000 worth of inbound, right?
+It's just because, Hey man, I read this blog post.
+I totally understand what you're saying.
+I do not have time to be paying my engineers to be like deciphering 60 blog posts.
+Can you just help us out?
+And that's the feeling I think I want your customers.
+Yes.
+Alpha, alpha means info.
+And that's basically it.
+I won't go over too much of the details of the course itself, but the idea is
+that it's in the same structure as we talked about today, all the tools and all
+the secrets for writing, all the information, how to change your mindset
+and thinking about hourly to value based pricing and then sales and proposals.
+And I know this was very dense, but this is, I think only 40 minutes, but the
+general idea is that the course will be very dense and it'll have a lot of
+hands-on experience and I hope it's something that will be worth your time.
+And if you can't make money after the course, I'll totally give you your money back.
+Yep.
+And then I'll show the slides after this presentation.
+And that's all I would say.
+Yeah.
+This is the QR code for the newsletter and then this is the QR code for the
+course, and then I will share the slides in an email afterwards.
+So if, let me also jump into Q and A now.

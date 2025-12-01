@@ -1,0 +1,788 @@
+I think a lot of folks have questions around incorporation and also specifically questions
+around IP, primarily because many people are thinking about not only doing consulting in
+the short term for maybe just like, you know, cash flow, but maybe turning that IP into
+something more meaningful.
+Maybe this is a productized service.
+Maybe this is SaaS software.
+I think there's a lot of questions on how to protect that.
+I know that many default contracts basically say you hand over all the IP to the company,
+but I think this AI space is a little bit too quick changing and it's possible to really
+want to do that openly.
+Luke, I would love if you could just like introduce yourself a little bit more about
+what Virgil does and then I'll kick it off with a couple of basic questions.
+Great.
+Yeah, thank you so much for having me.
+Great to meet everyone.
+So I'm Luke.
+I am an attorney, if that wasn't obvious by the title of this session.
+But well, while I was in law school, I thought I was going to be the typical big firm attorney,
+but I actually ended up co-founding a small molecule biotech startup while I was in law
+school.
+I jumped in as in-house counsel straight from there and I've been working in and around
+startups and entrepreneurship ever since.
+After that startup, I spun up my own practice and was kind of a full-stack startup attorney
+doing everything from incorporation through financing and everything in between.
+Started a little side hustle along the way, sold it about a year and a half ago.
+One year ago, almost to the date, I think our anniversary is on Friday, I co-founded
+Virgil with Jeremy Howard and Eric Reiss.
+And Virgil is unified legal and back office support for startups.
+So we combine especially the day-to-day general corporate work that is too expensive to turn
+to the mega firms for, but it's still very important that it's done correctly.
+And we pair that with bookkeeping, tax compliance, people ops, all the stuff that generally falls
+into the bucket of things that founders don't want to deal with, but also having one organization
+handle all of those, we can be a whole lot more intelligent and efficient with how we
+represent them, especially because we're building our own tech and tools to better serve our
+clients.
+We get quite embedded and that allows us to do a lot of interesting things.
+So what I'm currently doing now is I'm the CEO of the tech side and managing partner
+of the affiliated law firm that's related to it.
+So whereas I spend a lot of my time working with entities with early stage startups, both
+now and when I was a solo practitioner, I worked with a ton of consultants.
+I'm also on the other side of the table reviewing consulting agreements between my clients and
+consultants.
+So I'm quite well versed in the minutia of those contracts, but that's the little preamble.
+That's my background and excited to jump in.
+I think the first question, which I think was asked the last time we did this, but I
+realized that's quite late, is why do I need a lawyer?
+Do I need contracts if it's some small contracts?
+I would love for you to address that just because the more and more I realize the answer
+is yes.
+Sure.
+Yeah.
+And it strikes me that there might be two questions in there.
+One is, do you need a contract?
+And that is absolutely yes.
+The second part is, how do you get a lawyer?
+Yes.
+I mean, I'm going to speak from a place that is possibly self-preservation, but there's
+a lot of things that are helpful to have a lawyer in your back pocket to help you with
+these things.
+I will say that there is no replacement for you gaining your own familiarity and understanding
+with the terms of the contracts, what the provisions mean, what are important to you.
+And as you build up that familiarity, oftentimes the contract itself, the underlying contract
+will not change much from client to client.
+What will change is the statement of work, which is the client-specific and project-specific
+details that are appended to that agreement.
+You want that in one agreement, but it's typically structured as an exhibit.
+And so you can build up familiarity and you can certainly choose to DIY if you gain that
+familiarity, but there's always going to be oddball questions.
+There's always going to be nuances and there's going to be times where maybe you want the
+correspondence, the communication between you and your prospective client or former
+client or, God forbid, disgruntled former client, that you have a lawyer handling that
+communications to make sure they're being good actors and staying in line.
+And beyond that, a lot of contracts have ongoing responsibilities, ongoing obligations within
+the contract.
+And that's part of making sure you're familiar with the contracts itself, but lawyers can
+help you keep apprised on a client-by-client basis.
+If you've done anything in the past that might limit your ability to take on a new client.
+So I hope I always lean in the direction of not trying to over-lawyer or encourage lawyers
+when lawyers are not necessary, but there are certainly situations when you are negotiating
+these sorts of arrangements that a lawyer comes in quite handy.
+That makes sense.
+I think one question that was asked earlier today was actually around having contingencies
+around scope or something like that.
+Have you seen anything crazy happen in that space or general contingencies that might
+make sense to prevent yourself from having a lot of scope crease or anything like that?
+Yeah, so I would say that there aren't any bright line specifics.
+It's more the other case where vagueness and having too few details in that statement of
+work is when you really run into trouble.
+There's a couple of things that you can do to build out the bones.
+You can have it very tied to quite specific deliverables.
+So there's no wiggle room on, you know, was this deliverable accomplished?
+Was it not?
+Those should be quite spelled out, so everyone is of the same mind with regards to those.
+If you're worried about scope creep, you can put outward limits on it.
+I know that's kind of contradictory in the sense that a lot of you will probably be doing
+flat fees or project-based fees, but you can protect your availability by committing to
+the contract.
+You can be available or contribute to the project no more than X number of hours a week.
+But the bottom line is that is worth investing a lot of time into.
+The contract, like I said, hopefully the provisions don't change much from client to client.
+You may have a little bit of back and forth.
+You may have a little bit of red lines, as lawyers would say, marking up the agreement
+until you come to an agreement or decide on the mechanics of it.
+The statement of work is really worth spending a lot of time in.
+And my time working with AI consultants, they usually produce a proposal ahead of time.
+The proposal is a very good starting point for SOW.
+If it's detailed enough, I've even seen people drop in the proposal as the exhibit with the
+nut attachment.
+Nut should cover the basics of delivery timeline, pay, pay terms.
+You know, I expect net 15, net 30.
+Try not to do beyond net 45.
+I see some clients argue for net 60.
+Yeah, 90 or 80, it can get pretty onerous.
+But the bottom line is that is where you want to spend a lot of the time in negotiations
+to make sure that is abundantly clear on the deliverables.
+That makes sense.
+I think I also realize that a lot of the folks here actually from Europe in particular.
+And one of the questions around, can Europeans incorporate in the US?
+How do you do a bank account there?
+Like, do you take payment like USD?
+How do you handle the exchange rate?
+A lot of questions around crossing borders, I guess.
+Yeah, so as long as you are not from a prohibited country, international folks can set up US
+LLCs and therefore can set up US bank accounts.
+I do all my banking with Mercury.
+If you've heard of Mercury, I love it.
+So yes, it's certainly a path forward.
+It's certainly doable.
+Sometimes it's nice to have that familiarity with the traditional Delaware entity when
+you're across from a client negotiating.
+That being said, I do have plenty of contractor agreements between US companies and
+international contractors where they're either contracting in their individual capacity or
+a foreign entity as well.
+So that's certainly not like a legal bar to contracting with US employers.
+It may be a practicality bar if they have more comfort contracting with a domestic entity.
+But it happens both ways.
+I'm a US attorney, so I'm limited in my ability to advise and give advice on that side.
+But I see plenty of international folks set up US entities and US bank accounts.
+Yeah, I think with the same thing with being in Canada as well, I know I kind of messed up my process a little bit.
+Lucas helped me unravel that a little bit more.
+But I think on the Canadian side, it's the same thing.
+I just had LLC in the US, a bank account in the US, and that was pretty good to go.
+One question actually around exchange rates.
+Have you seen companies or handled things like exchange rates versus just being paid in USD?
+So I've seen at a time or two where if you are the contractor, well, one aspect of it is you can negotiate for any sort of
+transaction fees above and beyond to be not included in your like it's not borne by the contractor.
+It's borne by the company. So that's one aspect.
+And then in terms of exchange rates, I don't have a ton of experience there.
+But how it's typically stated is you will be paid at the then current exchange rate when the wire is processed.
+But if you want to put more more process around that, more concreteness around that, I mean,
+you can contract basically anything.
+So you could say if there's fluctuations of more than three percent, more than five percent,
+you could you could absolutely bake that into the contract to protect yourself in cases of dramatic fluctuations or increases in the ratio.
+Makes sense.
+So I guess this is the question that I think most people are asking.
+Like, how do you protect your own ID?
+Like, what kind of language do we need?
+I know we have like a maybe this will be good for you to maybe take a look at our existing default template.
+A lot of what I've been doing is just saying, well, most of my work uses open source software and I happen to be the creator of that open source software, therefore the IP is mine.
+But generally, like, how should we be thinking about protecting our IP?
+And when should we push back against that?
+Yeah, so this is perhaps the most important thing we'll cover here today.
+And that is because this is the biggest point of contention between you and your clients.
+And the clients will want as broad IP assignment as possible and you will generally want as narrow.
+And so there's a couple of terms that I want to touch on.
+One is all of your agreement should have this notion of pre-existing intellectual property.
+So pre-existing intellectual property, as is aptly named, is the materials and any intellectual property, whether patents, whether copyrights, whether or not registered, that you have created before your engagement with this client is owned by you.
+And there's a big old carve out in the language for all pre-existing IP.
+So ordinarily, if you are providing services for a client, there is this legal doctrine called work for hire, which ordinarily absent any other agreements, the work you do for them is owned by them.
+You are providing it for them.
+They take ownership.
+But what we do is understand that legal framework and put safeguards in place to carve out things that we care about.
+So one being the pre-existing intellectual property.
+The other is methodologies.
+So that's really important for you all.
+Methodologies can take a lot of different shapes and in some cases overlaps with pre-existing intellectual property.
+A lot of methodologies can be seen as intellectual property.
+But it's important in these agreements to have a separate carve out for that.
+And that preserves any sort of routines, processes, anything like that that you take to every client you will use to produce these services time and time again for each client.
+You obviously want to protect that and not assign that because it would limit your ability to turn to the next client and do the exact same work.
+So the carve outs are pre-existing IP.
+The carve outs are methodology.
+And then what happens is most of what you're doing that is pre-existing IP and methodologies is in some regards integrated into deliverable you're given for the client.
+That's probably going to be unavoidable.
+What happens there is they get a license to that intellectual property, your methodologies and your pre-existing IP so that they can make use of the deliverables.
+Obviously, if they can't effectively use what you deliver to them because they can't use the underlying pre-existing IP or your methodologies, it's worthless.
+So what the license does is it allows them to fully take advantage of what you've done for them.
+But it remains the ownership remains in your hands.
+And that means that you can take it from client to client.
+You can reuse it. You can repurpose it without any limitations.
+So I would highly encourage you to take a look at any IP provisions if you're getting the contract.
+So if your client is producing the contract, generally, I would prefer if you all had your own contract that you are sending to the client to start with a basis of strength from your position.
+But it happens. So if you're reviewing their contract, definitely pay attention to that IP section.
+And if it seems just like broad assignment, everything that you do is assigned to the client, then that's where we definitely want to make those those pullbacks.
+And you should also note that most of you will probably have ongoing or engagements running in parallel.
+You might not be working for only one client at a time. You might have multiple going out of time.
+So another tricky thing that slips in there is you want to make sure that IP assignments, the IP assignment that should be happening is limited to work for your specific client during the engagement.
+Some will just say, like, during the term of the agreement, which is ambiguous because you might have multiple engagements going on at once that overlap in term.
+So we want to be very specific that the only thing that is being assigned is the work you are producing for this specific client and no one else during the term of the engagement.
+So that is the overarching stuff we can talk about, whether it's worth, you know, copywriting and patenting if you want.
+But everyone's will look a little bit different. And I should have had this call out at the beginning, but I'm going to be speaking in general generalities here.
+I'm a lawyer, but I'm not your lawyer. I'm not familiar with your specific situation.
+And so it's probably helpful to stay at the upper level of how to protect this IP in whatever fashion that looks like.
+I don't make sense. I don't make sense.
+Oh, yeah. What are the things? This is a funny question.
+One of the things I used to do is just the moment someone like verbally accepts an agreement, I just send my contract first to sort of define that versus like waiting for them to send me this like 45 page PDF that I have no idea what's going on.
+But the clients have the contract first. Like, how should we like navigate that conversation of like, can we use our contract? What does that actually look like?
+You know, sometimes if it's like Walmart, I feel like I can't really push back. But I'd love to hear your thoughts there.
+Yeah, I'm glad you gave that example, because a lot of it does come down to leverage.
+Like, if you have far more people that want to work with you, then you can actually support, then you can choose to be a little choosy.
+You can say like, sorry, I, you know, per my arrangements, I only work from my template. Can we work from my template?
+You can be polite. You don't have to be a bully about it. But even in a situation where you don't have the leverage, you could say, you know, as a independent contractor, as a solo practitioner, as a solopreneur,
+I do not have the resources of a full legal team at my disposal like you do.
+I prefer starting from an agreement that I have familiarity with. And then you can slip in like, I use this with all my clients, like, you shouldn't have too much cause for concern.
+This has been, you know, gone through multiple iterations, multiple legal departments.
+I've used it in multiple different settings. And that can build some sort of trust that they're not just going to get like a, you know, one paragraph, you know, no pen, a scroll that's supposed to document the entire arrangement.
+So I would encourage you to ask for that if you can. It's not going to fly in every situation.
+And if it doesn't fly, you just need to decide if you want to get comfortable using somebody else's form.
+So it happens all the time that you're working from somebody else's contract. But I definitely encourage you to try to get yours through the system if you can.
+Yeah, that makes sense. I think I just call it the limited resources has definitely worked for for me. Otherwise, I'd send it as quickly as possible.
+Yeah, and I will call it like we do have a template contract that I use. It's pretty straightforward.
+It just has like for payment terms, for example, it just says the payment terms will be reflected by the statement of work.
+And then I just attached a PDF that is the proposal. And if it says 50 upfront, 50 after 45 days, that's all like in writing.
+There's been times where I send that they attach a statement of work. But like on page 37, it's actually met 30.
+Those are the kind of things that kind of catch me off guard sometimes.
+Yeah. Can I jump in there? So that actually brings up a really good distinction between the underlying contract and the statement of works that are statements of work that are added as exhibits.
+And one thing that you want to look out for is any potential points of contradiction.
+So something that's going to be routine, even if you do three, five, ten different projects for this client, and those would just be appended as subsequent statement of works, the underlying contract would not change.
+In the underlying contract, you can have the terms that are not designed to change from project to project.
+However, as much as possible, if there will be changes and changes for individual projects, you want those to be found in the statement of work.
+So like net payment. So like if you have to travel, if you have to print, if anyone does printing now and it's any reimbursable expenses that are understandably going to be picked up by the client,
+that's probably not going to change from project to project.
+But I would caution you against doing like solid net payment terms in the underlying contract and encourage you to do the S.O.W. instead, because what if the first S.O.W. is just like straight hourly, you're fine with getting paid, you know, net thirty.
+But then project number two, you scope it out and you're like, I need to get paid ahead of time.
+Like, I want payments in front or at least half payments in front before I get started.
+Do you really want to amend the entire underlying agreement?
+Now, that sounds like pain. You might have to reach out for a lawyer. You might have to incur extra costs.
+So the things that you expect might change from project to project, put that in the S.O.W., not the underlying agreement.
+And it's always helpful to take a optimistic and long term approach, even if you suspect that it's only going to be one project and therefore only one statement of work, pretend like it might be multiple.
+It'll save you some time if that comes up and you get hired for additional projects for that client.
+Yeah, there's been times where I put in like in the proposal, like unlimited access to me over Slack.
+But really, it's like in the contract is very much like from time to time, like there's some like fair use terms there.
+And that definitely has protected me in the past where I basically said, like, yeah, like I'm happy to jump on calls any time.
+And then they set me up with like 12 job interviews in a week.
+And I can at least pull up the documents like, hey, you know, it's not sort of like fair use of of my my time.
+That has definitely gotten me in trouble before.
+Yeah, that reminded me of one other thing that may or may not be in the glossary.
+And if it's not, I'll make sure to add it in because I want you all to be familiar with something called an integration clause.
+And in a contract, it'll usually be labeled as entire agreement.
+And it's a very common provision.
+Don't be scared of this provision, but I want you to know how it works.
+And it basically says this contract is the entirety of the understanding between the parties.
+And it supersedes anything that has been discussed either in writing or orally beforehand.
+And how that functions mechanically is if you have agreed to something in over, you know, over slack, over phone calls, anything like that, but it is not represented in the agreement.
+It is technically null and void. That is the same for previous contracts, because that would be one of the writing components.
+So be aware of that. Almost every contract will have it.
+If you talked about something that you need to make sure is a part of the mutual understanding and part of the arrangement, it needs to be found within that contract,
+because that provision will basically undo any agreements that you've had in the past if it's not documented.
+Makes sense. That's kind of pretty funny. Victor asked, what's the worst fuck up you've seen a consultant make and like what kind of legal consequences like sort of have you seen in that world?
+I have not seen too many crazy things. It's mostly just been like a big refund or like a misuse of time.
+But I'm curious if you've seen. Yeah, so they're all basically back to this concept of just not being specific enough in the SRW.
+Sure, you can have people that lose trust and they start fighting and stuff like that.
+But a lot of them come from either having no concept of net payment requirements.
+So if it's not in there, I've seen clients drag their feet and spend take months and months and months without paying.
+If you have too vague of deliverables, they will try to argue that you didn't meet the deliverables, you did not fulfill the contract, you breached the contract.
+They'll either refuse payment or try to negotiate for partial payment.
+And then one thing to avoid is you should probably stay away from any sort of non-compete just generally.
+Non-competes are really not appropriate for independent contractors.
+In fact, this is probably more legalese than you care about or want to know.
+But one of the big differences between independent contractors and employees is the extent to which your client can exert control over you.
+So independent contractors, they are independent, they set their own schedule, they use their own tools.
+Those are hallmarks of independent contractors. If you introduce a non-compete, it might actually mess with the classification.
+It might actually introduce a situation where you could argue that you are an employer or an employee rather than a contractor.
+But so I have seen situations that they agreed to non-compete.
+And even though would it be enforceable if you took it to court?
+Maybe not. It causes a whole lot of pain because you want the freedom to work for arguably competitive clients.
+I mean, especially with how AI is going now, everyone is stepping into different areas.
+The surface area of competition and overlap is quite progressing.
+So the odds that you run into an arguably competitive arrangement is pretty likely.
+I have seen situations where they say you can't work for our competitors or anything that competes during the term of the agreement.
+That's a little bit better than just kind of blanket, you know, for the next 12 months, you can't do anything competitive.
+I'd still try to push back on it if you have the leverage, but that is going to be more palatable than others.
+So run into non-competes, be specific, be specific about monetary, pecuniary stuff, be very specific about deliverables, be specific about timelines.
+And most of the big issues I've seen that have led to demand letters and lawsuits and fighting and sorrow are due to not being specific enough at a time.
+Makes sense. Makes sense. Yeah.
+I try to just like charge enough that I'll just eat the open AI tokens and call it a day.
+I guess one question I think a lot of folks had earlier this week was around NDAs and testimonials.
+I don't know. What is the general recommendation on things like this?
+I know you could just always like just ask for permission and whatnot, but there are companies I know where I've signed away my ability to talk about them.
+Yeah, so.
+If you want to preserve the right to do testimonials, that's really common, and you can draft it narrowly enough that they shouldn't cause too many concerns about their confidentiality.
+Some are difficult to work with and just say, no, you can't talk about us in any fashion, not even mentioning that you worked for us.
+And that sucks, but it happens. And again, it comes down to leverage.
+But there's certainly a way that you can preserve like general good principles of confidentiality while preserving that availability to leave testimonials.
+But you'll probably want that in the SOW, so there's no haggling after the fact.
+One thing with NDA is that is pretty interesting.
+And I was it goes back to the integration clause, and I was just chatting with a founder about this last night.
+A lot of people don't realize that if you sign an NDA and inside a pretty standard contractor agreement or services agreement that you have technically nullified the NDA because of this integration clause.
+And this doesn't really matter because most of these agreements will have just as ironclad confidentiality requirements as the NDA itself.
+But just be aware that sometimes it can be superfluous and just be aware that it might not actually be in effect if you later sign a contractor agreement or a services agreement.
+NDAs, it's pretty important that you...
+It's just going to happen, like you're not going to find much web room and confidentiality.
+One thing that you do want to push back on is your general industry knowledge and your methodologies again.
+You want those to be carve outs from the definition of confidential information.
+As you don't want to come in a situation where they might argue that things that are just in your head from your years of experience are somehow conflated as their confidential information.
+And now you can't serve more clients because you're sharing their confidential information.
+So any sort of confidential confidentiality provision will have a couple of big carve outs.
+It's anything that is told to you by a third party, not subject to confidentiality, is no longer confidential information.
+Something that by no fault of your own becomes public knowledge is not confidential information.
+Anything that you have to provide in a court proceeding, not confidential information.
+And then we want to add two more, which is things that are of general industry knowledge and my own methodologies.
+And from that perspective, you should be in a pretty good position.
+That's kind of the bones of a confidentiality agreement.
+That makes sense. Yeah, I definitely have...
+I've seen a lot of weird contracts there.
+I want to make this call out. Someone asked, I have a trusted client where the contract is verbal.
+Any opinion on that?
+So verbal contracts are in many cases contracts.
+A contract needs an offer and acceptance and consideration.
+Actually, value needs to change hands.
+Of course, if it is only verbal, you have very little to go on in terms of he said, she said documentation.
+I would certainly prefer that it be documented, especially because I would imagine that the project terms, the financial terms have been agreed to.
+And if everyone is in good faith, the odds of you getting pay are probably pretty high.
+But you're missing so many of the more boring legal provisions like preserving your intellectual property, confidentiality.
+And one thing to keep in mind is you'll probably be working with entities.
+And just because you have a really good relation with an individual within that entity,
+does that not mean that individual will stay with the company?
+They might be swapped out for somebody who cares a whole lot more about being aggressive with their IP position.
+And if you have not carved yours out and protected it, kind of out of luck there.
+And again, a lot of these transcend just the term.
+So you might think, yeah, I got paid.
+It's done. What's the problem?
+They might say that you are going and working with our direct competitor.
+A lot of the stuff you did is our intellectual property or our confidential information.
+And we're going to sue you because now you're providing that to the to the competitor.
+So the reality is, does it happen fairly often?
+Yes. Will it always lead to cataclysmic issues?
+No. But do yourself a favor and document it and put it in a contract, especially if it's already been agreed to ahead of time.
+There should not be too much friction in putting that together.
+Yeah, generally, I feel like if there is a verbal contract, then actually there's just a contract that exists up in the sky that will be handed to you once.
+Any real issues come about like I've I have not had to deal with IP issues from employers, but I have dealt with IP issues with employees.
+But it's like, oh, like now they've changed their mind.
+They want to do something like, oh, it doesn't really make any sense.
+I want to call it like if anyone has any live questions, feel free to raise your hand and then we can call those out.
+Is there anything you feel like we have not been asking that is pretty important to think about?
+We haven't really touched on contracting in your individual capacity versus an entity.
+I do highly recommend it for a lot of reasons.
+One is just that limited liability protection.
+So if something were to go wrong, if you were just contracting in your individual capacity, they can go after your personal assets.
+Well, whereas if you have a entity, it is limited to the assets of that entity with very few caveats to that.
+And another thing is, you know, you'll probably be working with pretty sophisticated clients.
+It ups your level of sophistication to be contracting through a legal entity with a associated bank account for that entity.
+It's gotten to the point where these are really cheap and easy to set up.
+I highly recommend doing so.
+I actually listed there's one registered agent that I think is probably the cheapest and the fastest called Northwest registered agent.
+I'm not an affiliate or anything like that. I just have used them a bunch.
+They file really quickly.
+I expect a lot of you will be LLCs.
+They have like 24, 48 hour turnaround for LLCs.
+It's like less than $100.
+And then, you know, quick plug for Mercury.
+I love Mercury.
+They make it super fast and easy to set up a entirely digital bank account as well.
+Yeah, so that's just fast.
+Yeah, yeah, I love Mercury.
+Just good business practices of protecting yourself by setting up that entity.
+That's a big one.
+Some things are just like fun to talk about.
+Like a lot of you will be solopreneurs, which means you get access to fun things like the Solo 401k, which big caveat, I'm not a financial advisor or anything like that.
+But it is my favorite investment vehicle.
+And in my opinion, the most powerful investment vehicle is the Solopreneur.
+And it is really only available to self-employed folks who don't have any employees if you want to get help.
+And it doesn't make sense to have an employee.
+I started working with Athena, the registered agents, and I love my EA.
+She's totally changed my life.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+I'm a big fan of her.
+Want to see your question?
+Yeah, thank you for having us.
+You mentioned solopreneurs and sort of how you'd set that up.
+Is there any difference in partnerships?
+And specifically partnerships across different states?
+Yeah, so big caveat here that I'm not a tax attorney or accountant or anything like that.
+But both in LLC, as it is usually set up, and a partnership are pass-through entities.
+So they're not taxed at the entity level that flows through to the owners.
+If you are a solo, a single-member LLC, that will just be you.
+If it's partners, it's to the partners, obviously.
+A couple things to be aware of that my understanding is it gets more complex when you're adding
+more partners across different states is if you're a partner, you will get a K1 for your
+partnership return.
+And you have to do like apportionment on the tax side.
+And that can raise your tax bill.
+So just find a trusted accountant, a tax accountant specifically, ask them what it's going to
+be like both in terms of day-to-day management.
+Is it going to cause too much pain?
+And is it going to be a pain at tax time and or run up the bill?
+But generally speaking, partnerships, I would actually encourage the LLC in most situations
+because you have that limited liability protection.
+And it's also a pass-through.
+So you can have 10 members in your LLC and it'll function quite similarly to a partnership.
+But LLCs are far squishier than corporations.
+They're more flexible.
+You can do a lot with them, but they're more concrete than partnerships.
+And so LLC has this kind of element of familiarity that can help because it's just better understood
+concepts.
+Partnerships you could come up with practically anything within the law.
+And it just starts getting a little bit unruly.
+So not to discourage you from partnerships, there's plenty of situations where partnerships
+make sense.
+My law firm is a partnership, but it can lead to some additional admin headaches.
+And I would urge you to at least take a look at the LLC first because you can always convert
+it later.
+We're just looking at the chat.
+I think a lot of the questions are aimed.
+You might not be the right person, but what are tax liabilities for those living outside
+the US but have clients receiving their fees as a US LLC?
+Yeah, unfortunately, I'm not very well suited to answer that.
+And it also depends quite a bit from where you live.
+So I wish I could be more helpful there, but I should probably stay in my lane.
+Yeah, that makes sense.
+I paid a lot of money for a Canadian accountant firm to figure this out.
+And a lot of money.
+If I could do all of this, wow, I could corner the market.
+But there's plenty of stuff that I don't know or can't practice because I'm not licensed.
+Totally.
+Let me see if there's no other questions.
+There was one other question.
+I'm not sure how well we can answer this one, but it's like corporate clients have often
+very long MSAs and SIGs.
+Are there any tips dealing on these kinds of things?
+I don't know if that's something that we can answer, but I'm curious if you have any thoughts.
+Yeah, I mean, we touched on it a little bit in the sense that hopefully you can get your
+contract in front of them rather than receiving a mega long MSA.
+And if you get a mega long MSA, pay really close attention to that glossary that I shared
+because that will highlight the key things that you need to know.
+And then you can kind of, you know, process some elimination.
+If you check those boxes and are OK with them, then if you're working with a lawyer that
+can scrap the stuff that's unnecessary, that can help you understand the stuff that goes
+above and beyond what you would expect or what is in your standard agreement, it just
+happens.
+And then you can have, you know, more mature enterprise clients will have a MSA that is
+near and dear to their hearts and they will not deviate from it.
+And your goal is to protect yourselves as much as you can within the parameters of the
+contract they provided.
+And I would recommend if you are faced with that, you know, we talked about do you need
+a lawyer?
+When do you need a lawyer?
+If you get a big scary long contract that is giving you heartburn of what could be in
+here that I'm missing.
+And if you have a lawyer that is willing to do that, you can get a lawyer.
+And if you have a lawyer that is willing to do that, you can get a lawyer.
+And if you have a lawyer that is willing to do that, you can get a lawyer.
+And if you have a lawyer that is willing to do that, you can get a lawyer.
+And if you have a lawyer that is willing to do that, you can get a lawyer.
+And if you have a lawyer that is willing to do that, you can get a lawyer.
+And if you have a lawyer that is willing to do that, you can get a lawyer.
+And if you have a lawyer that is willing to do that, you can get a lawyer.
+And if you have a lawyer that is willing to do that, you can get a lawyer.
+And if you have a lawyer that is willing to do that, you can get a lawyer.
+And if you have a lawyer that is willing to do that, you can get a lawyer.
+And if you have a lawyer that is willing to do that, you can get a lawyer.
+And if you have a lawyer that is willing to do that, you can get a lawyer.
+And if you have a lawyer that is willing to do that, you can get a lawyer.
+And if you have a lawyer that is willing to do that, you can get a lawyer.
+And if you have a lawyer that is willing to do that, you can get a lawyer.
+And if you have a lawyer that is willing to do that, you can get a lawyer.
+And if you have a lawyer that is willing to do that, you can get a lawyer.
+Can you talk a little bit about what insurance means as a consultant?
+So there is all sorts of different types of insurance.
+There is kind of the directors and officers, which protects your decisions
+that you make in the business, all the way down to property
+if you're actually using hardware and things like that.
+One thing that's going to be pretty common in your situation
+is cyber liability, data protection liability.
+And so I will not to be too paternalistic, highly recommend it.
+Don't bankrupt your company from something that could have been protected
+with insurance, it's a worthwhile expense.
+But also, there's going to be a lot of contracts that require you to have insurance.
+And I've seen a lot of people sign that, even though they don't have insurance.
+And obviously that will only come up if there's a problem,
+but please don't sign something that claims you have insurance
+when you don't have insurance.
+And a lot of these more sophisticated companies will require you to have insurance.
+So I recommend it.
+Yeah, in that recommended tech stack, it's not huge, but insurance is expensive.
+So I got you like 5% off your premiums.
+Feel free to use that link.
+I like Mouch a lot.
+I think they do a great job of white-gloving the process
+and giving you exactly what you need, but not more than what you need.
+So I wanted to add a plug in there.
+Yeah, I recommend it.
+It's one of those things that's cost of doing business
+and it will likely help you land clients who are expecting it in their contracts.
+Makes sense. Makes sense.
+Victor also asks, does it make sense that you even have an LLC in the US
+if you're not from the US?
+Like how often is it the case that these clients prefer that
+versus something like we think we need to have?
+I think it was a bigger deal in the past.
+Could be reasons why you want proximity to your clients
+even if it's just kind of faux proximity in the sense of a legal term.
+But it's becoming increasingly easy to work with and pay folks across the globe.
+So I think it's less important.
+So it kind of transitions from a legal question to just a practical question.
+If you're working with a client and they're like,
+we typically only contract with US domestic LLCs,
+then you have your answer there.
+I work with a lot of my clients have contractors all across the globe
+and it obviously adds another dimension as Lena I believe
+raised that you have to deal with a couple different sets of laws
+whereas if you just had a domestic LLC,
+we would likely be working with US law, probably Delaware or something like that.
+So it can reduce some of the friction
+but there is certainly nothing saying that you cannot contract
+with a company from an international LLC forever.
+Yeah, I generally feel like if they're using any kind of modern payroll system,
+like what I've actually realized after I made the LLC
+is everyone just uses like deal or like rippling or work or whatever
+and they all just have tools to support international contractors
+and all the tax paperwork and I'm not being as much of an issue.
+I only made more of an issue once I actually moved back to the US
+and I was able to handle all my stuff through there.
+I guess one question is just around like how important is it
+is the states that we incorporate in?
+I know that right now, we used to be in Wyoming, now we're in Delaware
+but we have taxes in New York.
+I am going to suspend my kind of aggressive opinion
+which is I always prefer Delaware
+and I can pontificate on that a little bit
+but it's mostly because I work with Delaware C Corps
+and most of them are trying to raise venture capital
+and even to this day, you've probably seen news of Sequoia leaving Delaware
+and stuff like that.
+Delaware is still king and a lot of investors will still require you
+to be a Delaware C Corp before considering an investment.
+So as a rule, I tend to recommend Delaware.
+It changes a little bit on the LLC.
+If you're an LLC, there are a lot of situations
+where it probably just makes sense to incorporate in your domicile
+because for pass-through entities, it's all passing through your taxes.
+You can't really game the tax system
+by incorporating in a more favorable tax haven
+because it's going to trickle down to your tax return
+in the state you live in.
+You might want to optimize for cheapness of setting up the LLC.
+I'm moving to Montana
+and I just found out their filing fee is $35, which is awesome.
+That is so, so cheap.
+Delaware is going to be more expensive.
+But one thing that you do get from Delaware
+is Delaware has a dedicated court system just for businesses.
+It's called the Court of Chancery.
+And the reason why Delaware has been king for so long
+is not because it's the most tax-favorable,
+not because it's inherently the most business-friendly,
+it's because the Court of Chancery
+leads to a really, really high degree of predictability.
+Whatever has happened in any fashion, in any business, they've seen it.
+And that means that everyone can predict with a pretty high degree of certainty
+what the outcome of a court decision is going to be.
+Some of these new states that are coming along
+and trying to poach companies from Delaware
+just don't have the historical precedent.
+Delaware has been doing this for 100-plus years.
+They've seen it all.
+And in my opinion, it's worth paying a little bit more to have the Delaware.
+But going back to the LLC, less gaming is involved
+because it's not taxed at the entity level.
+So there's definitely something that used to be said from filing in your back door
+only dealing with one registered agent, only dealing with one state's payments.
+So I know that was kind of a non-answer.
+Didn't they screw over Elon? That depends on who you ask.
+There is certainly something to be said for just courts staying hands-off.
+I think that's a little bit of a
+question if the shareholders say what the shareholders say go.
+A lot of people who are angry at Delaware right now
+think they were too heavy-handed.
+They inserted themselves too much in that agreement.
+But everyone who is threatening to leave as a result,
+I think it's a little unfounded because that is a very, very outlier situation.
+I think that's a little bit of a bonus of hundreds of millions of dollars on the line.
+Maybe I will care about the Delaware Court of Chancery deciding my fate.
+But for business decisions and reasons,
+I think they're going to be king for the foreseeable future.
+I guess maybe as a last question then, could you talk just a little bit about
+when we want to go the LLC route, which is probably going to be for most people,
+when would someone want to consider something like a C-corp?
+I think that's a good question.
+Going back to that, I'm not a tax attorney, not an accountant attorney.
+There's kind of two overarching things.
+Actually, I'm going to introduce the S-corp as well.
+The S-corp is something you need to talk to your accountant about.
+When you cross a certain revenue threshold, it may make sense to,
+and it's not a different entity to be clear.
+You can have an LLC and elect to be taxed as an S-corp.
+Basically, what that does is you can be an employee of your own entity.
+You can also have a tax attorney to be able to take control expenses from your
+top line revenue.
+That can be a tax advantage.
+Talk to your accountant. Everyone's situation is different.
+Between LLCs and C-corp, C-corp has two benefits that LLCs don't.
+One is around QSBS.
+QSBS is not super applicable to most consultants who only do consultants.
+Because QSBS, for anyone who is not aware,
+is probably the most generous carve out in the IRS code,
+which is if you hold QSBS eligible stock for the allotted time,
+which has just changed last week,
+and you sell it, you don't pay any federal taxes.
+If you generally hold qualifying stuff for over a year, you get capital gains.
+For QSBS, you get not any dime of federal tax.
+That is pretty incredible, especially for these startups who are exiting for hundreds of millions.
+If you have a lot of money, you can get a lot of tax.
+If you have a lot of money, you can get a lot of tax.
+If you have a lot of money, you can get a lot of tax.
+If you have a lot of money, you can get a lot of tax.
+If you have a lot of money, you can get a lot of tax.
+If you have a lot of money, you can get a lot of tax.
+If you have a lot of money, you can get a lot of tax.
+If you have a lot of money, you can get a lot of tax.
+If you have a lot of money, you can get a lot of tax.
+If you turn your consultant into a SaaS, if you're entirely courses, that very likely does qualify for QSBS.
+Again, waving my flag, I am not the IRS nor am I a tax guy.
+I can't affirmatively decide if your company is QSBS eligible or not.
+QSBS is a very, very powerful incentive within our tax code, and it's not available to LLCs.
+It is available to corporations.
+Another one, which is kind of a hidden benefit and probably doesn't sound like a benefit on its face, is double taxation.
+It's taxed at the entity levels, which sounds bad and in many cases can be seen as bad.
+But there are situations with a past or entity that you don't always want to take it all as revenue and all on your taxes.
+If you made a ton in one year and it all goes through the entity onto your personal income statement, you're going to have a pretty big tax bill.
+C-Corps allow you to reinvest in the business, leave it, not touch it, save it for future years.
+You've probably seen with LLCs, like trying to spend as much as possible at the end of the year, lock in like year-long contracts and stuff like that.
+It's not as important C-Corps because you as an individual will be taxed on the money you're making from the company, typically as an employee.
+Whereas a lot, it's easier to keep it just sitting in the entity than it is with LLCs.
+So that may not be particularly relevant to a lot of you.
+You probably just want to pull down most of what you are making in the LLC.
+I would encourage you to keep some assets in the LLC.
+This is going to go down a rabbit hole, so I'll finish my thoughts on the corporations.
+But I would say that you can't go wrong starting with an LLC because if you are staying within the same jurisdiction, usually it's pretty easy to convert from an LLC to a C-Corp, especially if that state is Delaware.
+It's super easy to convert from an LLC to a C-Corp.
+If it starts looking like you are no longer doing just consulting work and it starts to look more like a tech company, then you should talk to your accountant and see if you could set something up that's QSPS eligible.
+The new tax bill that passed around the 4th of July has changed.
+It used to be the holding period for QSPS used to be five years.
+It is now tiered starting after three.
+So if I recall correctly, after three you get a 50% tax break, after four you get a 75% tax break, and then after five years you get a complete tax break like it ordinarily is.
+So something to investigate, but I would imagine that most of you, if you are a more traditional consultant, are going to want to go the LLC route.
+Okay, I promised I would come back to that point of leaving a little bit in your accounts.
+There is this doctrine called piercing the corporate veil.
+And that is where, that is situations where somebody could sue you and they could not only be limited to the assets of your entity, but they could actually pursue your personal assets.
+And one of those things is intentionally making yourself judgment proof.
+If you have $10 in your bank account, and a company can only recover $10 because there's only $10 in your company bank account, the court is going to acknowledge that you intentionally kept that as low as possible so that you can never be sued.
+So you're not a perfect amount of money to keep in there, keep a
+justifiable amount of money in there to generally cover expenses for consultants, it's unlikely, unless you're always keeping it at zero always pulling down every dollar out of the bank accounts that you're going to get in trouble for this is a doctrine that
+is not invoked very often.
+Be aware that you should keep enough in the bank account that if somebody were to open your bank account, say, this looks like a company that can pay its obligations.
+So, that is something to be aware of and it can jeopardize your limited liability protection. Great. I think we're perfectly at time.
+I did not know that but that's actually good to know Luke thank you very much. If there's anything else want to say if you'd like, give one more shout out.
+No, thank you. Thank you so much for having me was was really fun to talk about. Feel free to reach out if you want to chat about anything. I love chatting about this stuff.
+Perfect. Have everyone. Thank you so much. Take care everyone. Thank you everyone. Take care. Bye bye.

@@ -1,0 +1,867 @@
+So I'm really excited to bring on Collin today.
+I think generally it's my opinion that coding agents have been like the clearest proving
+grounds for any of these like long running tool rich agentic systems.
+And they're like the first ones that really drive a lot of economic value.
+So I'm really excited to start this little speaker series on autonomous coding agents.
+And my goal for me at least is to try to bring back as much learning as possible from these
+coding agents into more general purpose rag systems.
+Today's guest, Collin, was previously a founding engineer at a company called Augment, which
+open sourced the top ranked SWE agent and has helped build a lot of Augment's state
+of the art tool suites.
+He's also co-authored the meta science paper Cicero, which was the first diplomacy AI to
+reach human parity and knows a lot about agents.
+And in the next 30 minutes, he's going to share with us what he's learned about building
+systems, specifically on sweet bench.
+And by the end, I hope we can bring a couple more things to the verticals that we build
+on.
+We'll have questions at the end.
+If you share the slido in the chat, you can basically ask your questions there, upload
+them.
+And with that, Collin, take it away.
+So the topic we're going to talk about is this question.
+Do agents make rag obsolete?
+And here I really mean rag in quotes.
+So rag is this kind of traditional idea we have.
+It's evolved over the past couple of years.
+And you have this embedding database with pine cone or insert any other tool, turbo
+puffer, and then do some dot products.
+And then you get all these relevant documents and you put them in your prompts.
+Does agents make all that obsolete?
+And we're going to use my experience building an agent for sweet bench verified as our case
+study.
+Sweet bench verified for those that aren't particular as the canonical AI coding evaluation.
+We'll get into a little bit more what that is as a refresher.
+Okay.
+AI coding.
+Let's take a kind of zoom out and think about what's been going on in the space for the
+past couple of years.
+2023 was completion model.
+So this is like GitHub copilot.
+2024 was when people started using chat bots to help write code.
+This is in particular when people found that cloud was really helpful when it could look
+at your code base or look at files.
+2025 is really about agents.
+Now if we look under the hood and think about the underlying retrieval tasks that are relevant
+to each of these products, the retrieval complexity is only getting higher.
+So for completions, the desiderata for retrieval system is, okay, it needs to be super low
+latency.
+So that's hard, but the retrieval is not super difficult for code at least.
+So it's, I'm trying to complete a function.
+Let's say it's a implementation of a method that lives on an interface.
+I probably want to go retrieve other implementations of that interface for inspiration.
+And so you just need to like copy word, like look for like other locations where that function
+name is present.
+And that's clearly not that part of retrieval task.
+The only thing that's annoying is how latency sensitive it is.
+Then we go to chat bots in 2024.
+And with chat bots, things are getting a little bit harder.
+Okay, let's say I'm building kind of like an LLM power application.
+I may have a question for my chat bot, like how do I abstract away the LLM SDK that I'm
+using from my application?
+So what that means is maybe I want to use OpenAI models.
+Sometimes I want to use Gemini models and I want to have one consistent API for all
+these and not have to use the Gemini SDK sometimes and the OpenAI SDK and other times.
+And so that probably means creating some kind of interface on top of the OpenAI client and
+on top of the Gemini client.
+And then the question is find the locations of the Gemini SDK and the OpenAI SDK in your
+code base.
+Then can I figure out, okay, how do I abstract these?
+And can I figure out maybe where should I put that abstraction?
+And this is a bit more of a challenging retrieval problem.
+And so here was when we really found like training embedding models becomes a little
+bit more important.
+Now with agents, it's getting a lot more complicated.
+Now the agent has to understand many different parts of your code base.
+It has to look through different files.
+It say looks through 100K tokens worth of files and then it needs to truncate those
+from the prompt and go look at another 100K worth of tokens.
+So things are only getting more complicated.
+A quick refresher on what exactly do you mean by retrieval here?
+Everyone thinks about embedding models, but there's really a lot of different
+techniques that could be used.
+There's good old BM25, which, by the way, for completions, we found was extremely good.
+There's embedding models, which have a little bit more flexibility or good for less
+structured content are good when you're not doing just similarity, but you're doing
+some kind of more complex mapping.
+You're trying to model in the retrieval.
+And then there's like other tools like graph and page rank.
+As I mentioned, we were making this agent that could perform on this
+eval called a sweep bench.
+So sweep bench is essentially like I give the agent a description of a coding
+problem that has access to a code base.
+There are some held out tests and some not held out tests.
+And then the agent has to go implement the, that PR description and that code
+base, and then we run all the tests at the end and see if it passes.
+It's able to do things like, you know, use whatever tools we provide it, whether
+it's iterating through files or running tests.
+So we created this kind of open source repo for this and it has all this simple
+stuff you may need, it has a bash tool, file viewing tools, it has this notion of
+a sequential thinking tool, and then everything else like Docker harnesses
+so that the agent can run code and so forth.
+Now we ended up getting to the top of this eval.
+So you see that's, that's us there up top augment agent V zero.
+One of the most interesting facts about this work was that we've explored adding
+various embedding based retrieval tools, but found that for sweep bench tasks,
+this was not the bottleneck.
+Grep and find were sufficient.
+So this is really interesting.
+And frankly, the first time that I saw this result, I was like surprised.
+I thought maybe there there's like a bug in our evals or something.
+Cause like clearly embedding models should be so much more powerful than
+grep and find and yeah, so I dig a little bit deeper and so we'll look at some
+examples and try to figure out does this data point indicate that traditional
+rag as we know it is obsolete.
+So here we're looking at a very specific sweep bench problem.
+So I'm just going to read through it so we can get some context.
+So this is pulled from an actual PR on GitHub or an actual issue on GitHub.
+Modeling separability matrix does not compute separability correctly
+for nested compound models.
+Consider the following model.
+And there's some code.
+It's separability matrix, as you might expect as diagonal.
+If I make the model more complex, and then the user starts talking about how
+in a particular situation, these inputs outputs are no longer separable.
+And it's not really important here.
+What is the separability matrix?
+But just, but it's good to get a sense of what is the problem.
+So there's this code base called astropy.
+There's this function called separability matrix in this file.
+And there's some property of it that seems buggy.
+So now let's look at what the agent does to try to solve this problem.
+So here I actually took all of our agents tool calls and LLM responses
+and just pasted them here.
+We can click through these and get a sense of what it's doing under the hood.
+So first we have this initial prompt, which obviously contains all of this.
+And we asked the agent to figure out how to fix it.
+Then the agent responds.
+I'll help you implement the necessary changes to fix the issue with the
+separability matrix function for nested compound models.
+Let's start by exploring the repository structure to get familiar with it.
+Then it calls the bash tool using find, and it looks for all files that have
+the prefix in the name separate.
+So it's like separability separable.
+And then it finds this separable.py file.
+And then it uses a file reading tool to look at that file.
+And then it says, now let's also look at the compound model class to
+understand how it's structured.
+It looks in this file core.py and it greps for the word modeling.
+Then doesn't quite find anything.
+So now uses a file reading tool and it reads lines one to 50 for core.py.
+You'll notice here it's just reading 50 lines instead of reading all the
+file to do it separable for separable.py one, because this is an option.
+It can optionally just look at a few lines, but also this is a much larger file.
+And so let's look at the compound model class.
+It does a grep.
+It still doesn't find what it's looking for.
+It does another file read.
+Still doesn't find what it's looking for and does another grep.
+Still doesn't find it actually finds it then.
+And then now it's like looking for the function.
+And so now it does another grep and then it goes on and it does
+implement the correct solution.
+And so my takeaway looking at this was agents are dumb, but they're persistent.
+So they eventually find their way around with grep and find.
+In other words, the agent's persistence is compensating for worst tools.
+So there are some benefits of this agentic retrieval with grep and find
+one iterative retrieval is super easy.
+If any of you have seen what an old school iterative retrieval setup might look like,
+it's something like in this bottom, you have a prompt one, which is your query.
+You put that in an embedding model, you dot product against the knowledge corpus.
+You get some top K documents.
+Now you have a new prompt that's query plus this top K documents.
+You put that into an embedding model, which you've trained differently.
+You dot product that against the knowledge corpus, you get some new top K documents.
+And then you have to decide how to balance your resultant prompt between the,
+this set of top K documents and this set of top K documents.
+Prompt token budget management is a lot easier.
+So this is some code from our code base.
+And basically what happens is the agents iteratively doing this crazy
+this and greping all these different files.
+And anytime we hit our token budget limit, which is, I think it was 150 K
+tokens, we just truncate all the old tool calls.
+So here we replace all the sequential tool calls with truncated rerun tool.
+If you need to see output input output again, and then we do the same for other tools.
+And if it needs to go look at the output of some old tool call, like some old
+grep, for example, it can just rerun that grep.
+So with a vector databases, you obviously have this whole new dependency
+and this whole new database you have to deal with.
+You have say a sync you have to manage with completions.
+We have say like a 50 millisecond service level agreement for how quickly
+we update the documents on the client.
+So in that VS code editor or whatever your editor is and our servers, none of
+that you have to worry about anymore.
+And finally, there's this really cool course correction property where if the
+first call to say the bash tool with fine or earth with grep doesn't work, then
+it tries again and maybe uses the view tool and then it tries again, you use this grep.
+But the challenges with grep and fine are the hard to scale.
+So imagine doing grep and fine against 10 million files.
+What about a hundred million files?
+You definitely can't replace page rank on Google with grep and find.
+And they also don't work particularly well with low structure natural language.
+So if we look at the bottom right here, just some random code
+that I picked out, there are all these high signal words in it.
+So there's text prompt, text results, token counter, count tokens, and
+these make it really easy to figure out how to grep things.
+Like we're calling in that we go back to this there's separate star.
+Like that works because code is super structured.
+And that's not necessarily true for like other kinds of content or information
+you might want to retrieve over.
+So what's the best of both worlds?
+You can imagine this agentic loop, but with access to great
+embedding models as tools.
+In order to build this, you still build your underlying embedding system per
+usual, and you just surface it to your agent as a tool.
+Similarly to how we surface grep and find as tools.
+So there are going to be some potholes when applying this to other domains.
+So one of my hypotheses that I haven't really confirmed, but I think may be
+true is that anthropic models are post-trained to be really good at
+agentic code search specifically, but I'm not sure how well they do.
+They just mentioned code is a lot of high signal keywords.
+And also all of this is pretty slow and expensive.
+So when we are trying to decide then, okay, how do we architect this retrieval
+system, we may have some rag, so traditional rag, we may have this
+agentic retrieval, embedding tools on option, the grep and find tools or other
+options, there are different axes we can consider and each of these axes
+has different weight, depending on the type of tool you're using.
+Different axes we can consider and each of these axes has different
+weight, depending on what you're building.
+So there's quality, so how good is the file output?
+There's latency.
+So the embedding models, as I mentioned, are like 15 millisecond SLA.
+Uh, agents can take many minutes.
+Cost to the agents are much more, agentic retrieval is much more expensive.
+Reliability.
+So agentic retrieval allows that course correction, but embeddings do not.
+Their size of index.
+So grep and find work totally great for small to medium sized indices, but for
+truly large indices, it's just too slow.
+And then there's the effort to build and maintain your retrieval system.
+Do you have the engineering resources to deal with maintaining some
+index and updating it and whatnot?
+So we look at some examples of some different kinds of configurations of
+systems, traditional retrieval.
+So okay, quality, it's really fast.
+It's really cheap.
+The reliability isn't great because there's no course correction, but it's
+super scalable and it depends on the effort to build and maintain it.
+The main factor here is I think whether or not you're training your embedding
+models, the quality is really great, but it may degrade in certain situations,
+like really large indices, or when you're retrieving or searching over content
+that's super low structure where like keyword searches don't work well.
+It's slow.
+It's expensive.
+Uh, the reliability is great because agents are persistent and they're
+course correcting, and this also gets even much better when the agent has access
+to some kind of signal that it's in the right direction.
+So for coding tools, the agent has access to being able to run tests.
+And so if it gets stuck in some direction and it has some hypothesis for the
+task it's trying to complete, it can spin up an ephemeral file, run some code, see
+the output, and then use that to inform how it continues to do the code search.
+The size of the index, it's not that scalable as we talked about, but the
+effort to build and maintain it is super easy.
+And then finally, this kind of third option I mentioned, which is the
+agent plus an embeddings based tool.
+The quality is great.
+It's still slow and expensive, but we get everything else.
+So we get the reliability, persistent and course correcting, and now handles
+large indices and the effort to build and maintain the retrieval system.
+It's mostly easy because you have less of a need to train embedding models
+because agent can just be persistent.
+And now maybe you want to optimize things further and have the agentic
+loop and also the really good embedding model that can help.
+So I want to get through a couple like preemptive Q and A's, and then
+we can talk through questions.
+So one, I already built a retrieval system with custom trained embedding
+models, do I check it and build agentic retrieval?
+It should be clear right now.
+No, build agentic retrieval on top of it.
+Just take your existing system and add it as a tool to an agent loop.
+How do I eval agentic retrieval?
+End to end vibe develop first.
+So five to 10 examples, then consider quantitative end to end eval or eval
+just of the embedding tool note that improving the embedding tool won't
+necessarily help because the agent is persistent.
+So I'll give some anecdotes here from our experimentation.
+So we were like working on an embedding base tool for sweet bench in particular.
+And we had some evals that were using the kind of hill climb just on that
+embedding model and we improve the embedding model, but we found that the
+end to end result didn't improve because the agent was super persistent.
+So you always want to start with that end to end eval first, and then go from
+there, depending on where the system is struggling, I'd suggest building the
+dumbest retrieval tools possible, put an agent loop on top, iterate from here
+on whichever qualities of the system cause the most pain for customers or
+for you and follow the previous eval instructions.
+And then the last question, our last topic in traditional rag, I can improve
+my system by training better embedding models.
+How do I improve my system with agentic retrieval?
+So in general, I would just say build better tools.
+So this is the goal anecdote agents are getting radically smarter, but even
+Einstein preferred writing on paper instead of the stone tablet.
+So yes, these agents are persistent, but you should give them whatever you can
+give them to improve the odds that they find what they're looking for.
+So that could mean adding a reranker to your embedding tool.
+One benefit here is you spend less tokens, so it's cheaper.
+Maybe it's also faster because the agent messes up less, the precision
+on that embedding tool is higher.
+You can try training different embedding models for different tasks.
+Maybe you have one embedding model that's really good at answering questions
+about messages and Slack and another one that's really good at looking over the
+code base, you can provide these as separate tools.
+You also want to prompt to your tool schemas to avoid pitfalls.
+So for example, if we look at our bash tool, which as we saw previously, our
+footage agent was using to call grep and find and whatnot, we had to prompt
+it a little to tell it like, this is how you use grep and this is how you use
+find and by the way, don't do X and Y regexes because those will be really slow.
+Yeah.
+So that's, that's kind of everything.
+I'll pause now and we can talk through any questions.
+This is great.
+I have a bunch of questions in my mind, but let's go over some of the questions
+on the slide of Marion just shared the link back in the chat, so feel free to
+just go on there and look at the questions you want to ask about the ones you care about.
+I think the first question everyone's mind is actually going to be around
+the frameworks that you use.
+So how did you decide what tools to build?
+Did you build the framework yourself?
+Could you talk a little bit more about that?
+Definitely.
+So I built the framework myself.
+Let's go all the way back here.
+I found you need something very simple and it's very hard to, I looked at some
+of the existing frameworks out there and they were nice, but I just, I wanted
+something super simple, like I can.
+Here, let's see.
+I will.
+Can you still see my code base for my screen?
+Okay.
+I'm just going to walk you through a few things in this code base,
+just to give you an example.
+So we have this tools directory.
+There's this very simple notion of an LLM tool.
+Okay.
+Let's see.
+Tools in a utils common.
+LLM, common.py.
+Okay.
+Yeah.
+So there's this very simple abstraction.
+It's an LLM tool.
+It has a name, a description, an input tool schema, and there's like a few commands on it.
+Then you have this notion of a dialogue messages, which is where we keep track of
+the dialogue history for the agent.
+This needs to have options to add user prompts and then also agent prompts and
+tool calls, and then finally you need some kind of truncation strategy.
+But once you have those components, you have that dialogue messages object, and
+you have this LLM tool abstraction, then you're like pretty much good to go.
+You yeah, that's pretty much it.
+Then you just call it the agent in a loop.
+I wait for at the top level agent.
+I actually just implement the LLM, this LLM tool abstraction.
+And then it just has like separate LLM tools is like the dependencies.
+So given those are the only things that are necessary, like I didn't
+really use any frameworks.
+Yeah.
+That makes sense.
+I think a lot of people, at least the higher level practitioners have generally
+like leaned on building things yourself just because you want to find control over
+the prompts and how things are called and whatnot.
+It's just so simple too.
+Yeah.
+Is this-
+I'm working on several new projects right now and cause I left augment recently to
+take experiment on some different projects and I built several agents and I
+literally and for total things, totally unrelated to code and I literally just
+forked in this code base and made a handful of changes and it like pretty much just
+works.
+All right.
+So there's going to be a new agent framework that you're going to release
+sometime in the near future.
+I love for you to comment on that, like one conversation we had earlier, like
+last month where it was just, do I give my agent like access of control, command
+line and have it do everything, or do you build out these specific like search
+tools, like grab fine and all that.
+You mentioned it's really changed the distribution of how these things behaved.
+Could you talk a little bit more about that too?
+Yeah.
+We just give it access to a bash tool and I can do whatever it wants.
+And this works because it's super persistent.
+So like when it messes up or when it like runs the wrong command, then it will
+figure out how to run the right command and go from there.
+But yeah, if you already have a good embedding system, I wouldn't throw it
+away.
+It's like probably going to be better than bash.
+Does that kind of answer your question?
+Embeddings and you're probably going to be good to go.
+Yes.
+Okay.
+So yeah, one interesting thing here is people have talked a lot about
+tuning your system prompt and tuning your prompts.
+There's a whole new access to that now with agents, which is like
+tuning the set of tools for bash.
+We could have instead had 10 different sub tools.
+And we actually did start with this, which was like having the file
+reading tool, the file editing tool, the Greq tool, the fine tool and so forth.
+And then letting the agent call these tools whenever it kinda made the
+code base more complex.
+It didn't seem like a very fruitful direction.
+I'd say.
+Interesting.
+It almost feels like a bitter lesson the way a lot of those things is, you
+know what turns out if you just give it bash, it'll work today.
+And maybe in the future, it's just keyboard and mouse inputs.
+Got it.
+It's almost like fewer tools, fewer tools, better tools and use tools that
+are very generalizable in the hopes that future models will just be able to use
+them better.
+Yeah, exactly.
+One question I'm really curious about is what do you feel like we can learn as
+a practitioners, not in code generation, but maybe what does the AI for medical
+scribes or the AI for like construction documentation or AI for legal, like for
+lawyers, what can they learn from the things that the coding community has
+been picking up on?
+The main thing is to do agentic retrieval.
+So that's like where you give the agent access to tools that are like search
+tools.
+The simple answer is like whatever you already have, turn those into tools and
+iterate from there.
+I think that's a simple thing, which is very unintuitive maybe to some people
+because they want to go architect some, whenever there's something big
+technological innovation, they want to go architect some whole new system, train
+models and whatnot.
+But this is, it's really just like a layer on top of your existing search tool,
+existing search system.
+And it does cost in money and it does cost in latency, but it just makes things better.
+So I would just start from there.
+And then there are all these different directions you can go from there, whether
+it's like realizing that, okay, now this agent is so persistent, I want to give it
+access to a new kind of embedding model that like, maybe it was really hard to fit
+into my previous search system.
+Maybe I discovered that like actually my embedding models don't help at all.
+And doing some more basic search or doing like a glean integration or something
+like that is just as effective and way less total cost of ownership for the team.
+And so I just go to that and never came, I embedding service.
+You need to make those decisions.
+Once you get a sense of what's moving the needle on top of the basic
+agentic retrieval system.
+That makes sense.
+I think cost of ownership is something that people are not really thinking about
+these days, but really should as especially because in the future, more and more
+things will be abstracted away.
+I think maybe last year everyone was asking me how to fine tune language
+models, but now very little is going in that direction.
+But I think a lot more folks are thinking about doing fine tuning and
+betting models.
+That's an interesting topic.
+I still think no one really knows how to fine tune embedding models.
+Like very few people do.
+New technology is I can't tell you how many people have texted me over the past
+few years because they heard Augment has like really good retrieval.
+They were like, how do we train good embedding models for insert category X, Y,
+or Z, whether it's finance or medicine or whatnot, or therapy.
+It was hard because I was just like, you need to have an AI researcher on your
+team and there's not really any APIs for this.
+You can't, there's nothing great out there, but now it's less important.
+So I do think this is in some sense democratizing like the
+really good retrieval systems.
+Yeah.
+Yeah.
+I think cursor is the only company I know who's really talked about fine
+tuning their embedding models.
+And that's mostly just for the tab model.
+Right.
+If you look at like the cursor agent, it's not really using embeddings that
+often in the agent product, but code completion, you really do want
+like very fast retrieval.
+Yeah.
+So we found fine tuning.
+Medding models is really important.
+It really does help.
+I'll give you some examples, reasons for why it helps.
+So we talked a little bit about like with code, with completions, but when you're
+asking these more complicated questions, the embedding model needs to have some
+understanding of your particular domain.
+Like it needs to have almost the reasoning capabilities of an LLM.
+Obviously it's not going to be a much smaller model, but it's like approximate
+that and like most embedding models that you get off the shelf, that's not really
+what they're trained to do.
+They're trained to just look for similarities between text A and text B.
+So it does really help, but it's just, it's a little bit less of a bottleneck
+now that, now that we have this agentic retrieval.
+Makes sense.
+This question is pretty interesting because I think it exists in multiple scales,
+but what are your thoughts on memory and how does it play with other rag
+and that's what we're doing.
+I know there's compact as a way of truncation, but we'd love to
+hear a little bit more about that.
+That's a great question.
+Obviously memories are super important.
+Okay.
+How do you add memories?
+There's a really simple thing.
+I don't think this is anyone's secret sauce.
+You add it to all it's it's memories and then you add it to all that reads memories.
+Now, how does memories affect how we think about retrieval?
+Let's look again at this example.
+If we had memories here that kind of described something like at the end of
+this, the model could create a memory that was something like describing
+some aspects of the code base.
+These are the files where models are defined.
+And in general, like models have these kinds of functions on them, or these
+are the relevant interfaces to consider.
+When you add this stuff into the memories, it speeds up the next time I go around.
+The next time I try to do an agent run that kind of has a similar kind
+of search task with this.
+So yeah, memories are personalization, but they're also in some way like a
+semantic cache that speeds up future runs of future search or future search runs.
+Yeah.
+This is a big, pretty big question, but can you also talk a little bit more about
+your eval harness for this seed bunch work?
+Sure.
+How does success look like?
+How do you think about iterating on these things?
+Yeah.
+So it's really valuable to understand that even as you improve the embedding
+model, it might not matter because the agent is so persistent, I feel like that's
+a big learning that once you say it.
+I wasted a lot of time on this one.
+And again, this is not to say that embedding models aren't useful as tools.
+They are very useful, but it's not as simple as if you make score go up on
+embedding model eval, then score will go up on the end to end agentic retrieval eval.
+And so that's why I recommend to start with the end to end vibe about, I
+use it in general, just recommend the store words vibe evals.
+I think this is something very unintuitive to people that come from like
+classical ML who are always trying to make quantitative evolves, like with
+natural language stuff, you can learn so much just from looking at a few examples.
+Once you have a few examples and you have a baseline in your head, like
+we're again, it's not a number, but it's like a baseline in your head.
+If you're how good is this system?
+What are the general kinds of questions or tasks that it stumbles on?
+You get to a point where you could look at a problem and you can just tell if
+the system's going to get this one or not.
+And okay, once you're to that point, it's like an intuition thing.
+Once you're to that point, then you try to poke it and you try to test out it.
+And you're like, what do I think might not work here?
+Uh, and you try to prove out, can I find some examples that indicate that
+this particular access to the system doesn't work?
+Let's say in my end, end, my be balling thing, I noticed like there, these kinds
+of questions, which it's both very fast on solving and consistently solves correctly.
+And then there's these other set of questions where it sometimes solves them,
+but it's very slow and it does not at all solve them consistently.
+Then I focus on those questions and I look at them and I'm like, maybe it's
+because, oh, our grep tool doesn't ever use this particular kind of a regex pattern.
+Or like our embedding models when we, when the agent sends a query to it is
+never asking this particular kind of question, I think asking this particular
+kind of question or doing this kind of regex will really help.
+And then, so you add that to your tool schema and maybe it helps.
+And then in terms of evals for that, for those kind of like more pointed problems,
+you can do the vibe eval just in that embedding tool of that particular core
+of that particular task.
+And usually that's sufficient.
+If you already have a quantitative eval lying around, that's nice.
+I will say once you get to a certain like quality bar with all these
+vibe eval stuff of like different following, different intuitions for
+what's not working and what's working.
+You do eventually get to a point where you do need the quantitative eval.
+Um, so for sweet bench, that quantitative eval was it's 500 examples,
+which exists in this, in, in, in sweet bench.
+And there's a yes, no, at the very end of, if not the agent figured the problem out
+because you just look at it, the test pass or not, you do want that because
+as you're doing all these kinds of like spot checked improvements and even the
+vibe evaling one improvement may negate other improvements, you need to see how
+kind of everything that's out.
+So eventually you do need the quantitative eval once, once you have
+saturated all those like early wins, all those low hanging fruit.
+Yeah.
+I want to call out something that's really refreshing, which is when I
+talk to you and in the context of rag, you're always giving very specific
+examples of queries that we want our system to service.
+I find that when we're talking to a lot of really smart engineers, but folks
+who are not as familiar with research, they lead with questions like which
+embodied, many of that model for that you, should I use hide or should I use
+agentic rag versus your example of just what are the specific kinds of examples?
+What are the failure modes and just becoming really familiar with the
+evaluation suite rather than the set of tools at our disposal.
+I just want to call that out because that's not something that's very big in
+a lot of the consulting work that I do.
+It always starts with what tool should we use?
+And then it gets to, we need to be able to handle contact search
+and scheduling much better.
+And we need to build specific tools to do that.
+Yeah.
+I'd say one of my controversial takes here is that being a researcher is
+actually very similar to being a product person.
+It's what do I mean by this with both of them?
+You're working backwards from use cases.
+You're working backwards from examples.
+So most AI research these days is not solving a math question on a whiteboard.
+It's like data.
+It's like looking at this particular agent run or this particular query and cross
+referencing it against other examples and trying to understand like why that
+query failed or not.
+And so when you're analyzing this kind of use case level user data or exam, the
+data of your kind of task distribution, that's very similar to being a product
+person and like looking at and studying how are people using my product and how
+can I improve it?
+And so I think there's actually a ton of overlap between product and research and
+engineering is like the skill that's like the odd man out.
+Yeah.
+That's pretty interesting.
+What do you think is missing from these other folks?
+I think, for example, Klein has talked about not using embedding models in the
+past and going only for tool use without embeddings.
+Do you think this is a matter of there are no good open source code embedding
+models out there?
+Is it because we're not training things correctly?
+Is that because Sonnet 4 is just too good at using grep that we don't need that
+in the near term?
+Yeah.
+I mean, for Sweetench, they're pretty small.
+They're pretty small repos.
+And so grep and fine work great.
+And so that's how we didn't need to do some embedding models for them.
+But if you want to get to truly huge code bases, or you want to be able to like
+search over a code base and search over like low structure natural language,
+like like in Slack or in Notion, like grep and fine are like less useful.
+And so maybe it's like you have a clean, that's one thing I mentioned, or you
+for, as you're told for searching over like Slack board ever, or maybe you train
+your own embedding model, but it's not really just grep and fine.
+And then let's say we want to search over third party code bases because these
+models don't, they memorize a good amount of third party code bases.
+So they do memorize the open AI SDK, but that like random SDK that you found on
+GitHub that has like barely any stars that you're using, like they probably,
+it probably hasn't memorized that.
+So you want to be able to search over that and maybe it has docs.
+And if it has docs, like, yes, you actually want to search over the code base.
+The corpus that you, the size of the index can get really large.
+And in this situation, grep and fine can get slow and embedding models are really
+good and moving quickly through these giant corpuses.
+So that's the main thing I think about is it's like, how much do you want to scale
+your index and then to what are the different kinds of information that you
+have in that index and like grep and fine are like going to be less and less
+efficient.
+I'll give you another thing that I think we're going to have coding agents search
+over soon that grep and fine are definitely going to work for searching over
+like video recordings of user sessions.
+So I have this giant corpus of customer studies.
+I recorded them all.
+So I have all these hours of video footage and I want to search over those
+when doing an agent call, like maybe I asked the agent a producty question, or
+maybe I asked the agent, like I'm thinking of moving this particular button on this
+webpage from this location to this location.
+I probably need to search over all those videos.
+Obviously grep and fine aren't going to be sufficient there.
+So it's really like about thinking again about your use case and asking yourself
+like, okay, if I was a human working on this use case and I was a really persistent
+human that never got hired, would having this other tool, like this other search
+tool help me?
+And if the answer is yes, then like it's probably going to be useful for the
+agent.
+That makes sense.
+Do you feel like it's almost an artifact of sweet bench being just like too much
+of a toy set of evals?
+I think about my time at Facebook where you just can't even grab the code base.
+We have like custom tools to grep over our code base to understand like when
+were the two else called this function in the past like 90 days and there's like a
+special UI because it's like some mono repo, which is luckily it's a mono repo,
+but in other cases that might be distributed systems and you can't grep any of that.
+Yeah, I think that's spot on.
+Sweet bench is like one of the most real world of the academic evals and it's very
+good, but at the end of the day, it's still as an academic eval.
+So the repos in are all open source, which already biases them to be pretty small
+and makes them look different from like professional repositories.
+And the tasks are pretty simple tasks.
+So there's actually, so there's sweet bench and then there's sweet bench verified,
+which is what we use.
+So sweet benches, there's many more examples.
+A lot of them are like crappy, like mo quality.
+So you've been verified as like filtered down version that open AI released, but
+they just filter down to like 500 examples from sweet bench.
+So that's what we worked with.
+And that's kind of the more useful one.
+The sweet bench verified there, there's some statistic, like I think 90% of the
+examples took less than an hour for a good engineer to solve.
+So they're pretty simple examples.
+And so that simplicity also makes something like grep and find the lobby's here.
+And again, as I mentioned, there's like this still the latency factor.
+Like, I don't know about you guys, but I've definitely had these moments where
+my thumbs are twiddling for five minutes because I'm waiting for an agent to run.
+I like that super annoying.
+And like right now we're like, well, these tools are so good.
+They're saving us so much time.
+But let's roll things forward.
+And everyone's used to like, gets used to the speed at which we're building with
+agents that kind of latency is going to get annoying.
+Yeah.
+It's the first time I get wife on a plane.
+I'm amazed.
+And the second time I get wife on a plane is like too slow for me.
+And I'm already complaining.
+So there's about 12 minutes left.
+We try to end at 55 because we have another talk in the hour.
+One question I'd like to ask everyone is what is a question you think people are
+not asking these days and they really shouldn't.
+That's a really interesting topic.
+I still, I don't know.
+I still come back to this point that I think no one, very few people still
+understand, very few people understand how to build and train good retrieval
+systems.
+It's like a simple thing, but it just confuses me like why no one knows how to
+fine tune really good embedding models.
+So I'm going to go with that one still.
+I know at least at augment, like we found having fine tune embedding models was
+really helpful.
+So as you mentioned, other people say differently and that makes me wonder, do
+they know how to train embedding models really well?
+Yeah.
+So I'm going to go back to that simple question.
+And I bet a lot of it really is the fact that what data do you have access to
+that allows you to train those embedding models?
+Like the cursor team has been deploying this tab model for a year, right?
+And so what they can train on is going to be much larger volume than say a
+smaller company building out like their coding SDK.
+I can imagine Codex can probably get a really good coding embedding model out
+pretty quickly, but I don't know if cloud code can't because they don't really do
+any indexing right now.
+So like, how would you go back in time to build other models?
+Training embedding models on user data is a very useful access.
+This is her.
+Yeah, I think that's going to be the big factor, especially because also
+identifying whether or not the retrieval was good.
+I think it's going to be very, I'm on it.
+Yeah.
+I think one of the things I just saw recently was like cursor has their like
+bug bot, right?
+Where you make a request, it is on GitHub.
+There's a portal that you can use to get a request.
+It is on GitHub.
+There's a pull request and maybe it's just, okay, retrieval is good.
+The pull request gets merged, but that's a ton of infrastructure to have to spin
+up to try to collect that data.
+I'm curious, do you agree with that sentiment or do you think it's actually
+something else entirely?
+Maybe it's not just, we don't have the data, but really there's something
+fundamental about training these embedding models.
+Wait, so your question is eventually is like essentially does retrieval get
+harder for this, is it retrieval hard for this?
+Uh, more like.
+Rangling PR agents.
+Have people not trained in these embedding models because they don't have
+the data and they don't have the sort of sensors out in the world, like merged
+pull requests to understand what is good retrieval, or do you think there's
+something fundamental about like the training of embedding models themselves
+rather than the data sets that they're coming from?
+I just think there aren't that many people that are good at this skill.
+And so, yeah, I think that's the main reason.
+And then I think the data is the next thing.
+Code, there's a lot of data out there that you can wrangle in all different
+kinds of ways, like from GitHub and you can do all these transformations on it
+and stuff, most domains don't have that.
+So for code, it's mostly finding great people.
+I think for other domains, it's probably more the data, but I'm also that wonder
+if just that the smartest people want to work in the LLM and not on the
+embedded.
+That's actually an issue that that is like definitely an issue, like
+more like a macro level.
+I'd say also one interesting point that I was just thinking of when you
+mentioned bug bot is like some other code cert tools that are really useful
+is maybe I don't want to just search over the code, but I want to search over
+target commits.
+So I basically want to see blame of who edited what lines.
+Another thing is maybe I want to do like hierarchical retrieval though
+asynchronously, not while someone's asking the agent a question.
+I want to take every file in the code base and write like a one line summary
+of it, and I want to take every directory and write like a one line summary of
+that.
+Like these kinds of things can have a huge impact on the performance of retrieval
+systems.
+And yeah, I don't know.
+I just think there's so much, there's so much to build here and yeah, it's
+exciting.
+I think you can also imagine giving the systems access to the language servers
+or giving them access to the ability to more naturally browse code rather than
+just parsing things through strings.
+Like I imagine like when I debug things, I look at the stack trace, I look at the
+files, then I traverse through functions.
+And maybe that traversal is one way of doing it.
+And then you just say any sort of straight path to debugging an issue, the
+embedding should be similar or dissimilar.
+Totally.
+One thing with like language server protocols, which if anyone's not
+familiar with that is that's essentially when you're coding your code base, you
+make little squigglies under some part of your code that indicates some kind of
+error.
+That's this thing called the language server protocol.
+It's like analyzing your code base at all times and like looking at the code and
+seeing if it's correct.
+They're like attaching links between a function name and like the function
+definition and so forth.
+Like these are pretty low.
+They sometimes don't work.
+Like they don't work well in broken code.
+They sometimes work, but like they don't always work.
+And before agents, it was a bit of a pain to figure out how to take LSP's with
+all the like issues and challenges they have and integrate into the code base in
+a way that, into a retrieval system that like works really consistently.
+But with agents now, it's, I'm just going to paint a very simple picture.
+It's like, you could have an LSP LSP tool.
+And then if that doesn't work, well, then the agent can just call the like code
+search tool or can call the bash tool.
+And so now we can like more easily synthesize like different retrieval tools
+that have different pros and cons without having to like deal with a bunch of
+complicated work and fine tuning regrind curves and stuff like that.
+Yeah.
+I think that's super relevant.
+What gets me psyched to maybe take a look at this a little bit deeper myself.
+Sure.
+Can I say one more fun retrieval anecdote?
+So I'm working on like a side project right now.
+It's just kind of like a weekend hacking project where I'm like building
+a, like, what I'm trying to have the world's largest index of songs
+that you can retrieve over.
+So if I want to ask any question about music ever, I have this
+like giant index of music.
+And I am, I found like with ChatsVT, if I ask it a question, like to, I'm
+searching for a song and I want to find a song that's like a mid 90s vibe,
+female singer, insert other qualities.
+It's not very good at doing this because it's like, it has access to a web
+search tool and like web search is like not the right abstraction for
+doing this kind of search.
+So what I've done instead is I've taken every one of those songs and I've used
+an LLM to go do deep research on each song to come up with like a, a, this,
+like a dossier about that song.
+And I was like for each song, I have this description and then now I'm
+doing search over that and that works really well.
+And I thought this was like a really cool example of like just one simple,
+little like asynchronous pre-processing step took a totally not working search
+system and turn it into something that like works really well.
+That makes a lot of sense.
+You're just creating these like synthetic summarization or summary embedding to
+use and then embedding that.
+Yeah.
+I'm definitely going to explore a little bit more about this.
+Yeah.
+And I think one thing I'll just call out is right after this talk, we have
+another talk coming up from the VP of Algolia and he's going to basically
+talk about like query expansion, summarization, changing different
+embedding models and how to learn from feedback.
+And so I think it'll be a pretty interesting segue into some of
+the stuff you're talking about.
+That's awesome.
+Excited.
+As always, we'll send an email with any of the references, study notes, as well
+as any kind of slides and the GitHub repos.
+Before we go, Colin, is there anything else you want to say?
+Where can we find you?
+Yeah, you can.
+Well, I'll have you send out my contact info and people can message me.
+Perfect.
+Yeah.
+I think the feedback is that this has been super dense.
+People are really excited to even just watch this back and get the slides.
+So I'm gonna have everyone.
+Thank you so much for sharing your expert knowledge.
+I feel that there have been very few people who have been really
+talking about this kind of stuff.
+So this is awesome.
+All right.
+Bye.

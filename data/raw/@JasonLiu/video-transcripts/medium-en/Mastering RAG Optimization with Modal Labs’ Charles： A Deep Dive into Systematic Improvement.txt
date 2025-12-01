@@ -1,0 +1,435 @@
+What does machine learning optimization have in common with improving RAG applications?
+Optimization, the process of improving neural networks.
+Optimization is formalized systematic improvement.
+The best way to prevent fitting is like process fitting, right?
+It's ensure that you have tests that can test leads out of your validation set.
+In this episode, I'm really excited to bring in my friend Charles from Modal Labs.
+I'll talk a little bit more about his research and how he thinks about
+systematically improving applications.
+My name's Charles.
+I did my PhD studying the optimization of neural networks at UC Berkeley.
+And since then, it's kind of worked in the ML ops and waste biases at Gantry,
+post-modeling courses myself, and now work at Modal, showing how to use their
+serverless platform to develop AI applications.
+And so originally I was thinking of giving a talk kind of about fine tuning
+for RAG and like, like how do you fine tune model, but you think about when
+you're fine tuning, optimizing neural networks.
+And it kind of, as I was starting to work on that talk, I realized you can just do
+this like service level stuff, like, oh, this is, here's some LoRa brand people
+like to use, here's some little tricks and tips, but it doesn't give you like
+a systematic idea of how to optimize neural networks, how to think about
+machine learning.
+And that is the part that one is like most in line with the like branding
+presentation style of this course from the other materials.
+And then it's also like quite frequently the biggest missing piece for people
+coming from like software engineering backgrounds and like approaching this
+new world of ML powered applications.
+So I wanted to take some of the things that I've learned about optimization
+from like HDIM and work with machine learning systems over the last decade to
+what does systematic improvement look like for like this inner kind of inner
+core part, your retrieval augmented generation application, which is the
+neural networks, the power your embeddings or power your, or the power
+your search or power your generation.
+So optimization, the process of improving neural networks, we think of it
+as an algorithm, but really it's like just formalized systematical.
+And the particular time type of optimization that is used on neural
+networks, gradient based optimization.
+It was sort of like formalized version of iterative improvement, taking many
+small steps to get to your final destination.
+The way, using how to, what to optimize is often done for people just like copy
+the things that other people have done.
+But there is actually a systematic approach from statistical learning
+theory, from probability that gives you a framework for thinking about these
+loss functions that you optimize.
+The optomans.
+This people do this kind of optimization stuff because it comes
+through a more researchy world.
+People tend to do it less systematically.
+They tend to do it very ad hoc.
+But it's very critical to approach to the optimization process with the same
+sort of like systematicity, monitoring, et cetera, that you approach your other
+kinds of like failure prone innovations.
+And then finally, there's like, if I learned one thing from my PhD on optimization,
+it's when not to optimize.
+And so we'll talk a little bit about what the alternatives to optimization are
+and how to think about optimization, like programmatic optimization in the
+context of the other kinds of the other kinds of systematic improvements you're
+trying to do, that's the outline.
+Put the meat on those bones.
+Optimization is formalized systematic improvement.
+Let me give you, I imagine there are a split of the slides.
+I think you see a lot of circular diagrams and loops and sly wheel, but let me give
+you a particular perspective on iterative, on continued improvements, improvement,
+and how optimization fits in that picture.
+The like one galaxy brain view of software development is that a product
+lead, who may also be the engineer, defines the behavior that they want out of a
+program that behavioral definition goes off to an engineer, then engineer writes
+code, they produce a program.
+And in order to like write code, to like make sure that that program actually
+like fits the defined behavior, people will write test cases.
+So they start off, or at least in the abstract model, or when people talk
+about best practices, they say start off writing a program that does that work.
+And then write test cases that fail and run your program on those test cases.
+They'll fail.
+Now, you know, you need to implement implement things that cause you to pass
+the test and do that until you pass all of the tests.
+So that's that's like one model of how you build software with optimization,
+with machine learn programs.
+They look different, but like are different characters in each of the roles.
+But the same basic thing is happening.
+You have data that addresses the behavior that you want your system to engage in.
+So you are training a pre-trained language model that's you have tests that humans
+have put on the internet.
+If you are like fine tuning a model to be a helpful assistant, you have data that
+shows the behavior of helpful assistants and users in chats.
+So that's your that's the equivalent of your product lead writing down a
+stack defining a behavior.
+It's also kind of the equivalent of the engineer sitting down and writing those
+test cases and say, this is the way I want to behave.
+But they're like time nodes, individual really tiny little unit tests that are
+like, if you receive this input, you should put out this output.
+So that data goes into a model optimization program that then like writes out the
+parameters, writes out the weights for a neural network.
+And that's your like final program.
+And the way that the model optimizers generally work is that you start off with
+garbage junk parameters, start with random numbers, and then you run your program.
+You run your model on the inputs.
+You use the data to calculate loss the same way you use paths to check for
+failures and then update the program, update the weights to decrease the loss.
+And then this loop, unlike the like test driven development loop, that one may be
+run, you know, tens of times or something, maybe less, or maybe just like one times
+through even as a straight line and not a loop, but this optimization process
+runs millions up and hundreds of millions of times.
+So this, this process of optimization, starting from a specification and then
+creating something that classes that specification is formalized entirely
+numerical automated version of the general way that we like build software
+systems or that we improve software.
+That's a useful sort of high level perspective for thinking about what's
+the role of optimization is in this like inner loop optimization is just the part
+of building our machine learning application that we can fully and completely
+automate and have a machine to handle all the optimizations.
+Unlike writing the outer software, like writing is model optimizers, generally
+still done by humans, the collection of specifications from product leads and
+the definition of your high level goals are done by humans, but this part of our
+systematic patient improvement can be done by computers and can be done numerically.
+So one caveat, I'm going to throw in at the end of each of these sections, I'm
+going to throw in like a little kind of advanced tape for people who maybe have
+seen some of this material before you have to be very, very careful with you
+automate something and you set a system to optimize things.
+And like there are many examples of this coming from machine learning, like
+static creating little reinforcement learning agent bots that learn to do
+crazy things and games and cheat in order to win.
+I think you can see this already even just in traditional software.
+You can imagine if you just, all you ever did is just like, if code classes test,
+it's good, no human like intervention is necessary.
+You hand it off to some unspressed individual on the internet.
+So writes code and if it passes the test, it's great.
+Like one way in which that can fail is that you could write code that, that
+just passes the test that does nothing else.
+So like I wrote a kind of somewhat generic version of this in Python a while
+back, which the, where the implementation of this foo function just looks inside
+the test, figures out what it was supposed to put out by just like parsing
+this search statement here and then returning whatever it is that was, you
+know, it's the expected, it needs search statement.
+And this is exactly the sort of thing that can emerge in like an automated
+system that machine learning models and neural networks love to cheat and find
+shortcut and get to watch out when you like, you can't fully trust the system,
+the opt the system that you are, that you are running and you need like
+control, guard rails, some like, you know, human monitoring.
+Maybe the clearest example of this is we do, we optimize on training data.
+We always hide some data from neural network, we hide from some data from
+the model while we're training it.
+And we actually evaluate it on data it's never seen before.
+Sort of like having hidden tests, the way that like coding competition or, or like
+leak or whatever might hide some tests that you can't like write code that
+just passes the visible public tests.
+So this arises over and over again.
+We'll see maybe some more examples as we go through.
+Okay.
+So like at a high level, this optimization process that we use is
+automated optimization that is our most systematic form of systematic improvement.
+The particular way that we tend to do it is with in contemporary
+optimization is gradient based optimization, which is just formalized
+as this process of making that's very popular in the way that people build
+distances and build software these days, which is very, very small iterations
+compounding with each other to create your like final results.
+So what does that look like?
+Just like Matt, I want to walk through this, this a little bit mathematically here.
+The way that we do optimizations with gradients.
+So imagine this like white curve here is some function that I'm trying to optimize.
+I want to get to a point where the function value is nice and low,
+like maybe one of these three points.
+And so the thing that I do is I do a linear approximation to the function.
+So I, I give up on the idea that I could just like, I know, write down the
+functional form of this and do some algebra and come up with, oh, this is
+the point where it's low and this is the point where it's low and instead I
+approximate this thing and then I say like, let's pretend that this linear
+approximation here is like this slope here tells me everything that I want
+to know about this function.
+That would say that the minimum would be somewhere over here, right?
+So this white line here is a second order approximation based on this point
+to this like darker gray function in the back.
+And the, when we take a gradient, what, what, that's what gives us the second
+order approximation and then we say, I don't actually trust the second order
+approximation that much, so let me just take like a tiny step in that direction
+and then repeat this process over and over again.
+And eventually you get to a point where the bottom of this approximation and the
+bottom of the actual function are at the same spot that you stopped.
+That's convergence, a gradient based optimization.
+I won't actually dive into great detail in the math stuff here.
+There's some lectures that I did for Ways and Biases a couple of years ago on
+math for a month that go into like excruciating detail on it.
+Those are on YouTube.
+That'll explain sort of what into these components.
+But the core idea is that we like, we take this really, really hard problem
+and we, we replace it with a simpler one.
+And then we also don't even fully solve that problem.
+We don't go all the way to the bottom here.
+We just like take one step in the direction of solving it.
+We repeat that over and over again.
+So this substantially resembles like the way that we solve hard problems, other
+kinds of hard problems, non-automatically.
+It's like, well, I want to build a new startup that's for legal documents.
+Let me find a simpler version of that problem, which is like chat bots that
+just answers questions about mortgages.
+And then let me find, let me get a little bit towards the solution of a chat bot
+that, that answers questions about mortgages by just by like setting up a human to
+answer questions about mortgages and walking with it and like have easy to
+interact and see what questions they ask.
+That's, it's like a similar set of motions, but in this case, just automated and
+mathematical.
+The sort of like, the people think of this as being the way that we solve
+problems where it's like, oh, this like mathematical function here is super
+complicated.
+This is the way to the neural network interacting with data we have downloaded
+from the internet is some complicated nonlinear thing we could never possibly
+understand.
+And so we have to give up and use this iterative improvement approach.
+But actually this sort of like iterative approximate improvement almost always
+wins as the way to solve any non-provisional problem.
+So like you, you probably heard arguments for this, like from in other
+places, business and neural network training.
+But I want folks to find just like a super, super simple one, which is like,
+how do you get the square root of a number?
+Like, how do you know what the square root of the other number is?
+And they're the, like, the solution that people have landed on is to say that,
+well, what it needs to be the square root of a number is that if you took that
+output and you multiplied it together, you copy it and multiply it together, you
+get back the original input.
+And so if we take that and we just kind of like relax it and turn it into
+something where it's like, well, what that means, what it means for these things
+to be equal is that if I squared their difference and that difference would be
+zero and then say, okay, so the best square root would be the number that
+minimizes this value.
+If I could try many for class abilities, what the square root is, some of them
+would be, would be very close to the original input, I'm multiplying the
+gap, some would be really far away.
+And then I can iteratively get a better one by better square root by taking my
+current guess and then improving it by taking all like small step of iterative,
+iterative improvements of this approximation.
+And this is not theoretical.
+This analysis is how you get something like John Carman's fast inverse square
+root famously used in the Quake first person shooter in the nineties to get
+around the fact that hardware was like too slow at calculating splitting point
+operations to be able to like do some calculations about like distances and
+radiuses in this video game.
+Instead of Toml puts this approximation, take a step or two, the iterative
+improvement, improve it, and then ship that as your square root, approximately one.
+Hey, are your rag applications falling short despite using the
+latest frameworks and models?
+You're not alone.
+I'm Jason Liu and I've helped a dozen companies improve their AI applications.
+I've developed a systematic approach that delivers results.
+If you want to check it out, join my free six week email course and learn the
+techniques I use in my own consulting practice.
+That way you can stop guessing at what works and measure what matters.
+Just check out improving rag.com.
+So we've now, so like we said at a high level that this we're trying to fully
+assist our profits of iterative improvement.
+The question has been completely unanswered this whole time is like, what is
+this thing that we're getting better?
+What was this like function in the background here?
+Like what was this thing that we were using to generate our unit tests?
+And people tend to kind of just like use things that somebody else has used, but
+there are systematic ways to like figure out what's the, what this loss should be.
+And the general thing that people do is they think of it as a, like they think of
+it probably, they say that there is some like over the question of all possible
+answers, what's like by the output of my system is the probability distribution
+of possible answers.
+And then I observed that the true answer was something in particular.
+So this is a little like German translation problem where the correct
+answer is this word and there's a number of possibilities put out by a model.
+These are actually real values for an old bird based model.
+We think of it as a, there's, we don't know what the output might be.
+There are many possibilities when we had seen data in the past, maybe we
+came up with a clear answer or, but we can also say like the data in the past
+was half the time this gets, this sentence gets finished with this word, half
+the time it gets finished with another.
+And then we would have just like 0.5s here instead.
+And so this cross entropy loss is directly used in like language modeling,
+like a still in the blank language modeling task, or like a sentence
+completion task, like is used to train generative retrain transformers.
+But it's actually the case that this cross entropy is hiding inside all
+the other loss functions that we use.
+So you might've, if you've done ML in the past, then you've probably done linear
+in the past, you've probably done linear fits, it's an Excel function to, to
+do to fit a line to something.
+And when you do that, you actually do end up calculating a crop
+entropy, it's just kind of hidden.
+You take what we do is we say, well, we don't really know what the future
+values are going to be, but we're going to predict that they are going to be
+some normal distribution, some bell curve around some center.
+And if you take the probability distribution for a Gaussian, you take
+this logarithm, so you go over out of the world of probabilities, the world
+of entropy's, you get a squared value.
+So you take the like square that's up in the top of the exponent in a normal
+distribution and you pull it down.
+And now this is the thing that you would, that you are optimizing when you're
+doing your linear regression fit for like predicting the output.
+And that can be, and use the weather prediction output example here to say
+that like, this is not just like linear regression, but also like many other
+kinds of regression will use these, the squared error loss function.
+So you're using that value there comes from looking like frost entropy, but
+for your distribution, it's going to be your distribution, the output of your
+model, and the distribution you can apply by the gene you collected.
+Just say that there's this kind of cool derivation of frost entropy from
+the notion of like surprise.
+And that's sort of where the iteration theory comes from all things to
+physics and to like optimal betting theory.
+Post about that on my blog that I'll share at the end.
+Okay.
+We now have a way, like a systematic mode of thinking about this thing, how we
+sprain the problem that we want to optimize and their process.
+We also want to systematically approach like at a meta level, how are we
+doing our optimization.
+It's critical to approach that statically as well.
+This is a screenshot from my spirit diary when I was in grad school in 2018.
+I was working on this like complex designation problem.
+And I would just, every day I would like write up some little notes, copy, like
+take screenshots of Jupiter notebook, be and paste things in.
+And this worked, but it was, and one of the reasons I, when I left grad school,
+I joined weights of biases was because of how painful this process was.
+Tooling around these optimization processes is super, super critical.
+They have a lot of the same properties of distributed systems.
+They fail silently.
+They fail in complex ways, but it's unpredictable.
+And the like data requirements are very large.
+You really want to like log everything that you're doing.
+You do want to have a notebook like the one that I showed, but you want that to
+be like full of links that go back to places where you can find more detail
+information, full of interactive charts so that you can see precise values instead
+of these screenshots full of like actual data.
+This example, it's a little hard to see here, but there's input images and output
+tests for a character recognition model down here, and that's embedded in this
+document full of links to information about training run that is it's still
+linked in a GitHub PR that explains like how a problem was solved with overfitting
+or with improper calculation of validation laws caused by data.
+It's the main thing here is that you can take a look at those artifacts you want to see.
+So, you know, I like weight biases and you can use like whatever it is that you use,
+make sure that you were just like, like keeping this information
+structured and discoverable.
+And the goal here is to achieve the like systematic way to think about logging is
+the idea of observability from control theory.
+This is something that Charity Majors of Honeycomb has written about extensively.
+Observability is can you look for the information that you have available about
+a system, can you figure out inner working and then change its behavior on the basis
+of what you observe?
+So can you just look at your logs and then realize what is the change that you
+need to make?
+That's way better than needing to recreate the system, rerun it, get inside it,
+break point, debug, whatever, in order to solve your problems.
+And that's frequently impossible in distributed systems, which is why Charity
+who works on like distributed system debugging is so on there.
+But it's all a similar problem with ML systems where you frequently can't rerun
+it, it's too expensive, there's too much like non-determinism from data issues,
+from hardware issues, et cetera.
+And so logging is your resolution to that.
+And so you want like the richest logs possible, be able to have this
+observability, to have this.
+And so finally closing out, so frame this in terms of optimization, that's the
+term people are going to use all the time to refer where we're optimizing
+neural networks.
+Fine-tuning is continuing to optimize a neural network.
+But really like optimization is a very strict idea of like, get to the
+absolute best answer.
+And really what you frequently want to do is something called satisfying, which
+comes from Herbert Simon, who is like one of the godfathers of AI and of
+optimizations.
+And also thought quite a bit about administrative issues and decision
+making and organization.
+Satisfying is like getting a system to the point where it like meets a criterion
+rather than getting to the optimal point.
+So one way that this goes up is you have many metrics to care about, right?
+You probably have metrics for your RAD system, you have metrics that are like
+correctness based, like the loss.
+You also have things like how quickly does the thing run, right?
+What, like what do you, does it fit on?
+These are all things that could be optimized, which is really, really
+difficult to optimize many, many numbers at once.
+And people be tricks like they combine numbers together into a single number in
+order to make them optimizable.
+But really the like better approach is to say for, I have N things that I care
+about for N minus one of them, I'm going to set, I'm getting set a threshold.
+So I'm going to set like, I want to be at least a hundred milliseconds latency is
+my, is my latency like threshold.
+I never want to go.
+And for my like retrieval accuracy, I want it to threshold of 95%.
+For my precision, I'm actually going to optimize my precision.
+Precision is what matters the most.
+I never want to give a wrong, like a false negative.
+And so I'm going to optimize precision and satisfy on the, on a
+re-fall or other metrics.
+So this, the full detective learning course that I just want has some great
+thoughts, we got to go in on, on like how to think about which things to satisfy
+versus which things to optimize and how to like, and how to achieve those
+threshold models, baselines, a lot of ideas does end up being demeaning
+judgment, unfortunately, or fortunately for engineering salaries.
+But in the end, this, this principle of doing satisfaction rather than, or
+satisfying rather than optimizing, it's a very general principle and, and like
+the, the losses that we think of ourselves as optimizing when we train neural
+networks or train machine learning models are not actually the true thing that we
+really care about optimizing.
+The real thing that we care about optimizing is some downstream business
+goals, some downstream like SOFO outcome, what have you.
+So take for example, the training of the llama models for Facebook as an
+optimization piece, I'm like specifically upset to see a loss curve like this.
+I see this paint line here and you can see this thing is still going down
+like rapidly at 2000 process, 2000 billion, yeah, two trillion process tokens.
+But they stopped then because there were limits on the, like on their other
+things that they cared about.
+So they actually just made like, they kind of set the system up so that they
+would do as well as possible on, on this.
+So in a sense, they like optimized this at a high level.
+They said, how can I get the loft as low as possible given these constraints
+of hardware or, or time, but they didn't like optimize the neural networks
+in the like calculus sense.
+I think there's an important lesson here, which is like, don't go, it's like
+easy due to the fact that this is this like very pristine mathematical approach
+of like optimize, formulate a problem.
+The mice that there's lots of numbers and variables involved that sealed
+like it's a typically correct, but it's like frequently it's a kind of blind.
+So, and this is especially true in fine tuning where data effects are small
+and we don't trust them and our metrics and losses are frequently very rough
+proxies of the thing that we care about.
+And so you just, you know, the wrapping this optimization process in the outer
+loops of continual improvement that you've learned about in this course is
+critical for sort of like controlling it and avoiding like excess resources
+spend it on this and avoiding like maybe the flaws, like the overfitting to the
+tests and just passing the tests that an otherwise the devil.
+Cautious of time.
+I want to just quickly close out by saying that modal is actually not a
+system for solving your optimization problems, at least directly modal.
+The computer workforce serverless infrastructure platform.
+We help you run your Python code in the cloud without all the agonizing pain.
+Look mom, no yaml.
+And there's serverless set up means that you pay for resources that you use
+memory and CPU cores, TPUs with access to like TPUs from A10s all the way up to H100s.
+Thanks for watching.
+If you liked that video, make sure to like and subscribe.
+And if you want to learn more, check out improvingrag.com.
+We're going to talk about the foundations and not frameworks over six emails.
+You're going to learn how to overcome absence blindness, as well as how to
+fine tune language models, understanding diverse query types, improving multimodal
+rag and ultimately smart question routing and build a UX that collects user
+feedback to check out improvingrag.com and fill out this quick email address at the bottom.
+Thanks.

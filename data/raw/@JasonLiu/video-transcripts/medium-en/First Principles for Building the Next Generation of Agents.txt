@@ -1,0 +1,639 @@
+I'm really stoked for this.
+So as part of the improving rag sort of series that I've been posting, I've been really excited
+to be able to bring together a bunch of folks building the code generation space.
+I think it's probably one of the most economically viable forms of agentic rag.
+And basically my belief is that the things we learn from you are the things we'll be
+able to apply in the future to general document search, internal tooling, like everything
+else that rag related.
+I think coding systems are probably will give us a glimpse of what that looks like.
+And this is really interesting because a lot of the systems I've been seeing get built
+these days do fall victim to the chat style of rag.
+Usually it makes a search.
+We do embeddings, we shove things in the context and we hope it works.
+But as workflows get really complicated, we have to do things like reading and planning
+and searching and subsequent tool calls.
+And so for all of us listening here, I'm really excited to bring in Deang Liu, the CTO of
+SourceGraph and the creator of this new coding agent, AMP.
+It's a tool that I've been using a lot in a couple of weeks.
+And the idea that they're really going to explore is the fact that we've replaced things
+like writer databases with grep.
+We've replaced many sort of search indices with just having better feedback loops and
+context sources.
+And I'm really excited for you to share more about the principle that you've had, how you
+think about the portfolio of tools and sub-agents to build out this larger LLM system.
+With that, Deang, the floor is yours.
+Thanks, Jason, for the introduction for having me.
+Hello, everyone.
+My name is Deang, CTO, co-founder of a company called SourceGraph.
+As Jason mentioned, we're building a coding agent from the ground up and the agent is
+called AMP.
+And as part of doing that, we basically started at first to question a lot of the principles
+and best practices that we had learned from building our previous coding assistant, Codi,
+which is one of the first sort of like rag-oriented AI coding systems on the market.
+And at some point, we took a step back and said, like, actually, there's so many things
+that have changed that maybe it's warranted to actually rethink everything from first
+principles.
+So that's what this talk is kind of about.
+Okay.
+So why rethink things from first principles?
+I think at a high level, it's for this reason.
+If you look at the evolution of AI and specifically what we now call gen AI, I would argue that
+it's actually been through at least three distinct phases or eras.
+The first era was the autocomplete era, where the predominant model at the time was GPT-3
+and predominant application architecture was autocomplete, because that's what the underlying
+model was capable of.
+And so that's what you did as an application builder.
+Next came the sort of like rag chat era.
+This was ushered in by the release of chat GPT and GPT-3.5 and then GPT-4.
+This era moved beyond basic test completion to the point where you could actually instruct
+models to do certain things like generate a piece of code following instructions or
+asking a question about a code base.
+And the key inside this era was like, hey, the elements get a lot better about reasoning
+about facts if you actually hand them factual things.
+So they are completely reliant on what they've memorized from training data.
+And that sort of era culminated in what I like to call the emergence of the VS code
+forks or the AI IDEs.
+This was thick clients that were built to deploy chat LLMs in various situations that
+really worked around a lot of the limitations of chat LLMs of that era.
+And the era that we're entering in now or have entered in with, I would say like 3.7
+sod it now, quad four, is the era of agents.
+And so essentially like a new training technique has yielded a new type of model and that in
+turn motivates a new application user experience and architecture.
+And so what is that architecture?
+In short, the architecture has changed once again.
+So in moving from the rag chat era to the agentic era, the main thing in this diagram
+is the inversion of the context fetching step.
+So in the rag bot era, all AI applications kind of followed the basic the same basic
+pattern.
+You had a user message.
+And then before forwarding that user message to the LLM, you first have your kind of like
+monolithic context extension go and fetch relevant snippets and pieces of information
+from different sources and then take those snippets and place those within the context
+window of the LLM and have it generate a response.
+With agents, the control is now inverted.
+So instead of having the rag engine decide what is the relevant context and then handing
+that to the LLM, you now have the model decide based on the user request, what tools do I
+want to evoke in order to fetch the appropriate context?
+And it seems like maybe like a minor change, like in the picture, just moving the green
+box down to the bottom.
+But it actually has some pretty big implications for what the user experience is and what the
+architecture is in our view.
+OK, so what is that?
+What are the implications of this change?
+So the coding agent that we're building is AMP.
+And I like to show off AMP as basically just like these are screenshots of what AMP is.
+These are the two clients that are what users of AMP use.
+So there's a simple VS code extension.
+It's very bare bones.
+The main input is just that text box.
+And then you have a CLI, which is also very bare bones as well.
+And the thing I want to call out here is just how simple these interfaces are.
+In contrast to a lot of the kind of like context tagging UIs that were built for those like
+chat LLM era.
+And in building AMP, I think we made what are some controversial design decisions if
+you're coming from the world of chat LLMs, but even if you're building agents.
+So you already saw the UI.
+It's very minimal.
+We're really focusing on the design of the agentic feedback loops rather than complex
+graphical user face for selecting context.
+When we designed AMP's interaction, we biased more towards just having it do things.
+So when it edits files for you, it normally just doesn't ask before editing a file.
+It does ask before executing some bash commands because those can be destructive.
+But as much as we can, we try to make it so that the human doesn't have to micromanage
+what the agent is doing, which is a big departure from the chat LLM paradigm of like,
+you know, every kind of turn of the LLM that the human is sort of like guiding and nudging
+and modifying the output.
+Third, there's no model selector.
+So, you know, in contrast to a lot of the other agents you see out there and a lot of
+the tools from the previous era, we didn't build in a kind of like model selector into
+the agent. And I'll talk a little bit more about why that is later.
+And then we also believe in more of like a UNIX philosophy rather than a thick client
+that's like vertically integrated. It's easier to compose and combine with different things.
+And then the last thing, which is not a technical thing, but just an economic thing,
+I think more and more people are starting to realize that in the era of agents, because
+token consumption is so high, if you have flat pricing, it introduces quite perverse
+incentives on the behalf of the product builder.
+So, you know, if I'm charging you a flat price, but the cost that I'm incurring on the
+back end is variable, then I have a strong incentive as the product builder to kind of
+like nerf or dumb down the intelligence and models I'm using to to make the cost fit
+underneath that. And so we're kind of throwing that out because we want to build a tool
+that sort of like maximizes intelligence.
+This is kind of like a sales pitch slide, but it's just motivating.
+Like, why do you care? These are controversial design decisions that we're kind of doing
+differently from a lot of other folks.
+And so, you know, why are we off our rocker or is there something to it?
+I think we've seen a lot of good feedback from people just saying positive things.
+You know, that's like the left hand column, but also comparing us favorably against
+AIDs in terms of what the agents do, how far it's able to get and even against other
+agents. So there's design decisions that are baked in here that I think have made
+AMP just do better or feel better than some of the other coding agents on the market.
+And a lot of that ties back to our approach to doing, you know, rag for the agent.
+OK, so let's talk about that architecture and the design of that rag engine.
+So before we get into that, you know, what motivates this differing architecture?
+It's really a shift in the kind of like user interaction paradigm.
+So like the dominant interaction paradigm of the chat world, the human was very, very
+much in the inner loop of interacting with the model.
+Basically, like every LLM turn, you had a human checking output.
+You know, you say, like, write a function that does X and then it would generate some
+code. And you're like, not quite like that.
+More like why you refine it.
+And then once you were happy with the change, you'd say, OK, now take this change and
+apply it back to my file, go edit the file and apply that change.
+And so you'd have a lot of ping pongs with the model back and forth just to make one
+sort of like atomic change in the agentic world.
+It's now possible just to articulate what you want up front, have the agent do a lot
+of work, a lot of validation on its own, reading the file, editing files, searching
+around for related files, executing bash commands, checking compiler output.
+And so it's able to get much further.
+And with the proper prompting, we've seen much stronger success with it just being
+able to cut down on the ping pong and just do the thing that you want to do so you
+can not have to babysit it and also get things done much more quickly.
+So this interaction paradigm shift.
+You know, motivates an architectural shift.
+So if you look at the architecture of rag chat bots, most of them had a pretty thick
+client and also a pretty thick and monolithic context engine.
+And that's because of two things.
+One is the context engine was doing a lot in this case.
+It had to kind of like basically like fetch relevant context snippets for all types of
+user queries and using that, it would then place those relevant snippets into the
+context of the chat.
+LLM the coupling of the context engine in the chat LLM was also fairly loose.
+That's why you saw a lot of people ship bottle selectors that allow you to kind of
+like interchange the model in use.
+And then lastly, you did have a pretty thick complex UI for a lot of these
+applications because the model is the context engine couldn't always magically
+infer what was the relevant stuff to fetch.
+And so you had like a fallback for humans to be able to kind of like ergonomically
+tag in the appropriate context.
+Now in the agent world, the combination of a tool use model with the proper set of
+tools is able to essentially replace a lot of the intelligence that the context
+engine previously had to provide.
+So really the core of the logic is more in these agentic feedback loops and how
+you design the runtime and how you tie together agents and different subagents
+and how they connect with tools.
+That is a much bigger part of the kind of like application development paradigm.
+And so you need a thinner client because there's not as much human intervention and
+you also need a far less monolithic context engine.
+In fact, you can kind of decompose that context engine into a set of smaller, more
+primitive tools.
+And then it's really all about the coupling between the tool use LLM and that set of
+tools and how it's able to take advantage of those tools to get further and further
+successfully.
+So, you know, if you look at the rag engine set of features for the chat LLM era, you
+had, you know, typically this is probably like, you know, the median rag engine, right?
+Like you had a basic, you know, keyword index, VM 25.
+Then you trained an embedding model.
+You probably fine tuned that on your domain specific data to get it to perform better.
+You probably had domain specific chunker of some sort to be able to do document
+chunking in a way that made sense.
+And then on top of all that, you slap a reranker to basically, you know, aggregate
+results from these lower level retrieval mechanisms and then rewrite them properly.
+Maybe you have some intent detection on at the very top to route between different kind
+of like reranking engines because you have different types of queries.
+Like we built all of this for the previous era of coding assistance.
+And then it's like you look at some of the most popular agents on the market today and
+like, what's the main tool they use?
+It's like, correct.
+Now that's an oversimplification.
+I think like, you know, now you're starting to see more retrieval tools being leveraged
+by, by agents as well.
+But the, the fact of the matter is, it's like a basic agent that uses a very simple
+retrieval tool can match the performance of, of some of the, you know, very fancy
+monolithic rag engines, plus chat LLMs in the previous era.
+And so if you want to see this in action yourself, you know, there's a blog post
+that a member of our team wrote called how to build agent.
+If, if you want to do it yourself, just read the blog post and follow the instructions,
+but you can also have an agent just read through the blog post and generate an agent
+yourself. It'll create a very simple agent with a very simple set of tools.
+But it gives you something to play around with and see, like even with like a simple
+kind of like 101 basic version of an agent, these things are pretty intelligent and
+pretty smart.
+Okay.
+So, I basically just said, you know, rag, as you know, it is, is dead in our opinion.
+So what does, you know, rag look like in the era of agents in our view?
+It's, it's really about three main categories of considerations.
+So number one is what sort of tools do you give the agent?
+And so you have tools in the retrieval sense where some of the tools are about retrieving
+the relevant context.
+But there's other forms of tools that also are becoming more important.
+And so if you take a step back, like what was the motivation for rag in the first place?
+It was really just to get the bottles to be able to do more things for you in kind of
+like productivity oriented environments.
+And so one of the things we say is that, you know, rag is not strictly about retrieval
+anymore. It's really about just molding the underlying model to be able to do what you
+needed to do in a particular application setting or for a specific set of workflows.
+And so the tools, I like to categorize them as breaking down to like three main things.
+One is just context retrieval.
+That's more of the sort of like traditional rag sense.
+The other, the second point is like feedback.
+So how do you get more feedback about what the agent has done and then planning to
+structure agentic flows over kind of like a longer period of time?
+The second main category of consideration for agents is really about context window
+management. And so as we try to stretch agents to do longer and longer change of
+automation, the context window size sort of emerges as kind of like a key constraint.
+And so, you know, how do you what do you do to ensure that the context window remains
+focused? The model doesn't get confused.
+How do you avoid tool overload?
+Do you do compaction or something like that so that you can kind of like continue on past
+the limits of some of these context windows?
+And then the fourth point is, I think, the emerging as like the most important point
+for us, at least, is the use of subagents as a mechanism to effectively conserve or
+extend the context window of the main agent.
+And then last but not least, it's the model choices is really important here.
+And I would emphasize again the point that like we've kind of gone past the era in
+our view of being model agnostic because there is much tighter coupling between models
+and set of tools. Now, you really have to be intentional about the model that you use
+for any particular agent or subagent.
+And so just to dive into a few concrete examples here, so if you look at the
+construction of the toolset for AMP on the right hand side, that's the tool panel for
+AMP. And so the way to think about this is at the bottom, you have the toolset for
+AMP, and then at the top, you have your list of tool providers.
+These are external services or packages that will provide a suite of tools.
+And then at the top, you have all the tools that each provider provides.
+And so if you look at the main tools that AMP uses to fetch context, it's really a kind
+of like a suite of I don't want to say simple tools because some of these things
+are simpler and less modelistic than your kind of like standard chat based rag engine.
+So, you know, grep and glob, those are great command line tools.
+We also have a search subagent that stitches together some of those primitive tools into
+more of like an agentic flow where it will do multiple queries and refinement of queries
+in succession to find the right thing.
+It pulls from the web, you know, documentation on the web, as well as pulling from specific
+services that might have relevant context about things that you're trying to do in your
+development environment.
+So it's really this like combination of tools.
+And then the reason why we separate out the kind of like tool provider interface from
+the tool selection interface is that what we found is one of the things that you want
+to avoid is kind of like tool overload.
+So one of the things that we've observed with the advent of things like the Model Context
+Protocol, MCP, MCP is great.
+It encouraged everyone and their mom in the world to think about how to make services
+ready for agentic consumption and how to package up the context that those services
+contain for use and consumption by agents.
+But naively just throwing in all the tools that an arbitrary MCP server defines, that's
+a great recipe for just confusing the heck out of the underlying model.
+Because again, that context window, you have a limited amount of context and each piece
+of context that is thrown in there that isn't relevant to the task at hand ends up being
+a potential confounder for the model that might confuse it or make it make less intelligent
+choices down the road.
+OK, so this is kind of like the set of tools here is sort of encompasses what would be
+known as like traditional rag, but for the AMP agent.
+But as I mentioned before, I think a really another very important element of kind of
+like augmented inference in the agent world is these feedback loops.
+So in addition to fetching context from other sources, you also have the context that is
+provided by the environment itself.
+So agents, unlike chat LLMs, they do things in the environment, right?
+Like they edit files, they execute code.
+And what that means is they can also execute things that verify whether they did the right
+thing or not.
+So like you could use bash to execute the unit tests and get feedback that way.
+A very popular MCP server is the Playwright MCP server that allows you to take screenshots,
+or I should say it allows the agent to take screenshots and iterate against what's in
+the screenshots straight for front end development, especially when coupled with something like
+Storybook, which makes it easy to isolate specific UI components and go back and forth.
+There's the editor diagnostics, which is really just an easy way for the agent to consume
+compiler output.
+And then you have other services like Postgres.
+So, you know, very popular MCP server for us is the Postgres server.
+We use Postgres on our back end.
+And so when it's making a change to the Postgres schema, in our case, you can actually
+go and inspect the schema and the dev environment based on what it did.
+So you have context, you have feedback loops, and then once you start stitching these things
+together, it's a natural tendency for users to want to get to kind of like longer and
+longer chains of automation.
+And so actually helping the model structure its actions over a longer horizon of things
+becomes more and more important.
+So we're moving way past the point where humans have to babysit every single model
+inference point, the point where now instead of I think the ideal interactions instead
+of making it easy for the human to intervene, it's really about helping the user convey
+more of the context upfront for the model to do the right thing.
+And then at the product layer, we've added this kind of like to do mechanism.
+So this is kind of like the planning light product version of the more complex planning
+that people do.
+And so AMP will typically when asked to do a more complex or non-atomic task, it will
+add things to its to-do list so it can kind of like structure itself to avoid just like
+diving into the first rabbit hole it thinks of and going down that rabbit hole and writing
+a lot of code that isn't useful.
+Okay, so that's a bunch about how we're doing context and planning.
+I think a lot of what we think about now in terms of stretching the capabilities of agents
+and LLMs is about extending the effective context window.
+And so you have things like compaction, which is basically saying like, okay, this interaction,
+this thread with the agent has extended to the point where it's now filling up the context
+
+Let me summarize the thread and then compare it to the actual context window.
+And so we're going to do a lot of this compaction, which is like a very complex
+model that's going to be a very complex model that's going to be a very complex model that's
+going to be a very complex model that's going to be a very complex model that's going to be a very
+complex model that's going to be a very complex model that's going to be a very complex model that's
+going to be a very complex model that's going to be a very complex model that's going to be a very
+complex model that's going to be a very complex model that's going to be a very complex model that's
+is subagents. So AMP implements subagents in a couple different places.
+The very first subagent we implemented was actually this code based search subagent.
+So oftentimes, when you ask AMP to do something and needs to look up context,
+and it can't get the context from simple indications of grep or glob or other basic
+Unixy tools, it will actually invoke a subagent to go and poke around the files in the same way
+that human might to find the right thing. And this is nice because all the exploration it does
+when it's refining different queries, trying different things to find the thing that the user
+is looking for, that eats up context window. But because it's a subagent, once it's found the right
+set of snippets and returned them to the main agent, you can essentially throw away the context
+that was used for the subagent. So the code based search subagent often eats up a good portion of
+the context window, but it's not the context window of the main agent. So it doesn't prevent
+the main agent from taking the relevant snippets and doing more with that. In addition to the code
+based search agent, which is a very specialized subagent, we also implement a generic subagent.
+So this is essentially just like recursion, but for agents, right? So AMP can effectively
+invoke itself to perform tasks in parallel. And we find that this is common in cases where you're
+trying to make one type of change in many instances or do one type of retrieval across
+many different cases. So this is sort of like a toy example. Just the other day,
+I was thinking to myself, yeah, I don't have much time to read Hacker News these days,
+but it'd be great to stay up to date with what's going on. AMP, let's just have you spawn a subagent
+to summarize every single top post on the HN front page, produce a high quality summary,
+and then the main agent can gather all those artifacts together and summarize the key points.
+The same scatter gather approach can apply to unit test generation and a bunch of other things
+that are kind of common in coding use cases. And then last but not least, the most recent
+subagent we've added is this subagent that we call the Oracle. And the reason we call it the Oracle
+is because it thinks really hard and is much better at getting to the right answer just by
+thinking. And this one is noteworthy because more and more we're playing around with the
+capabilities of combining different models intentionally in subagents. So earlier I said
+that the model agnostic architecture is going away because it's hard to rip out the main thinking
+model and replace it with some arbitrary other model. I think more and more you're going to see
+application architectures use models intentionally. So rather than having something that's very
+swappable, it's like, okay, you want a specific subagent to do a specific type of task. Hey,
+there's a model out there. In this case, we use 03 that's really good at this like nuanced thinking
+and teasing through tricky to understand code. Let's actually use that as part of the agent
+construction here so we can take advantage of the abilities of that model without having to
+adopt some of its weaknesses for things like tool use and agentic composition of those tools.
+Okay, so on the model selector, why do we think that that is now an anti-pattern? I think this
+probably goes against some of the things that you've heard from builders of other agents,
+but this is our salty take. And when we try to think about why it is, we think the model selector
+ought to go away in the architecture of agents. It's really this. On the left-hand side is the
+basic loop of chat LLM based AI applications. So this is like the loop of the quote unquote chat
+GPT wrapper, right? Like you have the human do something, then you go retrieve relevant snippets,
+you put it in the LLM. It's very simple and there's not a lot of tight coupling between the retrieval
+mechanism and the model here. So it's quite easy to say like, oh, let me take the same relevant
+snippets and put it into, you know, KimiK2 or 03 rather than, you know, Sonic and let's take a
+look at the results. And that's, there's often something like a, that is kind of like cool and
+interesting for an end user to do. If you look at the flow in like an agent though, it's much more
+complex. So like you have the human making requests, these are forwarded to the agent LLM. And then that
+LLM has a bunch of tools that it can use and each tool description, it becomes part of the effective
+prompt that then is kind of like coupled with that LLM to get it to effectively determine, you know,
+when to use or not use a tool. And then in addition to that, some of these tools are agents themselves
+with their own set of bottles that are kind of like tuned to that specific use case. And so if we were
+to offer up to end users a way to easily swap out any of these LLMs for another model that's not been
+tuned to those tool descriptions or has other kind of like tool use capabilities or characteristics,
+it's just a recipe for a bad user experience. And I think you've seen this now in a couple instances
+where like a new model is released and there's some other tool that integrates it into the model
+selector. And then the model provider gets mad. I think like Elon got mad the other day because
+he thought that another tool wasn't doing the latest release of Brock justice. And so for us,
+yeah, this is basically why we think the choice of model has to be much more intentional for building
+agents. One last thing that's kind of a little bit orthogonal to the whole discussion of RAG and
+technical architecture, but I do think that it's an exciting time to be building applications because
+number one, there's much more interesting application architectures that can be built on top of
+agentic LLMs. And two, from a user's point of view, I think agents are far more high ceiling tools
+than chat based applications. So chat based applications were always constrained by
+sort of like the retrieval engine model. And so the way to think about them is a lot of them were
+kind of like search plus plus. It's like get the search results and then generate an answer.
+And that's great. It can do a lot of things, but it doesn't yield a lot of, it can only go so far.
+Whereas with agents, you can actually prompt them to do much more complicated things, but you do have
+to get better at prompting to be able to do that. So one of the things that we built into AMP is
+this built in kind of collaboration mechanism where you can see all the threads that your
+teammates are having with the agent. So you can see like who's using the agent or the agent
+for which use cases, for what tools, how long are their threads, how do they prompt.
+I've learned so much just from like watching how other people on the team are doing prompts.
+There's some people who write like paragraph, you know, like essay long prompts and are able to get
+enough context in there to get the agent to do much, much more. And so I think the way to think
+about this, it's important to realize that as an application builder, the agent could be a much
+higher ceiling tool and to ensure that you're not kind of like dumbing it down artificially
+just to make it seem, you know, more magical for kind of like newbie users.
+Okay. So in short, like we think that it's really important to think from first principles when
+building agents. A lot of the best practices that people developed during the chat LLM era,
+I think are no longer relevant at best. And in the worst case, actually, you know, run in direct
+tension with what the emerging best practices for building agents are. And so, you know, when I talk
+to other people building agents, I usually kind of bring up, you know, three things or three
+questions. You know, first, it's like, what do you cargo cull thing from the chat LLM era? Have you
+actually thought about whether that is the best construction for building an agent? Two, are you
+treating context not as a retrieval, not just as a retrieval exercise, but as this kind of like
+broader set of things that provide relevant information for the context window? And then
+three, are you thinking about how to unlock the ceiling of what agents can do? Because I think
+the potential here is far greater for them to be able to automate and accelerate much more of
+knowledge work. But it does require thinking about how you design intentionally for that,
+rather than, you know, just how do I provide the smoothest ladder for new users into this
+product experience? Because often those two things run in tension too, you know, like making it quick
+and easy for new users versus preserving the power of composition and the ability to do more complex
+things for your power users. So yeah, it's kind of like a whirlwind tour of a lot of the things
+we've been thinking about with AMP. Thank you all for listening. And I'll turn it back to Jason,
+I think is going to take some questions now. Yeah, I mean, I think it's gonna be clear that
+like the whole sourcecraft team has thought pretty deeply about this kind of like code experience,
+especially because I think you guys have such a rich history in thinking about code understanding.
+Um, which brings to the first question, which everyone is curious about, which is
+for AMP, do you guys see a lot of use cases in the AST aware tools? I know recently, I think maybe
+today I saw that the tab model uses the LST. I'm curious where you guys are thinking about this.
+I used to wish I could have like code mod support for coding agents when I was doing
+like these massive refactors. Yeah, so that's a very kind of like the answer to that is,
+um, I guess it's complicated, but I'll try to condense it. I think what we've learned over time
+is each the deployment of like static analysis tools and AST aware tools should be motivated
+by the shortcomings that you see in any particular use case. So it's not a good formula to say like,
+Oh, I have this great thing that's like semantically aware or like is aware of pipes.
+Um, let me go and like bake that into the agent architecture
+straight away and make that requirement. Um, I think that is at this point just kind of like premature
+optimization or premature, uh, uh, fanciness to a certain extent, um, because LMS are so
+new, uh, the classic saying in machine learning is, you know, like do the simple thing first,
+the brain dead simple thing first, establish a baseline and then, and then you can explore,
+like fancier, uh, methods, uh, fancy tools and fancier capabilities to see if they actually move
+the needle. Um, and so I think in certain cases, like the, the tab completion, um, being able,
+uh, to be aware of what imports are pulling in turns out to be like pretty useful for improving
+the quality of predicting the next edit that the user is going to make. That's a, that's a case
+where those tools come in handy. Um, for the, the main like AMP agent, it doesn't need to use any of
+those tools. You can plug them in, but we kept them out of the kind of like built-in set of tools
+because, uh, for a lot of languages, at least, you know, currently they do not add that much value.
+I see. Yeah. I will say if AMP ever considers going down to the world of like code mods,
+you know, I feel like every time I want to be able to rename a function, it has to edit like
+45 files. Yeah. Those have been a specific example where I've been thinking about like building a CLI
+to do some of these code mods for, for larger migrations. Do you feel like it's also about
+just like the bitter lesson, you know, like in the future, these LLMs will just know and it'll be,
+it'll just have the awareness of the AST. I think the bitter lesson comes down to, uh,
+is the thing that you're trying to do, can it be captured by a data collection of some application
+that is currently being used by the people doing the work that you're trying to do, or can it be
+emulated in some sort of like synthetic environment? And if the answer is yes, then
+the days of that approach are numbered, but you could, you could still build it as a vehicle to
+generate the training data, right? Like compilers, stack analysis tools, all these played an important
+role in, in generating the data that were used to tune these models to be able to make effective use
+of, of tools in a coding setting. Yeah. I mean, I think the other question people are really dying
+to think about is just sort of outside of the coding session, uh, coding setting, like how much
+of this do you feel like applies to, you know, general, maybe like QA systems or poor generation
+systems? I obviously have my own feelings about this, but I'm also curious, you know, do you guys
+use these like AI tools from other vendors and go, I wish they had sub-agents, I wish they,
+I hate this model ticker. You know, it's funny that you mentioned that, like, you know, because
+AMP has this like thread sharing capabilities, like trivially simple, just to peek at what other
+people are using it for. Um, and still like the dominant use cases for like coding and technical
+Q and A, but like every now and then I'll see people being like, Hey, can you do some research?
+I think I saw one thread the other day, which like, you know, my, my, uh, kitchen sink garbage
+disposal thing broke. Can you like search the internet for appropriate things and help me fix
+it? Um, and so I think there, there is a lot that sort of like generalizes to other use cases
+here and you see people using that. Um, I, I do think that there is some limit. Um, so I think the,
+from what I've seen, the things that do generalize well are the things that kind of look like,
+the workflows that can be done using a set of tools that look more or less like the set of,
+of tools that you have access to in your development environment, in, in your terminal.
+So like, you know, basic search, uh, basic code execution, basic retrieval, relevant documents.
+There's a whole bunch of knowledge work that kind of falls under the umbrella of like, okay, like
+as long as you have some tools that look like that, you as the human can get it done. And therefore
+like the agent can probably do a pretty good job as well. I think there's other forms of knowledge
+work. Um, like I have a friend who's, who's working on like a finance, uh, AI who's, who's building it
+to do more like fundamental, uh, sort of analysis. I think there's some tools and,
+and some forms of reasoning there that don't have, uh, like good mappings to the type of stuff that
+people do in the development environment. And so there it's, it's a bit harder to generalize that.
+Interesting. It's funny you say that because I just saw that cloud code announced cloud code for
+finance, but I guess it's a different kind of analysis. It's really around like the portfolio
+of tools. Yeah. Yeah. I think there's probably a lot of workflows within, you know, finance is such
+a big umbrella. There's probably a good number of flows that do fall into their umbrella, but for
+certain specific types of workflows. And I think you will see this in every knowledge domain. It's
+like the workflows that can kind of be captured by the RL environment of the models. Those will
+start to be more and more automated. And then what's left, which is a tiny amount of the
+workflows right now that will expand to being, you know, the lion's share of what takes up people's
+time, because that's where, you know, the interesting alpha remains. Yeah. I don't make sense.
+Even this idea of like, I guess, I guess I'm curious about this question too. Like
+you mentioned that searching for the information is actually very context, you know, expensive.
+And so we might clean off a subject agent. Does this sub agent sort of preserve the history of
+the main agent before it forks off? And like, does that sub agent also have more sophisticated
+tools? Is it also graphed for the most part? It has a different set of tools than the main agent.
+It does not inherit the context window of the main agent. For that sub agent in particular,
+we found that the existing context ended up being more confounding than useful. There are other
+forms of sub agents where that history can be more useful. So I would say that's like a hard
+and fast rule. It's really dependent on, you know, what the agent is trying to do. Yeah. I imagine
+there's like a preserve history and sub agent flag and just do some experiments to figure out
+if it's better or worse. I'm curious then it's like, how do you start evaluating things like this?
+In a lot of what I've been doing, maybe earlier last year was we have a search tool. It is
+retrieving text chunks, the text are sort of relevant or not relevant. So there is a recall
+metric. And if you can go from 68 to 72, we're doing better. Now that agents are so persistent,
+well, if it's 62, it'll just take nine more searches. Yeah. And you get the same results.
+How do you think about designing the tools versus the result of the LLM capability?
+Oh, I think you cut out for a little bit. I got you at how do you think about designing the tools
+versus? Yeah, like improving and designing the specific tools versus the whole system.
+Right. Yeah, that's a really good question. I think it's a combination of trying the tool out in the
+product itself and seeing how it feels. And then having evals to make sure that you're not regressing
+some other form of behavior. I do think that this concept of a tool provides pretty good
+encapsulation of like, hey, you're trying to make it do something, you encapsulate with a tool,
+and then the decision is whether you turn that tool on by default or not. And that's much nicer
+than making it all or nothing for every one of your users. That being said, you still have to be
+careful. And so I think of when you build a new tool, it really should be motivated by some
+pain point that you felt as a personal user. And so all new things, in my view, are motivated by
+vibes. Like that thing was painful, I want it to be better. You should never use evals as a way to
+guide your product development because evals are always downstream of the vibes. Evals are in some
+sense an attempt to quantify the vibes. And so I think of evals more as unit tests or smoke tests
+for like, hey, these workflows currently work well, I want them to continue working well, even as I
+make changes to make some of the things that don't work well better.
+Yeah, I mean, I think I definitely apply even the non-coding examples, like I think some of the
+biggest, like commenting some of the biggest successes that we had in like traditional
+rag tools is, okay, well, it turns out like if we just had specific tools to search contracts and
+contact information, all of a sudden the agent can now combine them to figure out, you know, who do
+we need to harass to get something done? And like, who's the right person to contact and say, okay,
+well, just message the guy's boss instead. And all of a sudden, like your legal workflow becomes a
+lot more productive. Yeah, I guess let me take another look at some of these questions. And as
+I do that, I'm curious if you have answered this question, which is, as we're building these agents
+these days, what do you think is something that people are not asking themselves as they sort of
+set forth on this journey? That's a good question. When I take a look at what other people
+are doing, I think people that are building in the coding domain, in some sense, are like,
+they see a preview of what is going to roll out to agents in other domains, because like coding is
+such a kind of early use case of agentic models. And so I think what people in the coding domain
+more and more so are starting to realize is, like, how many of the best practices of like the
+previous AI coding paradigm no longer apply. And I don't think that that message has bled out to
+other knowledge domains quite yet. And so I still see a lot of people focusing on more on, like,
+workflow construction and switching that together rather than like true agents and other knowledge
+domains. And some of that might be justified, because you never know how well this stuff will
+generalize until you actually go and try it. But if I were working other domains, I would at least
+be trying the agentic approach. And the good starting point is just build a simple agent
+yourself. They're not that difficult. It's not like agents aren't magic. It's really just,
+what's the term? It's just like invoking the model in a for loop. Like, you can think of it like that.
+And sub agents are just like nested for loops, in a sense. There's a lot more that comes from just
+applying them and building them in practice. But that's the basic gist of it. And so I think
+if you're building with AI and you haven't tried this agentic tool use thing, I think
+at the very least you should try it and see how it works and do a spike to see where it gets you.
+Yeah. Yeah, that makes sense. I feel like oftentimes when we host these kinds of sessions,
+people are asking, like, what frameworks do you use? What tools do you use? And almost everyone's
+answer has been, like, the first agent is 300 lines of code. You just sort of make a tool class
+at a for loop and you can really see how things break and fail. You mentioned sort of like
+inheriting the chat bot assumptions when building these agents. I feel like, and maybe correct me
+if I'm wrong here, you know, today is the agent in the sidebar, it's in the CLI. I think some
+companies are exploring things like background agents. Like, do you feel like that's generally
+the correct direction? Or is there something even like more interesting that you feel like is
+underexplored? I think background agents are very compelling. I think that's definitely going to be
+a thing. I tend to think that the way that a lot of folks are approaching it is kind of like too
+vertically integrated. So, like, as a developer, I think the truly powerful tools are, like,
+simple and composable. So if you think about the tools that have really stood the test of time,
+they're like the Unix tools. They do one thing, but that one thing might be actually pretty
+complex under the hood. But they're encapsulated in such a way that they're easy to reason about.
+And then you can compose them and you can deploy them in different environments. I think that's why
+the CLI form factor is so compelling right now. It's like I can use the CLI on my local machine,
+but I can also deploy it into an arbitrary container where I've done the setup for how
+that development environment ought to build because that's often very domain specific.
+And the more vertically integrated approach I think can lead to, in the short term, like a
+schnazier demo. It's like, oh, here's a cool video that I'm going to share out on Twitter of it doing
+a bunch of things. And look, it's drag and drop. But I think in practice, what you see is those
+solutions end up being brittle because there's a huge diversity of code bases. We've seen a huge
+range of build systems, code base size, monorepo versus micro repo. And it just gets even weirder
+the more you move up into the Fortune 500 and the code bases that power the world. And so I do think
+that you can optimize for the Twitter hype if that's the case, and you build a vertically
+integrated solution that demos well. But I think the long run, things will tend to pull towards
+tools that are more composable, more Unix-y, and don't force a set of very opinionated choices on
+the rest of the SDLC. I see. So maybe in the future, I'll expect like that app amp GitHub
+action that I can just tag and just sort of get some work done that way. Yeah. I mean, the beauty
+of the CLI is that anyone can create a GitHub action that does that themselves, right? Like
+CLI, you don't have to wait for the first party to do it for you. And develop a fluff to build,
+right? The magic thing about agents is like, it's not just end user experience that you can
+ship to people. It's like, hey, try this in the editor. It's pretty good. But also, like you can
+script with this thing, like put it in a bash script. But I think we're thinking more about
+ways in which we can make it possible to program agents using actual programming language as well.
+So stay tuned for that. I was excited. Maybe I'll wrap up with one more question, actually around
+Billing. Saurabh asks, how does the billing work so far? For example, when he has CloudMax,
+they use like one API. Because you guys are using tons of different models,
+how are we thinking about API usage in the enterprise?
+Yeah, so it's really simple. Like the AMP has a server. And so all the inference for all the
+different models that we use get routed through that single server endpoint. And then we just
+record how many tokens you're using against each API. And then we just bill you for the usage of
+those inference APIs. So it's really simple, very transparent. No kind of like magic underneath the
+hood. It's just usage-based billing routed through kind of like a single API endpoint.
+That makes sense. Yeah, I think also I just find the thread experience to be really interesting.
+I think as I grow my own team, it will be very cool to sort of see how people are using tools,
+even give feedback and just say, oh, I was like, see how you've been doing this data science with
+AI. Here's a couple tips. And then to more material. I think that's all. I think most of
+these other questions are very similar. I guess one other question, maybe this just comes back to
+evals, which is when do you lean on tools versus like the native capabilities of some of these
+outlaw systems? I think maybe the example is pointing to something like search. Yeah, so
+actually I would say search is not a native capability of any LLM. There's some model
+providers that provide a search endpoint, which I would just say just use whatever works for you.
+So I think the thing to recognize is that there are many things that are packaged up as
+sort of like magic, but actually things are quite simple. Like if you want to use web search,
+you can use free web search. That's what we use. I think it's what some of the model providers
+actually use underneath the hood as well. There's other APIs. In terms of what do we
+decide to build into, build as tools versus just rely on the model to do. There's some tools,
+for instance, that do deeper thinking, like the Oracle tool. It's really motivated by what the
+model can't do. So I think if you're building these things, just do the simple thing first,
+see what the model is capable of, see if you can prompt in that direction. And then when you hit a
+wall, that's when there's motivation to build an additional tool or build something fancier.
+Right. And that makes sense. I definitely have learned a lot about sort of how I should be
+thinking about these agents, especially in the non-coding workspace. I think by the end,
+people just come up with a black box, like everything I learned from code and how to build
+things. I do think one of the things we've been exploring more is having a smaller tool that
+helps you find the filters you need to search to pass into the bigger tool. Even if you just have
+generic document search, maybe I can filter by subdirectories or filter by owners or teams
+and projects. And building that portfolio of tools makes sense. But having a subagent do that now
+feels very obvious because it is like 15 tool calls. It's like burning up your tokens.
+Great. I mean, we have like five minutes left. If there's anything else you wanted to say,
+I think you shared your Twitter. But yeah, if you have any other message for the audience,
+if we just shoot that off. Otherwise, we'll send some notes in the end.
+If you're coding professionally or on the side, we'd love to hear your feedback from trying it
+about, we built it for professional developers. Like I said, from kind of like rethinking things
+from first principles. But as almost like a side effect, we've seen a lot of people
+who are more on the novice end of the spectrum get use out of it as well. And so whatever your
+level of experience is in building things and in code, we'd love to hear from you.
+Our team is very online and responds to feedback very quickly. And we think that
+what's motivating for us is just to see it used in the wild and to get that feedback. That's like
+the dopamine hit for us day to day. And there's so much that's exciting, that's changing about
+how code is written. And we're just eager to be kind of like on the frontier and discovering
+how agentic coding ought to be done in real time. And so much of that is just like
+listening to our users and learning from them in terms of like interesting creative ways in
+which they've discovered they can use this tool.
+Great. Thank you so much. We will send the recording and hopefully I'll be able to share
+with you some of the coding agents I've been working on through that blog post. I really
+recommend everyone find that out. It's really mind blowing to see AMP just like create an agent
+in about five minutes. It's crazy. What a time to be alive.
+Yeah, exactly. Exactly. Great. Piyang, thank you so much. Thank you everyone else listening.
+It will send some follow ups over email. Take care everyone. All right. Thanks.

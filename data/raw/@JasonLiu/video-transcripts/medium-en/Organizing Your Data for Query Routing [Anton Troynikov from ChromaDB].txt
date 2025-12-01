@@ -1,0 +1,971 @@
+Just by way of intro, I am the co-founder of Chroma.
+We are an open source retrieval system for AI applications.
+We help you build things like RAG really, really easily.
+I think that this topic about organizing your data for retrieval and really
+organizing your data for query routing.
+And I'll explain what that means in a little while is often overlooked.
+It's not especially sexy, but it is a mistake that I've seen a lot of people
+make, and I think small things like this and chunking and other pieces really
+add up to a lot of what contributes to retrieval accuracy and, you know, what
+you should be thinking about when building applications.
+A lot of this stuff just isn't really best practices yet because many are
+still coming to grips with how we're supposed to be building applications.
+And so my purpose in this presentation is to give you at least a starting point
+of things that maybe you didn't know you what to be thinking about when
+you're setting up your pipelines.
+So I'm going to just jump in, Jason, I'm relying on you to pay attention to the
+chat in case there's anything that you want to shout out.
+Otherwise I'm just going to dive in.
+So, you know, let's, let's talk about organizing your data for query routing,
+which is really organizing your data for RAG, right?
+There are steps that I wish everybody knew.
+I said these in the last presentation.
+I'm going to say them again.
+You need to look at your data.
+You need to look at what exactly is going into your vector database or your
+database, you need to actually see what's in there before you do literally anything
+else, and that includes organizing your data.
+I think I want to enhance that from what I usually say here is you also want
+to be looking at your queries.
+You should take a look at what your users are actually trying to access in your
+data, not just what data you have stored, because often this maybe doesn't align
+and you're maybe retrieving things that you don't expect.
+Always do these two things first while setting up your pipeline.
+This also does pay into sort of how we organize our data.
+So it's, it's something that I want to put front and center.
+So let's think about what our data for retrieval might actually look like.
+What are some of the characteristics that matter for the purposes of organizing it?
+So the first thing is, is thinking about our users, right?
+Do each of our users have their own data?
+So for example, are we building an application where our users can
+upload their own documents and they only have access to those documents?
+Or are we building, for example, an enterprise application where each team
+has maybe a separate document store, or maybe they're sort of ACL and access
+control considerations around this.
+Does each user or each team or whatever the abstraction that you're using have
+access to all of the data or only some of the data or all of the data all of the
+time, or all of the data some of the time, this is well worth thinking about, right?
+And the other thing to think about here is does this access actually change over time?
+And what I mean by that is maybe right now X, Y, and Z users have access to A and B
+data sources, but maybe we want to add a user later, maybe we want to remove a user.
+Maybe we want to restrict or open up what data a given user has access to.
+So we need to think about does that access change over time?
+The next thing to think about is besides users is data sources.
+So you might be building a fairly simple RAG application where it's, you know, one
+sort of corpus of data and all the data kind of looks the same.
+Maybe it's all case files for legal professionals.
+Maybe it's all scientific papers in a particular domain of biology, right?
+Or maybe you're building a more rich application, which is often more powerful.
+And you might actually be dealing with, first of all, different kinds of data.
+So one example of this is like financial reports, investor relations reports from
+a company, economic data, which is all related to the same set of topics, but is
+different in form and structure and different in content.
+And of course, then you can think about things like multimodality, like are we
+going to be doing audio and images as well as text, which is increasingly possible
+and increasingly more powerful as the LLMs themselves get more powerful.
+And then the immediate next question, of course, is does each user have access
+to data from every source, right?
+Now you have that intersection of what are the users doing and what are
+the data sources doing?
+And the third thing to think about is like, how often is the data really updated?
+Sometimes we have really real-time data sources that we want the LLMs to process.
+For example, you know, we're getting stuff out of news from a Bloomberg terminal,
+right?
+Versus, oh, we might have uploaded a math textbook and you know, the math hasn't
+changed in a hundred or sometimes a thousand years, so we probably don't need
+another version of it anytime soon.
+So those are considerations around data sources.
+And finally, there's also things to think about in terms of queries.
+And this first bit is a little abstract, so I'll try to explain it in a bit more
+depth.
+When I say what scope do queries have, it's oftentimes when we send a query to
+our data, we don't necessarily want to address all of the data available, even
+if it's for one user or one data source, because maybe we want to restrict to a
+particular date range, right?
+Or maybe we want to make sure that we're only searching among records that have
+particular keywords included in their text.
+And you can imagine other types of data or metadata that we would like to filter
+our queries by.
+And the question is, first of all, what kinds of filters are there?
+And second of all, how often do those filters apply?
+Right.
+And the other thing to think about again is how do queries intersect users?
+So our queries uniform between users.
+In other words, are all of our users, even if they have access to the same data from
+the same data source, attempting to get the same results from it, are they
+attempting to sort of query that data in the same way?
+Right.
+These are important questions to ask before we start thinking about how we
+organize our data.
+This is more of a set of questions to ask rather than a set of solutions for you.
+Now in this presentation, I'm going to sort of suggest two approaches, but really
+what I want to give you here is a set of sort of conceptual building blocks for
+when you think about how you're going to organize your data, what you need to be
+thinking about.
+So let's start with everybody's favorite and how everybody actually does this by
+default.
+So this is the sort of big pile of records approach.
+And here's what you do.
+You have one giant index for all the data in your entire application.
+It's very simple.
+It's the default assumption for many vendors and you do things like, oh, if
+my queries need to be scoped by user, well, I'm simply going to attach a user
+ID to each record and then filter my search by those user IDs.
+Right.
+This is a default assumption for many vendors.
+The reason it's the default assumption for many vendors is most of the products
+in this space were originally built as large scale search indexes serving
+massively parallel queries against a single large data set.
+But that's very different to the use case that we're building for, which is an
+application, which resembles an application database much more than a search index.
+That said, this is what most vendors try to push you into doing.
+Right.
+And I'm sure that you will have experience with one or more of those vendors doing
+that to you by now, it's not strictly illegal.
+You're probably not going to get arrested for doing this yet.
+Now there's a bunch of cons here.
+The first is of course, from a purely compliance and security point of view,
+your user data is commingled, right?
+There is no logical separation between that data, except in terms of the filters
+that you apply to make sure that your results are only retrieved for certain IDs.
+Now this is kind of sketchy in databases with robust access controls.
+This isn't really a problem if you're doing things to do with compliance.
+However, most of the vendors who build things in this way are not really thinking
+of those metadata keys as something that's used in ACL contexts.
+And so they don't necessarily have the same guarantees regarding what data is
+actually accessed and when, as databases do when they do something like a user ID
+key, that's worth thinking about.
+There's also a bunch of performance issues with this approach, which
+I'll go into in the next slides.
+Now that's not to say that this is always the wrong answer.
+Sometimes if you have a single homogeneous data source, which is shared by all users
+and all users pretty much want to query that entire set of data all the time.
+So for example, if I was to embed, let's say Wikipedia, and I just want to
+semantically search Wikipedia and give all my users semantic access to that,
+then this one giant search index is fine.
+Right?
+If I'm sort of indexing every tweet ever, that's probably fine for this, right?
+Cause it's just not that tightly scoured.
+But those resemble much more like traditional search applications than they
+resemble something that you might use an application database for in an AI application.
+So again, not always the wrong answer, but you should be much more cautious with this.
+You should notice yourself trying to force a more complicated data
+organization into this layout and start considering alternatives earlier.
+That's my strong advice here.
+So let's talk about some of the other cons here.
+Now we talked about already the sort of issues around security and compliance.
+When you have one index with many users, data is commingled.
+A very common pattern, like I mentioned, is you just tagged the records with user
+IDs, maybe by putting a metadata key or something else, and then you filter by
+that metadata key to retrieve only around records.
+Now, besides the commingling issue, this actually hurts recall.
+And this is kind of little known because it's slightly technical, but I'll go into
+it because I think this is important to understand.
+If you apply the more filtering you apply, and there's a term called specificity,
+which I'll explain in a sec, you're more likely to miss relevant results.
+And specificity or also called selectivity is what fraction of all data in your data,
+in your index actually matches a given filter.
+Now, the reason that this causes a recall to drop is because of the way that vector
+search works under the hood.
+The way that you can think of how vector search works under the hood for most
+implementations today is you have your vectors, they're stored as a graph data
+structure, and you have a compute budget for how many edges of that graph you're
+going to traverse.
+Now, if you're doing this the more sophisticated way, which is called
+pre-filtering, what happens is you walk that graph and some of the nodes that you
+encounter on that graph, if they don't match your filter, you don't consider them
+and you keep going until you have enough results.
+But because you have a finite compute budget, the more edges you have to walk,
+the more irrelevant edges there are, the lower the specificity of your filter is.
+So to be specific about this, imagine you have a database with 10 users and the
+amount of data between them is fairly uniform, then every time you filter down
+to one user, your specificity is only 10% of all the data.
+And so already one in 10 nodes that you encounter during that search even has the
+chance of being relevant to a particular search.
+So this is before we even compute relevancy, this is just because we're
+filtering those out during the pre-filtering step.
+So in order to get the same recall guarantees, you need 10 times the compute
+budget, and this only gets worse than more users that you have.
+Now that's a very crude approximation, but I want you to think about this.
+I want you to understand that applying filters in this way creates problems for
+recall and the more users you have, the worse that problem gets, right?
+And this applies to filtering in general, but this is the most common mistake that
+I see when people organize their data in terms of a single index for everybody.
+This gets even worse with post-filtering.
+Post-filtering is a different approach to this where instead of walking the
+graph and deciding whether a given node matches, you just grab way more
+results than you usually would.
+So say you want 10 results, you grab a thousand results, right?
+And then you post filter that list for reasons of frankly math, post-filtering
+in this way actually reduces your recall even further.
+So if you have a vendor that's using a post-filtering implementation, it's
+really, really bad to try to organize your data into this big bowl where
+everything is combined and then filtered by user keys.
+So that's one issue.
+It's overlooked.
+It's somewhat technically sophisticated, but it is important and it does have a
+significant impact on the results quality.
+And of course, recall is the number one thing that you want to care about
+because if you're building an AI application, the models are getting
+better at filtering out distractors, but they cannot process information
+that's not available to them.
+So they need all the relevant information, right?
+And so if your recall is going down, it means they're not getting all
+the relevant information they need to process the query.
+So your application performance goes down.
+And as we all know, this could be pretty difficult to debug too.
+Okay.
+So what about the, what's wrong with, for example, storing multiple
+data sources in one index, right?
+Like everything's text after all.
+Yeah.
+Well, there's a couple of problems.
+The first is even though everything is text, you have different types
+of data that get commingled.
+Now there's different types of data may come from different domains or they
+may have different representations.
+You can imagine, for example, storing code and documentation for that code
+in the same index under the same embedding model, or you can imagine
+things like SEC reports versus just investor relations versus marketing
+stuff all stored in the same index.
+No, nominally they're all text.
+Right.
+But the fact is if you store all of these in a single index, you need to
+store them all with a single embedding model.
+And what that means is you're pushed towards using a general embedding
+model, which won't necessarily give you great performance for your specific
+application, even if it has good performance in the general case, right.
+And this will sort of cut you off from the ability to being able to fine tune
+on a per domain basis or even a per structure sort of basis here.
+And certainly you won't be able to fine tune per user, which by the way, is an
+overlooked technique and I think is quite powerful and I think it is covered
+in this series of talks by somebody else.
+Another way to see why this is a problem is if we start thinking about metadata
+that we might want to attach, different data sources are likely to have different
+properties, which means we want them to have different structures of metadata.
+And if we're relying on that metadata to be in a particular structure, just like
+in a relational database, we're sort of, if you like, try to keep everything
+in normalized tables, the number of columns tends to grow.
+This is the same issue here.
+If we keep sort of tagging every record with its own type of metadata, everything
+turns into a big mess as we keep adding data sources, it becomes very difficult
+to manage and really understand what the schema is there.
+Another thing to think about is like, okay, like we're commuting all these
+data sources, but given that our queries will vary and that different people may
+use the data in different ways, is every query actually relevant to every data source?
+If it's not, then what you're going to get is irrelevant results from
+irrelevant data sources for some queries, pushing out relevant results from
+relevant data sources, and you have no real way of separating that except by
+using filtering, and we've talked about the problem with filtering before, besides
+which you still have to establish which filters to use for which queries,
+which is its own trick.
+And finally, you know, you still have this question like, okay, well, does
+every user have access to every data source?
+And that comes back to access control, right?
+And implementing access control on top of, let's say, a vanilla vector
+database is not always simple and does come with its own compliance issues.
+If you're going through something like SOC 2, you need procedures for
+this stuff and can be non-trivial.
+So those are some problems.
+So what can we do and what should we do instead?
+Now I'm not prescriptive, but I do want to give you the maximalist case, right?
+I want to take this maximally sort of commingled case and talk about the
+maximally, let's say denormalized case.
+For those of you familiar with sort of the database jargon, this is
+the approach here, we're going to do this fully denormalized.
+Now, what I mean by that is you do one index per user per data source, right?
+And this sounds complicated and expensive, but it doesn't have to be.
+So there's a lot of pros to this.
+It basically overcomes all the problems that I discussed so far.
+You get full separation of user data.
+Everyone's data is in their own index.
+There's no possibility of it getting critical.
+You get improved recall because you're no longer filtering indexes.
+You're just sending queries to the right index.
+You get independent indexing, which means that not only can your data
+sources be updated individually, which means you're not updating one giant
+index with a right for a very frequent data source, for example, writing to an
+already giant index is going to be much more expensive than a very frequent data
+source writing to a smaller index.
+It's all of its own.
+And you get more efficient reads because you don't have to read from
+the giant index every time.
+And that also is going to drive recall up for you because the same sort of
+graph traversal budget that I talked before is going to do more work for you
+because there's just fewer nodes to visit.
+Now the cons also fairly obvious.
+It's more complicated.
+You have to keep track of more stuff.
+It's not that much more complicated.
+I get into how to make this work for you.
+You then have the question of like, okay, well, great.
+You've got all these different indexes.
+How do I know where to route my queries and how are we going to deal with that?
+And I'll talk about them in a minute.
+How do we handle, you know, duplicate ads, updates, deletes, because, you know,
+I've said one user per data source, we have to feed the right to the right data
+source to the right user, right.
+Each time, which is kind of neat because it does guarantee that a user won't ever
+have access to data that they're not supposed to, because it's not in their
+index, so let's keep going.
+So that's a complication.
+It's not trivial.
+It's not necessarily that difficult.
+Now, the other thing is this means that your vendor has to give you a solution
+that makes creating, modifying and deleting indexes cheaply.
+Fortunately, we built Chroma from the ground up to do exactly that.
+Collections are very transparent data structures for us.
+You should use Chroma if you're going to do this stuff.
+That is the only plug that I'm going to give in this entire talk, but strongly,
+strongly recommended because we saw this coming very, very early because we
+understood people will be building applications and not search indexes.
+So if you want something that makes this cheap and easy, I do recommend us.
+So let's talk about solving at least one of these problems.
+Like I mentioned, like how do we route queries?
+Some of this is pretty trivial.
+Some of this is going to work exactly as you expect mapping user IDs to index
+IDs is trivial, just keep a table somewhere, right?
+You can write it out.
+You can make it as simple as literally just your user ID is also in the
+metadata of that collection and you retrieve the index by that metadata ID.
+Writing to data sources is similarly straightforward.
+Just keep a relational table, right?
+Of which data source goes to which user, which is kind of neat because it also
+takes the access control question out of the vector database itself, which may
+not have those robust controls that we want for compliance.
+So how do we route queries now to different data sources?
+There's a few options.
+The first and simplest one is, you know, what I think it was like full multiplexing.
+What I mean by that is you take the query and you just send it to all
+the applicable data sources, right?
+We're just going to find everything relevant.
+The question is then how many results do we return?
+Because previously, for example, in the one big index case would say, okay, well
+we want the top 10 results, right?
+But now let's say we have five data sources.
+If we ask for the top 10 from each data source, well, we get 50 results.
+The simple solution may be that given that the context windows have gotten longer
+because the per token cost has gotten lower, we literally just send all these
+results to the model and let the model figure it out.
+That's not off the table.
+You can do that.
+There is the question of how to filter and rank these.
+I think that it's worth experimenting with re-ranking models exactly in this
+context because the re-ranking model is kind of a global filter or a global
+classifier over any type of result with its relevance to the specific query.
+Right.
+And that can help you sort of get say your 50 results from your five different
+data sources and then rank them and then take the top 10 from there.
+I think this is actually fairly effective.
+It's worth experimenting with.
+I think re-ranking models are actually underrated mostly because people try to
+use them in the one giant index context in order to rank 10 results out of the
+thousand they get from one giant index, instead of using them as an augmentation
+to query routing, like we're discussing here.
+Now, sort of the more sophisticated version of this is LLM routing.
+And the short version of how that works is you tell the model which sources
+are available with the contacts.
+So you say, okay, these are all SCC filings and here's what one of them looks like.
+And this one here is like all marketing material from this company.
+And here's what one looks like.
+And then have it literally say, okay, well, this query should probably go to this
+and this index, but not this other one.
+This also works great with filtering because it means that the LLM can actually
+extract things like keywords that might be relevant.
+How does it work in practice?
+You can probably store this in the metadata or you can store it as a cached
+prompt for the sort of query pre-processing step in your LLM, and you
+have it determined which indexes might have relevant data for a given query.
+So you just rely on it to reason a little bit.
+What's cool here is again, you don't really need to use a full fat latest
+and greatest reasoning model.
+I think you can get away with most of the mini or the fast ones to do something
+like this, because the things the models are really good at, they're good at
+classification tasks, they're good at translation tasks, they're good at
+summarization tasks, and this, like which index should I route this query to?
+This is a classification task that they're really good at.
+So you can rely on that.
+And then you route the queries accordingly.
+There's also a bunch of potential benefits here, which I don't really go into,
+but one really effective technique for improving recall is at write time, include
+additional context about the chunk or the text that you're writing along with
+the text itself.
+Now a way to get that context is because it's already in the pre-computed system.
+It's already in the cached system prompt.
+And so all you have to do is just say, Hey, can you write a little bit more
+context about like what this data is about into the data before you start in
+the retrieval system?
+As with any time we use an LLM as a judge, and this is an example of using LLM as
+judge, you need to calibrate this.
+And what I mean by that is go back and look at your data, go and see what the
+LLM is actually really doing and see that you as a human would, what would you do
+as a human?
+And you can use that calibration step to give additional feedback and to sort of
+improve on the system prompt that you give the classification model here to do
+better at these things.
+Calibration is very important.
+Anytime you use LLM as a judge, I can give an entire presentation just on that topic,
+but I won't.
+That's basically it.
+This is again, intended to give you some conceptual building blocks.
+So I've looked at fairly open ended.
+I'm going to open it up to Q and A here and I'm going to rely on Jason to
+tell me what's in the chat.
+Sounds good.
+This is also a very good talk.
+I feel like every time you're given one of these lectures, I wish you just sort of
+ran your podcast a little bit more and just taught a little bit more.
+Cause I think you're one of the few people I talked to that have very clear
+exposition on what's really going on these days.
+Look, you bash your head against enough sharp edges.
+Eventually you sort of, you learn where they are.
+Exactly.
+Exactly.
+If you're clever.
+I think this is the top voted question.
+I think this is going to be, hopefully we can spend a little bit more time on this
+actually, but it's quite eye opening.
+Most people are not understanding why filtering is a problematic way of retrieving
+data.
+Couldn't databases be able to return all records that match a filter?
+I think this speaks to the idea of like exhaustive search, like
+agricultural small worlds.
+Can you speak a little bit about this?
+Cause I think this is a super important question.
+Yeah, I think that's right.
+I did kind of skip past the nature of semantic vector search here a little bit.
+So let me go back to that slide.
+So in the general case, yes, it's true that a database should return all records
+that match a particular filter.
+Now in order to make vector search efficient, we cannot use exact matching,
+right?
+Beyond a certain scale, it becomes infeasible to store and perform a nearest
+neighbor computation against all of those vectors, because it's, as you can imagine,
+it's an N squared operation.
+You would have to take your query vector and then perform a thought product with
+every other vector that's already stored in memory.
+That's prohibited from a memory perspective.
+It's prohibited from a compute perspective, right?
+So instead beyond a certain scale, we no longer do brute force matching.
+We do approximate nearest neighbor search.
+Approximate nearest neighbor search requires us to store our data in an efficient graph.
+Now graph data structures, for those of you familiar with CS, typically have
+logarithmic lookup times in the number of data points that are in your graph.
+That means that what we can do now by using a graph data structure, as I
+mentioned, is trade sort of efficiency and performance for recall.
+So in principle, yes, you could, for example, give yourself unbounded time to
+return a result and it would just traverse the entire graph until it had
+found all of the most relevant results.
+But that would require us to sort of also have unbounded memory.
+So we don't do that.
+We use approximate nearest neighbor search.
+Approximate nearest neighbor search has the word approximate in the name.
+And specifically approximation is we trade recall for speed, right?
+And we trade recall for space.
+Now, because of that trade, we have to decide how we're going to
+handle filtering in that setting.
+And there's two ways to handle filtering.
+Like I mentioned there is what's called pre-filtering.
+Pre-filtering means we are going to go through the graph step by step.
+And we're going to have some starting point in the graph and we're going to
+traverse it and we're going to ask each node, do you match the filter?
+And if it doesn't match the filter, we keep going.
+And we're only going to keep going up until a certain budget of
+edges that we've traversed, right?
+And if our filter selectivity is low, it means most of the nodes that we encounter,
+which means most of the edges that we traverse don't actually contribute a
+relevant result to our search.
+One way to think about it is we're much more greedy in what we're going to accept
+in that graph, which means that the further away relevant results from our
+starting point might not get found overall.
+Course filtering makes it even worse because you kind of have to rely on
+whatever is in the nearest thousand nodes, regardless of whether it's relevant
+to the filter or not, or 10,000 or however many it is.
+And so the lower your selectivity is, the more irrelevant stuff that there is.
+And it's actually even worse for reasons that I can write a mathematical
+proof about, but intuitively you can imagine, imagine you have like red
+and green points in space, right?
+And you're looking for green points.
+And if there's like roughly 50, 50 red, green points, and you draw a circle
+around them, you're going to have a good chance of getting the number of green
+points that you're looking for, which are nearby.
+However, if there are 10 times more red points than green points and you're
+selecting, let's say a hundred points, you're only going to get one tenth of all
+the ones that you're looking for.
+That's kind of a geometric intuition that I have about it.
+So it is the approximate nearest neighbor property of semantic vector
+search that causes this issue with filtering in that approximate
+nearest neighbor setting.
+This is fine for brute force, by the way, if you only have like a thousand
+entries in practice, this is going to get brute force for you.
+You're going to get exact matching with perfect filtering every time.
+You don't have to worry about that.
+This is for indexes, anything above like 10,000.
+This is when this starts to kick in and around a million, you
+will really see this happening.
+Yeah, this is definitely something I think many people don't really even
+recognize around some things like a PG vector, I believe.
+PG vector sacrifices a lot of recall.
+So you don't actually get exhaustive search, which is an issue if you're
+doing like financial resource or legal documents and you don't really understand
+what the approximation is doing.
+Of course, this is another way in which organizing your data in this
+denormalized way that I described actually helps you quite a bit.
+It means that your recall will go off for free, even though you
+have the same amount of data.
+You like, you don't really have to do anything.
+You just organize your data differently.
+You'll get better results.
+I think this is a perfect segue into the second question, which is, can
+you share an example of implementing dynamic metadata filtering where a user's
+question is categorized into a collection and using the filter?
+So I'll say two things.
+This will be the topic for sessions five and six.
+So we'll have a bunch of code examples there, but a simple example that we've
+seen in financial research is just first being able to filter documents
+based on the stock ticker, right?
+If you want to ask questions about Uber, it's much more useful to either filter
+against the Uber ticker, maybe that's metadata, or just having an index
+that's specifically for Uber.
+What that also means is there's other kinds of questions we won't be able
+to answer because you want to search across all data, but Anton, I'll
+let you take it from there.
+No, I think that's actually a really good example.
+Can you share other examples of implementing a dynamic metadata filter
+where a user's question is categorized into a collection and then uses the filter?
+Yeah, absolutely.
+Someone in the chat asked for a legal example.
+I think that's also.
+I'm thinking of a good legal one actually, right?
+So in the legal domain, you may have case law overall, right?
+And determinations, and then you might be interested in, for example, a particular
+decision by a particular court, right?
+Or all of the decisions that a particular court has made about a particular issue.
+And so what you can do is you can say, okay, in your set of data sources, you
+have court decisions is one thing, briefs is another thing, and then like
+evidence or whatever the documents are on the third thing.
+And then your query, you say, okay, I need to understand like what such
+and such superior court determined about such and such case and cases like it.
+And so your dynamic routing say, okay, well, this is really
+just about court determinations.
+I'm going to just route the query to that index instead of pulling in everything
+that might be relevant at all, because me as the practitioner really only cares
+about what the course decided, right?
+Not about all the other evidence that might be around the same issue.
+So that's just one example.
+It's not a great example.
+I'm not a lawyer.
+But it is the sort of thing that comes up.
+Yeah.
+Another example that I've looked at in the sort of accounting context is when we
+have different invoices coming from different States or from different
+countries, we only want to retrieve the tax law and the exemptions of that region.
+And so, you know, if someone's coming in from Brazil, we want to figure out
+all the tax law for Brazil.
+If somebody is coming in from Wyoming or New York, we want to be able to
+atomize that in a certain way and see if we can find any exemptions.
+Let's do one more question from the Slido and then we can go back and
+forth from the live questions.
+This one's also pretty particular to me, but you mentioned a lot about the routing.
+I don't know if, how much have you seen around the model context protocol and
+how that might be a way of defining model routing?
+Yeah, it's actually kind of cool.
+I've been working with MCP myself lately, building a little tool for myself.
+I think MCP is a great idea.
+I think being able to discover data sources, having the model automatically
+discover data sources is very useful because it makes it fully modular, right?
+You don't have to program this in anywhere.
+You can just create or remove data sources and the model will be able to discover it.
+And I think it's a great idea.
+Unfortunately, I haven't been that impressed with their actual implementation
+of MCP.
+It's not as well supported as I would like.
+I've opened a lot of bugs against it, a lot of issues, but as an idea, I
+think it's a really good one.
+I think that you can expose data sources with their context inside the MCP and
+have the model treat them as a tool, right?
+And then barrier routing just becomes tool coding.
+Which is really the same thing under the hood.
+So it depends on how much you want to wrestle with actual MCP, but
+conceptually it's very similar.
+Sounds good.
+Navneet, do you want to ask you a question?
+Yep.
+It's related to the dynamic routing itself.
+So I knew you gave an example of accounting and legal rights.
+So do you do that as a part of pre-filtering or let the LLM as in judge,
+let's just say I get an question related to like as which code does this
+case belongs to, right?
+So do you provide some enums like where LLM is like decide to categorize this
+question into like only these four categories and then use that as a filter?
+How would you or let you as in judge or somebody human in the loop to
+decide those dynamic filtering?
+Yeah.
+I mean, the, again, the easy way to do that is just like tell the LLM what
+data is available and then give it examples in context of how to make that
+decision and then basically watch what it does calibrate it, right?
+Like give it some examples, make it work.
+Yes.
+Okay.
+Perfect.
+Thank you.
+Yeah.
+I think there, a lot of it will just be also understanding, like if we look at
+our queries, we're going to be motivated to either add metadata filterings or
+adding individual indices, right?
+Because again, if you, if you build the, if you go down the route of having
+individual collections, then you can't query across many collections in an
+efficient way, whereas if you have many collections or single collection, it
+really depends on what your customers are trying to, trying to get.
+I don't know if I can pronounce your name.
+Songer.
+Okay.
+Perfect.
+Cool.
+So I just want to ask a question with back to the legal example that you were
+sharing because I'm working on such a problem and let's say you have document
+types, cases, rulings, publications, and so on, but there is one type which is
+dominant, like 95% of it is dead and it's like millions of vectors.
+So then the path that we decided to go down on is to try to extract as much
+metadata from those as possible.
+As large a metadata set as possible.
+So, and then we are using elastic search for this and then we do the
+filtering and afterwards do the vector search, but what I'm hearing here
+is like, yeah, very interesting.
+So I'm curious about your thoughts.
+Now, does this mean that we should rethink the way that we structure this,
+like millions and millions of vectors and maybe some of the metadata is now
+should become indexes or how should we.
+About it.
+That is exactly what I would suggest.
+And I would take a look at the query patterns that you're actually
+receiving in practice to see, like if, if every query is being filtered on a
+particular metadata key, then you should probably just denormalize that key.
+You should probably just make separate indexes for every value of that
+particular key so that you can route the query to that key, right?
+Elastic searches is particularly not great when you're filtering vectors
+for a variety of technical reasons to do with their implementation of vector search.
+Got it.
+But, and what do you do when it's a combination of multiple metadata?
+Like in one user query, you could have the author of a publication and also
+the institution, for example, behind the publication, you cannot avoid, it feels
+like you cannot avoid having metadata in some sense.
+Yeah.
+So I'm not suggesting that you should avoid it completely.
+All I'm saying is that you ought to be aware of it, right?
+This is, this is a, you should be making this as a conscious choice
+instead of landing on, okay, let's just put everything in metadata and filtering
+by default, you should understand that this is a trade-off, right?
+And then figure out what the appropriate trade-off actually is.
+Yeah.
+Let me add to come other examples too, at least in the construction context
+where we had first built a simple application that had a single index.
+And that was using embeddings, embedding search.
+And when we looked at the queries, we realized two things.
+The first thing was I think about 20% of the queries were on a specific RFC code.
+And so these expert users basically would just ask what's the due date
+for RFC 1, 2, 7, 4, right?
+So we, then we went and decided to build a specific RFC index where that was going
+to be, you know, just using full-text search, we would be able to retrieve the index
+and then retrieve the document from that.
+And so that's one example of just having, you know, our segmentation
+discover one new capability.
+And then it turns out one of the other things people did was they just
+understood where many of the people who are querying these documents were the
+ones who created them and they generally knew what the title of those files were.
+And so again, people would be very, very, very capable of just sort of verbatim
+reproducing the title of a document they had cared about, but we didn't have a way
+of being able to retrieve that.
+So then we built not only an RFC index, but a full-text search over the title.
+And those just became different tools.
+There was a query RFC, query by RFC code, query by title, and then general embedding
+search.
+And by doing that, we were able to dramatically improve recall for about
+like 30, 40% of our questions.
+But this is kind of discovered through the segmentation and data analysis process.
+Yeah.
+Thanks.
+So my question is basically what are the challenges on the way of automating some
+of this in the DB?
+Cause I'm thinking if single index is less efficient than this per user
+indices and so on, can't it be done by the DB?
+Right?
+Yeah.
+So I actually completely agree with you.
+I think that this is something in the longterm that the database should be
+doing for you.
+You as the implementer or the user shouldn't really think about this too much.
+Right?
+But I'll point out that even with relational SQL databases, we still have to
+think about the performance of denormalized tables versus normalized tables
+and things like private keys and indexes.
+In the ideal case, all of this would be automatic and hopefully it will be in the
+future or the time being we do have to manage this ourselves, especially as we
+establish the best practices and as the type of applications that we're building
+involved, right?
+This space is, is moving pretty quickly.
+And something that I've said, and Jason's heard me say this about a million times.
+The speed limit right now really isn't the model capabilities.
+The speed limit is our ability to sort of experiment and try different stuff.
+Right.
+But because of that, locking us into any particular paradigm at this point is
+likely to slow us down because we just don't know what we don't know.
+So for now I can make recommendations about here's how you should organize
+things, but deciding what to build into the database itself, what to build in
+the product itself will shake itself out over the next period of time as we figure
+out what we want to build actually is.
+I've seen some examples where, you know, there's maybe like full tech search
+supported within a body database, but that's kind of as general as it ought to be right now.
+I think we as a consumer still need to do a lot of the thinking upfront rather
+than leaving it all to the full tech search.
+David, did you have a question?
+Oh, I did.
+Yeah, thanks.
+Yeah.
+I was trying to figure out how to raise my hand.
+So we're talking a lot about retrieving out of the vector database, but I feel
+like it's a pretty big problem to manage ACLs, get the dating in.
+So can you talk about what frameworks you've had some experience with?
+Cause it seems like a really hard problem.
+Like how do we manage SharePoint and.
+It is a hard problem.
+Yeah.
+It's ultimately a hard problem.
+The solution so far that has worked best is to delegate.
+So delegate the ACL outside of the vector database itself for now.
+And then basically as part of the call to the vector DB have the sort of ACL
+filter already ready, right?
+But delegate this to just for now, like a more robust technology.
+So the ACL filter would be part of the metadata.
+Like if we were to do this in Chrome, would I stuff the ACL as
+a attribute of the metadata?
+Well, if you had a collection per user, a lot of that probably just goes away.
+Right?
+Right.
+You just literally know, okay, like these are the users' collections
+that I'm going to query.
+So I don't realize that's it.
+So I just have to query to the right place.
+I think that was a really interesting idea, but in the cases where you might
+have hundreds of thousands of users, do you feel like, what's your opinion on
+the scalability of that approach for very large user data sets?
+So in our case specifically, we have made scaling the number of indexes that
+you have even to the hundreds of thousands of users case, not a problem.
+It's like, it is not any additional load for the architecture that we have.
+The real thing to ask here is about redundancy.
+So what do you do when 50% of your a hundred thousand users have access to a
+given piece of data and it's a different 50% for every data point?
+That's like the worst case adversarial scenario, right?
+You have to at least duplicate every single piece of data that you write.
+I don't have a good solution for that.
+I think the correct solution for this is to have like real ACL built in.
+Right.
+But I don't like what the right shape of that should be.
+It's unclear right now.
+One obvious way to do it is to sort of, rather than have, let's say physical
+indexes, is to construct logical indexes over the data points.
+So what I mean by that is just instead of having actual vector representation
+in each index, you just express the index as a logical graph.
+So each user gets their own logical graph.
+Basically that's one solution to it.
+We've looked at it.
+We haven't implemented it yet.
+It's a question of demand.
+And this is an efficiency optimization that I think we're sort of as an
+industry or as a field, we're a little far away from needing that particular
+optimization today, so we haven't really put effort into implementing it, but I
+can see it on the horizon, right?
+And there are ways around it.
+If like someone needed me to build a very high performance index today that needed
+to have this feature, absolutely, because for example, milliseconds count, that's
+where I would build virtual graphs over data for each user.
+Okay.
+Yeah.
+That's great feedback.
+Thank you.
+And I would do it in a rest.
+Cool.
+If there's no live questions, we can jump back to some offline questions.
+We got maybe 10 minutes left.
+How does that sound?
+First for me.
+So I think, oh, Martin, let's go to you actually.
+Albert, I saw Martin first.
+Go ahead.
+Sounds good.
+Thanks for the talk.
+I'm just trying to understand why again, like I heard the initial answer as to
+why pre-filtering didn't really work.
+My thinking right now is like, so when you create the, like the nearest neighbor
+index with all the documents initially, and then once you remove a big chunk of
+documents, that index basically gets messed up, right?
+Is that why it messes things up or am I?
+Yeah.
+So this can, again, depending on the implementation, yes, that can mess
+things up in the long run.
+You're exactly right.
+Because what happens in certain implementations is the nodes are actually only
+soft deleted.
+So if you have a lot of updates going into the same index where like, let's say
+only 10% of the original documents are still there at any given time, you have
+this exact same selectivity problem.
+Now the solution to that, of course, is to not soft delete.
+Most implementation, graph-based implementations allow you to in place
+update, which is much better for the selectivity problem, but you correctly
+identified this as an issue.
+Yes.
+Gotcha.
+Wow.
+That really helps.
+Thank you.
+Of course.
+There's a lot.
+So what's interesting here is, and I think we're still coming to grips with this
+because again, we've only really been around, I mean, when I say we, I mean, AI
+application development has only been around for about 24 months and a lot of
+what we do in retrieval still has this conceptual overhang from when these were
+primarily search technologies, right?
+And so in a search index, it's not likely that you only have 10% of your original
+data there because if you're thinking about something like Pinterest, which is
+one of the original use cases for semantic vector search, you're just adding,
+you're very rarely removing, right?
+And so removals are only in that setting going to be a tiny, vanishingly small
+fraction of the entire graph.
+Whereas if we're building an application, the whole point of an application
+database is that you have an accurate up-to-date representation of the
+current world, world's always changing.
+So these concepts that were fine and safe in search index land, no longer
+apply in retrieval land.
+And we have to kind of work out what to do differently, which means that like,
+we have to sort of judiciously adopt or discard what works in search and
+what works in retrieval.
+I think that actually segues pretty well into a follow-up question, which is, how
+do you manage these multiple indices when data changes?
+Do you have any like preferred tools you want to think about?
+I think, you know, I've had customers where data comes in, the large text
+blobs get written to the dynamo and then some data gets put into a pine cone and
+then that's kind of charging, costing them like a thousand dollars a day.
+And then some of the data goes to elastic search.
+See your issue, you should use Chroma instead, because we do all of that in
+one place.
+And then how do you think about these like updates and stuff like that?
+I think also one of the issues people run into now is maybe new documents come
+in that look like the old documents with small updates.
+Yes.
+How do you think about this like time component as well?
+Yeah, I think again, if it is explicitly an update to a particular document, the
+answer is, okay, like keep track of that document's ID and send an update call
+with the document ID, right?
+That's relatively cheap.
+It's fine.
+It's safe.
+Everything is in place.
+The graph still works well.
+Where this is a problem is if you add a document that is very, very similar to
+an existing document, right?
+And I think ultimately the solution here has to be something like an automatic
+filtering or automatic sort of cleanup or summarization of data, which is something
+that needs to be built into the database itself.
+But for now, you basically have to keep track of this stuff for yourself, right?
+Now, when you have like multiple solutions for this stuff, when you have like pine
+cone for vectors and you have DynamoDB for documents, we specifically built
+Chroma so that you don't have to do that.
+And Jason, you remember the meme that I sent you on this topic, which I
+think is appropriate here, but like my answer here is just don't, right?
+We built this for you so that you have document storage, metadata filtering,
+keyword search, everything all in one place, vectors in one place,
+embeddings go to one place.
+If you absolutely must use separate technologies for each of these things,
+you need to think about a layer of indirection in your application that is
+probably managed by yet another database technology, right?
+Or some configuration somewhere that you have to manage.
+I recommend if you're going to manage it as configuration, you do
+configuration as code, there's no great solutions, but there are solutions at work.
+Or use the thing where everything is built in.
+All right.
+This is the last question.
+This is almost a promo for next week's session.
+So next week's guest lecture is actually from Glean and they're going to be
+talking about how they fine tune like customer specific embedding models.
+And you mentioned general embedding models.
+And I'm just curious, cause I'm a proponent of fine tuning, but I'm
+curious, what have you seen and what are your thoughts on fine tuning,
+rerankers, fine tuning, embeddings, and having like index specific models?
+It's cheap and you should do it.
+That's, that's my perspective.
+It's very, very cheap.
+People hear fine tuning and they get scared, right?
+Because now you're in big brain AI PhD land, sort of reality is the hardest
+part of fine tuning is creating a dataset and then benchmarking the
+results of your fine tune.
+Chroma is releasing an automatic benchmarking tool very, very soon,
+which will just work with your data.
+You don't have to do very much at all.
+But if you have a per user index, it now becomes possible for you to fine
+tune or do something like a linear embedding adapter, which again, I
+guess you'll cover next week very, very cheaply.
+And suddenly each of your users individually will be getting better
+results, your application just work better automatically for everybody.
+It's just a question of establishing that pipeline much easier to establish
+that pipeline when you have these separate indexes.
+I'm a big proponent.
+You should do it.
+That's a good call out that this is actually a feature of your user specific
+indices, but I've always seen it from the context of, okay, maybe legal
+documents will look different than financial documents, but yeah, it is
+the case that if you just have feedback from individual user index queries,
+then you can fine tune adapters for each one.
+Look, the example that I love to use here is imagine that I have an
+engineering firm and that engineering firm has a parts catalog and I've
+semantically stored that parts catalog, right?
+The people who are creating the products have a different use for the data in
+that parts catalog to what the salespeople have, right?
+So it's the same data, but two groups of users are accessing it completely
+differently, which suggests that they want to like, you can fine tune for
+these two different groups of users.
+And if you use something like embedding adapters, you don't even
+need to reinvent anything.
+You just apply those embedding adapters at the user level.
+So this is really cheap.
+It's really easy.
+You should do it per user indexes, make it easier.
+Yeah.
+My, my, my one liner is just, you know, if you're not fine tuning, you're more
+like blockbuster than Netflix.
+Damn.
+That's, that's harsh, but fair.
+David asked a question.
+Can you share a link to this new Chroma feature?
+It sounds like currently in development.
+And it sounds like it's per user fine tuning, right?
+Yeah.
+Like the one sentence.
+We're doing generative benchmarking.
+So what that allows you, once you've stored a data set in Chroma, we will
+give you an interactive UI that will allow you to generate a robust benchmark
+that you can then use to determine which embedding models you should use, whether
+the user queries that you're getting actually resemble your benchmark in
+production, it is the first and most fundamental step after looking at your
+data of how to improve your retrieval system.
+So the product is coming out soon.
+Watch out for the technical report.
+That's going to be first because we're going to make sure that this is like one
+of those things where it a hundred percent has to work, right?
+We can't generate shitty benchmarks for people cause they won't trust us.
+So we're taking the time to get this right, but things look very, very
+promising and I expect us to release that sometime later this year.
+Yeah.
+Yeah.
+It sounds incredible.
+Looking, looking forward to it.
+Awesome.
+I think we're at time.
+I mean, it's always been a blast hearing you present on these topics.
+I think you're one of the few experts that are pretty, pretty no bullshit.
+So thank you so much, man.
+I'll share the notes with everybody, share some links and then link to the
+Chroma technical reports when they come out.
+Awesome.
+I hope everybody got something useful out of this.
+If you want many collections, you should use Chroma cause we're built for it.
+Take care.

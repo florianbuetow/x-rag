@@ -1,0 +1,869 @@
+One of the big messages I had most of last year really was the fact that a lot of RAG
+systems and a lot of retrieval systems feel very much like recommendation systems.
+And if we can think about how we build recommendation systems, we can take a lot of that and bring
+them back into how we give agents tools, build with feeble and whatnot.
+And then when I talk about this idea of missing capabilities, a lot of it is the fact that
+these search systems don't really know how to do search properly.
+Like semantic search to me felt like my intern project in 2016 and everyone is catching on
+to what's happening now.
+But as Daniel explained in basically the second slide, there's a lot more capabilities that
+exist in our disposal.
+For example, on Amazon, you can search for cheap shoes with like a four inch heel.
+Are those where clauses are those embeddings?
+How do you do that?
+And then how do you do that across multiple modalities?
+And so that's why I'm really excited to invite Daniel to talk a little bit more about how
+he likes to think about these things.
+So yeah, Daniel, feel free to share your screen, take it away.
+Hey, everybody.
+Good to see you.
+I'm happy to see lots of folks interested in doing information retrieval the proper
+way.
+And I want somehow for my setup here, I don't really see the chat.
+Actually, I do.
+Okay.
+But if there is something that comes up during as I'm speaking, maybe Jason, you can flag
+it and yeah, we'll make sure to leave time at the end for sure.
+I'll try to do this maybe in half an hour and then half an hour for QA.
+All right.
+So yeah, how do we do search?
+How do we take learnings from recommender systems and apply them to our retrieval problem?
+And how do we use all our data to do it?
+Right.
+Our data is the signal.
+How do we use this signal to improve relevance and have control over retrieval results?
+I'm Daniel.
+I'm CEO of Superlinked.
+We have an open source product in this space, but I'll try to make this as least salesy
+as possible and just focus on how these things work.
+Okay.
+So just to set it up, let's start with a query.
+Let's take that as a problem statement.
+Imagine you have a travel company and you want to offer people AI powered search and
+people type in something like popular family friendly hotels with good Wi-Fi near Manhattan
+midtown.
+Wow.
+That's like topically relevant to where you are Jason.
+Under 400.
+Let's say that probably under 400 there are no hotels in Manhattan midtown that fulfill
+the criteria.
+But when you look at this query and you think about, okay, how would I do this?
+There is a lot of stuff that's going on in there.
+Think about each of these components as basically either a bias or a filter.
+Right?
+So we either want to steer the results towards certain attributes or aspects, or there is
+an outright explicit intention to have like a binary.
+Yes or no.
+So let's say popular would be like a numerical bias or it could be popular to a certain segment
+of the users and then it's not just one number, but some other representation.
+Family friendly might be something around categorical bias.
+And then good Wi-Fi might be described in various ways in, let's say, the reviews of
+the hotels and that's kind of like semantic bias.
+And then, of course, location in jobs or travel, a couple of different areas.
+Location is key, real estate, of course.
+And then there is that under 400 as a filter.
+Right?
+So if your toolkit for dealing with this is, let's say, just a text embedding model under
+the hood, it's not going to actually understand all these different types of data and you
+will just get poor quality results.
+So how do people deal with this today?
+It's something built around basically text to SQL.
+Right?
+So if you think about it as kind of inputs on the left and then the query being generated
+on the right, you do have that conversational query.
+That's what we just saw there.
+But then, you know, and now coming from kind of the recommender system world, we have some
+user context, right?
+Who is actually typing that query in?
+Right?
+What has been their history?
+What did they click on?
+Where are they right now?
+And there might be some other context also, you know, is it morning?
+Is it evening?
+All kinds of other factors that could lead into your eventual query being different.
+Right?
+And one interesting thing to note is that these user context and other sort of contextual
+parameters are often actually not text.
+Right?
+These might be clicks on some product IDs, let's say.
+Right?
+So how, if the whole thing we have here in the middle is something that takes us from
+text to, let's say, a SQL query or Elasticsearch query, then you have to feed it text.
+Right?
+And if you have a bunch of clicks, you know, how does that work?
+And then of course, the problem of text to SQL is the latency, right?
+You might think quite a big SQL statement or, you know, Elasticsearch queries might
+be hundreds of lines of JSON.
+So how is the latency on that?
+How is the reliability?
+If the SQL generation is too kind of unconstrained, it's going to generate
+somewhat unpredictably some queries that let's say, actually fail in some
+percentage of cases, right?
+So reliability might be an issue.
+And then, you know, at the end of the day, somehow you are doing the stuff on the
+left and you are generating a query that's obviously like compatible with your search
+system, right?
+So there might be some pre-filters, some boosting.
+Boosting is just the concept from Elasticsearch, kind of creating a
+combination of scores that then result in a certain item being ranked higher or lower.
+Of course, there will be your text vector search or image vector search in there.
+And then lots of focus these days on re-ranking, right?
+So like, the candidates we generated with the first three steps are not that great.
+So let's get a bunch of them and reorder them again.
+And then maybe once we see the set of candidates, we can have some
+additional rules for post-filtering.
+So, you know, this is sort of what many, many teams in the industry, we mainly
+look at kind of the broader e-commerce, but in media, in knowledge management,
+this is what people are sort of working with and grappling and trying to optimize.
+Right?
+But there is obviously a lot of issues all over this place.
+And, you know, even if, let's say you somehow figure it out and you generate
+your query on the right, there are some things fundamentally broken about
+the search systems these days, and I'll kind of call out three things.
+So even if you figure out the left side of this, the right side still kind of
+sucks, and I'll focus on three things.
+You know, filtering today, I think is used to approximate those biases.
+Right?
+We talked about popularity bias or things like that.
+People try to model that with a filter.
+Like, okay, let's retrieve everything above three stars.
+Right?
+That's going to be highly rated item.
+Or let's retrieve everything in, you know, 10 kilometer circle
+around Manhattan midtown.
+That's going to be a Boolean filter.
+Right?
+But if you think about the underlying preference function of the user you are
+trying to model, the users is saying near Manhattan midtown, right?
+If something is, you know, 11 kilometers, but it's like fitting the rest of the
+query amazingly, then actually, actually that would be a good result.
+Right?
+But if you model these kind of biases, which you can think about some kind
+of like a sigmoid function, right?
+The user kind of prefers things in certain region and then the
+preference kind of drops off.
+If you try to model that with filters, obviously you are using a very crude
+step function to approximate that smooth bias, right?
+So you'll have a loss there.
+So I think filters are overused.
+We should be thinking about mixing signals in a more smooth way somehow.
+Right?
+So that's kind of one area that I think is problematic.
+Then the other thing is re-ranking.
+Obviously re-ranking is a big topic.
+Everybody is talking about it.
+It's just such an easy way to put something on top of my existing retrieval
+and improve the situation a little bit.
+But when you think about it, and here Jason, like I'm kind of curious,
+what your take would be, but from my point of view, re-ranking is basically
+like if you could wave a magic wand and have a retrieval system that, that, you
+know, is the ideal retrieval system, it actually wouldn't have a re-ranking in it.
+Right?
+Re-ranking is purely a hack of our, you know, underlying grid retrieval sacks.
+So we have to shuffle things on top of it.
+Right?
+Like if the underlying retrieval actually worked and the 10 things that came out
+of the database for a given query were actually good, you wouldn't have to
+re-rank and so, so, so nobody actually wants to do it, right?
+It's, it's just some kind of hack we put on top because the, the, the first thing
+sacks and we are trying to fix it with the thing that runs on top.
+And, you know, obviously the issue with this is that when you re-rank, you are
+only re-ranking a tiny fraction of the overall index, right?
+Like if I have an e-commerce catalog and I ask for popular pens, and if a third
+of my catalog is pens, and I'm relying on re-ranking to kind of reorder by popularity,
+once I get the pens out of the database, then, you know, I can't get third of my
+database out and re-ranking by popularity, right?
+The re-ranking always applies to like less than 1% of your data.
+And so whatever you miss in that candidate selection, can't, you know, you
+will not fix that by re-ranking.
+And so pushing as many of these signals down into the underlying retrieval, and
+then just getting the right things from the database in the first place should
+always be the goal that we have, right?
+And so that's the category of issues that we see out there.
+And then the third category is that people try to kind of abuse text embeddings
+because those are the most widely available encoders for vector search.
+And in principle, you can make a string out of anything, okay?
+You can take a JSON object coming out of Instructor, and then you can feed it
+all into a text embedding model and get the vector out, right?
+This will not throw a type error.
+This will sort of like seemingly work, except the text embedding model that you
+use there really doesn't model the, for example, numbers included in that input
+correctly, right?
+Text embedding models understand numbers through how those co-occur in the
+training data, they get, you know, tokenized the strings and then embeddings of those
+tokens get run through the network.
+And it's very noisy and there's like easy ways to figure out just how noisy.
+If you just stringify some integers and then make embeddings of those strings and
+calculate similarities between those vectors, you will see that there is no
+like underlying concept of like 49 is one less than 50 in the latent space of the model.
+And so stringifying non-text data and running it through text encoders, that's
+another like big issue that exists out there.
+So these three things are basically kind of the, what is wrong with like the
+left side of the previous slide, right?
+We had the, what just happened?
+We had the previous slide, you know, we generate the query is great, but actually
+the query is problematic also, right?
+Because it has all these, all these issues.
+Okay.
+So, so how, what should we try to do instead?
+Right.
+You know, in principle, somehow we should figure out, you know, we should
+still have the same inputs on the left.
+We have our text query, we have our user context, we have other context.
+And ideally we should have some kind of box that converts that
+into pretty much two things.
+We should, we should staff all the signals we can that look like
+that bias into a vector.
+And if there is explicit filter content, or if we just need to filter the
+results based on, you know, access controls and so on, we should also
+generate some filter predicate, right?
+Like all these other things, ideally, you know, you are not doing.
+So boosting is done within the embedding, re-ranking you don't have to do, because
+now all your signals are in that, in the, in the vector and they feed into the
+ranking, you don't really have to do post-filtering, you do the pre-filter
+for access control and so on.
+So this should be sort of the, the, the ideal output of your kind
+of query understanding system.
+And, and then, you know, we have the vector databases where they are pretty
+good at like vector search and filtering, right?
+So they can do that for you.
+And then the other half of the problem is how do you take your data on the right
+side and make these vectors that again, integrate all these signals so that then
+in the middle, this thing kind of aligns, right?
+So you need basically a couple of these orange boxes to do that.
+And then somehow that needs to be also a concept of the feedback, right?
+So I think Jason talks a lot about feedback loops, like, you know, there's
+the behavioral data companies have all these clicks and all these
+feedbacks and all of that.
+Somehow that needs to be feeding into basically both of these boxes, right?
+How, how to, how to close that loop and actually improve this over time.
+Okay.
+So am I sort of like making sense directionally Jason?
+Is it?
+Yeah.
+Okay.
+And okay.
+So cool.
+So, so now basically the rest of the problem is like, okay, how do
+we make these orange boxes, right?
+Like we have, we have figured it out.
+We just need a way to do these transformations.
+And this is where I think in the signup for the event, we call this encoder
+stacking since then I started to talk about it as a mixture of encoders.
+It's basically the same thing.
+Um, but, but, uh, and, and, you know, this, this slide is like experimental.
+Let's see.
+Uh, if, if I like confuse people more than the not, but, but basically
+one property of a system that actually makes this work is that it can't
+just be based on a text encoders or language models, you need some other,
+um, little transformation boxes that can take things like latitude,
+longitude and make an embedding.
+Or things like a number and make an embedding, uh, or have some
+interaction data between, uh, let's say products and users or users and answers.
+Um, and, and somehow you need to be able to take that signal
+and make an embedding out of it.
+And this is what we call these encoders in the middle.
+So just running you through the picture, basically think about
+the conversational query coming in.
+It's, I'm basically a string, right?
+And what you have to do, uh, similar to how a mixture of encoders would work
+in an LLM where there is some component upfront that splits the query or, uh,
+reformulates it for the input of each expert, um, within, within the MOE model.
+Here we are kind of doing the same thing.
+So there is some, um, uh, DSPY style optimized prompt that takes that
+query and feeds each of these encoders with the appropriate input.
+Okay.
+So for like numerical encoder, if there is something like popular
+word mentioned in the query, it would tell numerical encoder.
+Okay.
+Let's create this kind of bias towards, um, uh, popular things in, in, in sort
+of, in the sense of a number, uh, if there would be a mention of minute and
+minute down, it feeds location encoder with minute and minute down as a string.
+And that encoder is trained to take that and produce, uh, uh, embedding that
+let's say approximates travel distance by car between different places.
+Right.
+Um, and it's, you know, the basis of that is something that understands the
+map, right, not if it's not trained just from like internet data, um, you know,
+the graph encoder that captures the, you know, which products are interacted
+with within the same user session.
+That will be some kind of graph embedding, right?
+That we have to train on the, uh, on our specific data.
+Uh, and again, it has nothing to do with the language model really.
+Right.
+Um, so basically we break the problem down into kind of Lego blocks out of
+which, out of which we assemble a model that has the right encoders that fit
+our problem, and then it put a prompt optimizer in front of that, that feeds
+those encoders with the right inputs, given the query, and it also sets the
+weights for how the outputs of those encoders should be aggregated into the
+final embedding.
+And just to be like super clear, this final embedding will encode biases
+towards location and numerical biases towards popularity and semantic biases
+towards, uh, you know, family friendly, whatever good wifi hotels, right?
+All of that signal will be compressed into the embedding that
+comes out of this machinery.
+Um, kind of make sense to, to, to out there.
+Um, what are we thinking?
+Um, we'll do some questions at the end.
+I think some people are curious about that.
+That's the FDY style prompt.
+Okay.
+Okay.
+Cool.
+Uh, and then, you know, to kind of complete the picture.
+Okay.
+So we have made a vector that encodes all these different things that
+appear in the query and does it kind of natively because those encoders
+understand those things, uh, and then, you know, user context, let's say is a,
+is a user embedding that somehow also captures those interactions, right?
+It could be accumulation of embeddings of the items the user
+interacted with, for example, right?
+Um, uh, so this might be like precomputed for each user and then to answer a
+given query, you will fetch that out of the database and the same for, for the
+other context.
+So the, the kind of uniformization that we are trying to impose on this is that
+each of these pathways makes a embedding and let's say a filter predicate if
+needed, uh, and then we have an Azure aggregator on the back of that, that
+somehow merges all of that stuff.
+And then finally, the last dot here is a vector with some filter predicates that
+compiles all these signals together.
+And, and then you just send it to a vector database and do the lookup.
+Okay.
+Uh, and again, some of these encoders are pre-trained.
+Some are unsupervisedly trained on the specific dataset.
+Uh, some are, you know, we have like a couple of texts and image embedding
+fine-tunes based on the domains in which we operate, um, and then you, uh, you
+know, basically superlink is a framework to kind of build this orange thing.
+Right.
+So like all the orange stuff, we have an open source framework for that.
+Um, and you know, obviously then on the other side, you need to be
+feeding the vector database with your data and code it with similar machinery.
+So that the vectors that, uh, sort of, uh, you know, the search vector meets
+the data vector in the database and everything is kind of, uh, compatible.
+Um, okay.
+Now in terms of like cloud architecture or, you know, component or system
+architecture, let's say, um, the way to think about it is that you have like
+data on the left, uh, you have your encoder library, let's say on top, you
+have your vector databases on the bottom.
+We were with the red is Mongo and quadrant.
+We are adding, uh, more, uh, but we, we are pretty slow on that because we
+actually, uh, need those to be, uh, battle tested, you know, like we operate,
+uh, in, in kind of low terabytes of index sizes.
+So when you launch a connector, it's, it's, uh, you know, it's not like
+a community contributed connector.
+Uh, we work very closely with the core engineering teams of all those
+companies to make our thing work.
+Uh, with, with their product.
+Um, and, and you can kind of use them interchangeably.
+Uh, so superlink the wraps, not only the read and write API's of the database,
+but also the management API's.
+So you can kind of switch and explore between them, uh, different kind of
+costs and latency, uh, trade-offs basically.
+And then on the right side, uh, you basically put that API endpoints on
+top of which you can build retrieval for rag and, and recommendation systems
+and search and, um, people do all kinds of analytical tasks as well.
+Because think about it.
+Now we have vectors that compile everything, you know, about the whole
+entity, right, everything you know about the user, you have an embedding for it.
+Like all compiled into one embedding, uh, same for products or pieces of the
+knowledge base and so on.
+So, uh, we try to then make it easily kind of, uh, accessible to API's.
+So you can build on, on top of that.
+Okay.
+Uh, and then, you know, case study wise, just kind of motivate this.
+Um, we have, uh, like one of the things we published is with the jobs marketplace.
+They got 50% lift in people applying for jobs.
+Um, this replaced, uh, Algolia in this case.
+And what I want to call out is that superlink is not really a search system.
+It's, it's just like, helps you build stuff with embeddings.
+And, um, that means that you have a lot of flexibility.
+So this company build a bunch of tools for the, uh, people listing the jobs on
+the marketplace and finding people, not just people finding jobs, right?
+You have a lot more flexibility, uh, because we don't bake, uh, like just
+search specific staff into the API's.
+Uh, and then similar case study with the fashion, uh, retailer, um, that, that,
+uh, increased, uh, you know, they added more than $10 million to the bottom
+line, uh, when they started to work with us.
+Um, and then I'll mention something about evals.
+I don't know, Jason, to what extent you focus on evals in the course, but
+basically just the TLDR is that, um, a lot of the benchmarks out there.
+So you might've seen this, uh, MTB, you know, the embedding
+benchmarks table and, and, and Bayer.
+Um, all of these things are text data and to text query evaluation, right?
+And this is like super not realistic because in reality you have a product
+in the marketplace has 50 properties and maybe a couple of them will be textual,
+but everything else is like some other metadata.
+And so all of these benchmarks are, are kind of, uh, not really, uh, fit, uh, for,
+for approximating production performance from our point of view.
+That's kind of a bummer.
+And also the results on these are not that good.
+Like these scores top out at like 0.6 for state of the art models, because all
+the models that are being evaluated here are purely text embedding models.
+So that's, that's like the, the somehow information retrieval benchmarks are
+stuck in this local, uh, local, uh, you know, maximum.
+And, uh, we have been working on datasets to, to, to kind of fix that.
+There are some other efforts out of Stanford that are kind of trying to add
+more metadata and more kind of realistic, uh, looking datasets, but yeah, we are
+very early in that respect and of course, making datasets is hard because, um,
+the traditional methods of how you generate candidates and then label them
+with the LLM, uh, work with like text retrieval methods.
+And so that's the same kind of issue.
+Like you are trying to measure a system that doesn't just work with
+text retrieval methods, but all these other things.
+Uh, so it's a little bit of a chicken and egg, and then, uh, you have to score
+way more candidates with an LLM.
+It can be expensive.
+So, I mean, that's kind of part of why this is stuck.
+Um, and yeah, I'll, I'll kind of put there, um, just as a summary, we have
+an open source, free to use Apache 2.0 framework on, on GitHub that allows
+you to do a lot of what I described.
+Um, you can run that yourself.
+Uh, we know of a couple of companies actually running this in production
+in like decent scale, you know, a hundred thousand items, uh, uh, tens of thousands
+or maybe a hundred thousand queries per day kind of scale.
+And then we have a cloud product that, uh, we work with companies more hands on,
+uh, where we have, uh, some proprietary tech to scale this app to like, you know,
+hundred terabytes of click data and millions, millions of queries per day.
+So I'll, I'll post their, uh, questions.
+I'm very happy to share anything people like are interested in.
+This was great.
+I also really liked the fact that there were no adjectives.
+It was everything.
+It was just like numbers on scale and like, you know, that's, I just, just
+want to call that out as something that's, uh, you know, really appreciate that.
+Um, yeah.
+And what everyone told me is like, it works at large scales production,
+enterprise, but you know, you're in like low terabytes is kind of a, a fun flex.
+So our big, our biggest vector search index we have ever operated so far is two terabytes.
+And our biggest like, uh, input data set that we, uh, that we ingested, uh, is on
+the scale approaching hundred terabytes.
+And this is actually interesting that, that, you know, you hear about this unstructured
+data taking over the world when we started working with the e-commerce company, the
+product catalog is maybe in the hundreds of gigabytes, right?
+Text and images and all that.
+And the click data is, you know, potentially hundred terabytes.
+So, uh, I don't know where, like, like which dashboard people are looking at, but
+I see there is like way more clicks than, than text and images, uh, in the
+data warehouses of these companies.
+So, um, and if you don't use the data, right, this is a problem because that's
+where the signal is, right?
+And that's the lesson from the recommender system world, right?
+Is that if we don't use the behavioral data, you know, if you have been on
+TikTok ever, then you understand that this is something that you absolutely have to
+use to help your users converge to what they are looking for.
+Oh, I guess before, before I asked the big question, um, I'm personally curious,
+like right now we're kind of doing these like specialization because we need
+different encoders to do different things.
+Um, what do you feel is the timeline on sort of even this part of the stack
+being like better lessened away?
+I get at what scale will we not need these kinds of tools or is it going to be the
+case that we're just never going to get there in the near term?
+Um, so are you saying at which point a text encoder can replace the specialized
+encoders basically?
+Or even just, you know, maybe it is just a transformer that takes in the click
+data and like queries in and that's all we need versus actually having to
+specialize in the speed and sort of a durable architecture.
+I just saw some papers recently on using transformers and like item embeddings
+and stuff like that.
+Yeah.
+Um, I think there is a trade off in, uh, you know, Ken, you know, maybe stitch
+fix or, or, um, with YouTube, can YouTube train a transformer on their click data
+that, um, we'll outperform everything.
+Probably yes.
+Right.
+That's probably the answer.
+Um, Ken, an engineer in a company that wants to solve information problem, uh,
+actually solve that problem with reasonable costs and time to market and all of that.
+Um, I would hate for the answer to that, to just be used this black box thing here.
+I think it's much better for that engineer's career and, and also actually
+in terms of performance, um, to have some kind of toolkit that allows you to assemble
+something that's, that's a bit more specific to that company.
+Um, because you know, like the, the, because if you take your soul to the extreme,
+then there is also like no companies, right?
+Because yes, they had, so, so I, you know, for now I operate in the world at like
+first-party data is a thing and companies are capturing this, this data.
+And they have slightly different user experience they want to build and slightly
+different business objectives and having a way to express that into a retrieval
+system is how you basically get the edge until, you know, AGI takes over everything.
+And, you know, let's talk in, uh, I don't know, a couple of years, and maybe we'll
+be all sitting around the campfire thinking back about the times we still
+had to work, I don't know, right.
+You know, I think everyone has different AGI timelines on that kind of stuff.
+Um, cool.
+Let's jump into some of the, uh, uploaded questions.
+So the most up-to-the-question was, can you walk through the same hotel
+query example and tell us what superlink will do to help you, uh, service that query?
+So let's remind ourselves the query.
+Um, yeah, so basically think about it as, um, you know, with this specific client,
+the hotel, like the specific client is not booking, but it's a similar company.
+So let's take booking as an example.
+Think about the data that booking knows about the hotel, right?
+It will be a bunch of reviews.
+It will be all kinds of metadata.
+Uh, there will be some categorical properties.
+Uh, the categorical property of like amenities might have a cardinality of
+you know, 10,000 things that potentially can be turned on.
+Um, and yeah, there'll be of course, location data and there'll be images as well.
+Um, so, so there's the dataset and prices, of course, there's
+the dataset we are working on top.
+So you would basically go and create a superlink index for hotels where you
+would, um, have your data schema of like hotel review and user and clicks.
+You, it starts with a couple of Python classes with like typed properties.
+And then you would create an index for hotels where you, um, uh, select these
+encoders and bind them to the different properties of those input objects.
+Um, and then when you send, we will push the data into the system, those encoders
+are used in their outputs that are aggregated to make, let's say hotel vector.
+Okay.
+So this is the data ingestion part.
+Um, and then when the query comes in and you get this kind of
+text from a given user ID, right.
+Um, it gets basically broken apart into like, okay, popular, uh, and that gets
+pushed into the, you know, some kind of popularity counter encoder as like, okay,
+we need positive bias on this dimension.
+Family friendly.
+We have a categorical encoder that is not like a filter, but it creates bias towards,
+uh, you know, there is kind of like multi-hot, but then like high cardinality
+categories need something a little bit different.
+Uh, so again, there is an encoder that gets, uh, kind of, uh, prompted towards
+creating positive bias towards family friendly like categories.
+Um, and, and again, like with location, there is a location encoder, right.
+That, that on the data side, eight, all the lead longs of all the hotels
+and on the query side can get prompted with the text location, um, and make
+an embedding that, uh, uh, such that the cosine similarity in the search afterwards
+approximates some kind of travel distance between, between places, right.
+Um, and then under 400, it generates a filter predicate in, in the
+super linked DSL basically.
+Um, so, so somehow this all gets compiled into an embedding that has, that expresses
+all of those, uh, biases, uh, plus the filter, and then that gets sent to the underlying,
+uh, vector database to get the 10 hotels that are family friendly and have good
+wifi and whatever are popular, uh, and then without any re-ranking, that's the 10
+hotels you get, uh, out, right.
+Um, and, and, you know, uh, I also mentioned we have some custom fine
+tunes, for example, one fun learning is that, um, for, for text embeddings,
+um, it's actually worth it to do text embedded, text embedding fine tuning.
+You can't fine tune text embedding model to understand addresses, right.
+There's not what I mean.
+I mean, things like, um, for example, this adjective noun association.
+So good wifi, if you just take like whatever MTB winning text embedding
+model and you give it a bunch of reviews and some reviews will say bed wifi and
+some reviews will say good wifi, and then you search for a good wifi, you get a mix
+of both good and bad wifi out, right.
+Because the model, uh, over index is on wifi, not the association of good
+wifi, right.
+So for example, we have fine tunes for that, right.
+So like the sentiment layer, um, text embeddings for, for reviews and things
+like that, um, but, but that's like tiny, tiny part of the puzzle, hopefully
+as I now kind of explained that there is no amount of fine tuning you can do to
+understand like, uh, uh, something like numerical bias, uh, and, and that you
+can find out by, by just, uh, uh, yeah, trying to understand how numbers are
+represented by the text encoder and how they are tokenized as strengths and how
+embeddings of those tokens, like roughly approximate the actual numerical
+value of the number, but only roughly.
+Um, and so, yeah, there is space for text embedding fine tuning, but the
+applications are limited to actually eating text, right.
+And a lot of this is not about eating text.
+Yeah.
+And I like the example of good wifi.
+I feel like, you know, in the course we talk about this, like, okay, if you build
+like a dating app, it's like, is I love coffee and I hate coffee, the same thing
+versus I love tea, well, it's not actually, well, not this is similar.
+It's whether there's actually some other outcome that happens with the end, whether
+there's like a match or something like that.
+I'm studying this another good example.
+Um, one of the questions I think is also pretty relevant is something I'm very
+curious about, which is how often do you refresh embedding models?
+I feel like stitch fix retraining and keeping these things stable was
+like a whole part of research.
+Um, how, how does super think about that?
+Yeah.
+So if, uh, if you train an encoder, you take all these inputs, you feature
+engineer, all these different types of data, you make a custom encoder, like
+a two tower model or some other kind of training policy, uh, then kind of, uh,
+distribution drift on any of those properties forces you to retrain the
+whole thing, right?
+This is, this is a problem and it can happen, you know, as often as
+distributions on any of those things, like meaningfully change, right?
+This is of course, uh, specific to the given case.
+Um, and it's kind of one of the benefits of not doing that.
+And instead doing this kind of composition of encoders, uh, because
+you, if you do have to retrain something, it's going to be one of those boxes
+in the middle, not the whole thing.
+Right.
+Um, you can selectively update parts of your model this way.
+Um, and like save yourself a bunch of trouble.
+Um, that's kind of one thing.
+The other thing is as your data changes and you have to re-encode, right?
+Like let's say popularity of the hotel changes and price doesn't or price
+changes and description doesn't, right?
+Do you have to take the whole entity and re-encode the whole thing?
+Or can you rerun like one pathway through this and update, let's say the
+embedding signal of the, of the location and then aggregate with the rest of the
+outputs, uh, you know, you can think about like caching on the individual encoder
+level, for example, so in terms of data updates, this is kind of breaks it down
+into more manageable components in terms of retraining, it also means that you
+can think about retraining individually for the, for the components.
+Uh, yeah.
+And then, you know, how do we detect that the retraining is needed?
+Um, I think the more you can productize the retraining and just kind of do it.
+And it's not too expensive for the individual components.
+I think it's a good idea to do that.
+But if it's like a big retraining operation, then yeah, you'll have to be
+more careful about like measuring.
+Okay.
+Uh, now we, now, uh, the distribution have drifted and all our embeddings
+are clustered over here and we are not actually using the space.
+And so let's like retrain to kind of stretch it out and identify the
+meaningful structures in the data again.
+Right.
+I mean, I can, I can keep talking about this for a long time.
+I'm just wondering, is there anything else, uh, coming up?
+I see.
+Hey, Danielle.
+Uh, it looks like Jason, uh, got kicked out somehow.
+Um, I'm going to just pull from, uh, the Slido questions.
+Um, how often do you refresh each embedding model?
+It seems like there's a lot of overhead involved.
+Yeah, I think I, I, I just did that one.
+Oh, sorry.
+How about keyword heavy query user is looking for a GUID.
+Mm-hmm.
+Uh, yeah.
+So if you are looking for like exact matches, then that's for me,
+that's a part of the filter.
+Um, yes, there is a caveat here that I totally skipped, which is sparse,
+uh, data structures, right?
+Um, that's kind of a world that, you know, you have to be careful about.
+Um, that's kind of a world that, you know, you either force it to be a
+part of your filtering mindset, right?
+Because this is kind of filters, right?
+Like I'm looking for this exact thing somehow.
+Um, so you either kind of, you know, stack it into that part of your stack.
+Uh, or do you think about this encoders as, um, either producing dense or also
+sparse representations, and then kind of, it's more part of this situation
+over here, um, you know, once vector databases will be a bit more flexible
+about having like composition of sparse and dense, uh, representations and queries.
+I think we can treat it more like part of this encoder side of the world.
+For now, we treat it more as a part of the filter side of the world,
+at least in our product.
+So like keyword filters in a way.
+And we use the, you know, underlying kind of sparse indexing, BM25E, uh,
+machinery of the underlying database for that.
+Can you talk more about how the encoder should be designed and then in turn, how
+that is combined with the functioning of the aggregator?
+Mm-hmm.
+So, I mean, encoder is really just some sort of input and, uh, some kind
+of dense representation output.
+Um, and, and, you know, then the aggregators get weights from the LLM
+that does the query understanding, or you can actually train a weights model
+separately, so you can have a model that given the query, you train on your
+click data and it sets the weights.
+Um, and, and then the aggregator can have all kinds of different forms.
+You know, the most simple thing you should think about is just, you kind
+of unit normalize the encoder outputs and your dimension wise concatenate
+them into a big vector, right?
+This would be your kind of, uh, starting aggregator, uh, strategy, right?
+The cool thing about that is that the signal is encoding in separate, you
+know, ranges of the dimensions, uh, which helps explainability on the query side.
+And also it allows you to do the weights at query time, right?
+I can put different, I can scale different ranges of these dimensions differently.
+And then the search vector can express, okay, I actually care about this signal
+that much more than this other signal.
+So it's like query time weights on those components.
+The same way that like mixture of experts model would score the outputs of the
+encoders before it aggregates them.
+Um, and then maybe I'll just say one more kind of tidbit, um, which is we do
+a lot of vector aggregation, so like whatever comes out of here with the user
+context vectors and so on, we do a lot of like averaging and aggregating.
+And time decaying between embeddings.
+And we noticed that it really matters.
+What the, how the encoder is trained, uh, versus how, let's say you average
+10 of those embeddings together afterwards.
+How, how did you, how well does that represent the data in the 10 source
+vectors and rule of thumb, the more efficient the encoder, the, the, the
+kind of less well it responds to this aggregation, right?
+Because it's already very efficiently encoding stuff in very few dimensions.
+If you average a bunch of those things together, you will
+basically destroy the information.
+And the, the, the more sparse the encoder is all the way to, you know,
+like bag of words or whatever, uh, the, the better it responds to aggregation
+because it's literally like union of keywords that appears in the document.
+Right?
+So those are the, that's the ease of aggregation scale, like very sparse
+aggregation is meaningful, very dense aggregation is hard.
+If you can train some sparsity into your encoders, then the aggregation will survive.
+So like, if I aggregate the vector that represents Apple car and motorbike,
+somehow all three signals will still stay expressed in the average vector as
+opposed to being some point in the middle of those three things that
+doesn't mean anything anymore.
+I hope that
+the learnings we had as stitchbooks as well.
+So it's kind of cool to sort of see this come up again.
+I do want to ask one question just as I saw this like on the, uh, in the question
+with like, and in my opinion, it's maybe like a spicy question, but what, what are
+your thoughts on, you know, using things like graph structures and graphs are
+treatable when it comes to these things?
+Like I think I've personally been very embedding told for most of my life.
+I'm very curious where you sit on this ideas.
+So we throw, we kind of see graphs as one of the inputs, right?
+I have a graph encoder on here.
+Um, I think it's somewhat of a stylistic debate.
+Like what's the, uh, what's the steering wheel and what's the car, right?
+Is graph the input to the embeddings or is graph kind of the master data
+structure, and then we hang the embeddings off of the graph notes, right?
+Yeah.
+Um, but yeah, so from our point of view, graphs, or just users clicking on things
+and through that, making an implicit link, right?
+Um, this is a useful input.
+We want to use that in our representations.
+We have, you know, we train this graph embeddings and aggregate
+them with all the other stuff.
+Um, and then, you know, when people talk about graph, right?
+I think they also talk about like.
+Post-filtering of the results by traversing some nodes.
+Uh, so maybe like using vector search to discover the interesting graph
+nodes and then expanding to neighbors.
+And then that's the result, right?
+So, um, but that expansion, if you do like one hope neighbor expansion, it's
+basically, yeah, you can do a SQL query for that.
+I think like graph database is useful if you want to do very long traversals
+or calculate some, uh, more, you know, harder to calculate graph
+metrics, like node centrality.
+Like if you really care about that, and if you want to have a data
+structure that you can update a lot and then, uh, a lot, you know, uh, high,
+high kind of throughput, uh, identification of some connected components or whatever.
+Then, okay, graph database is useful from our point of view, graph is the input.
+Uh, you should have it as a part of your encoder portfolio.
+Um, and yeah, the rest is kind of filtering.
+Makes sense.
+Makes sense.
+I think we're pretty aligned there as well.
+Great.
+I mean, there's only 10 minutes left.
+This is the question I kind of generally ask everyone, which is, uh,
+actually, I think there is like one more kind of just a landmark on that
+landscape of a previous question.
+You know, people generate these graphs with the LLM basically, right?
+Or they, they kind of, um, uh, have a language model generate graph queries
+or inspect the results of those queries and then make more queries.
+Um, one thing that's to be kept in mind there is if your nodes in the graph
+have a bunch of metadata, that's not textual, right?
+Numbers and so on.
+And you are using your, an LLM to kind of navigate the process of doing
+some retrieving, looking at results, you know, uh, whatever, call it agents.
+Right.
+Um, the main thing I want to get across is that the pilot of your airplane sees
+the whole world as string.
+This is like fundamental problem, right?
+Because a lot of the, let's say metadata on your graph nodes or
+otherwise are not strings, right?
+So you're using like a, like a pilot that's like stringifying the world
+and then processing it, right?
+And I see, you know, information retrieval as a way to kind of connect
+that pilot to sets of data that are actually not text.
+And the link there has to be encoders trained to understand
+this other kind of data, right?
+And, you know, that's also goes to, you know, will it all be just
+LLMs at the end of the day?
+I don't think so because of this, right?
+That, that basically there is some way you have to process other kinds of data.
+And maybe that other way doesn't even have a tokenizer, right?
+It has some other way to feature engineer the, yeah.
+Yeah.
+And then when you said this, like pilot sees the world as a string, I just go back
+to the example where like every LLM thinks 3.11 is bigger than 3.9.
+Yeah.
+Yeah.
+And that's just such a tiny, maybe example of the overall problem, right?
+Yeah.
+Like it's such a, just like a little gateway.
+And once you go, start going down the rabbit hole, you'll discover that we
+have been to some extent lied to, right?
+Like, actually this is like very poor way to see the world.
+Like you can't really stringify things and that can't be the end of this.
+Right?
+So yeah, I encourage people, you know, take some embeddings of stringified
+numbers and go play with that and become like even more embedding built in a way.
+Yeah.
+I mean, there's a joke that I used to tell when I was doing like a lot of like
+embedding work, it's like, you know, you ask AI what's 10 plus 10 is 16.
+You say, no, it's 20.
+And then you ask it again.
+It says 17.
+Yes.
+And it says 18.
+In the limit, you'll get the correct, but you know, until you get to real
+AGI, you still have to just sort of.
+Hard code a couple of these filters and get this to work properly.
+It's a very expensive and slow way to get unpredictable results.
+Right.
+I'm like, I like that you're also down the whole path of like using a lot
+of metaphors to explain these concepts.
+Well, the last question I like to ask everybody is what is something you
+feel like we are not asking?
+What is something that is sort of missing in sort of the ways that we in
+general have been thinking about these kinds of systems?
+Yeah.
+So I think this whole like, we have to look at the world through other
+lenses than text tokenization.
+I think that's one of my big ones.
+The other one is the re-ranking, right?
+Like I think re-ranking is overused.
+All the re-ranking models out there, pre-trained, cross-encoders, or actually
+also the late interaction stuff.
+Like I want people to understand that that's all text operated also, right?
+Like it, you know, tries to address issues that I think should be addressed
+in the underlying retrieval and is denominated in text, both on the
+query side and on the data side.
+So that's maybe extension of the first point, but re-ranking is kind of abused.
+And it's just a function of how easy it is to add on top of an existing system.
+So I think, yeah, like let's, you know, take a magnifying glass and look at our
+re-ranking and then the filters is the other thing, like if you are generating
+from a text query, some kind of insane filter predicate that actually should be
+smooth biases, because that's the underlying preference function of the user
+or of the system doing the retrieval.
+Right?
+You know, we have all seen like this Venn diagram in high school that like,
+if you intersect too many of those circles, the middle point is like very small.
+And that's what you are doing when you stack a bunch of Boolean filters, right?
+As opposed to creating some mix of some distributions that add up to
+kind of the results you want.
+So less filtering, less re-ranking and less just using a text embedding or
+text understanding model for what we do.
+I think those are my three sort of commandments.
+Yeah, I think, I think we're definitely going to move towards a world where maybe
+in the future there are encoders that can handle all this data, but not as text.
+But yeah, I think your example of just the pilot sees everything as a string is
+sort of a big issue.
+And even though there might be things like visual language models that can now
+have like image tokens or audio tokens, those modalities are still quite, quite
+broad and that don't really cover the information with people use cases that
+are specific to many, many real problems in the industry.
+That's right.
+And you should combine these things together, right?
+So I'm not saying text embedding bad.
+I'm not saying call Pali bad.
+I'm saying that's good for that part of the input, but we have all these like
+other data and we need to integrate it somehow to get the maximum kind of signal
+and edge out of it in terms of quality of results, in terms of the control we
+have over the results and so on.
+And I encourage everybody to check our GitHub.
+Again, it's free.
+Well, maybe, maybe it's not free because you have to give it the GitHub star.
+Right.
+So it's like proof of work kind of thing.
+We will make sure that everyone gets the email and we'll make sure the
+link goes directly to the star tab.
+Perfect.
+We'll share the slides at the end.
+We'll share some study notes once we generate those and, you know, expecting
+email sometime tomorrow with everything that is mentioned in this talk.
+And, uh, Daniel really appreciate this.
+I think the, this metaphor of the world being seen as a string is a big one.
+And, uh, I'm excited to hear more about what you guys are working on.
+Thanks for having me and, uh, good luck everybody with the course
+and, uh, see you out there.
+Awesome.
+Take care.
+I'll follow up with you.
+Cheers.
+Bye.

@@ -1,0 +1,822 @@
+Nick went a little bit viral on his essay, why I no longer recommend
+a rag for autonomous agents.
+I think the idea here is that retrieval is supposed to sharpen your coding
+agent's ability to have memory and do all this stuff, but really it seems like,
+you know, everyone has come to the conclusion that for the agentic use
+cases around code generation, embedding search is no longer something that
+is being recommended by a lot of people.
+Nick is the head of AI at Klein, one of the open source coding agents.
+I think it's like millions now of downloads on US code.
+And so if you want to check that out, it's Klein.bot.
+I think your essay really sparked a lot of conversation on Twitter
+about rag being dead.
+And I feel like this is a fun way to respond to some of that
+conversation as well.
+I'm really excited for you to share a little more and then go
+into questions afterwards.
+Nick, the floor is yours.
+Yeah, thanks so much, Jason.
+I've been, I've been following you for a while actually, and I'm a big fan.
+More, more than anything, I think you're a smart guy and I think, you know, I
+really enjoy the way that you write.
+I think writing is such, like an under emphasized skill these days.
+And that's like one of the main reasons I appreciate you and why I enjoy the
+timeline, following you on the timeline.
+So yeah, thanks for, thanks for the introduction and thanks for
+inviting me to come chat.
+So yeah, my, my article on the death of rag, why I no longer recommend rag for
+autonomous coding agents, they cause a little bit of a stir and I kind of want
+to dive into what sparked all of this.
+What actually sparked initially, why, why I initially wrote that article is
+because I was in, I was in a call with, with this enterprise that wanted to,
+that they were searching for their agent's a coding tool that they were going to use.
+And they were going through a procurement process.
+And one of the products they were looking at was fine.
+And I was in, I happened to be in this meeting with one of our sales guys.
+We were talking to this company.
+They're a very big company with thousands of engineers.
+And their decision-making process was remarkably naive, in my opinion, where
+it was almost like they were going through a checklist, like, Hey, do you have this?
+Do you have this?
+Do you have this?
+And one of the questions they asked was, Hey, do you guys do rag?
+And so, you know, like, it was like such a weird question to me, but like, they
+were like considering this as like part of their requirements, but they were like,
+they were like considering this as like part of their requirements.
+And essentially like in the meeting, I asked them like, Hey, like why,
+why do you guys want this?
+Like, are you guys sure you actually want this?
+And the answer they gave me was like, well, isn't it good for large coding,
+like large code bases or something?
+Um, so that kind of prompted me to, to write this, this article where kind of
+put all the thoughts that we're thinking about internally, I climb and that the
+thoughts that I'm the thing you for a while rep to articulate them and actually
+write them down and, um, the article.
+Kind of blew up on Twitter on X, um, and kind of started this
+discussion, um, in the whole industry.
+So let's kind of dive into it.
+So the original promise of rag, uh, back in like 2023, you had, um, it was kind of
+like a gold rush with all of these vector database companies like pine cone.
+And they famously came out with like this thing called the O P stack, which is
+like the open AI pine cone stack.
+This is like way back in the day.
+And they position themselves like, Hey, we give long-term memory to your AI.
+Back then context windows are very narrow, very short.
+And they promised to kind of ground responses in real documents and real
+data, saving, uh, you know, reducing hallucinations, pairing models with,
+uh, like vector database.
+They kind of claim that they were going to.
+The meal, a long-term memory for these agents.
+So all of a sudden, and this is like a lot of buzzwords around the time where
+there's like, Oh, like you have an infinite context window now, but now that
+you have rag, it's like a one size fits all solution that you have infinite memory.
+Um, and then another claim that they made was that instead of training on very kind
+of like fine tuning on your specific use case, you could now plug your own data
+and get accurate answers out of the box.
+So everyone invested in this promise, um, from Andreessen Horowitz to Sequoia,
+it's Venmo Ventures, to Benchware Capital.
+I could go down the list and not all the money, obviously went to Pinecone.
+You had other vector databases like WeeVee, A Chroma, Qdrain,
+and like, like hundreds of others.
+So, you know, at the time it was like very clear, like there, there's a lot
+of investor interest in this.
+A lot of people are invested in this story and this promise.
+And I think that's part of the reason why when I wrote my article, there was a lot
+of this, it was almost like sunk cost fallacy where like a lot of these people
+that were deeply invested came out of the woodwork and kind of were responding.
+Um, so I will say back then, back in the day, it actually worked.
+I ended up building Vault, which was a popular open source project at the time
+to help people ingest thousands of documents, create their own knowledge
+bases and get structured outputs.
+Um, I actually ended up making a little demo website for this open
+source project called Vault.
+Uh, and immediately my servers were blowing up.
+I had tons of people just using the web app.
+I had tons of people just using the website, even though I was strongly pushing
+everyone to like, Hey, just go set this code up yourself.
+It's open source.
+Most people ended up using the website.
+Immediately I burned through my like $250 opening.
+I quote at the time.
+Um, and actually my servers ended up crashing because of the load.
+So I ended up like building all these systems to handle scaling, added a
+subscription layer on top of it to actually charge people because I wasn't
+going to front the cost for it.
+If they really wanted to use the website, they were going to have to pay me for it.
+Started getting thousands of subscribers, uh, on this Vault website.
+And actually I had a number of, uh, AI companies reach out to me, um, to ask
+me like, Hey, how do we build rag?
+How do we improve our rag pipelines?
+And that led me to, into like consultation for a lot of recently funded AI startups.
+And I really became a professional.
+Like I, I know the ins and outs of rag.
+I know what it takes to improve a rag pipeline.
+It's a fundamentally non-deterministic system.
+So the way you go about improving it is non-trivial.
+Um, a lot of people came to me and they were like, Hey, I feel
+like it's not working very well.
+How do I improve this?
+And you know, then you go down the rabbit hole of, well, okay, what data are
+you collecting on your rag pipeline?
+Are you collecting cosine similarity scores?
+Are you, do you have a reranker?
+Are you collecting reranker scores?
+And then going into the art of improving rag applications.
+Yeah.
+And Jason has written a lot about this and I'm pretty much on the same page.
+It really is an art form.
+There's a lot that goes into it.
+And if you really do need it, it's worth it.
+Um, but I no longer recommend rag for coding agents specifically.
+And at Klein, I became like the number one advocate against using rag actually,
+even though, you know, rag has been my bread and butter for so long.
+I'm just like actively anti rag, uh, at Klein.
+And I think in general for any coding agent, um, company startup, we're all
+thinking about the same things here in the industry and let's dive into it.
+So this was the article that I wrote.
+I have a link here in the slides.
+Um, but it was called why I no longer recommend rag for autonomous coding agents.
+I wrote this in May and I talk about all the things that I'm going to
+be talking about in this talk.
+Um, at kind of like a more broad bubble.
+And, you know, the essential thesis is that rag isn't needed for coding agents.
+So code is inherently logical and structured.
+Um, I mean, hopefully your code is logical and structured.
+Uh, you don't need to index your whole code base anymore, um, which is
+a massive security nightmare.
+Um, there's actually, you could actually reverse an embedding and
+get the original contents of it.
+So it's not actually like a lot of people consider it like secure, like
+it's like some kind of hash of your data.
+And it really isn't.
+You can reverse engineer any, any embedding and pretty much get the original contents.
+And, you know, you got to store all these embeddings somewhere.
+If you're not storing them locally, then you have to keep them updated.
+Then you have to improve your rag pipelines and go into that whole process of,
+you know, cosine similarity scores and collecting this data and improving it.
+You can also just ask your coding agent, like Klein in this case, to find the
+relevant code and kind of like in these screenshots, I show I'm showing like a real
+example, like literally yesterday, I was using Klein to look into some GitHub
+issue that someone mentioned and we had this discussion in our Slack and I just
+pasted a copy and pasted the whole discussion in the Slack where there was
+like a link to the original code.
+That was problematic.
+And I gave it to Klein and Klein just started going through and I told Klein,
+like, Hey, you have access to the GH terminal command.
+You can go ahead and use that.
+And with access to the terminal, Klein could basically grep and use GH to pull
+in the link, read through the, read through the original diff of the original
+PR that caused the bug, look through the code that that's current, um, you know,
+that's current, um, use grep to find anything else and Klein went through,
+came up with a plan to fix it.
+And I just switched to act mode and Klein went, went ahead and fixed the issue for me.
+And, you know, this is a very common life cycle of a coding agent task where you
+have a plan mode and then you have an act mode and it's this plan and act paradigm
+that's becoming more and more popular with Klein.
+We actually introduced this plan and act paradigm and we're starting to see a lot
+of other coding agents follow, follow suit.
+So recently, I think famously cloud code added a plan and act mode.
+Um, so this is like becoming a common pattern for coding agents and the plan
+mode is basically all of the data gathering necessary, all bringing everything
+in context that's necessary to solve the problem.
+And you'll notice that rag isn't really a part of any of this.
+Oh, and really quick, just backing up a little bit.
+When I'm talking about rag, I'm talking about what the original, like, I know the
+term has been co-opted a little bit and I got a lot of criticism about my article.
+Even though I clarified this a number of times that rag is just any
+retrieval augmented generation.
+So like even this, you're still doing rag technically.
+That's a very common response that I hear.
+And I'm specifically talking about embedding search.
+I'm specifically talking about indexing and embeddings and cosine similarity
+and re-rankers and that kind of thing.
+Um, and what most people in industry that were invested in this narrative and, and
+pine cone and all these people, like all those articles that I referenced, they
+were all talking about this form of rag.
+So when I, when I say rag, I'm talking about embeddings and you, you'll notice
+that embedding search isn't a part of this at all, right?
+Uh, you have, you might use the terminal to use grep.
+You might search the code base using, uh, various tools, read file tool.
+What we do at Klein is we give.
+Klein, like an overarching view of the file tree, um, as well as some like basic
+AST info and Klein just goes, goes through and reads, reads files, uses
+grep and basic, um, like what they see an engineer would do really when you show
+a senior engineer, a new code base, what do they do?
+They look at the folder structure.
+They look at the names of the folders.
+They look at the files.
+They might read in a file and see like, okay, this file imports this other file.
+Let's go check out what this other file that it imports has.
+And then you generally build an understanding using this
+agentic discovery approach.
+And, you know, it works remarkably well.
+Klein just reads things in a context, gets all the information he needs to come
+up with a robust plan, and you really want to make sure you're investing in that plan
+phase to come up with a very rock solid plan, and then you're ready to switch an
+act mode and actually implement.
+So after I wrote my article, um, shortly after pine cone responded with this
+article on their page where they're, they're basically like kind of coping,
+uh, for lack of a better word, uh, with the contents of my article.
+And they said things like, uh, rag isn't dead.
+It's critical.
+They kind of downplayed a lot of my points and didn't really even address me.
+They just kind of try to like marginalize all the points that I was making.
+And he said, the Prague isn't rag.
+It's you, uh, that you're not using rag effectively.
+Um, they said hallucinations.
+What about hallucinations?
+Like you need rag to avoid hallucinations when it's like hallucinations are like,
+frankly, they're not even a pro.
+Like I've never seen it be a problem working at fine.
+Um, because you're reading in all of these files and all like all of this
+context that hallucinations hardly ever happened and also like we set the
+temperature to zero, um, or, or like pretty much all of our providers.
+So that that's just like, I think that's like a moot point and I
+think it's very outdated.
+And then a gentic rag, they came up with this kind of new buzz term where they
+said, well, Hey, like there's traditional rag and like, we agree that was bad,
+but a gentic rag, it's so much better.
+And they came up with this like diagram, um, with like all of these like little,
+you know, like just like to show you like how complex they're like their
+system that they're proposing is like, they made it for me, you know, they,
+they showed the diagram and like, they're showing off this, this pipeline.
+And my response to that was basically like, yeah, you're solving
+22, 2022 problems with 2023 tech.
+Everything that they call a limitation, like hallucinations, outdated
+knowledge or context limits.
+It's totally irrelevant today with flagship models and model context
+protocol, MCP servers, like, you know, they mentioned like documentation is
+like, we have MCP for that.
+We have tools that you can bring in that just pull in the most relevant
+documentation, the most recent documentation, and essentially rag is just
+a bloated workaround for issues that don't really exist anymore in practice.
+Um, they talk about control.
+Um, and they frame and they frame rag that it's safer and more trustworthy.
+But with a coding agent, you don't need citation graphs.
+You need judgment and you need just like logical progression
+reading through the code base.
+And I actually, it improves the agent's execution for the agent to come about
+and come up with a plan organically instead of having this like schizophrenic
+mind map of four dimensional clustered embeddings, like floating around in its
+head, you know, it really is a source of distraction for an agent to run this
+search and they propose the agentic rag to like run this search and just have
+like a whole bunch of like blusters from all over the place, surface of like
+chunked code that is just like, like you get like a small snippet of code.
+And even if you work, like, even if you work like really hard on your chunking
+algorithm and make sure that like your chunks are like immaculately split up and
+segmented, so you get like perfect functions and it's just like beautiful
+chunking, even then you're getting chunks surface from all over the code base.
+And your, your poor agent is just like, you know, dealing with all these chunks,
+trying to figure, like trying to make sense out of it.
+And it ends up being a fundamental like distraction for your coding agent.
+That's why I titled this talk, like stop distracting your coding agents, just let
+them do what they think is necessary and let them follow their own train of thought.
+We call this at climate, we call this narrative integrity, where every task is
+kind of like a story where it might be a very boring story, but the story has,
+has to make sense.
+The story is coherent where every step of the way, you know, like, Hey,
+Klein, you started out with a task that this like protagonist, which is Klein,
+this coding agent needs to overcome.
+You start with the kind of the setting of the story where Klein is exploring
+the code base, reading in files in full.
+We don't even read in like parts of files.
+We just look, we're very context heavy, taking the entire file, loaded into
+context, understand the setting, understand where the story is taking place.
+When we come over the plan on how to overcome the central issue of the story,
+which is the task that the user came with.
+And because these LLMs are really good at predicting the next token, if the
+story makes sense, they can continue the story in a logical way and eventually
+come to the resolution, which is it solving your task.
+And frankly, yeah, like this agentic ragged approach that Pinecone proposed,
+it just sounds like slapping agentic on top of an outdated solution.
+And it just adds so much complexity.
+And now you're maintaining the system and yeah, rag really is this black hole.
+And you could set, you can sync endless resources into it and try to improve,
+have like marginal improvements to your rag pipeline.
+And at Klein, I'm just like, what I propose is you just zoom out and take
+a totally different approach, drop all of that, remove all of that from your code.
+If you already have it, just stop maintaining it, stop coping and just go fully agentic.
+So this kind of leads me into the bitter lesson where famously Boris from
+Cloud Code actually found this clip from his Latent Space podcast, which by the way,
+myself and Saud, the CEO of Klein, we recently recorded a podcast, Latent Space,
+that's going to be out soon.
+So we're going to be talking about similar things in that podcast, but Boris was on
+there from Cloud Code and Boris is like basically like the creator of Cloud Code.
+Cloud Code is his brainchild.
+And even he in this podcast talked about rag and how they tried it at Cloud Code.
+And it was just disappointing.
+And they found that agentic exploration of the code base just works so much better.
+And he talks a lot about the bitter lesson where modern models don't really need rag
+anymore. You can feed in real files that rag just distracts the model, if anything,
+it just subtracts from the model's intelligence.
+And it's a maintenance nightmare.
+He talked a lot about like the security implications of it.
+And they ended up just throwing it all out after experimenting with rag, building
+like an early rag system.
+And they just gave access to tools like grep and basic read file functionality.
+And Cloud Code was able to do the rest.
+So my kind of take on the bitter lesson is that essentially what it means is that the
+application layer is shrinking and all this code that you write like back in the day,
+like with traditional ML, you needed like a big harness, you need like a lot of code
+to make traditional ML useful for people to actually productize it.
+With LLMs, you still need a decent amount of code, but it's definitely less now than
+before. You just kind of hook in some APIs with OpenAI or Anthropic or Gemini, and you're
+able to make something very useful.
+And the bitter lesson to me, what it really means is that this application layer is just
+shrinking over time.
+Every day is just growing smaller and smaller.
+And instead of trying to cope with that, instead of trying to hang on to these systems that
+you've built, which a lot of engineers, I see you doing this, where they're really holding
+on, you know, they're still maintaining these systems.
+It really is like a form of like delusion or denial that they're still hanging on to
+this. But really, yeah, just throw it all out.
+Let the model do its job.
+Stop trying to get in the way of the model.
+It's almost like cleaning a mirror and letting more light shine through.
+Right. And this applies to more than just RAG.
+And this is like probably a topic for another talk.
+But I've written about this as well for Fast Apply.
+I wrote a similar article.
+This applies to RAG.
+This applies to Fast Apply.
+It even applies to fancy static analysis tools like recently CodeGen.
+Their whole bread and butter for years was building these like knowledge graphs of code
+that you could query with like a SQL database or like almost like a SQL query string.
+And even that, they came out and they did this like full capitulation.
+They came out on the timeline and they were like, yeah, we spent like two years building
+this crazy, like these fancy static analysis tools, these knowledge graphs for code.
+And a special query language to be able to query it.
+And we ended up throwing all of it out and just like, like essentially forking client.
+I don't know if they actually forked client, but they ended up just like doing what we're doing now.
+So, and then the next kind of the jury is still out on this, but like I am tentatively on the side
+that multi-agents and sub-agents, it's going to follow a similar pattern where you're not going
+to need any of this stuff.
+You're just going to let the flagship model do its job.
+So I will give a kind of short disclaimer.
+That's not a disclaimer where RAG can still be useful.
+I think RAG can still be useful if you're trying to keep things cheap.
+If your business model revolves around making money off of inference, RAG can make sense.
+If you're trying to save tokens and squeeze margins, like if you're trying to like charge
+like a $20 per month subscription for your users and you're building a coding agent,
+you'll quickly find that coding agents are very expensive.
+They're very context heavy.
+They burn a lot of tokens.
+And one way you can go about kind of doing a shortcut and saving on some of these costs is using RAG.
+Instead of reading in entire files, you just kind of have this RAG step and bring things
+into context that way.
+And yeah, you get like perfunctory performance.
+I think Cursor famously employs this strategy.
+And it makes sense because they charge you $20 per month subscription.
+We don't do this at Klein from the very beginning at Klein.
+We would just bring your own API keys and you know, you Klein however you like.
+And we just go full context heavy and we don't take any shortcuts or any workarounds around context.
+And we find that it works just so much better for agent to coding.
+But if you're kind of stuck in this business model where you need to make ends meet and you're
+charging this flat subscription rate and you have these credits and all this other stuff going on,
+then RAG can make sense.
+And also for the traditional use case of like vaults and things that I've built in the past, I think it
+can still make sense for human readable documents, maybe legal documents.
+But even then, I'm starting to think about like recently I used Klein.
+I told Klein about like there's this LLM.txt document somewhere.
+It was for Adio.
+I was trying to hook up some more systems to the Adio CRM and have automatic ingestion of accounts.
+So I gave Klein the LLM.txt for Adio and it's basically a long, it's like all of the documentation
+for the Adio API.
+But unlike a normal LLM.txt where everything is just in this one site, in this one document, it
+basically had like a bunch of links to categories of like, okay, here's the person category, here's
+the company category.
+And for each one of those, it linked to another Markdown document where it would go and have other
+sections and other API endpoints to explore.
+And basically I gave Klein this original document, Klein found it's like, oh, okay, I need to look
+the organization thing, hold in that link using the Markdown, the Markdownify MCP server.
+And basically we saw a Gentic exploration even in a human readable context with like just
+documentation where you have like a kind of directory list of the high level categories.
+And if your documents are somewhat hierarchical and you have them in this like logical folder
+structure, all of the same rules apply.
+So even there, RAG wasn't needed.
+But I could see some cases where you have like maybe a massive data lake where it's unstructured
+and it's just like a whole bunch of human readable text.
+You know, RAG could be useful there.
+So that's pretty much that's my talk.
+I'm happy to open it up for questions.
+But yeah.
+It's funny you talking about this PDF case where I think even now for very large data
+sets, it still makes sense to do like RAG over PDFs.
+But even now, some of the tools we've been implementing is, you know, when you retrieve,
+you retrieve a page object from a document field and then you can still then traverse to a
+certain document, view a certain page.
+And then I'll read things that said, oh, this mentions appendix 162.
+I'll go to table of contents and then go to page 162 in appendix.
+And even in those cases, I find that having this portfolio of tools is still very useful.
+Maybe RAG is needed in the planning step.
+But once you are able to implement these, like go to page, go to the next page, go to the
+table of contents.
+Yeah, you tend to sort of mimic the behavior of these domain experts, right?
+Which is again, sort of processing data the way that humans are used to processing data.
+I guess the first question really is like, what do you recommend RAG for?
+I think we've somewhat answered that.
+But if you have any other thoughts, I would love to hear them out.
+Yeah, like again, if you're, if you need to save costs and you want like perfunctory
+performance, that's not like truly intelligent.
+That's not like super high quality.
+For things like I see a lot of like these like review agents on GitHub where they have
+to review like thousands of PRs.
+And the cost for that can't really be justifiable in those cases for a lot of the free
+use, free tiers.
+It's like, yeah, that can make sense where it's like uses like a basic form of RAG and a
+smaller model to answer questions, basic questions and respond to GitHub issues.
+Yeah, like massive data lakes, things like that can make sense.
+So, you know, I wouldn't say it's fully dead, but for intelligent coding agents, for like
+serious engineering teams, I wouldn't trust my production code base with an agent that
+uses RAG.
+I guess if I played double advocate gear, what about the situations where even the code
+base deals like a massive data lake?
+Like, I'm curious.
+I don't think I've seen anyone sort of work with agents on like, you know, like I'm really
+curious what the Google or like the Facebook like monorepo looks like.
+But I don't know if you have any thoughts there.
+Yeah, even at Facebook, we had to have, we had to have like our own grep.
+Yeah, I would say like Klein, a lot of these enterprises that are coming to us, we
+basically like early on we have, we didn't have any enterprise products and we're actually
+launching our enterprise product like this week.
+But a few months ago, we didn't have it and we just like put up a website with like a
+forum where enterprises could go and sign up.
+And immediately we started getting flooded with like all these enterprises and we started
+getting booking meetings with, you know, Fortune 5 companies, not even 500, but like
+massive companies like massive engineering teams and massive code bases coming to us
+saying like, hey, we already have hundreds of engineers using Klein in our organization
+because you guys are open source and we pass like the security audits, like really easy
+to use Klein at these organizations.
+And they're like, this is a fire that we need to put out.
+This is like actually really bad because we have no idea which API keys our engineers
+are using, like where they're sending their data, how much money they're spending,
+we have no control over this.
+Please just give us an enterprise product.
+Let us give you money to make an enterprise product so that we can actually manage this.
+And all of them say that Klein works remarkably well in massive code bases with the
+basic tools that Klein already has.
+And one of these things is like grep.
+If you have your own form of greps like at Meta or whatever, you can just either hook in
+an MCP server for that or give it a special Klein rules file that explains like how to
+use this tool in the terminal so that Klein just knows it out of the box.
+And we also do like these like basic like, you know, folder structures and a tree view
+for Klein and like basically like some basic ASD stuff and Klein just handles all that
+very well. And if you give it like a starting point, then even better.
+Klein can find what it's working with a lot faster.
+So you're basically just trying to reduce that planning phase time down to where Klein
+can more quickly figure out like where the relevant stuff is.
+And really that part is fairly trivial, even in a very large code base.
+That's good to hear.
+I guess this question, it's almost baking into two parts, but can knowledge graphs or
+other forms of indexing help me ditch rag?
+In terms of vector databases for non-coding use cases, I have my general thoughts there,
+but I'm curious where your head is at for something like this knowledge graphs.
+Yeah, like what's remarkable to me is like, you know, I was on the knowledge graph team
+at Meta and like.
+I was bullish for a long time for like using knowledge graphs for input in these
+agentic workflows.
+But like I said, like code gen, like literally yesterday, the code gen founder, J
+Hack came out and said like, hey, our whole bread and butter is like building these
+knowledge graphs.
+We've been trying to build a coding agent using it and it's just like, it just worked
+terribly. Like we just threw it all out.
+And, you know, this they overcame like all of this, you know, all of this work and they
+themselves said that it didn't work.
+Like, you know, I'm starting to.
+You know, think again about about knowledge graphs in general.
+So I think the jury, the jury is still out, but it's not looking good.
+Yeah, on my side, I feel like the the harder thing is that if you write.
+The AST is well-defined knowledge graph that is very Lindy across many, like
+decades, whereas if you're building your own custom system, you need to define this
+taxonomy.
+And I think the jury's out on whether your team is aware enough of the problem to
+actually build the right syntax.
+Right.
+It's it's but if you know exactly how things are being used and exactly how things
+are being traversed, it does make sense.
+But I just don't like it.
+It's hard to find people who are good at modeling things that way.
+To this point, I'm also curious, what is your experience with using the AST and the
+syntax trees for these coding agents?
+Like does client have access to this kind of information?
+Client does have access to this information and a client even has a tool that you can
+use that that uses like this, like AST to list like code definitions and things like
+that. And frankly, client doesn't really use it that often.
+And it's not actually like used like a lot or and it's not very necessary, I'd say
+say in some cases that can be helpful.
+But in most cases, it's like, hey, if you need to find a code definition, you have
+the imports at the top of the file, you can go and find it.
+So even that, you know, might end up dying out to this bitter lesson concepts.
+And one last note on knowledge graphs is.
+I think another kind of problem with it is that these models aren't really trained
+to use these tools.
+These models, they're trained to do like the standard coding agent stuff, but
+they're not really trained to use like your custom knowledge graph.
+So maybe like.
+If if these models are trained for that use case, you can see better performance.
+But, you know, out of the box, I don't think it's going to be as good.
+That makes sense. Yeah, I sometimes always feel like the agent is using the arguments
+wrong. I wish I had some access to that language server to figure out like, what is
+the definition of this? If you know, you can write a function and put in the prompt.
+But yeah, I can imagine like has cloud code sort of gets all the data out of
+Sonnet 4 to fine tune.
+Sonnet 4 will just become better.
+And then all coding agents that use things like Sonnet will just improve over time.
+Oh, here's a good question.
+What is your recommendation on maintaining context in long running coding agent tasks?
+I'm really specifically curious about you, whether or not you believe in like compacting threads.
+Yeah.
+So at Incline, we have a few slash commands you can use.
+You can use the small slash command to compact.
+Another thing you could do is slash new task, which I use a lot actually, where you
+can basically do this task handoff process, where it's like, if you're starting to
+approach the capacity of a like a token context window, you can run slash new task.
+And client basically comes up with like a summary of everything that was done so far,
+like as you would to, you know, a new engineer that's just like taking the task from
+here, here onwards, passing off the context to a brand new task and doing context
+management that way.
+And at Client, we actually, we had a big blog post where we wrote about like our,
+like before summarization, what we kind of did by default was this like very
+algorithmic way of truncating context where we remove like duplicate file reads.
+We really try to maintain narrative integrity and clean up the context that way.
+And what we're finding now is that actually like, yeah, summarization just like works
+better and you can like in our internal testing, you can just like have these like
+long running tasks with like resets of the context window, like many times over with
+just like a very detailed summary and cloud code, Boris from cloud code said the
+same thing in his talk.
+So I think surprisingly the better lesson also applies to context management.
+I think like all of our clever ideas about like truncation and context management is
+starting to pan out that that's the basic summarization works really well.
+And especially internally, we're testing like to do's like a, like we're doing it a
+little bit differently.
+We have our own kind of way of doing it.
+And it's internally, it's been looking very impressive actually, where we get even
+better performance than like cloud code for very long running tasks where you can just
+like one shot like a very long running task.
+If you have summarization as well as like a little scratch pad with to do's where the
+agent can just like mark off what it's done and what is left to do, kind of keeping it
+on track that way.
+Yeah, one thing I always also say is the performance difference between asking for
+some piece of code to be written and just doing like any amount of test driven development.
+I get like massively different results.
+It's one of them to say, okay, like implement this new feature, maintain backwards
+compatibility, implement this feature, here's a script and you run it and it fails.
+You've done something wrong.
+Like that's the difference between sort of like supervising something versus like
+actually coming back in 20 minutes and knowing that the thing still works with
+summarization.
+That has been a huge thing as well.
+Let's go to the next question.
+What's your take on RAG when not applied to coding agents?
+For example, early on for large enterprise document core practices to chat with in QA
+against like RSPs and whatnot.
+I think we generally answer this.
+It is very much the case that for large data sets, RAG is a different use case.
+But even then I have been seeing, again, just it's not about whether or not you use
+embedding search or not.
+It's just whether or not it makes sense for your budget of latency, content
+performance.
+And there has been a lot of contexts now where we have tools to do semantic search to
+build the initial context.
+And then afterwards we have tools for traversal.
+Once we know that these seven PDFs out of the 1 million PDFs about this construction
+building are important, then it becomes things like read the next page or like go to the
+link or like revisit chapter seven.
+Those things have been really, really valuable.
+Cool.
+Let's keep going down some of these questions.
+As I'm scanning some of these, I'm curious for what is a question you feel like if we're
+not asking in the coding agent world?
+I'm going to take a couple of seconds to think about that while I scan over some of
+these questions.
+Yeah, one question that I think a lot of people are asking is, is there a question
+people aren't asking is, you know, what's better, a team of geniuses working together
+or a bunch of solo geniuses working separately in isolation?
+And this kind of goes back to sub agents and multi agents.
+And, you know, we've seen examples of
+geniuses, human geniuses in the past where breakthroughs just come from one person and
+they come up with incredible ideas entirely on their own.
+And then you give it to maybe like a team to implement those ideas.
+But for like by and all, I think like in general, I'm on the side of like solo geniuses
+working in isolation.
+And I think that applies to coding agents.
+Like I think this whole like multi agent thing, like, oh, I spun up a Gorillian sub agents
+to like handle this task.
+I think you're just going to like we've had this in the past, like with auto GPT.
+And, you know, back in the day is like auto GPT and, you know, crew AI came out and that
+was like also the promise of crew AI is like, oh, like context windows are limited.
+We can have a crew of agents work on a problem together.
+And it seemed like it was very appealing, but it just never worked.
+Like it was just like, you know, it was like a fast way to burn a whole bunch of tokens
+and get nowhere.
+So, yeah, and I think it's just like a repeat of like, like there's so many parallels to
+the rag narratives with with this like multi agent thing that.
+I don't know, the jury is still out on that, but I'm I'm kind of on the side of like,
+no, just like keep it, keep a single threaded, keep it one agent for things like maybe like
+read only. It might make sense if you're like just gathering things in a context.
+But even there, it's like you have the anthropic research mode and Claude and then you
+have the open AI research mode and anthropic uses both agents open AI doesn't.
+And open AI just works so much better for me when I use it for like, you know, deep
+research for my articles, like quote mining and things like that.
+It's just like so much better than enthral and they take like roughly the same amount
+of time. So I don't know, jury's still out, but yeah.
+Any other good question? What's your view on servicing bash CLI tools versus using
+things like MCP servers?
+I think with CLI tools, like it's just like a very easy tool that you can give your agent
+access to and it just works.
+You know, and then the agent can decide himself what tools to use with MCP.
+I think there's some cases where it can make sense.
+Like, there's some some really notable examples like the the magic MCP server from 21st
+Dev where they inject like taste into the context of the model, where they have this
+like massive library.
+It's like a bunch of design engineers that came up with like all these beautiful
+components that have like a big repository of it.
+And this MCP basically like pulls in examples of beautiful design of like code or
+beautiful components into the conversation and injects some taste into the agent so
+that the agent can make beautiful components for you.
+I think there's some good use cases for MCPs, but also like the more MCPs you add, the
+worse the agent gets at following any one given tool.
+So we've seen like that's actually one of the limitations with with Anthropix models
+is like there's only so many MCPs you can add before it just like kind of dilutes
+everything. Whereas the Gemini Gemini is actually much stronger.
+You can actually give it a lot of MCP servers and Gemini will start using them
+effectively.
+That makes sense.
+I guess another question I'm curious about is when I look at something like quad code,
+it has every single tool in the CLI listed out.
+So there is a like list directories tool and there is a read file tool and then there
+is a GitHub tool versus, you know, once I imagine just exposing bash to it and having
+a single tool that does many things.
+I'm curious in your experience, like how do you think about having like super tools
+versus having smaller task specific tools?
+I think this is actually I think a lot about for any kind of agent.
+Yeah, and like Klein and quad code are similar in this way where both Klein and
+quad code, we have a terminal tool where the agent can just run any command in the
+terminal and get its output.
+But then we also have like the read file tool or like the search directory tool or
+like these are the other tools.
+And I think one element of this is just UX.
+So, you know, in Klein, I think we might I might even be able to show you here.
+Yeah, like on this slide, you might see like Klein wants to read this file.
+If you have a special tool for it, then you can have like all this custom UX around it.
+Whereas for all terminal commands, they all look the same.
+They all look like that little, yeah, I'm lost to execute this command thing.
+So on the one hand, there is like the UX component of that.
+And I personally like I think UX is actually very important for this.
+I think that's one of the reasons why Klein has been so successful is because we
+just have like such a nice interface.
+With an AI agent.
+But we have considered like, like this internally as well, which is like, hey,
+what if we just like only use the terminal tool and just like the agent would figure
+things out from there?
+I think eventually we might move in that direction.
+But for the time being, it is helpful to just have like this little sandbox for the
+agent where it has like these tools that are like, you know, like, you know, like
+agent where it has like these tools like accessible to it.
+We know that these tools will work.
+Whereas like, you know, the agent might miss format, you know, a terminal command
+or something like that.
+And there's just like more surface area for problems with the terminal.
+But I think eventually like we're going to get to a point where none of these
+tools will be needed.
+Yeah.
+I can only imagine one use case.
+It was just like having permissions and being able to allow list.
+Right.
+It's like, oh yeah.
+Yeah.
+That's actually a good point.
+We have like auto-approved settings where it's like, you know, you have to, you can
+turn on auto-approved for reads and edits, but otherwise everything needs approval.
+And like the user can either accept or reject it.
+Whereas like if the agent's just running terminal commands, like good luck.
+Right.
+Yeah.
+And I guess that goes down to the UX part again.
+Yeah.
+You know, as things become more higher stakes, it might be the case that we actually
+need more tools because we need finer grained access controls versus just having
+terminal or just running things in a Docker instance.
+I mean, speaking of terminal, someone asked, is there a plan for a client CLI?
+Yes.
+So, I mean, we internally, we already have one that we're building.
+We're actually, so we're, we're coming out with enterprise this week and we're also
+coming out with JetBrains and a CLI version of Klein imminently.
+Um, so we're just kind of tweaking the lab.
+Like we're doing some final polish to make the UX a little bit better for the CLI so
+that open source contributors can actually start like contributing to it.
+And we have like the foundation set for it.
+But yeah, it's like, it really is like cool.
+Uh, the, the terminal like Klein just feels, feels so awesome, especially when
+you're like using it in them, this is great.
+Oh man.
+I really wish there was some like popper and bindings for short coding agents.
+I, uh, I don't, I don't really want to just like multi-flex the screen.
+I want to be like commit commands and almost have things something in a, in a,
+like a plugin format.
+Um, I guess on your comment of like the, the super genius, like one super
+genius and many super geniuses, uh, what are your thoughts on mixing these
+models for specific tasks, for example, tools that specifically use Gemini's
+1 million context model versus O3 versus Sonic?
+Um, have you thought about, so what does Ergonomist might look like?
+Yeah.
+Um, I think what a lot of like Klein users, like a common pattern, a lot of
+people use is they use a very large context window model, like Gemini Pro,
+the Gemini 2.5 Pro or the planning phase.
+And then for the apps phase, once they've come up with a plan, read it in all of
+the files in the context and come up with a very solid plans, then to, for the
+execution phase, they switched to Sonic 4, for example.
+Um, but yeah, I think at Klein, we definitely have a philosophy, like we
+don't want to, you know, uh, be locked to just one model and our users don't want
+to be locked to just one model.
+And not just that we support all the different providers.
+We support like Bedrock, Anthropic, OpeningEye, whatever you want to use,
+even self hosted models.
+Um, so it's interesting to see these, these patterns emerge kind of organically.
+Um, but yeah, I'd say Gemini is really good for large context tasks.
+So this can be like coming up with a plan for like a massive project.
+Um, and then Sonic is very good at this, like, kind of like almost like autistic
+execution of like one specific goal, right?
+So, yeah.
+That makes sense.
+That makes sense.
+I guess.
+Oh man, I have one more question.
+But I just, I just forgot it immediately.
+Unironically, the question was about memory.
+What are your thoughts on memory?
+Cause I feel like I see cursor trying to do a memory thing.
+I don't know.
+In my opinion, I don't know if I use it that often.
+Um, so Cloud Code has that like exclamation mark or that, that pound
+remember versus like the agent files.
+Um, how do you think about defining a system like that?
+Cause I can, I can imagine that could either be, you know, rag or that is we
+just, you know, feed like suffix it, uh, in the agents.mb file and call it a day.
+So I'm curious how you guys think about that as well.
+Yeah, that is a like, um, I will say like, okay, and Klein, we have work, but we
+have, uh, Klein rules, which is you can consider it like memory or like, you
+know, things that you just want client to know out of the box every time you
+start a new task.
+Um, and we see, you know, teams, you know, engineering teams, uh, at large
+enterprises using it this way where, you know, they might have this like kind
+of custom tribal knowledge that they, uh, like articulate in this, uh, Klein
+rules file and you know, multiple client rules file and toggle them on and off
+and kind of manage them that way.
+We also have workflows, which is like more for when you're trying to automate
+a sequence of repetitive tasks, um, that you, you know, previously would do
+manually with Klein.
+Now you can just like create a little workflow markdown file where it's like
+step-by-step like, oh, when I'm doing a PR review full first use the GH tool.
+It's already authenticated.
+You can use a GH tool to like pull the PR down, review it.
+Then you can leverage Klein tools as part of this workflow and say like, Hey
+Klein use the ask follow-up question tool that you already have access to, to
+ask me to make sure like, if you want to approve this or not, um, and give a
+justification for why this PR should be approved or rejected or whatever.
+And then if I say yes, then go ahead and run the GH tool, GH command to
+approve it or reject it or whatever.
+Um, but for this kind of concept of like auto, like auto updating memory, like
+kind of in chat, GBT, they were the first ones that came up that came out with this
+with like the memory updated.
+Um, yeah, I I'm still like in our enterprise product, we're going to have
+like a knowledge engine that kind of does some of this stuff, but you kind of, you
+really got to be careful with this because like oftentimes like, you know,
+even using chat, GBT, it's just like memory updated.
+It's like, Oh, memorize something that I didn't want it remembering, like stop,
+like stop doing this.
+Like now I have to go in and try and manage it.
+Um, so there is like a question of like, also like really, it's like another UX
+question is like, do we want it automatically updating for users or do we
+want users to like have the control over it or maybe some kind of hybrid thing
+where it like asks for permission to update it and you can like approve it or
+something.
+Um, yeah.
+And for something like that, where it's like your memories start piling up, um,
+and you start wanting to like doing context management around that, you know,
+the question is like, okay, well, is rag good for that?
+And I'd say maybe, um, maybe it could be, uh, depending on how it's implemented,
+but it's like, if you have like a whole list of like random little memory snippets
+that's associated with, with the tasks that you're working on, maybe, maybe
+embeddings can actually be a good fit there.
+I know we're out of time.
+I want to make sure, you know, you know, I just heard with me, help hostage.
+Hi, but before we go in any sort of like, where can we find you?
+You mean on Twitter or LinkedIn?
+We'll always send a follow up email after this, but you know, the floor is yours.
+Yeah.
+Um, so yeah, my name is Nick Pash.
+You can find me on LinkedIn, um, on Twitter.
+Twitter is like primarily where I post.
+Um, I also have a sub stack.
+Um, and yeah, I'll just, uh, put my at Twitter here in the chat.
+But yeah.
+Um, if you have any kind of follow up questions or any discussion topics you
+want to talk to me about, just tweet at me and, uh, we'll chat there.
+Awesome.
+Thank you so much.
+I'm gonna have everyone else.
+I think we learned a lot today.
+Excited to talk about Klein.
+Thanks so much, Jason.
+Bye bye.

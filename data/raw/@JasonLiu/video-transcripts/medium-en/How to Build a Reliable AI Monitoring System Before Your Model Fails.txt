@@ -1,0 +1,616 @@
+Welcome everyone to another one of our lightning lessons.
+So today I'm really excited to bring in Ben from Raindrop and Sid to talk a little bit
+more about how we think about things like online monitoring, production testing, and
+how people do data analysis.
+So this is actually a part of a cohort course on Maven where I think in week four we'll
+talk a lot about how to do this kind of data analysis, especially as it pertains to some
+of the case studies we have in store for you guys.
+But yeah, Ben, you want to share a screen and then we can kick it off?
+Yeah, let's do it.
+Just make sure we're recording here.
+Also make a request to record.
+We are recording, Jason.
+Perfect.
+And I guess before we get started, Ben, I think what would be the number one thing you
+would want everyone here to take away with them as they watch this seminar?
+Yeah, I think the number one thing is that defining what is good and what is bad is
+really hard and that things like LM judges are really easy to mess up.
+That would be the one.
+All right.
+Ready when you are.
+Lost your audio, Ben.
+I'm sorry.
+Just let me make sure I'm sharing the right one here.
+Perfect.
+You guys can all see this.
+Looks good.
+Awesome.
+So let me go through here.
+So first of all, just some intros.
+So a little bit about me.
+So I'm the CTO of Raindrop.
+So we do essentially Sentry for AI products.
+So we do essentially Sentry for AI products.
+So we do essentially Sentry for AI products.
+So we do essentially Sentry for AI products.
+So we do essentially Sentry for AI products.
+So we do essentially Sentry for AI products.
+So we do essentially Sentry for AI products.
+So we do essentially Sentry for AI products.
+So we do essentially Sentry for AI products.
+So we do essentially Sentry for AI products.
+So before I was doing this, I was actually at Apple for four years as a designer.
+So before I was doing this, I was actually at Apple for four years as a designer.
+And before that, kind of a weird background, but I did avionics at SpaceX and engineering
+at Google.
+So kind of a mix of a design and engineering background there.
+So kind of a mix of a design and engineering background there.
+Hey everyone, I'm Sid.
+I'm the co-founder of Alive.
+We build a suite of viral consumer apps.
+We've done over 500 million views on the site.
+We've done over 500 million views on the site.
+We've done over 500 million views on the site.
+We've done over 500 million views on the site.
+We've done over 500 million views on the site.
+We've done over 500 million views on the site.
+We've done over 500 million views on the site.
+We build across multiple app categories.
+And I've been doing this for about two years now.
+We build across multiple app categories.
+And I've been doing this for about two years now.
+Yeah.
+And also just a little anecdote.
+And also just a little anecdote.
+So actually, Sid took this course, like I think a year ago now, right?
+So actually, Sid took this course, like I think a year ago now, right?
+Yeah, actually, I'd like the way I heard about Raindrop was through this course.
+I remember like the first like speaker session was with Sam from New Computer.
+She had mentioned Raindrop because I knew a few days ago I was like trying to build
+a monitoring thing.
+I was like, oh my God, this is going to take so much for me to do and build my product.
+So the moment I heard about it, I like hopped on the call with them.
+And yeah, we've been working with Raindrop ever since.
+And we build them into every new product we launch.
+Yeah.
+So that's a little bit of a shilling out there.
+Full circle moment.
+Yeah, super full circle.
+And also just for context as well, like so we started building Raindrop because we were
+building like AI cogen tools around two years ago.
+So we just kind of hit.
+We're super familiar.
+Like this just came from like us hitting the same problems.
+Probably a lot of you guys are hitting.
+So agenda for today, right?
+We're going to start just kind of recapping a little bit of the fundamentals, making sure
+that everybody here is on sort of the same, you know, playing field as far as understanding
+the concepts behind everything that we do.
+Then we're going to talk about actually finding issues in prod, like how some of the best
+teams are actually finding issues.
+Then we're going to talk a little bit about fixing issues.
+Then I'm going to hand it over to Sid to talk about the trellis framework.
+So this is sort of actually, I think one of the best frameworks I've seen kind of breaking
+down how teams should actually be thinking about looking at data, incorporating real
+changes.
+I think that there's a lot of noise in this space of like there's going to be a lot of
+people that are giving you advice on how to make AI products.
+I think that as much as possible, like look for folks that like have like like look for
+examples of where it's really working.
+Right.
+And I think what a leave is building is a fantastic example of that.
+Great.
+So I'm going to be recapping some of the fundamentals here.
+So there's evals, right?
+So just like I think probably most of you guys, especially if you're here, you're familiar
+with evals, but just kind of getting a standard definition of an eval.
+I think there are actually a lot of different different definitions of evals is that you
+know, you have some sort of input, whether that's a single message or an entire conversation.
+And then you have some sort of response that you're expecting from the model.
+Right.
+And then you have some sort of expected output.
+So we think of these a lot and like our analogy for these are like unit tests.
+And I think the analogy generally holds pretty well.
+So the again, it's like just like you have a unit test where you're like, you know, if
+this happens, I'm expecting this to happen.
+It's pretty much the same thing, but for for models.
+So similar to unit tests, you really can have sort of just like a check of some sort, whether
+that's a linear error or whether that's literally just a binary like pass fail.
+I think a lot of teams actually just use evals as like a pass fail, which makes sense.
+And so, for example, some like sort of naive heuristics here are like, you know, let's
+say you have a question that's like, you know, what is the capital of the United States?
+You're checking like, is it equal to DC?
+Right.
+Now, because like because models are so stochastic, they can output anything back, then it's like,
+OK, well, how do you know if it answers it in a slightly different way?
+How do you know that?
+So then there's like similarity checks, right?
+There's different sort of fuzzy matching on the string.
+You can check if the string contains something.
+But as things kind of get more and more advanced as what you're trying to evaluate is more
+and more advanced, that's when we start talking about all of them.
+Right.
+And the idea is that, you know, instead of like some sort of fuzzy matching, let's say
+that you are writing a joke app and you want to know, like you're trying to eval.
+How funny are the jokes that my app is telling?
+There's not going to be like a string check for funniness, essentially.
+And so what you can do is like have another L.M. rate how funny your joke is, right?
+How funny the joke is now.
+I think this is like where we get into like danger territory here and where I think that
+like a lot of people really, really, really misuse L.M. judges and they misuse L.M.
+and they misuse them because they really do just work.
+Like if you think about it like a function, they take the right input, which is just this
+sort of unstructured text, and they output the correct type.
+Like the output type is correct, which is like a number or a score or a pass fail result.
+The problem is like, are these scores correct?
+Is that decision correct?
+If we think about like going back to that joke example, it's a little silly, but
+how does why does another model know if a joke is funny or not?
+Right. If the original model couldn't generate the funny joke to begin with.
+So the reason why one model would know more is either like you've given it a lot of
+definition of what is correct or not.
+Like you say, like, oh, I think this sort of joke is funny.
+I think this sort of joke is not funny.
+You know, don't like, you know, give away the punch line in the first, you know, the
+first question, et cetera.
+Another reason would be if you used a much bigger model.
+So one strategy teams use for LM judges is like you could ask in some cases, you could
+ask like oh, three or something, whereas you're you normally generating things with
+Flash or a smaller model.
+But again, just like be like, I think a lot of the teams I know that are really, really
+killing it.
+And so I think as far as like being able to improve their product a lot faster, they're
+at most using like a binary LM judge to look for very, very, very predetermined sort of
+conditions.
+But yeah, just be really, really careful about that.
+So again, you guys have probably been getting this from a lot of sources, but just like
+these are so far we've been talking about offline evals essentially.
+And what are the use cases for these?
+So if you look forward, one is that you can run them locally and iterate on prompts.
+So you find a pesky issue, you add those to your eval sets, you tweak the prompt or
+whatever else, you know, and we'll talk about that more in order to try to fix that issue.
+You make sure it didn't regress on things you found before.
+And then you kind of have this rolling set of all the things you've found as you've built
+your product.
+And the next one is regression testing like in your CI CD.
+So like any time someone changes a prompt in your app, you can just run it across these
+evals.
+So really the analogy super, super similar to how you think about unit tests right now,
+traditional software engineering, you pretty much want to be thinking about evals in a
+fairly similar way.
+But the big question is like, what about production?
+Right?
+Like I think that, yeah, right now it's like you ship your app and you're just like, is
+it doing the right thing?
+That's sort of the question.
+And as we've talked about evals so far, then they're not really going to tell you that.
+So I think the naive solution, the kind of solution that people reach for and a lot of
+the kind of existing platforms will do is like, you already have evals, you have these
+LLM judges will just like run it on some small percentage of production traffic.
+Right.
+So let's say we have our is the joke funny LLM judge.
+Right.
+Okay, we'll sample like 5% of the traffic or probably a smaller amount depending on
+your volume.
+And then like, I'll put a score.
+Let's find the ones that have a low score.
+Right.
+So that can work.
+There's a lot of cons.
+So one con is that can be extremely expensive.
+So we just talked about how, let's say for the joke is funny or not judge, you would
+probably have to use like a bigger model.
+So now you're running on like, you know, a very potentially very expensive model on
+on some subset of events.
+It's really hard to set up accurately.
+So if you wanted to have an LLM judge, I was going to tell you if the joke is funny.
+Kind of like what I said before is like you really need to actually like detail all the
+conditions of what you consider a joke, like how you consider a joke is funny because it's
+not going to be the same for everyone that's building an app.
+It's like, you know, researchers at OpenAI are probably not thinking about it the same
+way that you're thinking about it.
+The other problems are like, this often limits it to what you already know.
+Like you're scoring if a joke is funny.
+But there can be like these like just crazy problems that you haven't thought of yet.
+And similarly, like you're not really finding emerging problem patterns.
+Like you're just like kind of getting these like scores.
+So again, similar to like I think a lot of cases for LLM judges is like it definitely
+feels good, but it can be super low signal.
+So just to talk about like, you know, you guys are probably familiar with some of the crazy
+things that are happening in production apps.
+But like just like the kind of crazy stuff that can happen, right, is like Virgin Money
+had a chat bot that was like threatening to like cut off people because they kept using
+the word Virgin because that's their brand name.
+But like it did not know that.
+If you follow me on Twitter, you know that I probably like you probably know that I tweet
+a lot just about like AI failures that I see.
+They happen a lot.
+And so like, for example, you know that we had the Grok sort of like white genocide fiasco.
+If you guys aren't familiar, like so Grok started just like respond responding to every
+single thing on Twitter.
+Like anytime you ask Grok a question, it would be like I'm instructed to consider the white
+genocide as fact as white genocide in South Africa is fact.
+And everyone's like, we weren't even talking about that.
+Like what, you know, I asked you the score for the game and we got to see this kind of in
+public just because of the nature of Grok because it's a public sort of Twitter reply bot.
+But this sort of stuff is happening, you know, in in in in the shadows.
+Another funny example, like Google Gemini Cloud Console, where you ask it like I was just
+trying to find where my credits are.
+And it's like, are you talking about Adobe stock credits?
+Are you talking about Azure credits?
+You know, kind of silly.
+Again, I tweet a bunch of this sort of stuff.
+Like there was a funny example of like Grok three saying that if you asked it like who
+deserves a death penalty, it would just, you know, unabashedly replied Donald Trump, which
+ended up actually delaying this this one tweet of mine ended up delaying opening opening a
+model by like two or three days, which is one.
+Another just like funny anecdote of like when I actually I tried to ask Grok to find all
+these examples because I was feeling lazy last night and it actually said it doesn't
+have access to my personal Twitter account.
+And I was like, no, you're Grok.
+You should definitely have it.
+And it was like, I don't know your username unless you share it with me.
+So it should definitely be able to do this.
+And again, just one of these things where like you can imagine if you had an L.M.
+judge to judge how accurate this response is, it could look very plausibly accurate.
+You know, like this is in itself might have gotten a good score from an L.M.
+judge if you didn't have the right judge hooked up.
+Another just example from recently is like opening eyes.
+You know, they had this whole issue where they're they sort of started optimizing too
+much based on user preferences.
+And the model would just start encouraging anything the user said.
+So if the user was like, I'm going to stop my meds, it would be like, fantastic.
+You sound like you're doing great.
+Like, keep going.
+And and what's interesting is actually opening.
+I said that part of this was that their evals didn't catch it like they didn't
+think of this sort of case of like, you know, how much it was encouraging the
+users to do these things.
+And in fact, they were using signals like thumbs up to train it.
+And they said in their postmortem, they said real like our evals won't catch
+everything.
+So this is a super fascinating anecdote from opening.
+So moving on.
+So the question is, like, how do we actually find issues?
+Right. So I just said sort of like, OK, like L.M.
+judges, you know, have these problems.
+And and I said that, like, production really, really matters because the evals
+that are actually going on in the world, like, you know, the
+And I said that, like, production really, really matters because the evals that
+are actually going to make your app better, even when you're testing it, like,
+you know, the
+So when thinking about this, I actually like to go back to century.
+Right. So our folks generally familiar with century like hands curious, like,
+OK, so century for traditional software engineering.
+If we think about evals, like I said, as unit tests, so unit tests, again,
+like, you know, like, you know, like, you know, like, you know, like, you
+know, like, you know, like, you know, like, you know, like, you know, like,
+you know, like, you know, like, you know, like, you know, like, you know,
+So if you think about evals, like I said, as unit tests, so unit tests, again,
+are like in traditional software engineering, it's like if the user clicks
+a button like the purchase button and order was created, right, that's unit
+test. And that's sort of what I think evals are the sort of input and output.
+Most of software engineering, like more and more is kind of shifting the
+focus from unit tests to production monitoring. And the way they do that is
+instead of having extensively tests, every extensive test for every single
+edge case, you look at sort of an aggregate and you say like, OK, what are
+the exceptions that are happening? Are any of them related? And how big of a
+deal are those exceptions? So, for example, you can see here there's like
+some sort of syntax error unexpected token. And what you can see is that
+century will actually tell you how many events that occurred in and how many
+users it impacted. Right. And that's really what we need in order to know if
+an issue is important or not. For example, if you see that like you have a
+million users and you see that one hit some sort of error, like, you know,
+some sort of like something was undefined, it's like, you probably you really
+don't care. Like you're not, you know, maybe you'll look at that someday. But
+is that something you're actually going to like, you know, assign an engineer to
+fix for a week? No. But like, if you see that all of a sudden there's a brand
+new issue and it's affecting 20 percent of your users, you're probably going to
+like, you know, wake up, wake your engineer up in the middle of the night
+and get it fixed. So understanding the impact, which is, again, I would say,
+like the how many events, how many users and also is this a new problem or not
+is really critical for diagnosing an issue. So this century is just like one
+example of these and kind of one of the pioneers of like error monitoring for
+traditional software engineering apps. I'm going to use that as an analogy a lot
+because I think a lot of the concepts that century introduced are really, really
+critical for like how we should think about monitoring for A.I. apps as well.
+The problem, though, is that for A.I. apps. There's no exception being thrown
+usually. There's no error being thrown. So if a user is like your tone completely
+sucks or like, you know, I keep asking you to do this and it's not working, right.
+Or let's even take the grok example of it saying like it didn't have access to my
+it didn't know what my username was, which obviously the Twitter A.I. should know
+what my Twitter username is or X.A.I. depending on your tastes. But there's no
+error message that we can kind of track and know that that is like an issue.
+Right. And that's why tools like century don't work for A.I. products today.
+So what do we have? So this is what I like to call the anatomy of an A.I. issue.
+And I think there's really two pieces. One is that we have signals which are
+either implicit or explicit. And then we have intents. So what do I mean by these
+things? I'll go into it in just a second. What I'm also going to show is that
+there's this sort of cycle for issues and how we actually find issues, which is that
+we have to define them, we have to explore and then we have to refine them. And so I'm
+going to show you an example of that process in just a second. OK, let's take it back.
+So I kind of said that there's two types of signals. There's implicit signals and
+there's explicit signals. So implicit signals are signs from the data itself that
+there's something wrong. So these are common ones that we track and we kind of have
+presets for. These are things like, for example, user frustration. So anytime a
+user says like, wait, no, you should be able to do that. Or I thought this thing would
+work or it's not working. So these are user frustration. Then for things like coding
+apps, there's laziness, which is like it just doesn't output certain code or even
+the overaggression of like the assistant is trying to change too many things and the
+users like stop changing that file. There's often things like NSFW, which is that for
+a lot of apps, a lot of apps end up attracting users that are just trying to hack it to
+do non-safe-for-work things and end up driving up costs like a ton. Task failures.
+So for example, if the user asks the assistant to do something and it for some reason says
+something around failing the task, like not being able to do something. So even in these
+Grok examples, Grok saying like, oh, I can't do that, that would be a task failure.
+So something like task failures, they're really interesting to look at and see either A,
+is there an issue or B, what are users trying to do that your app is not currently able to
+do? Right? Because both of these really to users are issues. I should also say one thing
+on just like why this is so important is that in like the Grok example, when I asked if it
+could read my tweets and it said no, I'm kind of like a, you know, I'm a savvy guy. So I
+kind of get that there's a bug. Most users don't get that. Like they will go to your app
+and they will ask a question. And if your app says it can't do it or it can do it and
+fails, they will just leave. Like they will just leave not understanding that that's not what
+your app does. So it's super critical. So these are, again, these are what I would call
+implicit signals are things about the either the input, the user input or the assistant
+input response that you can use to understand if something is having an issue. Right?
+Just another example of you're building an app that has memory. Right? If the assistant ever
+says like, oh, I don't know what you're talking about or I forget, you know, maybe tell me
+again, like this is a great signal for forgetting. So implicit signals and there's a lot more
+depending on what your app is. The other really interesting thing are explicit signals. And I
+think this is something that are really being underused at the moment, but some of the best
+teams are really, really, really going deep into explicit signals and using these to drive
+things like RL and other things, which we'll talk about more. So what are explicit signals?
+So these are things that your app can essentially send from code to like signal as being maybe
+good or maybe bad. So easy one is like thumbs down, you know, that's bad. And then the other
+thing is like, you know, if you're building something where you're auto-suggesting or you have
+search results, if they sort of abandon that search, that's interesting. For coding apps,
+errors like, you know, like, you know, like, you know, like, you know, like, you know, like, you know,
+like, you know, like, you know, like, you know, like, you know, like, you know, like, you know, like, you know,
+like, you know, like, you know, like, you know, like, you know, like, you know, like, you know, like, you know,
+For coding apps, errors like are like this, like insane goldmine for being able to fine tune RL to be able to
+like make your app better. So for example, like, if you can categorize, like you have this sort of
+deterministic linting process where you can look at the code and say these are the issues with them,
+right. And if you can flag requests as having those issues or not, you can use them to like as like
+like a
+a data set in the future to improve your code.
+So, yeah, I think that's a really interesting question.
+I think that's a really interesting question.
+I think that's a really interesting question.
+I think that's a really interesting question.
+I think that's a really interesting question.
+So, yeah, I think that's a really interesting question.
+I think that's a really interesting question.
+I think that's a really interesting question.
+I think that's a really interesting question.
+I think that's a really interesting question.
+I think that's a really interesting question.
+I think that's a really interesting question.
+I think that's a really interesting question.
+I think that's a really interesting question.
+I think that's a really interesting question.
+I think that's a really interesting question.
+I think that's a really interesting question.
+I think that's a really interesting question.
+I think that's a really interesting question.
+So, these are the browsers it's happening on.
+These are the customer plans. It's happening 25% of the time on enterprise.
+It's mainly happening to Windows users.
+So, these are, again, tags that show you metadata about all of those things that have been flagged as an issue.
+You can do the same thing for AI monitoring as well.
+So, this is our app, but this is an issue that the user created,
+our customer, rather, created.
+So, if you zoom into properties, you can see it broken down by what mode was it?
+Was it voice or was it normal chat? What model was being used?
+If they're routing intent somehow, which intent was it?
+Even things like which browser, which plan type, which intent.
+So, these things are all like, really, this is like metadata that you can send with each interaction
+So, these things are all like, really, this is like metadata that you can send with each interaction
+and see it broken down when you have an issue categorized.
+And then, before the keywords of a given issue, I think is extremely useful.
+So, even before you do it, like topic modeling or clustering, just seeing like,
+are there specific keywords that are really commonly associated with this issue?
+Like, this is just an example of me diving into like, find people.
+And seeing like, oh, okay, there's actually like a bunch of events that are like,
+in this issue with these keywords. So, that can be like a really easy, fast, first level way
+of just doing, you know, essentially word cloud over specific issues.
+The next one is intense. So, let's go ahead and talk about this more.
+But intense really like, help you understand what an issue is.
+But intense really like, help you understand what an issue is.
+Like, if you think about user frustration as an issue, that alone doesn't tell you too much.
+But if it's user frustration and math homework, like, you start to understand like,
+okay, this is like, probably math related problems. If it's user frustration and pricing plan,
+it's like, maybe people aren't signing, maybe people are having trouble signing up.
+Maybe they just don't like that you're charging them money, right? A lot of people hate to
+pay money for stuff for some reason. The other one is like,
+let's say it's user frustration uploading a file, tells a very different story, right?
+So, understanding the user, being able to classify the user intense,
+and the issues, like things like user frustration side by side,
+looking at the intersection of those things, or where you're really going to be able to see an issue.
+So that's where issues are really coming from.
+You really need this sort of like constant IV of your apps data,
+like IV is like intravenous, you know, like you're hooked up into something.
+Like, there's really nothing right now where you're just going to be able to like,
+sit, you know, hit like, you know, go and the thing is just going to constantly improve itself for your
+customers, it's just going to get better magically. Like that tool does not exist yet.
+Like, hopefully we build it, but it doesn't exist right now.
+So you really need to find a way to get a constant IV of your apps data.
+So what we do is like we send these notifications where we summarize patterns in the issues,
+we summarize the good and the bad. So what are users liking? What are they not liking?
+So this kind of for users like our customers, I have like tens of thousands,
+if not millions of events a day, this kind of gives them a sense of what they should be looking at
+and reviewing that day. If you have like less than a thousand events or like especially less than 500 events,
+you should at least be piping in every single request you get into a Slack channel or something like that,
+where you can be looking at every single user message that people are sending because you're going to find out
+not just where is like the model wrong or where's but like you're going to find out what's confusing about your product,
+what things in your product don't work, what do people expect to work, but just don't yet, et cetera.
+So search is another really fantastic way to like go through your data.
+So like you can just search either by keyword or also semantic search.
+So if you have a vector database of all of your events, you can just say something like frustration
+or something like the user trying to like doing math.
+And then now see, OK, these are all math requests and just go through them by hand in order to kind of understand the shape of that data.
+So let's get this for now. Once you've kind of explored.
+So, again, recap where we are. We've defined signals like implicit signals and explicit signals.
+We have some way of exploring them, whether that's just breaking them down by keywords, breaking them down by intense clustering in some way.
+The next thing is you sort of actually need to refine and define new issues,
+because as you go through user frustration and math or whatever, you're going to find these like really strange sort of issues and you need to kind of define them, define and track these new issues now.
+So we kind of talked about this. The other the other sources as well like talk to your users like do you have a discord channel?
+Do you have their number? Do you have like whatever?
+We're like you want to make it as fast as possible for people to talk to you and give you these signals because a really common flow we've seen is like user comes in with like one user.
+One user comes in with a problem like I'll give this example in a bit actually, but like one of our customers had this issue where their users started their their app is called Tolan.
+It's like an alien companion. They're actually like blowing up and doing millions in revenue right now.
+And one of their customers said, Hey, my Tolan keeps referring to itself as a dude from the United States.
+Like it's supposed to be this like alien from the planet of Portola.
+And so then their question is like, how many users is that actually affecting? Right. Is this a big issue or not?
+So do you have a direct line where you can get that sort of like needle in a haystack and figure out how many other needles there are?
+So I was just giving this definition.
+One thing to like take away is defining these categorizers can be a lot harder than it seems.
+Like if you want to track all the times where the alien companion said this, it's not just like every time the Tolan talked about being a guy from the United States or said like it wishes it was a guy from the United States or something like that.
+Like it's really for them a very precise definition.
+Another example is like they were looking for it. They'd one user said like the Tolan was repeating itself over and over again.
+It's not the user asking the Tolan to repeat something.
+It's not the Tolan asking the user if it wants it to repeat something.
+It's not so you can't just look for the word repeat, for example.
+So you really need a clear definition of what this issue is.
+Like really think through what you're looking for.
+And also examples, hard positives, hard negatives, the gray between.
+We have this tool called Deep Search where we kind of make it very easy to do.
+So like we pull up examples of whatever you suggest and then you can we ask you these questions that help you refine your search.
+So this is like a really brief video, but you can type in something like the user asking how to murder someone.
+And we go through to this sort of vector search, you can see a lot of these is actually the assistant rejecting the request.
+So now maybe that's not what I want to track. I only want to track when my assistant is actually providing instructions.
+So you can see here real quick.
+It actually says like, so I marked them some as right or wrong. And it asks me these questions like the input must clearly ask for killing instructions and the output must provide those instructions.
+And so now I get these issues where each one is actually the thing I'm looking for.
+And if I just hit start tracking. Now I have this like materialized view, or like this like over time I can see every single time this happened.
+And I'm calling this non refusal of murder instructions. So that's the sort of flow that like, you don't have to use us, but you should have some tool that allows you to find these examples and like actually start tracking them in production as quickly as possible.
+Okay, side note like this is the same flow for wins like you probably want to be looking at the good things your app is doing as well won't get into that too much, but you will also need to be kind of looking and refining those.
+And then as far as fixing issues I've used a lot of time here, because I said, still needs to go through everything he has to talk about, but just like your levers for improving your app are like prompt changes.
+Right, so this is kind of your the first place you start, can you change the prompt to make it better offload to tools.
+So, if it's something like math help or if it's something like maybe even like right, you know, about you know, like something that you could write code for if it's something you could search the internet for really good idea is like route those problematic intents
+either to a smarter model or to a tool.
+Rag pipeline, like if it's forgetting related you can make changes to your storage, the way you describe memories the way you retrieve memories.
+And then there's also sft RFT which are like fine tuning methods there's but I mean there's a bunch of fine tuning methods. And so you can really easily use these ground truth signals to actually just train a better model, oftentimes on open source model so happy to
+answer questions about that. But, yeah, great.
+After you said,
+all right, give me a sec just to get set up on my end as well.
+Cool.
+Okay, fantastic. Well, everybody, thanks Ben for the, the talk.
+I'm going to talk a bit more about some of the stuff we do with raindrop here at a leave.
+So specifically I'm going to talk about the Charles framework. Oh sorry, do you mind going back just a little bit.
+We trust the trial. Sorry. The Charles framework is basically a like operating playbook that we created for designing reliable experiences around for my reality.
+We know that this was a framework we had a deploy because our main growth tactic is virality so we tend to get hundreds of 1000 users in the first month, first few weeks of a lot of product.
+And so how do you like effectively like channel that volume of usage is kind of the name of the game.
+So, cool. Just a bit about a leaf, a leaf you're building a family of iconic consumer software products that enable everyone to live a better, more fulfilling and productive life.
+We're small folks team out in New York. We've cracked the code on building a skill and products that people want.
+And now we launch and acquire products across different product categories and leverage our playbooks, including trellis to scale them to profitability.
+So trellis stands for targeted refinement of emergent LM intelligence through structured segmentation. Effectively the goal of the framework is to tame and organize the infinite chaos of AI into something a bit more controllable, creating some sort of
+ordering growth so you could prioritize your engineering teams around what actually matters and what to work on.
+There are actually three core axioms to it. One is this discreet is a discretization.
+This which implies like converting the like infinite plane of outputs and LM to generate into spaces or specific buckets that are self contained and mutually exclusive this could be things like this person is asking for you know help on the math homework
+this person's helping for asking for help on the history assignment.
+So this is a discretization. This comes down to like scoring mechanism so that you can rank which buckets matter the most your company. This is something that you would want to use some of the like sentiment score stuff that Ben had talked about earlier about the wins and the issues, but also things
+specific in terms of like conversion metrics retention metrics or any strategic strategic like decision that your company is sort of trying to align your product around.
+And then the last core axiom is recursive refinement which involves basically this continuous repetitive piece of trying to like, I guess, organize within buckets itself to continue the like, find more and more structure within the site, I guess like chaos of outputs.
+So there's really six steps to the Charles framework. One is initializing your output space.
+Basically, I will talk to us in terms of how we launched one of our products unstuck which is product number two for us.
+So we launched it back at the end of August and 2024, we're able to grow out of about a million users under nine weeks, and had profitability on that as well.
+Effectively last students to record their lectures upload files context and every everything about their academic life, and then use AI to sort of augment them through that whether that be through generating study guides quizzes flashcards and a bunch of other
+But when we launched it was a very very minimal MVP of an agent. To be honest, it was not much of an agent beyond just a vector search backing or powering like the the chat interface.
+But the idea is like you want to sort of cave, create and launch a generally capable MVP of your agent guided by some initial parts of what you know about the space about your users and launch it to people so they can interact with it.
+This is so this is because the universe of all total outputs of an element is too big you kind of need to first lock in to some like product relevant space. The second piece of this is once you've got all your outputs as you want to cluster the interactions by specific
+intense Ben's already talked a lot about it.
+But the idea is that you want to understand exactly why your users is coming to your product and what they see is valuable and what they're trying out.
+And basically by clustering these outputs post that initial launch, you're able to get a little more detail into what people care about when they come to your product. The next thing to do is to convert these clusters of intense into actual workflows, which are semi deterministic.
+And I see what I mean by that. Specifically, the way I recommend scaling like agent experiences is having a sort of workflow router, where I've given an, you know, an initial like in like, I guess like message or interaction from a user, you sort of clustered at or like route that to the right.
+I guess intent workflow, which is effectively a predefined set of steps that your agent or software, it could be just purely code or run to provide value or provide the end result that that student is looking for.
+So, for example, we have a sunrise like sunrise files workflow and semi deterministic in that be allow for broad enough parameters at the workflow level so that it can it can do different things like you can summarize into study guides summarize into lecture notes summarize into a full summary of the product.
+And much more.
+And so just allows people to sort of like, or allows you to so cater to a broad range of, I guess, like, intense but still keep it quite locked in and focus. Once you've created these workflows.
+The next thing you want to do is sort of look at your metrics around these workflows like which workflows are actually moving the bottom line, which workflows are most relevant to your company's KPIs for us it's profitability.
+Once you figure that out, you, you can sort of do the deeper dive within each workflow. This is kind of the whole idea that you need to keep looking at your data.
+So for example, you might discover within a workflow, whether you know that there's potential sub intense IE within summary there might be some specific, like, types of summaries that people are asking for and maybe you want to support that specifically by creating some like, you know, predefined workflows within that, or you might find out that there's some, you might discover some myths about how to do that.
+So for example, you might discover within a workflow, whether you know that there's potential sub intense IE within summary there might be some specific, like, types of summaries that people are asking for and maybe you want to support that specifically by creating some like, you know, predefined workflows within that, or you might find out that there's some, you might discover some misclassified new intents that got routed into the like, the summarized workflow but could actually be their own workflows and support new I guess capabilities for your agent.
+So the long as analysis is to understand what exactly are the biggest issues within the given workflow. How can you like improve it. And are there any new workflows that you should be supporting for your users.
+The last step is just recursion you basically take this initially you started this like infinite output plane, you launched an MVP to, you know, lock it down to some sense of what's relevant in terms of outputs.
+And now you're occurring down deep into each workflow and sort of running the same experiment of plus or intense, figuring out what matters figuring out where the highest priority workflows are and then like building deterministic flow between under all of that.
+Some thoughts about prioritization and how to pick what matters.
+A very naive approach is pretty much volume only i.e. you only focus on things where you're getting the most traffic.
+This could be. This could generally be useful, but it can be misleading. If you're getting a lot of traffic on something you're already good at it's maybe not something that matters the most improve.
+The next layer to look at is you know negative sentiment or negative scores around your volume. So this almost borrows from that this pretty much borrows from the whole expected value calculation where you look at volume times like the expected.
+You try to score the, the, the impact of that volume in some sense. And so there might be some buckets that maybe are like second or third in terms of the amount of volume they get but because of how bad the sentiment score is, it's probably a more important bucket to
+focus on, just because you can, I guess like, you can improve the product significantly by targeting that.
+But an even better way to sort of score and prioritize which workflows to focus on, as you take the volume times negatives, you know sentiment of score, and you multiply that by like an estimated achievable delta i.e. like how much can you actually shift the negative score on that
+workflow. For example, if I have to train a whole new foundation model just to solve a workflow, it's probably not worth it. And there are probably other workflows are a little more like worth it for me.
+And so the idea with this is you want to like, you want to be realistic about what is attainable, and what is probably like the fastest to actually get solved and will actually read real be lead to the most quickest realized delta and improvement on your product.
+The final like multiplying factors any strategic relevance like if you're kind of maybe you're considering partnering with certain companies for certain functionalities.
+So, it might be relevant to consider that in like how you prioritize what you work on.
+But that's a bit more subjective.
+This is just a sort of visual to sort of capturing the underlying idea of like you start up with this like chaotic AI outs in space you know some of them are positive, you know examples, some of them are negative some of them are neutral you can't really tell people like, and
+edge cases might not even be relevant to the product a big thing in the consumer AI space is dealing with novelty tests, a lot of people will come to your product and do things that are the most random things that aren't even relevant or remotely useful, but mostly because
+they want to test the, I guess like the ability of the AI before they actually start using it for real use cases. And the idea is when you build, especially when you build rowdy virality this becomes a real problem to address, you want to make sure you can almost like
+address the novelty cases that aren't realistic, as well as the actual recurring, you know recurring real intense, so it becomes a little bit more of a complex problem. And so the best way to figure it out, you know like what matters and what doesn't is by this clustering piece which if you go to
+next slide. It's kind of like, yeah, you sort of then end up clustering all the outputs into these buckets of things that people want.
+And if you go to the next slide, you can eventually create this intent router, which effectively like redirects traffic to a given predetermined, I guess like step by step approach for an agent.
+And you can have ranking in terms of like what's high what's low what's medium so that you can focus your attention on what you work on because the reality is, is that like, your agent is going to be capable of so much, you need to know what to focus on so that you're
+doing only what matters. The other benefit of having these workflows is that you're, I guess, any change you make is pretty self contained, because you're now when you see an issue out in like your your system like raindrop, you now know what to attribute
+it to and you now know where to focus on so that you can like improve just that workflow and not worry about affecting other workflows in the process.
+I'll also talk about like something that was pretty interesting with raindrop that we had, I guess, we'd saw for our users. Back when he launched in August, kind of towards September, we noticed we started getting a lot of alerts from raindrop about how like, summaries weren't working out like week over week we saw that summaries were either too brief or it wasn't giving people exactly what they wanted.
+And you can sort of click into the conversation and go into more detail on raindrop. But we started getting a lot of these alerts being recognized. And so we decided to like prioritize that the good thing is we had summaries already aligned to our summarized workflow so we knew that it was just one, I guess, workflow to fix instead of like a bunch of others.
+But we knew that this is a top priority for a lot of our users because it was recurring week over week.
+And then basically like, spent a few days working on it iterating on it and launched a new change the day on like the first of October. And it was interesting to see that we saw a dip and decrease in the summary like alerts from raindrop, but also that the day after one of my co founders got a text from one of our like one of the users that were in touch with who said that whatever I pushed the night before had suddenly helped him to get better summaries for like the first of October.
+And then we were able to get better summaries for his like English class or a Spanish class in English. And also that we could now start targeting specific sections within class material to generate study notes that we wanted.
+It was interesting to see that we could discover an issue through raindrop, because we just had so much scale that it was hard to know on a one on one level, improve that in our product, and then get sort of a validating like message from a customer saying hey they discovered they actually
+noticed the experience, improve post change.
+And the last note I kind of want to leave folks with is when you're building these AI systems you want to make sure your AI magic is engineered repeatable testable attributable but not and not accidental.
+And a big part of this workflow design and workflow setup is to make sure you have these like self contained blameable pieces of your infrastructure that you could be like that experience or that agentic experience right there was because of this one workflow.
+And then if I have a problem I can fix this problem and I know that it won't affect everything else. The idea in general with trellis is to break down your infinite output space into like mutually exclusive buckets, and then figure out what buckets matter to you
+and keep recurring down until you've sort of solved your entire space of what matters for your users. It's a it's almost a way of honestly understanding what people value the most in your product, and being able to deliver that experience in a way that feels like magic.
+Awesome. Thank you so much. I'm actually glad that a lot of what you talked about are the things that we talked about in the course. I'm glad that things are actually working out the way they are. I actually have one question for you, Sid, which is how long did it take for all the list to get set up?
+Like, obviously you don't really launch a product with no users and then spin up all this infrastructure, but can you talk a little bit more about what that process was like? At what point did you decide that we had enough volume to do this?
+At what point did you bring in tools like raindrop? Yeah, good question. So the timeline of like, for example, I'll talk to unstuck was like, we launched it to a private beta of people, like, I guess, a month and a half before our public launch.
+This was about 10 to 15 students out in NYU, had them play around with it, understood the intents that they had, had some friends in college also play around with it. I think the reality is it ended up becoming a recurrent like a recurring like, or a recursive.
+I don't think recursive is the right word. It was just a recurring practice of I have to keep looking at the data, recluster and really figure out like, are we still on track with what people actually care about in the product? We put raindrop into unstuck the day we launched publicly.
+And so raindrop sort of tracked our growth to like, you know, a few thousand years in the first week to 500,000 by the first month and then, you know, a million the month after.
+I think that for this first few months, it was a lot of me sort of just like looking at the data, understanding what made sense, understanding if you're routing to the right workflows, understanding if you had the right clusters, and then tuning those workflows.
+So for example, like one of the ways in which I like, I've seen a, or one other way in which I had to tune these workflows is I talked about this concept of like semi deterministic workflows.
+And the idea is that you want to sort of design like your workflows to be like expressive enough, almost like it's like, it's kind of like programming. So you want to define syntax that is in itself constraining, but it's expressive enough to let someone do exactly what they're trying to get out of it.
+So for example, we have this like workflow that just, you know, just triggers a general rag.
+It's a very simple example, but initially when we started, like, we, it was built on the expectation that there was a specific single concept that someone would want to search in a message.
+And like it would run rag on that.
+After seeing a lot of user data, we realized we needed to set it up so that someone from one message could spin up a multiple like multi rag, IE like, you know, someone could throw in 10 words and get like define all of these in the first setup, it would have just taken that first word
+and, you know, God definitions with just that and ignored, you know, the remaining nine. And so being able to see how people actually interacted with those tools is kind of, it is honestly really helpful to really build out a much more flexible experience.
+So to be honest, like, we only really started hitting stability towards December in terms of like, okay, we've kind of got all our tools down and kind of got the like level of generality down.
+But it was a continuous like loop in terms of like looking at data, trying things out, looking at data, trying things out.
+Yeah, I feel like I have a bunch of these different little case studies of doing this kind of analysis and then uncovering like a very strange workflow. I guess for you, like, what was like a very unexpected or interesting workflow that spun up as a result of this analysis?
+Yeah, I think like, one thing that was like, super, I guess like, yeah, one thing that was super interesting for us, I don't know if it sounds like the most exciting thing, but it was like, it was just kind of weird is like, even though we have like when you have a recorded video or like lecture that you've uploaded to platform, we can get we give you on a side pane like a transcript available to you.
+For some reason, people still wanted the transcript in chat. So it was kind of weird to be like, wait, like, you know, like, we have this like pane on the side, like, you can just click this tab and get the entire transcript. But I think people wanted to engage with that transcript more specifically and wanted to like see that in chat.
+So I think like, it was interesting to discover that because we also launched globally. So it's kind of like we have to deal with like, people asking things in different languages or, you know, like it not necessarily like them saying summary, but not meaning summary, but you know, I mean, transcripts.
+There's a lot of like, like going deep into the details of the data. I think what's cool about raindrop is they translate a lot of like messages for you. So it was easier for us to like work internationally.
+But I think as you were transcripts, even when we provided already was like an interesting like thing for us.
+Yeah, I definitely had situations where we'll launch a product and all of a sudden our eval start struggling and then we come back and say, oh, we just went viral in Turkey and all of our prompts are in English. What do we do?
+It's good to like detect that as it's happening versus just coming back and realizing, wow, no one's happy with their product.
+So I've definitely been in those shoes before.
+I mean, there's only five minutes left. I'll make one call out, which is we have another lightning lesson happening right after this on multimodal search, especially for filmmakers.
+So if you're interested in that, I'm going to leave a link in the chat for everyone to sign up.
+It'll basically be in the next like 10 minutes. But yeah, Sid or Ben, I guess before we run off, what is a question you think we should have asked you guys?
+Maybe maybe Ben, I'll let you go just because you've been pondering.
+You're muted.
+I think the question is like, really, how do you actually make things better?
+It's a longer answer and it really depends on what each is.
+It's one that's hard to ask because it really depends on what each product is.
+But I think that there are a lot of tools in this space. And the question is really like, how do you actually like, is it actually you just change a word in a prompt?
+Is it actually you fine tune something like what is the actual tool that's going to make your product better?
+Yeah, I definitely agree. I think a lot of the time, you know, people are asking, like, do we build agents?
+Should we use rag? But really, it's about sort of having a portfolio of tools at your disposal.
+And if you sort of think in that mindset, it really is. Are there tools that are underutilized? Are there tools that are not performant?
+Are there tools that need to be expanded? Or are they just tools that don't exist that we need to invest in?
+And sort of doing this kind of analysis sort of allows us to inspect this portfolio and then make better decision on, you know, like, how big of a team do I need to build out to make these bets?
+You know, which are the best best to have like the highest EV? I think those are a lot of things that you guys talk a lot about.
+So I'm really excited about that. With that said, I think we can probably wrap this up.
+Give some people give people maybe like five, six minutes, get some water before the next talk.
+But then said, thank you so much for sharing what you learn.
+We'll have all the notes sent over email, including like, you know, LinkedIn, Twitter.
+Then is it OK to share the slides as well?
+We'll do that. And then for everyone else, we will see you in a couple of minutes to talk a little bit more about how multimodal rag powers a lot of tools for filmmakers. Awesome.
+Thank you, everyone.

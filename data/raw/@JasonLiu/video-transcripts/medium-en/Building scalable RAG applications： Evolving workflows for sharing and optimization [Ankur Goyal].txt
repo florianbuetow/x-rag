@@ -1,0 +1,806 @@
+So hopefully we can make today's session as interactive as possible.
+I know a lot of folks on the call are the one-on-one point of building
+rag applications and many are already using brain trust.
+So I'll skip a bunch of the kind of like overly repetitive basic stuff
+and talk about a few fun things, show you a demo, and then I would love to
+again, make this as interactive as possible and do some fun Q and A.
+Just a little bit of background about me.
+Prior to brain trust, I used to lead the AI team at Figma.
+And before that I started a company in the prehistoric, pre-Chat
+GPT days of AI called Impiro.
+Jason was also working on ML in the prehistoric era at StitchFix,
+which was one of our customers.
+And we built AI software that extracted data from documents.
+And at both companies, we ran into a lot of issues where we would change
+something about our models or prompts or the data that we used and break a bunch
+of stuff, and we had to get really good at doing evals to help make sure that
+didn't happen.
+And so we built internal tools to help us do that.
+And then of course, it was really hard to find data to actually do those evals.
+So we built more internal tools to find data from our observability pipelines.
+And that eventually became the basis for brain trust.
+A little bit about RAG.
+And in particular, I'm going to show you what we think is like the easiest possible
+way to create and evaluate a basic RAG agent.
+But I think like one simple way of framing RAG is just an LLM with a retrieval tool.
+And it's convenient because it allows you to like localize their RAG logic into a
+tool.
+Tools are quite powerful in and of themselves.
+And it also makes them very easy and composable to test and use in other
+applications.
+So we're going to like, for the context of this presentation, assume that this
+is what one way of doing RAG and what we're going to show.
+So what I'm going to show today is actually how you can use one of our more advanced
+features called the playground to actually test RAG.
+I think a lot of the time you run evals, especially if you come from a data
+science background, it's your natural inclination.
+And I have the same inclination is to run them in code, but it's actually powerful
+to run them in something like a playground where you can be very interactive at like
+tweak the system prompt, see the results immediately run evals, engage non-technical
+folks to look at the results, label data, et cetera.
+And so we're actually going to show you how to do RAG evals in our playground.
+So one important part of this is retrieval.
+And in brain trust, this is TypeScript by the way, but in brain trust, you can define
+tools in both TypeScript and Python, and you can call external services.
+In this case, we're going to call the open AI embeddings API and pine cone as a vector
+database, and you can wrap this up and then actually run a simple command, NPX brain
+trust push or brain trust push in Python and publish this into the UI.
+And I'll show you this right now.
+Actually, when you do that, you get something in brain trust in the tools
+section that is exactly that.
+And you can actually play with it.
+So you could say, this is RAG over our data sets.
+I could say, how do I, our docs, sorry, how do I create an eval?
+And I could say top case three and actually just run it.
+And this will run this code, but it's running behind the scenes, not on, in your
+own notebook or on your laptop.
+Back to this, you can also define prompts in brain trust and those prompts can
+actually reference the tools.
+And when you do that, you just, again, run the same brain trust push thing, and you
+get a tool, a prompt that actually references the tool.
+Here's the prompt takes a question and you'll notice it's actually hooked into that
+tool.
+And so now I can say, how do I create an eval?
+And it will actually not only run the prompt, but run the tool, pass the tool
+results back to the prompt and then return a result.
+Now the really neat thing is how you can use this to do evals.
+And the first question is like, why should you, oh, sorry.
+Why should you run evals in the first place?
+Hopefully this doesn't require too much convincing.
+I know Jason is really big on evals, but the first thing is that in rag, you can
+have like very unpredictable error modalities, including repetitive loops,
+hallucinations, and so on.
+And the other thing that's rag specific is that you're involving a third party
+system retrieval system, and that can have its own type of failures.
+And so it's useful to actually test both of these things.
+I also think it's useful to test both quantitative and qualitative metrics.
+Qualitative metrics are sometimes called vibe metrics, but quantitative metrics
+are things that you can very clearly quantify and test.
+For example, if you have ground truth values for retrieval or for the final
+answer, you can actually just test accuracy.
+Obviously that's not always the case.
+You can also test quantitative metrics like cost or latency.
+I think in rag latency can be a big problem.
+And so it's quite useful to actually check the latency trade-off as you're
+making changes to your application.
+But I actually think it's equally important to test qualitative metrics as well.
+People really hate AI applications that are repetitive.
+Maybe they have the answer correct, but they're totally painful to actually look at.
+And so I think it's like equally important to actually characterize what you want out
+of an answer and actually try to define the right user experience that you want
+coming out of your application and try to evaluate that as well.
+And the last kind of high level thing on evals, I'll say is that I think the lazy
+approach is really powerful.
+And by that, what I mean is one of the biggest failure modes that we see from
+customers is doing like, how could I possibly evaluate this thing?
+Let me set up everything.
+Let me evaluate every possible step.
+Let me ask Jason to write every possible question you'll ever ask my system.
+And until I do all that stuff, I'm not going to do any evals.
+Cause what's the point?
+The reality is that I think evals are just as much of a process workflow and
+structuring your development process thing as they are a quantitative measure.
+And subscribing to the workflow of evals will help you iterate a lot faster.
+And so we recommend a very simple approach, which is the simplest thing to
+do if you're building a rag bot is to actually just use your application, maybe
+plug it into something like brain trust to capture the inputs and outputs and
+log them, and then save some good examples and evaluate the original input
+against the final output.
+And then as you actually change things and things break, try to find failure
+points and then run like more specific evals.
+So you might, for example, change one of the prompts or add a new question and
+notice that the retrieval is broken.
+And that's why the final answer is incorrect.
+And when you notice that you might as well save that specific example in a
+retrieval dataset, and then start to actually optimize the retrieval from
+there versus trying to think about all of this stuff ahead of time.
+Now I'll show you this in the, in brain trust in a second, but there's two kinds
+of scores that you might want to invest in.
+Um, one is code-based and the other is LLM as a judge.
+There's some very spicy opinions on Twitter and whatnot about these two
+different methods, and I think they have trade-offs like anything in AI or in
+software engineering, and I think the best teams are really good at actually
+leveraging both, and I would say at a high level, code-based scores are often
+better at the more quantitative things that you might want to measure and LLM
+as a judge is generally better at subjective stuff.
+And we see the best teams that we work with generally rely on heuristics as
+the North star measurement of whether their application is working or not broken.
+And then they use LLM as a judge metrics as a way to provide additional context
+and help them look at the examples with their eyeballs that are probably
+the most useful to look at.
+To give you an example, if you're someone like Zapier or Notion, you're
+running at very large scale, you might have tens of thousands or more test
+cases in your evals, but you don't always want to manually scan.
+Let's say you run an eval and you break like 2000 of them.
+You don't want to necessarily scan all 2000 of them, but if you use an LLM as
+a judge to help you understand maybe why some of the examples broke, you could
+potentially look at much fewer.
+So let me switch over here and we're actually going to jump into the playground.
+Now I'll just emphasize that everything I'm doing here, you can also do in a
+notebook, but for a lot of reasons, I think there's some benefits to doing
+this in a UI, like a playground.
+I've actually just plugged in that prompt that we were playing with earlier.
+And if I hit run, it will run the prompt and you'll notice the results are not
+very good, the scores are not very high.
+And I think that's because we didn't include this tool.
+So now let me actually try including the tool and let's see how it impacts these
+scores.
+Sorry, there's a intermittent error as I referred to earlier that can sometimes
+happen.
+Luckily we can just run this example again in a moment.
+Amazing.
+And so this gives you an example of what it's like to actually evaluate something
+in a more interactive way, directly in a UI like this.
+And again, I'm not saying you necessarily need to do it this way, but I do think
+that there are a number of benefits to being able to iterate this quickly.
+And we've actually seen a lot of our customers, including some of the most
+technical users at our customers move towards this style of evaluation.
+I won't bore you with a bunch of more demo propaganda stuff, but you can do
+some really interesting things like duplicate a prompt and then try tweaking,
+try tweaking the system prompt and actually compare things side by side.
+And so it's, again, it's a very powerful way to actually iterate on stuff.
+And you can even do it if you're doing rag.
+Sorry, I might've missed this.
+What is the metrics like the context inclusion, factuality coming from?
+Great question.
+So these are actually three scores that I've defined within this project.
+So factuality is a pre-built score.
+That's actually part of our auto evals library.
+And it is just a prompt that was created originally by open AI and it takes an
+input, expected value and output, and then it asks an LLM to grade it with five
+criteria, and then it maps those criteria to a score between zero and one.
+The other two are actually scores that we created specifically for this project.
+So if I look at context inclusion, this is actually a JavaScript function.
+And this JavaScript function is trying to figure out whether the
+context keywords are in the output.
+So this is a heuristic that's basically testing that you can actually tweak this
+again in the UI, you can play with it, et cetera, and you can also use it in your code.
+So if you create it in the UI, you can dynamically run it from your code.
+And then relevance judge is an LLM.
+And so this is a very simple prompt.
+You probably want to make it more complicated and more specific to your use
+case as you actually iterate on it.
+That lets you basically ask an LLM whether the output was
+relevant to the original question.
+Oh, thanks.
+Is there a best, sorry, is one of them the best?
+Do you, are you opinionated on what the greatest metric is to use there?
+I actually think that you want to use multiple metrics when you're doing,
+especially when you're heavy into iteration.
+And what ends up happening is you end up starting to view one metric as the North star.
+For rag applications, actually the factuality metric tends to work really well.
+I'm not a hundred percent sure this is true, but I think because open AI uses it,
+their models are also very good at actually executing the prompt.
+And so we see a lot of customers actually rely on the factuality metric as the
+North star metric for rag.
+And what you can do is actually look to say, Hey, if factuality is lower on a
+particular example than it was before, what happened to the other metrics?
+If factuality is lower was context inclusion also lower.
+And if so, maybe the problem had to do with retrieval.
+If not, maybe it didn't have to do with the retrieval.
+I think at first you slice the problem different ways.
+And then eventually you start to intuit what the relationship between the
+metrics is and as an engineer, you get faster and more efficient at actually
+using the different metrics together to figure out what the issues are.
+Jason, do you have a question too?
+Yeah.
+David just wanted to also see if you could show some of the quantitative
+metrics, like the latency time to first token, et cetera.
+I think.
+Let me see if I, yeah, let me show you what it looks like from here.
+You can actually kick off full experiments in brain trust and that will capture
+like a very wide set of metrics as well.
+Just because I don't want to screw with the demo gods.
+I'm not going to run one of those right now, but I've run a bunch of them in the
+past and let me show you what they look like for another project.
+If we click into one of these experiments, you'll see the experiment view.
+And this again was populated from a dataset and you get a bunch of LLM
+metrics that you can compare at a high level, as soon as O3 came out, I ran
+an eval of O3 against GPT-4.0 for one of our use cases, and it was pretty
+interesting to see that even though O3 generates a lot more output tokens, the
+cost is so much lower for output tokens than GPT-4.0 that it's still netted out
+to be cheaper.
+And so it makes it very easy for you to see stuff like that.
+You can also click into specific examples.
+So if you want to see cases that now have more output tokens than they did
+before, you can actually click into those examples and look at the side by side
+input and output and try to figure out why.
+You can see here's the difference in output.
+And of course you can also see all that information per LLM call.
+And I think that's super important when you're actually debugging stuff to look
+at the individual LLM calls and try to play with them.
+I'll just make one comment before you continue, but yeah, I really love the
+regression feature because it just means that across multiple runs, I can just
+only look at the examples that are performing poorly.
+If I can just like look at a hundred, think really hard, and usually you can
+come up with a way of improving the system downstream, whether it's better
+extraction, better retrieval or adding a reranker.
+It's pretty great.
+Yeah.
+I used to back in the Impira days, when I first built the hacky version of
+brain trust, I had a spreadsheet with a bunch of snowflake SQL queries saved.
+And one of them was like, like a insane join that did the regressions
+query and that was the main thing.
+Excuse me.
+I would use, by the way, when you collect all of these metrics across experiments,
+you can also do higher level analysis.
+So for example, if you collect the model name, you can just click a button and
+then very quickly generate a model leaderboard.
+Or another thing that Hamill, who's another one of Jason's homies clued me
+into was it's actually quite powerful to look at the latency versus quality
+trade-off with different models and try to understand where there are significant
+efficiencies or inefficiencies.
+So for this use case, for example, it actually turns out that O1 preview
+doesn't perform particularly better, but of course it's much slower and you can
+get a very quick visual indication of that by looking at a plot like this.
+Are we ready for some questions or did you have a couple more?
+I have just two really quick pointers I wanted to share.
+The first is that we recently wrote a guide, which I would
+highly recommend checking out.
+And it's a companion guide to this Anthropic guide.
+So I'm sure a bunch of you saw this.
+Anthropic has like a guide on how to generate or create a bunch
+of different agent architectures.
+We wrote one, which is very similar and it follows all of those agentic
+architectures and then has eval functions you can use for each one.
+And so I think it's a nice starting point.
+Of course you should adapt them to whatever you're doing, but it's a really
+nice starting point if you're building an agent that sort of maps to one of these
+architectures.
+And then the other thing is just, I know we're going to talk about Q&A.
+I really like this diagram that one of the engineers at Zapier originally made
+about how they actually, what their development process is like and how they
+think about the feedback loop.
+So I'm happy to talk about this or anything else that you all are
+curious about in the Q&A.
+Sweet.
+Let's jump into some of the questions on the Q&A and then we can leave it up to
+more open-ended questions.
+Awesome.
+This is a question I tend to answer a lot for other people, but I really love
+your answer here, which is when do I know it's time to just move from something
+like a Google sheet or a Python notebook and like a CSV file to using a tool like
+BrainTrust?
+You know, I think it's probably, there's definitely situations where it's probably
+too early, but yeah, when do you think it's the right time?
+How can you tell?
+I would say that there, there are probably two major reasons that you'd want to move.
+And to be honest with you, I would encourage you to start by, if you are
+comfortable writing Python, using notebooks, et cetera, I think there's a lot of value
+in actually starting that way because it's a zero abstraction, no, nothing
+left to the imagination way of familiarizing yourself with the problem of
+running evals and thinking about data.
+It's a good thing, I think, to do that.
+The primary reasons that you'd want to move on, maybe I'll come up with three.
+So the first one maybe is the most obvious, which is when you have enough
+data, just the physics of navigating a large table in a Jupiter notebook or a
+large spreadsheet can get unwieldy.
+And I think for me, at least the breaking point tends to be around a hundred.
+I'm probably a lot worse at pandas and stuff than people on this call.
+I'm more of a TypeScript and SQL person myself.
+And so I tend to want to look at the raw data as a table and interact with it
+directly.
+And so past around a hundred examples, I really start to struggle.
+Maybe for you it's lower or maybe it's higher, but at some point, if you start
+to feel like there's too much data for you to really have a handle on, it's a
+good idea to move.
+Another reason is that you might want to collaborate with other folks on the team.
+And when you do, it's very useful to have long, forever persistent artifacts that
+you can share with them and play with.
+So let's say you actually go and run an eval.
+I think it's really powerful to actually have a link to something like this that
+you can just share with a colleague.
+And then you can look at the results together, post it in Slack, take screenshots
+of individual pieces of it.
+And it's much easier to reproduce and play with than something that lives
+ephemerally in a notebook.
+And then I think the third reason, which is maybe the least obvious, but probably
+the most significant is that at some point you're going to want to connect your
+evals to data that you get from a production system.
+And I think the most important thing that you can do when you're creating evals is
+to develop a very good feedback loop from things that happen in production,
+especially when people have a suboptimal experience with your application into
+your evals and trying to connect the dots between your production observability
+system, data sets that you can use that are reproducible for evals and then evals
+that you run on top of those data sets.
+That starts to become a very complex soup of scripting and ETL and storing
+reproducible artifacts and so on.
+And I think that is for a lot of teams that we work with that are tech companies that
+would otherwise build software themselves.
+That is usually the breaking point where they start using brain trust.
+That's great.
+Yeah, I would also say like one of the big things is in the beginning, it's pretty
+easy to look at these spreadsheets.
+But like one of the things we did with Zapier is really just get together like every
+other week, do a screen share over the exact same evals that we see on brain trust and
+just having a conversation about what people are asking about, what are the things we
+need to improve.
+And we might come to a conclusion that says, oh, wow, a lot of the feedback that comes
+from using the Notion API is degrading.
+Maybe this is something we can go and do a better data analysis into and figure out.
+And those have also led to pretty good results.
+This is a much more pointed question.
+We are currently using Langfuse right now.
+Where does brain trust excel compared to the other options on the market?
+Yeah, I'm happy to have a more spirited one on one discussion with whoever asked that.
+I as someone who works really hard on brain trust and respects other people who work
+really hard on their products, I try not to say other I try not to say negative things
+about other products.
+I think that if some of what you've seen or heard today is exciting to you, then you
+should try brain trust.
+There are a lot of people that move from Langfuse to brain trust when they start to get
+serious about evals.
+And I would say that we have significantly more features like UI features, experiment
+tracking features and so on around evals in particular.
+And so if you're running evals and you already have written some code to do that, I would
+just encourage you to try brain trust and see if it makes a meaningful impact or you
+see a meaningful difference.
+I think you will.
+But the only the best way to do it is actually just to try it.
+Cool.
+Next question, feature requests anchored live stream using brain trust.
+That would actually be pretty cool to see how you guys are using it internally.
+But the next question is, are there many companies that are defining human aligned
+alums as a judge?
+This is something I talked to Hamal a lot about, which is it's one thing that you have
+a prompt that kind of works.
+But I'm curious how many people or how many sort of fine tune alums have you seen that
+are used for this kind of judging work?
+Yeah, I think that is more hype than reality at this point.
+Like most of the problems that people are trying to evaluate, they do have the answer
+might be difficult to characterize, but they tend to have a correct answer.
+And I think one of the challenges with human alignment is that unless you have a really
+good UI, UX and workflow that forces you to solicit enough data and keep realigning
+things, you can use it as a crutch and temporarily overfit what you're aligning to
+before you actually are forced to solve the underlying problem.
+So we have experimented with it in our product.
+And we've also worked with a number of customers who've implemented it using brain
+trust and shared results with us and so on.
+And we are at this stage not convinced that it is a great method.
+On the flip side, I think that there is a lot of innovation coming with models and the
+programmability of models.
+And so I think that some of the physics are going to change over the coming months.
+At this stage, though, I haven't seen it be a very compelling technique.
+That's good to know.
+On the other side of like human alignment as a judge, what are some helpful code based
+scores for evaluations and can you provide some concrete examples?
+Do you mind if I also give one that's pretty specific?
+Yeah, please.
+I've been working with a lot of different like meeting note taking apps.
+And one of the things we care about is just summarization.
+And what we have, what we found is for a lot of the earlier models, the feedback was
+just that the summaries are too short.
+Right.
+And so a very simple eval that we had in the beginning is just what is the character
+count of the initial summary divided by the character count of the total transcript.
+And it was basically like 22%.
+We were throwing a lot of information and it was very easy to just add up, add a
+couple lines of a prompt and say, make sure that the summary is the summary
+length is in proportion to the length of the transcript.
+And it went to 35%.
+And then we looked at the variance of that distribution and then started
+prompting it such a way where we weren't trying to improve the percentage, but
+just the variance of that percentage.
+And those are just very simple tests to, to write.
+Another one that we had was constructing action items and our eval there was just
+how many of those action items were not tagged with a speaker.
+And so it's one thing to say that this work will be done.
+It's another to say this will be done by Jason.
+And again, those are just very simple code-based evals.
+It just tells us, are we assigning people to tasks if we're not why?
+And are the summaries too dense or too sparse?
+Yeah, I think so you bring up two very good points.
+One is that I think people tend to initially assume that an eval is bad or a
+score is bad unless it's a hundred percent.
+And the reality is that doesn't matter.
+Like really what you care about is when you run a new experiment,
+how does it impact a score?
+And so if you have a score or a heuristic like that, and it's 22% or 10% or 56%
+or whatever, it actually doesn't matter because really what you're trying to do
+is understand how changes will impact the score, not the scores absolute value.
+And I think that's one of the things that is really important to grasp when
+you're building heuristic scores.
+Other examples that I think are quite useful are things like honestly, Levenstein
+distance is a very popular metric among our customers.
+It's incredibly imperfect.
+One of the common use cases for Levenstein is if you're doing data extraction type
+stuff, like checking that entities are equal to what you expect and Levenstein
+might give you like 83%, but it might actually be correct.
+And there's like a typo in the original document or something.
+That's totally fine.
+What matters is if you change a model, does it go from 83% to 50% or does it go
+from 83% to 82% or 84% and so it's not really a difference.
+The other point that you bring up is that I think code-based scores are good for
+basically checking, they're almost like type checkers or like checking
+invariants that ought to be true.
+So if you're building something like rag, one of the useful things that you could
+check with a code-based score is does the response include reference citations?
+Maybe that's an important part of your use case and models, they will go awry and
+they will forget to reference things depending on how you actually construct
+the application and that's the kind of thing like maybe you're working on an
+application that shows the references in the UI and that's a very important part
+of the application that you can almost like type check that will happen by
+using a code-based score.
+Let's do one more question here and then we'll just leave it up for some live
+questions.
+If everyone can just see the react button, there's a like a raise hand emoji here.
+So you want to just raise your hand for the rest of the questions.
+Let's do that.
+Cause I want to make sure we can get some live work.
+The last question is just, I think you've worked with a lot of really great
+companies like the notions and the ramps and the stripes of the world.
+What do you see are the biggest like behavioral changes that they've been able
+to make when it comes to working with evals and working with observability?
+Like what do you think makes them stand out above the rest or what could just
+every team here take away?
+Yeah, I think the main thing that really good companies do is they take people
+with great product intuition, not necessarily great data science chops.
+Although having good data science chops is incredibly valuable.
+I think there's no substitute for having good product intuition and they get those
+people to stare at data and look at real examples.
+And I think if you get people with good product intuition to look at real
+examples of things going well, and you figure out how to scale that process,
+then that is what creates an excellent AI product.
+Because you want someone who has empathy for the end user to literally look with
+their eyeballs at what the end user is experiencing and use that intuition to
+improve the quality of their application.
+Now, when you have three users and a small number of engineers or whatever,
+you can do that without any evals or any, anything, right?
+You just run the application and you'll see things that are good and things that
+are bad.
+But when you want to scale that to many millions of users, potentially using your
+application, you need to use something like evals as a way to, in my opinion,
+ultimately prioritize the time that your team spends so that they're looking at
+the most useful examples and building the best intuition and efficiently testing
+their hypotheses.
+And so I think, again, like the best teams embrace that idea.
+A Vitor from Zapier just did a session with us last week and he said that he
+looks at traces for three hours a day.
+This is like a staff product engineer at Zapier.
+He's like a really talented software engineer and he spends three hours a day
+looking at traces.
+And I think that mentality and he's not just scanning through the logs, right?
+He's looking at the right traces, but that mentality, I think, is what it takes.
+Before we go into questions, I realize this one's probably pretty relevant.
+Are you ready to talk about pricing at all or should we say that for a async thing?
+Yeah, what I can say is we, I know it's been long awaited, but we are going to
+release self-serve pricing pretty soon.
+I can't publicly announce what I don't want to like preempt the team's
+announcement on how the pricing will work.
+But I think our goal is to make it very easy for people to one, to have a really
+generous free plan and two, to get started and scale as their use case scales.
+Matthew, do you want to kick us off with the first live question?
+Yeah.
+Hello.
+Is this a little bit tangential to evals, but also related and
+might be relevant to bank brain trust.
+So I was just curious if you had any thoughts about auto optimizing prompts
+with, for example, DSPY, is that something that if you see that as a promising, is
+that something that you're at all considering incorporating into brain
+trust as a part of writing experiments?
+Yes.
+Great question.
+And I think what we've seen very much tracks what we've seen with human aligned
+scores, I think DSPY is very exciting.
+I personally don't like the syntax, but I don't think that matters.
+It's a very cool concept.
+And I think it's directionally the right framing for how to
+create optimizable AI programs.
+The biggest problem that we've seen is that companies don't actually have the
+datasets needed to be able to take advantage of auto optimization well.
+And so we are planning to release a bunch of stuff.
+But I actually think that our primary focus is going to be helping you create
+a really good flywheel of data specifically for the purpose of doing auto optimization.
+I almost think of auto optimization as like the cherry on top.
+Once you've prepared an immaculately good dataset that allows you
+to optimize in the first place.
+Awesome.
+Thank you.
+Just one quick follow-up question.
+That was super helpful.
+So when you say using your words, immaculate, an immaculate dataset, like how would you,
+how do you think about what that means?
+Is that just a purely qualitative?
+We think this is representative or is there like quantitative ways of thinking
+about, oh, this is a really good eval data set?
+Yeah.
+Uh, good question.
+I think it's both, but specifically what I think, um, is missing from what is
+available today is it's not creating the initial dataset, it's creating a dataset,
+doing some kind of auto optimization and then witnessing the ramifications of the
+auto optimization and using those to improve the dataset further.
+So I think the really important thing is actually the feedback loop that allows
+you to continue improving the dataset rather than any specific characteristic
+about the dataset at a particular point in time.
+And I think those observations are inherently going to be
+both quantitative and qualitative.
+Okay.
+Awesome.
+Thank you.
+True?
+Yeah.
+Yeah.
+So this was really interesting, but one question I had is I think the different
+scoring mechanisms that you identified were really about correctness of the
+response or like how you can identify or track correctness in your evals.
+But like, is there, have you thought about incorporating this in a brain
+trust or how do you all approach it in terms of integrating like customer
+feedback or customer satisfaction of the responses being generated into your
+eval datasets and capturing some of that real life feedback from customers as
+opposed to relying on say a large language model?
+That's a very core part of what we do.
+So in brain trust, you can create a human review scores and you can
+populate them through the API, which people often do to capture and user
+feedback, and this will probably look familiar to you, like the most common
+version of it is thumbs up or thumbs down, but you can also create like
+categorical scores, so you could say missing the receipt or I don't know,
+I'm just making these up bad audio or whatever, and you can save those as
+labels instead, or you can save them as scores depending on how you want to
+consume them, and you can also do stuff like capture free text input, and we
+view the problem as twofold.
+One, we think it's very important that it's easy to capture end user feedback
+so that if you're building an application and you have a thumbs up button, you can
+pull that into brain trust and then maybe also run automated scores and see where
+they agree and disagree, that's a great way to actually improve the quality of
+your automated scores.
+And then the other thing is it's really important to have a good workflow within
+brain trust for engineers, product managers, support people, subject matter
+experts to actually label and incrementally keep labeling and improving data.
+Matt, this kind of touches on what you were talking about.
+I think we view the work that we are doing in auto optimization to actually be an
+evolution of the work that we've done so far in capturing user feedback and
+labeling.
+Okay.
+Sorry, I just know if you had something else to follow up with.
+Uzair, am I spelling your name?
+Oh, you're on mute.
+Yeah.
+Thanks, Ankur, for doing this.
+I really appreciate it and what you build is very interesting.
+My question was around computer use and voice agent evaluation.
+We've just now deployed some computer use agents with our customers.
+We have some voice agents and I'm really struggling to figure out what's like a
+scalable way to evaluate them.
+Right now, it's just a crazy manual process where we're just looking at like
+the instructions, we're looking at the photos, we experimented with making like
+GIFs and like humans looking at them.
+Obviously like the end thing that happened, if there's an API on the UI, on
+the computer use piece, and then on the voice agent, transcription is so reductive.
+Like it's been missing a lot, like the intonation pauses, interruptions, et
+cetera.
+Would love your thoughts on these two things.
+Yeah, we've done a little bit more work on the ladder, like voice than the former.
+And I think like a few random things that we've tried, although I think it's very
+wild west at this point, to be honest with you, is sometimes, I don't know what
+APIs you're using, but sometimes the real time transcription models are dumber than
+offline transcription models.
+And we've seen some success doing evals where you use the smarter model offline
+to generate a transcript and then compare it with the real time transcript.
+And excuse me, that's a great way of surfacing interesting cases where the
+real time transcription system is just not as good as the offline one.
+Super simple things you can do.
+Like you could do both transcriptions and then Levenstein them, or you could use an
+embedding distance if they're wildly different to understand what the differences are.
+And then I think the other thing that we've seen is converting everything to text
+and then running them through a classic pipeline and then comparing the results.
+So let's say you're building an agent that is a voice agent and it's doing some
+rag behind the scenes, you might capture the original input and then the final
+output from the audio interaction and then transcribe everything and take the
+original transcribed text and then run it through a classic rag pipeline and take
+the final output and then compare them.
+And again, those are two different tricks to try to find cases that may be
+anomalous that you can improve.
+For computer use, we are early into seeing anyone actually use it.
+So admittedly, we haven't done a lot of work here.
+However, I think there's two exciting directions or it's one exciting direction,
+but two different companies, I think that have done exciting work.
+One is E2B and the other is BrowserBase.
+They both have emulation methods.
+E2B is obviously a VM and BrowserBase is for browser stuff, like operator style use
+cases, and I think you can actually express the flow of computer use through both of
+these methods and actually potentially automate some of the manual parts that
+you're doing right now.
+I haven't done this myself though, so I can't speak to it with a lot of
+firsthand insight or credibility.
+It's just probably what I would expect to end up working in the medium term.
+Cool.
+Yeah, appreciate that.
+That's where we're at right now is just doing the evals on the actual intention of
+the bot and the actual looking at the screenshots and what it did is very
+manual right now.
+Cool.
+Thank you.
+Are you emulating stuff or are you doing it?
+Yeah.
+So it's like not a headless environment.
+And so it's yeah, but I think most likely just evals on the actual intention of the
+instructions that the thing produces to do should probably get us there at scale.
+Let's see.
+Yeah.
+I, again, I think the most important thing is when you're running evals is to find
+anomalies, like the, especially with wild west stuff like this, if you're running
+an eval over a thousand examples, really the only thing that matters is I only have
+time to look at 10 examples.
+Can this thing help me find the 10 examples that I should stare at myself or try to
+repro myself instead of having to look at all thousand.
+And if you think of the job of writing a good eval function as helping you find
+those 10 examples, rather than an absolute metric of quality, then it might help.
+It might help.
+Yeah.
+Just point it to some downstream thing that is easily findable and then go back
+from there.
+Yeah.
+Sure.
+Yeah.
+Yeah.
+Again, when you notice something is broken, you're going to want to repro it.
+Right.
+Um, and you're going to want to play with it and tweak prompts and actually mess
+with it.
+So really your job is just to find those cases.
+Yeah.
+Thanks.
+Thank you.
+Amir.
+Uh, Hey, thanks for the great presentation.
+I had a question about online evals.
+So right now the way we have our system set up, we just have thumbs up, thumbs
+down, the regular stuff that everyone seems to be doing.
+And then, so now we're spending time, not only just looking at doing offline
+evals, just looking at data sets and just, just evaluating data sets by using our
+eyes and the qualitative, qualitatively saying, okay, this sucks.
+This is okay.
+This sucks.
+This is okay.
+But now with online, now we're looking at user feedback, also doing the exact same
+thing.
+Is there any other signals that, that also help and yeah, any other strategies on
+improving the use of time here?
+Yeah.
+Yeah, for sure.
+I think I would suggest adding online score.
+You saw the scores that we created in the playground.
+You can actually run any of those scores directly on your logs or any of the
+pre-built auto eval scores directly in brain trust.
+And so I think probably obvious to you, but if you have offline evals and they're
+reasonably good and they don't require ground truth values, for example, like
+the summary proportion thing Jason was talking about, or something like the
+coherence of a result, you can just take those exact scoring functions and run
+them on a sample of your logs.
+And then you've basically built a filter or a funnel of things that would do
+poorly in your evals and you can just find them directly in your logs.
+That's pretty simple.
+Thanks.
+Yeah.
+I'll add to this too.
+It's, it's also incredibly valuable to monitor this over time.
+We've had situations where we've, we have a 70, 80% factuality score.
+We onboard a whole new suite of customers and all of a sudden the documents dropped
+at 65% and maybe initially we just see factuality drop and then we can do further
+analysis to go, okay, it turns out that if actually dropped on February 4th, because
+we actually onboarded these new customers and they uploaded PDFs and it turns out
+all the PDFs are screenshots of like text.
+And so something's going on in this process.
+What's going on?
+And now you can go investigate and figure out, okay, it's these customers uploading
+these kinds of documents that now we can identify and we could only figure this
+out because we just saw the factuality drop from 75 to 60 overnight.
+And that is generally just a very helpful way of identifying what's going on.
+Michael, you're going to jump in?
+Yeah, thanks.
+So I'm just thinking about the users of this, the playground and the system.
+And maybe you could comment on different patterns here, for example, like just
+looking at some very high level, very high level summaries versus drilling down,
+like the guy you described earlier, who spends three hours by looking at the traces.
+What's the typical use case here?
+Yeah.
+I think if you think about a healthy team of people that work on an AI application,
+there's a lot of different people involved.
+I think you tend to have some engineers like product oriented engineers.
+You tend to have some ML or data science minded people.
+You tend to have product managers slash designers who really care about the
+user experience, but are maybe less in the weeds of technical details.
+They also care about things like pricing.
+So they want to evaluate on some frequency, whether you're getting the best ROI that
+you'd want from the models that you're using.
+And then you have subject matter experts like support ops, data labelers, et cetera,
+who are very familiar with the problem and usually not very technical.
+And some of our customers, I can't quote the numbers publicly, but there are like
+thousands of humans at some of our customers who are using brain trust.
+And part of, I think our job is to bring all of these people together into one
+environment that, you know, it actually works for different personalities.
+So the playground that I showed you, it's super unlikely that a product manager would
+create the tool that does retrieval.
+But once you create the tool, it's very easy for a product manager to write a rag
+prompt and then actually just pull the tool in and use it and test some stuff.
+And so there's a lot of those little things in brain trust that are designed to help
+you navigate the necessary diversity of skill sets that go into building an AI
+application.
+I'll give you a quick example.
+So we talked a little bit about review.
+So if you look at an example of an experiment like this, where you can actually save
+review information, this UI is generally something that like Jason would be very
+happy to use and like it has all the numbers and all the stuff that Jason would
+want to see.
+If you show this to a support person, they're going to get very lost very quickly.
+But brain trust has this human review UI.
+You just hit the R key and then it turns into this much more simplified thing that
+you can actually further customize.
+And it's much, much easier for someone who literally just wants to look at this
+input and the output and the ground truth value and then actually just label it
+against a rubric.
+And so I think we put a lot of work into bringing a bunch of different kinds of
+people together.
+Interesting.
+Thank you.
+All right.
+Let's do one question with Navne and then we can leave the rest in the Slack and
+I'll just invite Ankrit to make sure he's able to see that.
+Navne, do you want to jump in?
+I'm just new to brain trust.
+It might sound a stupid question.
+I just want to ask, so in the start of this tutorial, you run an experiment,
+right?
+So are those connected to a production ready retrievers or is there a retriever
+that is specifically created in the brain trust itself and that run those
+experiments?
+That's the-
+You can do either.
+You can do either.
+So there is an API support itself where we can just call brain trust and then
+they run those retrievers and we can send those experiments to the brain trust
+UI itself.
+That's right.
+Yeah.
+Okay.
+And when we run those experiments, is there a support for comparing different
+retrievers like the semantic storage versus the hybrid search?
+What works best and is there a support for that as well?
+Yeah.
+The idea with brain trust is every time you run an experiment, you're
+trying something new.
+So in this case, I'm testing using RAG versus not using any retrieval at all,
+but it's totally arbitrary.
+You can just test whatever you want.
+And when you do that, you get a bunch of comparison metrics that you can use to
+actually dig in and understand.
+It's surprising that without using RAG, there's still nine regressions.
+So this is basically saying I'm using RAG, but the answers are worse with using
+RAG compared to not using any RAG.
+And yeah, it's very, that's the whole point of brain trust.
+Great.
+I don't think we have any more live questions.
+Ankur, there's a bunch of other questions in the Slido, but I'll let you,
+LL, you take a look and see if there's any questions that you think would be
+helpful for the whole team.
+And yeah, I think on behalf of everyone, thank you so much for taking your time
+to share this with us.
+Big fan of the work that you're doing.
+And yeah, I think that's it for everyone.
+We'll let some thank you messages stream into the chat and yeah, we'll
+see you guys on Slack.
+Awesome.
+All right.
+Great.
+Thanks everyone.
+Good to meet you.

@@ -1,0 +1,857 @@
+Before you go on introductions, I think the one question I like to ask everyone here is,
+what is the one thing that we should be paying attention to and what is the one thing we're
+going to take away from this talk?
+Yeah, I think the one thing, the one big idea I really think everyone should walk away from
+with this is probably along the lines that the browser is the most natural in the age
+of web apps, the browser is the most natural system to use in order to shuffle data to
+and from other systems, particularly when it comes to LLMs.
+And that doesn't make sense at first, but when you see the kind of problems that we're
+facing, you slowly realize, hey, wait a second, this is a much nicer way of getting around
+some of the limitations of having to bring data to something like an LLM or an agent.
+Got it, got it.
+Great.
+Well, let's jump in.
+Cool.
+Thank you.
+So yeah, hi everyone.
+I'm Michael Strivett.
+I'm head of AI at OpenDB.
+This talk, like we've just mentioned, is about how we approach RAG in a slightly different
+way for interesting reasons that you might not have thought of in the financial world.
+And yeah, it's kind of how do you do RAG but without traditional APIs where you have your
+agent that will actually end up hitting some kind of API to pull data in from an external
+service.
+We say we don't want to do that.
+Instead, why don't we just use the browser directly with our web application, OpenDB
+workspace, in order to allow you to do things like connect data that is running on local
+host, for example, to an agent that is running somewhere else.
+So yeah, let's jump right in.
+So, who is OpenDB?
+We are a very interesting company and a very fun place to work.
+We have a whole bunch of different teams at OpenDB.
+I obviously run the AI team.
+And we have a couple of theses, I guess, or hypotheses that comes with what we think are
+the guiding principles for AI and what we wanted to achieve.
+So before we even talk about the product and what we do, we kind of really believe that
+human plus AI or human and AI is going to be a lot better than human or AI.
+Our vision of the future has got very little to do with AI actually replacing humans in
+day-to-day tasks.
+We see this much more as a collaborative kind of process.
+And for this reason, we've called our agents co-pilots historically.
+And for us, we really think that the symbiosis between human and AI, where the AI kind of
+makes a human better or offloads some of the tasks that a human would have to do, is going
+to be the future.
+The other thing that we have with our application is anything the human can do that AI must
+be able to do and vice versa.
+So for example, if the AI is able to retrieve a certain piece of data by generating certain
+input arguments to a widget that contains this information, the human needs to be able
+to do the same thing.
+We don't want the AI to be able to do something that provides an answer, but there's no way
+for the human to recreate the process.
+And we have the inverse as well.
+If a human is able to inspect some kind of data like a chart or manipulate the data in
+order to draw some kind of conclusion, the AI needs to be able to do the same thing.
+So we have this idea of one unified interface that allows humans to do everything and the
+AI can kind of leverage that same interface.
+The other thing is that the data should flow freely into an AI system.
+So as you'll see in a second with OpenBB Workspace, we allow you to bring in your own data sources
+that you can then view and build dashboards from.
+Our philosophy is that, well, if I integrate the data, the agent should immediately have
+access to that data.
+There's none of this, I have to integrate it twice or how do I get that data to flow
+into the agent so that I can derive insights or query it or answer questions.
+We have one place, you bring in your data and you get the agent interaction for free.
+And we primarily target the financial industry.
+As you'll see when I talk about the products a bit more, this extends beyond that, but
+we're primarily focused on finance.
+So this is kind of what OpenBB Workspace looks like.
+Essentially you have a series of dashboards, you have a whole bunch of different data sources.
+Here we have some news, we have a watch list for a various bunch of companies that we're
+taking a look at.
+We're looking at company news, maybe the price target.
+On the right hand side of the application, we have OpenBB Co-Pilot.
+You can bring in your own agents as well, which is something we'll talk about in a second
+to explain how that works.
+And basically it's just you can ask questions, get answers.
+We produce things like charts if you want as an output.
+And we also have full blown citation.
+So in this case, we use the price target widget over here that contains the data.
+Again, everything that the human can do and we can manipulate input arguments, we can
+look at different kinds of data, we can do analysis, all of that the agent can do as
+well.
+And then you can pull all of this information, pull it out and create new widgets from it
+as well.
+So you have this kind of nice circular flow.
+It's a very organic research process.
+And all of these different widgets that you see, you can write your own and bring these
+in as custom backends, custom data backends.
+Do analysis in this way.
+And so this is kind of just to give you a sense of what OpenBB Workspace is about.
+It is a really, really amazing AI driven analysis tool for predominantly financial data.
+But we kind of treat this as an extremely capable platform rather than just a product.
+So yes, you have multimodal inputs and outputs with the agents.
+So you can look at things like PDFs and CSVs and images and unstructured data like earnings
+transcripts and structured data like, you know, historical stock price, stock prices
+over time.
+You can do all kinds of deep analysis using the agent on this.
+But where we really see value is that you can bring your own data.
+We see this with a lot of our kind of big enterprise customers.
+What they're interested in is they already have all their data.
+They're not looking for any kind of data provisioning.
+So they want a way to bring that in so they can analyze it in a lovely way.
+And now we've also recently launched the ability to write your own apps that run on OpenBB
+Workspace, which allows you to give a much more customizable kind of experience to your
+users and of course be allowed to bring your own agent as well.
+So you have a whole bunch of data sources that we kind of give to you out of the box.
+But we also have a way for you to bring in your own.
+And there's a whole bunch of apps.
+And this is a rapidly growing ecosystem where people are contributing the apps that they
+find useful.
+And then you just basically copy paste in a link and away you go.
+And then you have access to one of these apps that you can then use and do all of this analysis
+that you would typically do yourself in conjunction with an agent.
+But as all things go, there's a catch.
+And the catch is that we don't want to distribute your data.
+So if you're, I don't know, building a crypto, per a crypto custom backend that you now want
+share with users and allow them to use, we don't want to be responsible for distributing
+your data.
+The reasons for this is it's really resource intensive.
+If you have a lot of data flowing through your system, it ends up costing a lot of money.
+The other thing that we're really cautious of and something you have to be really careful
+of is there's a lot of legal fuzziness around what counts as distribution.
+If you've purchased a data license somewhere, are you allowed to distribute it in this way?
+It's not always clear exactly how that works.
+And so we don't want to be kind of stepping on landmines, legal landmines here.
+And the other thing is that the data needs to be reachable over a network.
+So if I have my agent that we provide for you, how's it going to get access to that
+data?
+Well, it's going to have to be able to hit that API point directly.
+And that's not always the most feasible thing, especially if you think about big enterprises.
+To take a note out of Raymond Hittinger's book, surely there must be a better way.
+And so the idea that we have at OpenBB and the way we build the workspace is we ask why
+can't the browser itself be the data layer?
+Think about this for just a second.
+We have a local first web app.
+So the OpenBB workspace that I showed you, it predominantly runs locally on your machine
+just in your browser.
+So the client code is distributed by the web, but the data doesn't actually flow through
+some back end server at all.
+It directly speaks to your browser running on your machine through the client code.
+The main benefit of this is we don't have to distribute your data and you have really
+excellent security because you have to be on the same network as where the data is available.
+So if you think you're operating in some kind of cloud environment or some kind of on-prem
+situation, you can physically air gap the system to make sure that only when you're
+on this network will your app be able to have access to that data.
+And the bonus is that you can actually serve data from local hosts running on your machine,
+which is fantastic for development.
+You don't have to deploy this somewhere where it's reachable via some kind of URL or IP
+address.
+You don't have to worry about any of that.
+Everything just flows directly through your browser.
+And you have a bunch of really nice downstream effects of this.
+So how does all of this kind of piece together and work?
+So here you can basically take a look at our architecture, have a very simplified version,
+but you have on your machine, you have OpenBB running in your browser and you can have a
+custom data back end running on local host that's connected to this.
+Or maybe you have a custom data back end that is connected or available via your network.
+And this is how the data essentially flows, right?
+We don't have some back end servers that fetches the data and sends it through to you.
+This is all up to you.
+And the question is, well, if we want to connect an agent to this data, how do we do it?
+If this agent lives on some kind of external network somewhere like ours, how do we kind
+of get our data to have access to this?
+And the trick is, well, we're already treating the browser as a data layer.
+Why don't we just treat the browser as a crossroad, an intermediary, an interconnect that can connect
+to the agent to your data as well?
+And this is kind of the idea that we settled on and have really developed out and it ends
+up being really useful.
+You have client-side function execution for an agent that actually doesn't live locally
+on your machine at all.
+It might live somewhere else.
+Maybe it runs in your company's infrastructure.
+Maybe it's the one we host of our end.
+But we connect it to data that is available only on your local host or on your network.
+So the way this works is essentially you have a query request that the front end application
+will make to our agent that specifies the messages and also the widgets that are available
+that contain data, their descriptions, the parameters that can be set.
+If the agent decides it requires this information in order to answer the query that you have,
+it can submit a function call back to the front end that contains which widgets you
+want to have access to and also which input arguments to use.
+So for example, maybe I've got the widget set to Tesla, but I want to query the earnings
+transcripts for Apple.
+We allow the agent to kind of change that.
+And then you have this little function calling handler that actually runs in your browser
+locally.
+And what this does is this can then go and interpret this function call, execute it,
+and fetch the data, and then respond with a follow-up query that contains both your
+messages and the result back to the agent.
+And so basically you just use what we call the AG2 protocol as a way of connecting an
+agent to data via the browser, via something that's running locally.
+And this agent protocol is what basically allows us to work.
+And I'd like to talk about this a little bit now.
+But I guess before I do, the downstream effects of this approach are really big because take
+a look here.
+If you only integrate your data once into OpenBD workspace, but once you've done that,
+the agent itself doesn't have to know anything about how to access this data.
+It has to be something really, really simple.
+It has a unified interface.
+It just has to specify the widget UUID and the input arguments that it wants.
+You can choose not to generate input arguments if you don't want to, you can just reuse the
+ones that are currently set.
+But the point is you now have this nice separation of concerns where you integrate the data once
+and your data is now instantly available to either our agent if you want to use ours or
+your agent if you want to use yours, no matter where it's run, whether it's on your machine or not.
+And so when we were designing this agent protocol, we cared about a couple of really
+important things to us.
+It has to be easy to debug, easy to test, easy to reason about.
+This is really important if we want people to build their own custom agents.
+If we want to make our lives easier for ourselves, it has to be something that is easy to understand,
+easy to make sense of.
+We want to use standards that people are already familiar with, so we're not going to roll
+out some kind of new protocol that nobody understands how it works.
+Sorry, MCP.
+And we also want to try, we don't want to be clever.
+Engineers tend to get themselves into a lot of trouble when they try and be clever, so
+we want to have something be as boneheaded simple as possible.
+And so basically the resulting API is stateless.
+So your agent or our agent doesn't have to handle any state at all.
+It's all handled by OpenBD Workspace.
+So this is fantastic for debugging, for reasoning about your problem.
+It's easy to do unit tests because you just have to hit it with one, with a payload and
+it will do the right thing.
+It is reproducible, which is a really big deal.
+It doesn't require a lot of storage as a result.
+It just makes everything easy when you don't have to worry about state.
+It also uses REST.
+So post, get request, that kind of thing, which is familiar to everyone.
+Everyone who does any kind of web app development will be very familiar with REST APIs and
+it uses service sent events, which have become the standards for communicating with other
+LIMs.
+And the other thing is that we published this protocol.
+So we have, it's available here on GitHub.
+It's called the OpenBD Custom Manager SDK.
+But basically the entire protocol is available.
+It's PIP installable.
+We just made this public yesterday, although it's been on PiPi for a couple of weeks.
+And this is what we actually use for our OpenBD Co-Pilot as well.
+And we just say to everyone, hey, just use it.
+Build your own agent.
+We support it.
+And so all of the inputs, the outputs and the models and stuff like that is available here
+for the protocol for free for you to take a look at and to use.
+And what's lovely about it is it's actually really simple.
+It's got a couple of very minimal primitives that allow you to do all of the important
+stuff that you care about.
+So for example, if you want to string message chunks back to the front end, you just, from
+an execution loop, you just yield message chunks.
+If you want to yield reasoning steps, so we actually allow you to provide digital status
+updates kind of like what ChatGPT or Cord will do if they're searching the web.
+It kind of gives you information about what it's, what's doing next, which widgets we're
+accessing, what kind of queries we're making.
+That's also just a single yield away.
+You just yield the reasoning step.
+If you want to fetch widget data from OpenBD workspace from the front end, well, it's just,
+you know, you just yield this, we specify the widgets and the input arguments that you
+want. Same with producing citations.
+Maybe you want to return a table like the screenshot that I had earlier.
+You want to yield a chart and can do pie charts, line charts, bar charts, scatter charts,
+whatever you're interested in.
+It's all these really simple kind of building blocks that you just figure out what your
+outputs need to be and you just do them and there you go.
+So this is what it looks like.
+If you have an existing agent and you want to make it OpenBD compatible, because of this
+protocol that we have, you basically just need to accept this request payload as an
+input into your endpoints and you just, inside of your execution loop, you need to stream
+back SSEs and you just yield from this execution loop.
+Simple as that.
+And all of this code, we have examples that show you how this works.
+You know, it's available if you want to just go on GitHub and just search for OpenBD and
+you'll find all of our stuff.
+And yeah, if you want to fetch widget data, it's literally just as simple as yielding
+the right request and we'll take care of everything else for you.
+So we kind of have two types of functions.
+You have locally executed functions, which is what you're probably used to.
+This is where the function is executed in the same environment or logical space, computer,
+if you will, where the function is called.
+This is what everyone's used to.
+But now we kind of have this idea of a remotely executed function, which we use to fetch data
+from the browser where we actually have a little mini interpreter that runs in the browser
+that can execute these function calls.
+Because nobody said anything about where the function call needs to be executed.
+And so this is how we ended up solving this problem.
+And the separation of concerns is actually really nice, like I alluded to earlier, because
+you basically don't have to worry about having your agents understand how to call data.
+Your data team and your agent team can actually work completely separately because we have
+that if you bring in your data onto OpenBV Workspace once so that it's human readable,
+it immediately becomes AI readable.
+And so the separation of concerns makes building agents and integrating data into them so much
+easier because the only thing you care about essentially is what's coming in and what you
+need to send out.
+So it's super unopinionated because it's just a protocol that you have to yield events from.
+It works with any AI system, whether you're using God forbid, Lang chain and stuff like
+that.
+But if you let's say you're using Lang chain or OpenAI SDK directly or Anthropics SDK directly
+or Google GenAIs SDK directly, it will work with all of these because you just need to
+yield the right events.
+You need to format the messages and yield the right events.
+The agents don't need to manage any of the state.
+They don't need to understand how APIs for the various data sources work.
+They only need to understand how to pass the requests and yield the function calls when
+they do that.
+So it's just a single kind of yield statement away.
+And it's easy to make your existing agent compatible.
+And so basically the big takeaway is, well, treat the browser as this super nice universal
+data protocol that you can bring your data into without it having to flow through some
+kind of back end and then just do the same thing with your agents as well.
+And so, yeah, that's kind of the short and sweet of it.
+So we're OpenBB.
+If you want to get in touch with what we're doing and stuff like that, feel free to send
+us an email.
+We have a generous free tier, including the AI.
+So feel free to try it out.
+And we're not restricting you.
+You can bring your own data, your own apps, your own agents.
+And yeah, we have all the compliance and things that we need for enterprise ready deployment
+too.
+So that's it.
+So thank you very much.
+And I think now would be a good time for folks to ask questions.
+We can have a discussion.
+And I'm more than happy to answer any other random questions, Jason, that you have as
+well.
+Sounds good.
+Sounds good.
+I guess my understanding, the way that I feel about this right now, it kind of feels like
+what MZP has been trying to do to some smaller extent.
+It feels like it's actually way less scope than what the protocol is doing.
+And a lot of it is actually building around the browser versus the client and some widget
+you got.
+But could you just add a little bit more color, especially because I think MZP came out maybe
+around the same...
+I mean, what is the AI timeline really, but around the same time?
+Yeah.
+So we ended up building this...
+We ended up building this long before MZP was even an idea and before Anthropic even
+published their blog post for their announced MZP and that they were giving this away for
+free.
+So this predates that.
+You're right that it's a lot simpler.
+The problem...
+And we've considered, like, can we use MZP for this?
+The problem with MZP is there is a baked-in assumption...
+It's a little bit subtle, but there is a baked-in assumption that the function call will be
+executed by the MZP server.
+And so that implies that the data that you need to have access to needs to be accessible
+by the MZP server.
+So if your MZP server is running on your local machine, that's fine because you might be
+able to have access to the data that you want to share.
+But if that MZP server is being hosted by us and we just want you to plug our agent
+You won't be able to access data that's flowing through...
+Like that lives on your local host.
+And so for us, that was really important is making sure that you can only access the data
+when you're on the right network or on the same machine.
+And so MZP doesn't solve that problem, although it solves a bunch of other problems.
+I see.
+It sounds like a lot of this is actually around governance and access controls and sort of
+the things that are important for OpenBB, which I think is also probably a pretty good
+segue to the other question, which is, how do you avoid mixing like confidential data,
+data that your users might bring in with other public data around these workflows?
+What kind of like tools have you had to build to overcome those?
+So for us, we pretty much solve this in the enterprise sense.
+The way in which we solve this is we basically deploy stuff on-prem and we give them a proper
+air-gapped system.
+So the only data that's coming in will be data that is working on their network where
+they have things fired, fire walled away in a VPC.
+So that's one way in which you can solve the problem.
+And besides that, we don't actually distribute any of the data.
+So it is entirely up to you to decide how that uses.
+So because everything flows through a local browser app that's running in your browser,
+it's completely up to you what you choose to bring in.
+So we just say, look, here's the platform.
+It's just a platform.
+If you're going to be silly and publish your custom backing for people to use publicly,
+like that's on you, so don't do that.
+But if you want it to misbehave, I suppose you could.
+But we obviously just say, look, just stick it in the workspace and then you're responsible
+for how you choose to distribute your data.
+Makes sense.
+I'll save the landing chain question for later.
+But let me do that as well, which is, could you share a little bit more about your eval's
+pipeline?
+How do you validate whether the user query is being used appropriately by the agent and
+executed in the right way?
+So this is a really, really good question.
+So first of all, what makes evaluation extremely hard for us in particular is when you're
+doing something like financial analysis, it's very hard to validate whether the answer
+is correct or incorrect.
+This isn't like generating code where you have a unit test that the generated code needs
+to satisfy.
+And that's something that would make this process a lot easier.
+When you have very nonspecific answers, so for example, what do you think the possible
+outcomes could be for a company based on this and this and this data?
+It's not easy to rate that.
+For us, we do, in terms of answers, we actually rely on our users to give a thumbs up and
+a thumbs down.
+It's not the best solution in the world, the reason being you only typically get responses
+from about 1% of users.
+So what we do is we take a, at least from a, if you're scared of hallucinations, what
+we do is we take a, we say, well, it's going to be hard to control that.
+So we take a radical observability approach.
+So every piece of data that the agent interacts with produces an answer with, fetches, summarizes,
+queries, whatever it is, we have a full citation trace that we return with every single answer.
+So you can see exactly which input arguments were used, which widget it was, we highlight
+the specific widget.
+If it isn't on the dashboard, you can click a button, we can add it to the dashboard for
+you with the input arguments that were used.
+So for the human, we make it as easy as possible to actually observe and analyze and make sure
+that things are correct from that point of view.
+For us, what we really spend a lot of time doing is we fit with users and we check with
+them and we do vibe checks, which a lot of people say, oh, so you're just relying on
+vibe checks.
+You know what?
+Vibe checks are surprisingly high information.
+And you can often tell a lot more by taking a look at what the agent saw and the answer
+provided and fix things that way when you see things going wrong.
+Sometimes you just have to hop in and actually take a look at those traces.
+We spend a lot of time doing that.
+That makes sense.
+I guess on that line of the citation traces, what kind of tooling have you been using?
+I think a lot of people have questions and thoughts on vendors, for example.
+What kind of toolings have you enjoyed working with?
+So for us citation-wise and to handle all the data that's coming in and coming out,
+it's a custom system that we wrote.
+No one is really that great at doing citations.
+And obviously, because we control the data plane, we need to be able to map back to that
+somehow.
+So we have to do something custom.
+In terms of monitoring, we currently, the only really off-the-shelf tool that we use
+is two libraries that we really like.
+The one is by Jack Collins.
+It's called Magentic, M-A-G-E-N-T-I-C.
+I think it's the nicest LLM framework that's out there.
+It's very minimal.
+It's a shallow wrap over these.
+It allows you to control how things get executed.
+I think it's the right abstraction for how LLMs work.
+So I recommend people check it out.
+It's full of great ideas.
+And then we use LogFi to do our tracing, just because it's really fast.
+It has a nice user interface and it's open telemetry compatible, which if you care about
+telemetry, you'll understand why that's a really important deal and why it's important
+to have.
+I'll also just make a plug, which is that if you're part of the students of the course,
+then I think LogFi, we have a $500 promotion with LogFi.
+We'll plug there if any of these people want to try these things out.
+Yeah, that makes a lot of sense.
+I think open telemetry as a standard is really, really valuable, which kind of brings me to
+maybe the next question is, what were your experiences with lane changing?
+Why was it the God forbid?
+So I like poking fun at lane change.
+Look, I think I started lane change.
+I think most people did.
+The gift that lane change I think gave to developers around the world is this idea of
+it's not just a one and done request for a completion to an LLM.
+You can actually chain these things together and you can get quite interesting behavior
+from it.
+I think that is a really significant popularization of an idea.
+The problem, not problem, I guess the critique I have of lane change is the same one most
+people have when you try to work with it, which is it's heavily abstracted.
+It makes a lot of strong assumptions about how your business logic should work and it
+ends up solving the average of a lot of problems.
+The issue with solving the average of a lot of problems is if this is my problem and this
+is my problem and this is someone else's problem, the average is right here, which means you
+solve no one's problem.
+Lang chain is great for your Hello World example, but the second you want to do something just
+a little bit custom, like maybe I just want to do this one intermediate step before I
+submit my completion, it makes it really hard to do that.
+Almost invariably, you end up reaching for the base SDK or something that just gives
+you a little bit more control over how the agent will execute things.
+That's kind of been my experience.
+It's been the experience that everyone I've spoken to that's decided to really go heavy
+in on building this stuff.
+You end up just going, man, I'm fighting this framework now and I can't figure out how to
+customize it.
+I'm just going to go for something a bit more custom.
+What kinds of abstractions or architecture have you adopted?
+I think one of the questions that just came up was, I think Lamont Index is now trying
+to do this event-driven architecture and LandGraph is state-driven workflow.
+What has felt right for the kind of products that you've been building?
+You have the for loop and completion call.
+Yeah, I actually think the abstraction for us that we also ended up doing really early
+was the state machine model.
+The idea is you have one main execution loop, the model decides what to do and that drops
+you down into another sub module.
+For example, let's talk about how we do analysis of something like a PDF.
+If you're doing analysis of a PDF and you bring that data in, our model will then say,
+okay, this is a PDF and we need to summarize it.
+That then is a function call that then drops into a sub module or a sub agent that has
+its own mini execution loop.
+Then that then has all of the functions that it requires in order to analyze and assess
+a PDF.
+What you can do is you can yield these events to the upper loop that then yields it to the
+client.
+Basically you can go deep and bubble things and that's how you can get things like status
+updates or citations or intermediate responses and stuff like that.
+We just bubble everything through the execution loops.
+The right way to think about it is a state machine with various states and each of those
+states themselves is a mini state machine.
+That seems to work extremely and it's easy to reason about as well.
+This makes sense.
+There's a lot of really great questions coming up.
+I'll do one more question from the uploads and then we'll also do some live questions
+as well.
+If you see the React, you can basically use the hand raise gesture and then we can go
+from there.
+As people are figuring that out, let's ask some more questions.
+This is a very simple one.
+What did BD stand for in OpenBB and what is the USP of OpenBB?
+Everyone thinks it stands for Bloomberg but it doesn't stand for Bloomberg.
+It actually stands for BlackBerry.
+The origin of the company is really, really interesting.
+Didier, the founder, he essentially wrote a financial data terminal that ran in your
+CLI, like in your terminal, that aggregated a whole bunch of financial data and this happened
+during the whole GameStonk, GME event that happened.
+Didier threw it on the Wall Street Bets subreddit and it blew up and got a crazy number of stars
+and that's kind of the origin behind that.
+Then when they created the company, as far as the rumor goes, him and his co-founder
+James, they took a crazy wild bet on BlackBerry that didn't pan out and that became an inside
+joke for them and so they decided to call it OpenBB.
+Beautiful.
+That's pretty funny.
+I didn't actually know the Wall Street Bets history.
+Are there any readings you would recommend on this state machine approach?
+There's a follow-up question that I don't fully understand what this means, but by state
+machines, do you mean more or mealy machines?
+I don't know if you're familiar with those terms, but there's generally readings on the
+state machine kind of model.
+Yeah, so I'm not familiar with those terms.
+I guess I'll just explain what I mean because it's the way I interpret it, but basically
+the idea is it's kind of like a gentegrag where you have the agent generate the search
+terms, let's say, for data, but rather than doing that just to fetch data, you essentially
+have all of these sub-agents that have their own execution flows that you can drop into
+via function call.
+If you have your main execution loop, which is where the agent is essentially sitting,
+you can imagine the agent sitting and it's got maybe some context of what data is available
+and it has a whole bunch of tools that it can choose from.
+And it essentially says, okay, I want to use this piece of data with that tool.
+And then that becomes the state that you then enter and then analyze the information that
+way.
+And then you just basically hop between these.
+So you go and execute something and then bounce back up to the main kind of, okay, what's
+my next decision that I have to make?
+In terms of reading material, I don't think I would read too deeply into it.
+You could probably Google some stuff.
+Just go bold.
+Go bold.
+Figure out.
+I'm going to connect two agents together, one agent that comes up with the plan and
+another agent that executes the plan.
+And just bind the two of them via function call.
+And pretty much there you go.
+You've got two states that you're playing with.
+Deep has a question.
+Any kinds of challenges that you would like other sort of like support on or kind of problems
+that are very open for you?
+It's getting better now.
+And I think Google and Gemini are doing the right thing.
+And I've seen OpenAI start doing this too, which is a lot of the stuff that everyone
+wants to do, which is a bit tricky to handle.
+So for example, code execution.
+Doing code execution yourself, we've done it.
+We had internal tests of it.
+Is quite a tricky thing to do because you have to spin up a remote dreadful.
+You need to be able to submit instructions.
+You need to manage state, that kind of thing.
+What Gemini does, which is really like, I'm glad they did it and I'm glad other people
+are following them is that just becomes something that you can toggle on and then their agent
+will handle all of that.
+It's abstracted away from you because handling that is not really the problem you want to
+solve, but it's a big pain.
+So to have all of that kind of stuff happen for you is really nice.
+Like Google also integrating Google search into their stuff, which is a common use case.
+That's really nice as well.
+What do you think?
+What else is...
+You see the problem is I have the curse of knowledge, which means I've gotten so used
+to the stochasticity of these models and kind of constraining down...
+Because fundamentally, what are you when you're programming with other lens, right?
+You're prompting these things.
+You're shaping probability distributions in order to have the model as reliably as possible
+take the actions and pathways that you want.
+So you're painting these probability distributions using words and using tools and stuff like
+that.
+So that's fundamental.
+And I'm so used to that now that it's kind of hard to think of it in any other way.
+Let me ask a question real quick.
+Have you used things like E2B?
+I know like, I think in this case, if you do Gemini, you're kind of locked in a little
+bit more, but I've not really tried much of it myself, but I'm curious if you use something
+like E2B where they do their own code sandboxes and they...
+So we looked at it.
+We looked at it.
+We looked at it in the Doc2 compliant, which is an issue.
+So we rolled our own.
+So basically what...
+This is just a fun aside.
+So basically with...
+Over like a weekend, I ended up writing a mini interpreter in Python that would take
+in code submitted as a string by the LLM, do abstract syntax tree parsing, evaluate
+that code, capture the outputs of that and then return that.
+So essentially we emulated a Red Bull that would run on AWS Lambda with state and it
+was kind of like a fun hackathon project.
+And that worked.
+It worked surprisingly well and it was super cool.
+So that's how we did it so we can make sure it was socked to compliance for people who
+were potentially using it.
+We just then ended up changing directions because people were really showed interest
+So we never really released that to the public.
+Maybe it's going to come back.
+We don't know.
+But yeah, that's...
+It's not that hard to roll it yourself.
+You can probably via code it if you want.
+And that's something that's quite fun to do.
+Python's amazing.
+Interpreted languages are fun because you can do this kind of thing, right?
+You don't have to compile them first.
+Okay.
+It's not sock2 compliant, but I'll just execute the string.
+Yeah.
+Yeah.
+And it's fine because if you run it on a Lambda and it's isolated and sandboxed and you have
+an execution time limit, it can't do anything.
+So you're fine in that regard.
+It sounds like there's not many live questions here.
+So I'll sort of ease the question I asked everyone at the end, which is, is there a
+question you feel like folks should be asking?
+Whether it's about multiple tool use, whether it's about building out these platforms,
+I think.
+I think what people should be asking, and I've seen a little bit of talk about it, but
+only now.
+When will locally running language models be integrated into browsers?
+And when will a web standard be published that allows web apps and websites to interact
+with those language models running in your browser in a native way?
+I think longer term, this is what we're going to see.
+The browser is by far the most important application on a computer.
+And it just seems like such a natural place to want to slot in an on edge LLM is something
+Google played around with having an LLM running in Chrome.
+But I think that that interface to allow a web app to use that to maybe provide some
+kind of LLM powered experience that's running locally on your machine that interacts with
+that, maybe like a type check or maybe something that can allow you to hide content you don't
+want to see or do translation or whatnot.
+I think that is going to be, I would make a bet that that is going to become a web standard
+at some point.
+And as we get better at distilling these models, as we get better at running them more efficiently,
+I really think that we're going to start seeing these things embedded directly into browsers,
+which is where the users are.
+The web is the operating system of the world right now.
+And I think a lot of people should be asking, how can we make these LLMs that run on the
+edge, how can we make them more efficient?
+How can we make them more accessible to normal people?
+How can we distribute them easily?
+And the answer to that is, well, you're going to have to use the web browser, because my
+grandmother is not going to install Ollama, right?
+But she sure as hell knows how to browse the internet with Chrome.
+And so I think that is going to become the natural target for where LLMs will eventually
+be directly integrated into.
+I think I'm going to ask the question here.
+Do you think it'll be local first on desktop or mobile first?
+Mobile.
+Only certainly mobile.
+Yeah, I feel like I saw Jordan Singer who recently has been doing a lot of LLM local
+on mobile devices that have been running pretty smoothly.
+But we'll see.
+Maybe it'll just be mostly a hardware limitation.
+Yeah, that's the problem right now.
+But I think because more people have phones, it'll be the natural target, particularly
+in the developing world.
+I think that's a...
+I don't know how you monetize this stuff.
+I think that's the big problem that all the big tech giants are still trying to figure
+out is like, how do we monetize this in a way that is sustainable and that warrants
+us investing energy and time into this?
+But I suspect they'll figure it out somehow.
+Let me leave off with this question from deep, which is how do you make your agents sort
+of self-improving, right?
+When they have errors that would make mistakes, what is the flywheel that you've spun up to
+allow these models to sort of learn from these mistakes?
+Easiest one, the easiest one and the most obvious one, right?
+If you run into some kind of error, if the agent isn't able to do something correctly,
+have really good error messages and just return those and then let the model try again.
+You see this everywhere with any kind of agent.
+That is typically the thing that you can do.
+The other thing is keep really good logs of all the ways in which things go wrong.
+Typically you'll see there's a couple of key patterns that emerge where a model is always
+making a stupid mistake.
+We noticed, for example, one of our agents always for a particular data source, it always
+generated input arguments, even if you asked it not to.
+We noticed this pattern in our hero logs.
+We aggregate these and we look at like trends of errors and we notice, oh, we didn't allow
+to optionally specify certain input arguments.
+And that's just like a common failure mode that we saw everywhere.
+And the second you see that, you realize, oh, okay, I'm asking the LLM to do something
+that's impossible for it to do.
+And then you fix the system.
+Don't try and prompt it differently if you can help it.
+Just try and change the problem that you present in a way that makes it less possible to get
+wrong, preferably with like some kind of hard coding solution that you can do.
+We found that more effective than trying to build some kind of self-improving system,
+where the self-improve is in this case.
+This makes sense.
+It's almost like we want to primarily just improve error messages and then you're doing
+a lot of this data aggregation of the error messages or the failure modes.
+What does that process look like?
+Is it the case that we just have like messages on Slack?
+Is there some DAF what you're looking at?
+Every other week we get together for 40 minutes, we scroll through like LogFire, we kind of
+just hypothesize what are the next big issues that are coming up.
+Yeah, our process is really primitive, but it's not stupid if it works.
+We look at the logs.
+We have a couple thousand questions a day.
+We look at the errors that come up through those.
+Sometimes we pipe those to a Slack channel so that we get notified of them.
+But we just keep our eyes open when we pay attention to how people are using our product
+and where things are going wrong, where things are going right.
+Based on that, it's often easier to just by looking.
+It's not at this massifier.
+It's just by looking where things go wrong, you very quickly identify common failure modes.
+I think rather than trying to build some kind of specialized tooling to do this, getting
+something that just dumps a message in Slack or just having people every morning when you
+wake up, hey, what happened last night or the day before in terms of what went wrong?
+Just go look.
+And often you notice things that you can immediately fix.
+And somehow I think we just don't flex that muscle enough really.
+It's really that simple in many ways.
+Yeah, I saw Mohammed asking, do you use an LLM to summarize the logs?
+It's almost like it's better to just look.
+Yeah, we just look.
+It's astounding how just looking at logs, and obviously this assumes you have decent
+logs to begin with, but we don't do any crazy smart stuff.
+We're a small team.
+We want to move fast and we want our systems to be reliable.
+No, we just go look.
+That makes sense.
+I think every time I'm working with another client, they're like, oh, we just want more
+reasonably.
+We just have more reason.
+It's like if you're delegating all the reasoning, what's your job?
+If you end up reasoning, then you can use the simple processes.
+Too many people are now too lazy to stare at things.
+One of our neighboring countries is Namibia.
+And this story will make sense in a second.
+And it's a really rough place.
+It's absolutely massive.
+There's only too many people there.
+It's one of the remotest countries in the world with some of the harshest terrain.
+Toyota, who builds a lot of vehicles and stuff, they send their execs down with cars to Namibia
+to just watch what breaks.
+That is surprisingly effective.
+You don't need workflows.
+You don't need crazy tooling.
+Sometimes just putting your boots on the ground and looking at what's going wrong, that's
+the highest information signal you can get.
+Totally.
+It's just, you know, walk the assembly line.
+I think it's something people are not doing enough.
+The assembly line is made of robots.
+We have the robots looking at the robots, looking at the robots.
+And then with a big break, you have these big questions.
+Exactly.
+Let's do one question before we go.
+Kasim says, in your workflows, how do you think about or manage expectations around
+latency or just sort of...
+Brilliant question.
+Okay.
+So, fantastic question.
+This is where the status updates come in handy.
+Hold on.
+I'll go back to here.
+So, okay, it's hidden a little bit, but you see the step-by-step reasoning?
+If you expand this, it's got a whole bunch of different steps that the model took in
+order to produce this graph.
+It went and queried the right widget.
+It fetched the data.
+It then decided to produce some intermediate queries and then produce the chart.
+One of the things you don't want to have a user do is sit there wondering what's happening.
+It's why OpenAI will show you the thinking of a model, if it's going to be doing some
+kind of reasoning or whether it's searching the web.
+You need to have some kind of user feedback because users want to look at stuff.
+And so, this is why they started streaming back tokens.
+One of the benefits of an autoregressive model is when you've got a token, you've got
+a token.
+And the other thing is, well, we make it really easy to understand exactly what the model
+is doing.
+Hey, I'm busy querying this widget with these input arguments and here's why.
+Now I'm busy writing this SQL query in order to analyze the structured data.
+This didn't work.
+I'm going to try this now.
+Okay, I've got the answer now.
+So it's kind of like just providing that constant user feedback.
+That's the one thing that's really important.
+And the other is often you'll find when you're querying multiple pieces of data, if they
+don't need to interact with each other, it's an embarrassingly parallel problem.
+You just split off the path and you do everything in parallel and you combine things together.
+So if you're summarizing 10 PDFs, there's no reason to have to do that sequentially.
+You just say, hey, I'm going to summarize the 10 PDFs.
+You split them up, you summarize them and you combine the answer at the end.
+And so that's the way you kind of manage latency.
+And ever since we've been doing that, users don't seem to complain.
+You can only read to cost anyway.
+Yeah, I feel like, you know, cloud code has recently made a lot of really nice changes
+to just make the layer feel very good.
+There's always something moving in the paint.
+Now tickle the brain.
+Yeah, birth sample creatures.
+Perfect.
+All right.
+I think it was great.
+I mean, I feel like I have a better understanding of some like, it's funny because a lot of
+the things I think about in terms of improving systems are about like retrieving few examples
+and having better prompts for messaging.
+But yeah, I feel like I've actually gotten that a good error message is sometimes the
+most important thing.
+It's good enough.
+It really is.
+Maybe this is just a function of the model being good enough to really be able to parse
+these, but it seems like just investing in better error messages is something that is
+worth, it is effectively an investment in the execution harness of the system that you're
+building.
+Yeah.
+Yes.
+I mean, look, what are these things trained on?
+They're trained on tons of human data, right?
+It kind of makes sense that if your error message will not be informative to a human,
+it's not going to give you a probability distribution that will lead to a good answer or a good
+next step by an LLM.
+So what's good for the human is typically good for the LLM as well.
+And sometimes I think anthropomorphizing LLMs more is a good thing, not a bad thing for
+exactly that reason.
+That's a good takeaway.
+Well, I think we're out of time.
+Thank you so much.
+Is there any other parting words before we go?
+We will send the notes to everybody via email, but yeah, if we can share the slides as well,
+just let us know.
+We can make sure to do that.
+Yeah.
+Yeah, 100%.
+Feel free to share the slides.
+I'll make it available to you guys.
+Yeah.
+Give us a try.
+Send us an email.
+Bring your own agents to OpenBB.
+That's a lot of fun.
+And yeah, thank you so much for having me.
+It was really great.
+And at the moment, no, but maybe see.
+So we'll see.
+We'll keep everyone updated.
+All right.
+Thank you, Michael.
+Perfect.
+All right.
+Cheers, everyone.
+Thank you.
+Take care.
+

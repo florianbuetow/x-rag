@@ -1,0 +1,1016 @@
+Yeah, everyone.
+Hello.
+I think it's good morning for most of you.
+Did we start three minutes after as a, as this tradition?
+I think we should.
+And also like, we don't want people to, everyone joins late in general.
+So we don't want people to miss out the beginning of this, but I was wondering
+that whether the people who are joining this call have been on few enough of the
+North American calls live so as to not even realize that's our tradition.
+That's fair.
+Give me one second.
+I'm just grabbing water.
+Yeah.
+So how many of you guys have been joining any of the other sessions in real time?
+We're live.
+Tried once and gave up.
+I couldn't think if it's the middle of the night for me.
+Yeah.
+Yeah.
+Same.
+It's like 3 AM.
+It's like, but I, and she watched the recording.
+I haven't done for this week though.
+It's just so while we're waiting overall, do you feel like the course has still
+been worthwhile given that you have been watching recordings or if someone that
+socially, but in the same time zone asked whether to join, would you have said that
+it's actually not worth it given the time zone problems?
+I think the time zone is not an issue for me.
+I mean, I've been able to watch the recordings and get a fair bit of value out of it.
+Also the Slack channels are good.
+Get some random bits of knowledge every now and then.
+I have not been able to join the live session.
+So this is my first time seeing what the live thing has to offer.
+And if this is useful, then something in a friendly time zone would be better.
+But otherwise I think the recordings and the Slack do well even async.
+Yeah.
+We are planning to repeat this weekly.
+This week we're going to do just Q and A and then I'll probably just set it up as
+a poll in the, I think it's called APAC Slack channel and I'll just do a poll of
+Do you guys want for next week to do this mix like we've been doing in the office
+hours that we have during the U S day where you do half of it as breakout breakout
+session and half as Q and A or do you want to have all Q and A like we're going
+to do this week, but I'll put that in Slack and then we can use that to decide
+what we do for future weeks.
+Yeah.
+Should we or after we're a minute late?
+I think everyone's in, I think I counted 12 on the Slack and there's 12 in the
+actually, I mean, just, we have two more actually.
+So it's 10 and 12.
+Yeah.
+I mean, let's jump in.
+I think has anyone watched the videos for this week already, or has it mostly just
+been a week one and week two, maybe a thumbs up or a cool,
+or this week, I think.
+Yeah.
+Three weeks.
+Makes sense.
+Watch the lectures, all the lectures, everything up until the lecture for this
+week and including the lecture.
+Cool.
+Yeah.
+It sounds like most of you have seen some of the conversations around just
+making sure we have good recall metrics, allowing ourselves to use synthetic data
+to generate these evaluations.
+And then also once we start introducing production data, being able to figure
+how we can segment and classify some of these topics in order to better prioritize.
+And so, yeah, I would love to, maybe we can just use the raise hand mechanism
+in zoom and then we can start from there.
+If anyone has any questions that they want to talk about, I
+could just clarify anything.
+Yeah.
+Since maybe I can go first, no one has raised their hands.
+Yeah.
+Actually it's definitely very helpful because my previous role, we started
+building some stuff like I used to work for a graph render.
+So we kind of built like early stages of graph rack, like two years ago, but we
+kind of never thought about like, how do you do evaluation and everything?
+Like at one point we had to like create like, even though there's an LLM
+powering things, but generation of the cipher queries, but it was like.
+For this particular intent, we will have a API and everything.
+So with all the one thing over the last three weeks, what I've learned is very
+helpful to like how we could do it now.
+But what, one of the things I'm working on now is actually building more of a
+generic, like chat interface, Q and A system for, for students and researchers
+to work with, like any kind of documents.
+So like I was, because from, from that perspective, there's no way like I can
+generate questions across different domains.
+They might be working on different things because like, now I started off
+with just working with PDFs and word docs.
+I'm also kind of transitioning into what do you say, like PowerPoints and
+few other kinds of multimedia where they can upload and work with.
+So like first question on that is like, is there a way, like I, I can think of
+putting up a kind of a process where I can evaluate like different domains and
+because my Q and A system is going to be rag is going to be very generic.
+Yeah.
+Like, so it's like, how, how do you see this like at scale and we want to
+kind of like optimize over a period of time, what will be kind of an approach
+I can consider that's the first question.
+Second one.
+Yeah.
+I'll think about it.
+I've completely forgot.
+Yeah.
+Let's do the first one first.
+Yeah.
+I imagine there's quite a bit here.
+So obviously we can still think about potentially using language
+models to generate synthetic data.
+Right?
+We can say, given a PowerPoint, what are some questions this PowerPoint answers?
+We don't even know if by default that the text in the PowerPoint is enough
+to retrieve that, that single asset.
+Right.
+And so I think one of the big challenges is like, we might assume
+that synthetic data is too easy, but that's usually not the case.
+Right.
+On top of that, what we might find is maybe right now, because we don't have
+any domain expertise, we can't really do the segmentation on sort of the types
+of questions people ask, but we will still be able to evaluate, for example,
+the, our ability to recall the right assets based off of the file type.
+Right.
+When I was at Zapier, we had integrations for Sheets.
+We had integrations for Notion pages.
+We had a bunch of different notes apps.
+And what we found was just anytime the answer was supposed to be found
+on the sheet, we were struggling.
+And that's because they had just embedded the text in the sheet.
+And so what we did was we built out these summary index where we said,
+okay, given this sheet, give me like a paragraph description of what the data
+looks like, and instead of returning the sheet itself, return the summary and
+have that summary point to the sheet.
+And then immediately we went from 20% recall to 60% recall.
+It was still very hard.
+Right.
+And so if there's many different assets like that, it's worth considering
+just slicing up those and going, okay, we started allowing people to upload
+Google Sheets on top of just regular PDFs, but it's not doing very well.
+And we really need to invest the effort into figuring out what we can do about that.
+That would be like a single example, but generally it's still pretty important
+to come up with some like the synthetic data.
+Uh, one story I talked about with, with that was, oh, I just forgot it right away.
+Oh no, it's late for me now.
+Was yes, with a GitHub issues where we use Paul Graham essays and synthetic
+data got us 97% recall and like, great, this is super easy.
+Let's try something harder.
+And then it was just GitHub issues.
+We just realized we couldn't do anything.
+And so that synthetic data will still help you understand that.
+Cause maybe again, people are asking questions about what page is that slide
+on and you realize like, oh, we do not have, we do not have the ability to
+like map what pages are happening or maybe start asking about the comments
+on the slides, like, oh, we didn't, we don't have the ability to do that either.
+Now let's go figure out what to invest in.
+Yeah.
+So I give you a glimpse of sort of why maybe it's still okay.
+And maybe thinking about like the file extension as the first thing we
+want, might want to segment across.
+Yeah.
+Like one, one of the early thoughts, because like, apart from text, like I
+was, I still hadn't, didn't have any view on how to work with tables, but
+yesterday the week three session, I got like a really good glimpse thanks to you
+and Dan on the markdown approach, but for images, like I was thinking of
+extracting and like just creating summaries, but I think that's what
+the approach you propose.
+So now at least in my, in my head, how I'm designing this is like, I have all
+my wrong information that I get from the users, but then I create an intermediary
+layer, which I'm going to use as a router mechanism, like with all
+potentially like summaries and stuff.
+So that will guide, guide my system retriever to figure out where to go and
+fetch the right information rather than trying to look at the source information
+with true vectors, with index vectors.
+Oh yeah.
+Thanks.
+Like that's that I'll pass and I'll pass it on to someone else.
+Thank you.
+So just to make sure I understand it, it sounds like you're building a really
+horizontal or broadly useful platform.
+Some of the things that immediately come to mind for me would be if you're
+totally stumped or you're totally blocked by not having a set of PowerPoints
+that you can even experiment with, I would try and I would start by thinking
+about, I think, I, yeah, so I don't remember the details.
+I think PowerPoint now is used to be some binary format, but I think now is
+Jason or Yama, you might be able to synthetically create a bunch of PowerPoints,
+but even easier than that would be to go and find some purpose of PowerPoints on
+some topic that you can experiment with.
+It's not perfect because it's all going to be from one domain, but
+at least the domain that I'm familiar with that I know there's a bunch of
+public PowerPoints would be pitch decks for investors.
+So you go out, get a corpus of those, and now you can do this process.
+It's not great because it's all from one domain that you want to be cross-domain,
+but it's better to have one domain than zero domains.
+And then on figuring out what are the things we want to extract, you have
+the additional challenge of an extra layer of indirection here since you don't
+know what the use cases will be.
+I think that you could, for a given client, either have something in the UI
+where you say, describe to me the type of data that you're going to put in here.
+And you ask an LLM, what are the things that we're going to want to
+extract from this data?
+And maybe you can build that capability with that extra sort of layer in there
+to figure out what you want to extract in the LLM determines that.
+Or you could have it observe the data, but you may want to extract different
+information for different clients.
+And if you can either look at their data or have the user tell you what problem
+they're working on, that might help you build out a programmatic pre-processing
+pipeline, even without knowing much about what you're pre-processing.
+Yeah, that's nice because now I can create like, dynamically
+create metadata and pass it as options for me to filter, ask the user to start
+asking questions, like once I get more information on the intent or purpose
+of working with these documents.
+Yeah.
+It does, it does violate what I think Jason's first rule is, which is look at
+the data, we're not going to look at the data, we're not even going to know what
+the data is and we're just going to have an LLM look at the data.
+Yeah.
+It's going to be extra challenging, but that's what I, those are the
+things that come to mind for me.
+Like, sorry to take up much time, but then like the challenge we had like two
+years ago with this oil and gas company is like, they have 50 years worth of
+legacy information, like from handwritten notes to everything, like they have tons
+and tons of that, and the main reason they even invested into using like LLMs
+and open, like when with open AI and everything at that point in time was
+they don't have the manual labor to like, to be able to first thing classify,
+extract, and also they wanted to label information with it's like gold standard
+like silver and some stuff they want to fully automate it because of like 50
+years worth of legacy information.
+So that's, that's, that's, that's the kind of like typical clients.
+Like when I engaged them, this is kind of like the problems they have.
+Like this one, when the highlight is always look at the data.
+Yes.
+I would love to look at data.
+I was like tabularized quickly aggregate.
+You have certain forms of summaries you can look at and figure out this.
+Okay.
+This, this, this is not big outlier.
+There's something like statistically you can figure out what to avoid,
+what to like look for, but when it comes to texts and documents like, like this,
+it's, it's still so hard if you have so much volumes of information to go to.
+That's why it's like very generic and hopefully some we get better at it.
+Yeah.
+But thank you.
+That's helpful.
+All right.
+Let's jump to, okay.
+I don't know if I can pronounce your name correctly.
+Vibe.
+Yeah, it's fine.
+So we have already have a production application.
+And application is like, and we were, we launched it like four months back.
+And we have consistent users, but what we have been struggling with
+is building across with the users.
+So the application works decently, but we are basically a customer analytics,
+customer feedback analytics platform.
+And people can come and connect their sender support or other channels
+where they're getting feedback.
+And then we provide them like actionable insights on top of it.
+Plus a chat now with a chat interface.
+We have a taxonomy that we build, but with the taxonomy, it's
+always like lagging between.
+So if they have like some recent issues that are coming in, the
+refresh of the taxonomy might take some time.
+So in those cases, what ends up happening is we try to do like a rack system
+where in we fetch like some key records and then put it into an area and try to
+provide some insights and those insights are decent, but the problem we see is
+there is those are not quantifiable.
+So you cannot tell them, okay, this has happened this many times because we
+have a limited context window.
+We cannot on the black computer, how many people have said this.
+So how do we ensure that we can continue to maintain that trust with the customer
+while still being able to solve this problem in a systematic manner, wherein
+we are able to actually serve this to them and we haven't computed this
+insight right now to be able to get this insight to you within a few minutes or
+in a couple of minutes.
+I feel like one of the constraints here really is the latency.
+I think I've done some social media analysis tools and usually it's been the
+case where you upload some data, you tell us some configuration, and then we say,
+great, we'll email you once we have more like holistic results.
+Right.
+The other thing is another thing, which is hard is like, how can we
+down-sample that data?
+And then, so the first question is like, are we able to down-sample that data and
+report that in some productive way where we said, okay, if I can only afford five
+minutes and I know the latency of a single compute, can I figure out how much
+data I can afford to process given this constraint?
+And then when I give the results, I might be able to say, here's the
+summary of my results.
+And then here are the examples that led to this summary in some kind of citation
+manner, and we can say, Hey, if you have five minutes, we can do a 0.5% sample.
+If you have 50 minutes, it's going to be more comprehensive.
+That's like the most naive thought I have.
+Currently, what ends up happening is the iteration is happening live.
+So we connect to their sources and we directly continue testing.
+So now their expectation is whenever they come in and ask a question, we should have
+the insights already already, but we might not have them ready because you can never
+be a hundred percent accurate in terms of what you extract.
+You extract, like say something that you find is useful for the customer, but the
+customer might be, okay, this information is missing.
+So that is available on the end of the road feedback.
+So that is the big challenge right now.
+Like the expectation is even within 20 seconds or 30 seconds, you'll get the insight
+that you're looking for.
+And the question they can ask is they're product managers.
+So they have very complicated questions, which can be very deep analysis, but they
+want very good latency.
+They want us to match publicity.
+So what ends up being like at stake for these product managers?
+Like, so one of the things that you want to build trust, like what happens to them
+if the trust is broken, like versus.
+Yeah.
+So they start to feel like the platform itself is not providing enough value.
+So we have like, Sigma is a customer and one of their top executives came to the
+platform, just tried out the chat interface for a couple of minutes, but it's not doing
+a good job.
+And now the contract itself is at risk because of the fact that that executive
+failed, he's not delivering enough value.
+So why are we paying for this?
+So these kinds of situations end up happening, even though we have like a
+robust other reporting suit that consists of dashboards and other things that do
+provide value to the customers.
+But since that is the landing page and that is where they first come in, their
+expectation, it's, it should answer all my questions out of the box, even though
+you haven't really told it how to answer them.
+And the range of questions can be very broad to very, very specific.
+So we try to do extra SQL and then try to filter the domain and curate a set of
+records and then try to answer using that.
+But still that might not hit the market.
+So how do we ensure that we set the right expectations?
+Yeah.
+I mean, yeah, I don't know if I can give very specific advice, but like, when you
+say this, the two avenues that I would potentially explore is like, are there
+components in the UI that can help expectations?
+Right.
+For example, just like, if we show the kinds of questions that we want you to ask,
+can we drive them in a direction that makes sense?
+Can we try to like propose questions that we can't answer?
+The second thing might be a little more of like a product design decision where
+if I was put on this project, like basically what I would try to do is, okay, can I
+detect the difference between an easy and a hard question?
+And when it is a hard question, instead of asking the language one to do it, can I
+point them somewhere else and like make it less of my problem?
+Right.
+It's like, oh, you are asking some complex question that is like a financial
+issue, like here are products that we could recommend, contact the sales team
+and understand some other solutions.
+Because I think what ends up happening is you're kind of making the intern, the
+representative to some executive and really the answer, like, what you really
+want to tell the intern is like, okay, if you don't understand, like, do not try to
+answer some and answer the question, do not like mess up the sale.
+There are people to contact, et cetera, et cetera.
+And so maybe one other attempt is really just understanding, like, what is the
+category of questions we don't do well and how can we de-risk that with additional
+UI or triage, especially if this is part of the demo that we want to show an
+executive to sort of potentially make a sale.
+It's probably a little bit of a cop out, but usually when I run into these issues,
+I just imagine myself thinking, okay, this, this LLM system is kind of the
+intern, what kind of support structure have I provided?
+And then you realize like, I would never let the intern speak to the
+executive and without me present or without having some kind of script that
+says, Hey, like you can just show them a different landing page.
+You should just tell them to contact sales and speak to my manager.
+And that's kind of like the, how you de-risk some of this probabilistic software.
+Yeah.
+Might not be the best answer, but I think that that's, if I was to answer on the spot,
+that's kind of the direction I would explore next.
+Yeah.
+It makes sense.
+Also, like we cannot make it to be a hundred percent accurate.
+We cannot deliver on everything that they're expecting.
+So we don't have to set expectations if you're not satisfied.
+This is some other reason which you can still go ahead and serve the request.
+Yeah.
+And I think it's good to say, and maybe the answer too is just come back and say,
+Hey, maybe the question that the executive answer is not the same kind of question.
+Like the users of the software, if we bought it, would be asking.
+And so, so another question to think about is that if the success rate of this
+product is 60%, is it that every single question that we ask has a 60% chance of
+success or is there some segment that we actually do exceptionally well on and
+one second that we can't do well on and can we predict that and take an action?
+Right.
+Maybe that's like L I'm classifying.
+Maybe that's some kind of like classical model, but I think, I think that just
+like saying no is a very powerful feature.
+Thanks.
+Yeah.
+Not the best answer, but yeah, let's definitely chat on Slack and maybe we can
+bring some, some, some other ideas.
+I've worked on a project and this might be too restrictive for you, but we
+basically had instead of real text to SQL, we had a library of 150 or so
+templates of SQL queries.
+And then because of templates, we will take the question.
+We'll use retrieval to semantic retrieval to figure out which template is
+closest to it, and then there are fields that can get, they can get dropped in.
+And now for the questions that don't closely match any of, if a question
+doesn't match anything in our database, we have a sense because of the distance
+measure and as a result, you have a way of making sure that you don't do anything
+too crazy and if a distance measure is sufficiently far, I guess we do two, we
+do two things, one of the distance measures really far, we just say, sorry,
+we don't know, but then the other part is that whatever they type in, we're
+actually going to tell them here's the template that's being used and here's the
+fields that are being dropped in so that we can, we can give them a concrete
+guarantee of, it might not match your question, but we can tell you what we're
+answering.
+Yeah, makes sense.
+So for our text to SQL, we have a slightly different approach there and what we do
+was we take the, so we tried the library, but that didn't work for us too well
+because questions were too complicated.
+So what we then ended up doing was breaking it down into an AST, which basically
+had like some phrases or filters and then the connection between those phrases.
+And that has worked quite nicely for us.
+Then the composition is quite nice.
+We are able to like do it 95% of the times, but then the extraction itself is
+like at 70 to 80% we are trying to bring that up as well.
+So that has worked well for us, but the planning itself is like very hard for us.
+So given a question, how do you figure out you, what are the steps that need to
+be taken that has been the most challenging piece for us to solve and agents are not
+really very deterministic in nature.
+They can do something very good sometimes and then mess it up again.
+So that piece has been the biggest challenge.
+And then the other pieces haven't extracted themselves.
+Then how do we ensure we keep the trust?
+So those are the two critical pillars.
+They're still working on trying to solve it.
+I see.
+Yeah, that makes sense.
+I think a part of it is just like, if you're able to say no, I feel more confident
+in your ability to know when you can say yes.
+So that's the direct answer.
+Yeah.
+Matthew, do you want to shoot?
+Yeah.
+I think there was another, is there, there was another hand raised or am I the only
+one that said, okay, I think I did it after.
+Yeah.
+I think I see the ordering.
+I think it was like, Oh, okay.
+Go ahead.
+Okay.
+So I also have two questions, but one of them is shorter and I'll start with that.
+So we have users who drop in documents and when they do that, we basically convert
+them to markdown right away and we chunk them, but our chunking is a very.
+Lazy chunking right now.
+So we just do like sections.
+We actually put it into an AST, but then we do sections and then a section
+and whatever content is below it.
+And we've conflated those chunks with, we use them as UI display and we've
+conflated that with our vector search as well.
+And I'm just wondering what you have, like what your idea on strategies are to,
+to kind of unify those two worlds where the UI display is a chunk of text that
+when the user loads the app, it goes, boop, boop, boop and loads all the chunks.
+So how do we kind of reconcile that world with the chunks that are made so that we
+can do things like vector similarity search, which I imagine won't be as clean
+or, or the same as a heading and then content and markdown.
+We use, we use PG vectors to do vector similarity search right now.
+So they're kind of all in the same place.
+I don't think I understand what you think you're missing out on.
+Is it the fact that some of these like header paragraph blocks are just too
+large for the embeddings to be done well or?
+Too short.
+Like some of the headers are just like a little header, like just like a
+single little piece of text and one chunk with header and then content could be very
+long and there's no meaningful work we've put in into like actually doing chunking.
+So that is it is facilitates vector similarity search.
+I see.
+I see.
+Yeah.
+I think if you watch the talk from ChromaDB on some of the experimentations, like
+what, what I basically recommend was just making sure that we have some kind of
+minimum token size as well, where you can just like greedily append data to this
+chunk until it hits 600 tokens and then potentially either doing the sliding
+window over it or doing something like the recursive text splitter where we say,
+okay, now I have a sequence of chunks.
+If I split in the middle, do I hit this like 600 to 800 token limit?
+If I don't let's recursively split that again.
+And really it's just a matter of having some kind of minimum chunk
+size plus some overlap.
+Unfortunately, I don't really have too many best practices there.
+Like most of what we've done is just either using the recursive text
+splitter or like my preference is just like 800 tokens with 50% overlap.
+I find that if you use a mix of semantic search and full text search, like I've
+never gotten like different results by changing from like 25% overlap to 50%
+overlap is usually just the case that if it's like a, but less than a hundred
+tokens, it tends to perform pretty poorly.
+So if I do that process really well, would it be okay to have kind of two
+different representations of these chunks?
+One for UI display, which is more like similar to the actual markdown
+chunking or, and one for just this vector search, and we have these two
+bodies of slightly redundant data.
+That way, when we do like vector similarity search to do inference, to
+pass it as context to the AI, then we get chunks from this semantic search,
+semantic chunking process or something.
+And then when we can just display in the UI, the other chunks, is that appropriate
+to have like two sets like that?
+I think that makes sense, right?
+If anything, like there could be some like smaller optimizations where we say,
+okay, the, the embedding is just a pointer to some list of
+chunks that are in a sequence.
+One of the benefits of this as well is when you do citations, if you have sort
+of like these UI based chunk IDs, you can cite very, very refined sections, right?
+Like you can say like, oh, in what section did we talk about this?
+Where's the answer to this question or answer this question and include these
+like IDs, you're going to be able to like reference those chunks a very like precise way.
+Yeah.
+Like unless storage is an issue, I don't, I don't really foresee like a big issue
+except for maybe like making sure that data is in sync.
+Okay.
+Graph databases are a good thing to use.
+Like it'll really be very helpful because like very similar, like we had like
+text documents split like map for application use as well as to do vector
+search using graph database.
+So we had the primary documents as a node and we just broke it down into
+different structures, depending on either at a paragraph level or section level.
+So depending on which search matched and you, we always knew like where to go back.
+Where was the source document, which department belonged to it also helped
+us with security and data governance as well.
+So it's like graph might be a good, I know your PG Victor graph might be a
+good place for you to start on this.
+Thank you.
+What was your second question?
+Is this the appropriate place to ask for like advice on our whole pipeline?
+Basically like how we're doing retrieval and maybe it's kind of long.
+So maybe this is not the right place.
+I mean, if anything, just like message me on Slack, like message us in the channel
+and we can just like have a conversation if it's long, like a video, stuff like that.
+Okay.
+I'll do that.
+Thank you.
+That's good.
+All right.
+Azil.
+So I got a couple of questions here.
+So the first question is about hybrid retrieval.
+Do you normally provide weightage for the various hybrid retrieval methods?
+And if so, how do you decide before giving weightage to these individual methods?
+Yeah.
+So I tend to use like LanceDB and I don't think there's many, there's much control
+in the weighting versus if you use something like Elasticsearch and like, like Vespa.
+Like the, the bad answer really is I usually just have a set of evaluations.
+And then usually what I, what I find is we just kind of treat them as hyper
+parameters and then just run our evaluation suite.
+A very specific example was in the construction company I worked with, we
+just realized that a lot of the construction workers know the name of the document they
+care about, and so they just included the title a lot and it was just a case of,
+okay, we changed the title away for this category of queries and we were able to do
+like 12% better recall as long as we remove the underscores from the, from the
+file name.
+And so a lot of the end of just being like by having that evaluation set, we can
+figure out what the right weights are.
+Sure.
+And what about the individual methods?
+Suppose if I'm doing a lexical search and then if I'm doing lexical retrieval
+combined with say vector retrieval, do you normally provide weightage
+among these retrieval methods?
+The simplest thing that we've done is just using the Cohery Ranker as a final step.
+Right.
+Usually we can afford additional latency this way, mostly because otherwise we
+have to work with like missing scores.
+It's not always the case that a single document has both a cosine distance and a
+lexical like a, like a BM-25 score.
+Like we could train a separate re-ranker that just takes in two values that are
+both nullable.
+I think that's just like, I would rather just make the Cohery API call than like
+have someone own like a two parameter model that learns the ranking because we
+tend to not have that data.
+Awesome.
+Got it.
+So I have one more question.
+It's about information extraction.
+So I'm extracting huge data from a huge corpus of text, unstructured data.
+So how can I evaluate this information extraction process?
+I know you can ask synthetic questions to evaluate whether the information is
+there or not, but is there any other better, any other mechanism to do it?
+I feel like that question is probably going to be a little bit more under
+specified because it depends on like, are we extracting like, like one example,
+like even with a summary, right?
+The fact that whether it's abstractive or extractive could change how we do our
+evaluation.
+So I would probably say like, if you have a better example of what the schema looks
+like, we can like start that conversation on Slack, mostly because a lot of it ends
+up being like, like, what is the actual evaluation, right?
+If I am doing structured extraction over transcripts and the thing I want to
+extract is action items, then a very specific evaluation is like, did I
+correctly extract all the action items and did I assign them to the right people?
+That just becomes a dataset we build out versus like making sure we're parsing
+like net revenue out of financial documents.
+Again, that just becomes like the strings must like the numbers must equal, right?
+We're not going to evaluate some like distance squared metric for some
+assumed numerical value.
+So it's going to be very specific to what exactly you're extracting.
+Got it.
+Got it.
+Yeah, sure.
+And what are your thoughts about evaluation tools like Ragaz and other libraries?
+Yeah, generally they just tend to be too slow for the quick evaluation loop, right?
+So again, if we do use like recall, each computation takes like a millisecond.
+If we use Ragaz, each computation takes 10 seconds.
+And now if I have a lot of data, like every test is 40 minutes, right?
+And so if I have these small things where I want to change the title boost, now
+changing the title boost will cost me like 40 minutes and $200 of open AI credits.
+And I tend to feel like that just de-centrifies a lot of the engineers to
+actually run these experiments.
+Cause then you just do a standup one day and it's like, who's spent a thousand dollars?
+Right.
+I really prefer to like focus most on Recall.
+The second thing is that oftentimes you're going to want your own
+evaluation prompt, right?
+It's very unlikely that we just sort of like import the factuality prompt and
+like what I care about actually is factuality.
+Again, if you think of the example of transcripts, is that, okay, I'm going to
+produce an executive summary and a list of action items.
+Well, they don't actually provide like my like action item accuracy recall evaluation.
+And so I ended up having to just build my own prompts anyway, in which case I would
+rather just, you know, use async gather and use them evaluation.
+Mostly because also these libraries change every month that I have to upgrade
+or like they're not doing like concurrency the right way.
+And so those are the kinds of things that sort of bite me in the, bite me in the
+ass every month or two.
+Thank you.
+Very helpful.
+Yeah.
+Bito.
+Hey Jason.
+Hey Dan.
+First of all, like thanks so much for the course and getting a ton of value out of it.
+I'm going through it really slowly.
+So like I have been like super re-watching and doing lots of exercises
+related to like the retrieval metrics.
+So I'm the technical CEO of anycase.ai.
+So we do rag over legal documents and I'm kind of looking for just intuition
+because legal documents, they're quite long and a lot of relevant information
+can be scattered across these documents.
+So I was wondering if you had any experience with like multiple or
+multi-level summarization.
+So like one problem we have is right when you retrieve like the top K
+chunks, sometimes like there's a relevant chunk, but there's some legal
+definition that the distance between the query and that relevant chunk isn't a
+very near.
+So like my intuition is maybe we can create like summarizations over sub
+documents or larger chunks of documents and add that to the rag system.
+But I'm wondering if I'm going down a dead end and you have anything to share about that.
+Yeah.
+I'm, I'm very bullish on, on summarization.
+The thing that ends up being tricky is making sure that we're somehow
+quantifying the quality of that summary.
+So we're kind of replacing one difficult problem with another, right?
+Like in the context of like in the chain of density, sir, chain of density paper,
+chain of summary paper, one of the things they were doing is like, okay, we're going
+to fine tune a language model to summarize in such a way that we keep all the named
+entities, right?
+And so in the, so if, in this like 10 page document, there were 17 named entities,
+when you summarize it, there's gotta be 17 named entities, right?
+Like if my, if my transcript had a name, like Jason said this, my summary can't be
+the speaker said this, right?
+And so you just had to figure out like, what is the actual metric you're going to
+use that captures that?
+And then I don't have, I don't have an intuition.
+Like, I don't know if it's just like clause density or something like that.
+Cause that just might be evaluating like extractive summarization.
+And the second thing again, is to make sure that when we do recall, this summary is
+also like, is actually helping the recall.
+Does that help like sort of maybe just like, we're really just trading one
+problem for another in my mind, but I don't, I don't think I've worked in enough
+a legal context to sort of give like a.
+Right.
+Maybe just like your consulting projects, right?
+Has any of the systems been improved by adding like a bunch of summarization or
+like a year you using it with tables, right?
+And images, you just ask, you create questions for it.
+It's been used in a context that's like way less high stakes in law.
+We do a lot of like marketing.
+And so one of the things we do is we say, okay, every time there's an
+objection in a sales call, let's do rag and see if there's a document we could
+recommend to the salesperson to overcome the objection.
+And if we have bad inventory and we don't have a document, we want to generate
+documents and then we'll just use those in the future, right?
+So we're kind of doing this like on the fly rather than sort of doing the
+summarization just as we ingest data.
+That's like one, one, one example of how we've been using summarization.
+Right.
+It's like ad hoc, creating more context.
+Yeah.
+Like, do you have a specific example of like what, like specific example of
+text jumps that like are not working that you think could be working with a
+summarization?
+Yeah.
+I think mostly related to like definitions.
+I can't think of a good one on top of my head, but let's say there's this one
+section that says, oh, the penalty for this specific kind of murder is this.
+Right.
+And there are like circumstances there that have legal definitions that are not
+close to like query, like the user asks for, tell me all you know about this,
+um, this crime.
+So it's kind of like one hop away from that.
+Yeah.
+Yeah.
+I guess I have not done something that I would say is like production level.
+One of the things I had an experiment on, which I doubt will work reliably.
+Let me see if I can find it is effectively trying to extract entities out of
+documents and then defining edges across entities.
+Yeah.
+Uh, let me see.
+Oh, sweet.
+I actually just called it a legal entity extraction.
+This basically works, but it's not like a production quality system.
+But so I'll kind of give like a quick overview where I have like properties,
+entities with dependencies.
+And then the hypothetical example I created was the agreement is made on this date.
+And then the initial payment will be seven days after the signed date, which is
+obviously like very far away from the document here.
+And then, yeah, like the final payment will be due like 45 days after the signed
+day, but the signed day was mentioned somewhere else.
+And by defining this graph, you can kind of extract some notion of structure,
+right?
+Well, where I think, yeah, the delivery date is like 30 days after the
+agreement date, the agreement date is this.
+But we're still just kind of replacing one problem with another.
+So I think, I think I haven't confirmed that if this problem is actually easier
+than the initial problem, but this is to say that I think there is some hope and
+some possibility that we can be extracting some of this information out.
+Gotcha.
+Thanks for that.
+Could I get the link?
+I didn't quite see the URL there.
+No problem.
+I'll just send this on Zoom.
+Yeah.
+I think the challenge is like, if you start using a graph, now you start, you just
+start thinking like, okay, like what is the graph structure?
+What are the types of entities when I do queries?
+Like how much do I have to resolve?
+Yeah.
+It was just unclear that if we replace one problem with another, the second
+problem is easier.
+That's kind of the, exactly more prompts.
+Yeah.
+I don't know if that fully answered your question just because I
+think that that context is hard.
+Even, even like one problem I know that was happening with a, with a buddy of
+mine was they were very sensitive to low precision, so not even just finding
+the right references, but just if you have just a mess of clauses, the language
+model is extremely confused.
+Right.
+And so I think there's a ton of things that are going on there that might be,
+it might be an issue, but you could imagine, it says if you do build up this
+graph for any clause that is included, traverse two edges as code and just make
+sure we include that as well.
+Nothing.
+Is your hand still raised?
+Or did you have another question?
+Sorry.
+Is that, I think it's Matthew.
+Thanks.
+Thanks so much.
+No, no other question for me.
+Sorry.
+Oh, thank you.
+There was a question from Shubham in the chat.
+Have we experienced in specialized invited models for tabular data?
+This is interesting.
+I mean, let me just take a look at this.
+I, I do look a lot into specialized models, but I've not looked at one that's
+specifically for tabular data.
+Okay.
+Wait.
+So that I will say that I believe that there exists specialized inviting models
+that can perform better on tabular data.
+But I think that would also suggest that you might live in a world where you have
+a single index that is tabular data.
+I don't know how you might think about wanting to, to mix that, but yeah, I
+have not experienced, I don't have any experience in, in, in specialized
+embeddings for tabular data, but next week we're mostly going to talk about
+model fine tuning and fine tuning and betting models.
+And you're really going to find that even with a thousand or 2000
+examples of questions and chunks that should be returned for you will
+pretty convincingly outperform anything from open AI or for any of these companies.
+And I generally believe that if you have 10,000 examples of questions and
+chunks that are cited or have a rating, you should be fine tuning, right?
+Just because I think the embedding model is the easiest model to train and it is
+the easiest model to inference.
+And if you want to sort of ever put yourself in a situation, you're
+fighting CUDA errors, like that's going to be the most lightweight work to do.
+Whereas when you start thinking about fine tuning language models, it's a lot
+heavier to sort of reason about.
+And like fine tuning and padding models is what Netflix does for movie
+recommendations, it's what Spotify does for playlists, it's what Shopify does.
+You know, and the companies that don't do that are like blockbuster, right?
+And so specialization, I think is very, very strong, very, very beneficial.
+I met comments that I have not used specialized embedding models for tabular
+data, and so this is just off the cuff.
+It seems to me like an unnecessary idea, like tabular data, they either start as
+numbers or maybe you have some categoricals and then it's trivial to convert them to
+all numbers and even like typically it's trivial to convert them to a dense
+representation.
+And then the real challenge that I think you're hoping the embedding model
+solves is figuring out how to stretch that space or shrink that space so that
+some features get weighted more than others.
+And I'd be pretty skeptical that some pre-trained embedding model understands
+your tabular data better than you do.
+So I would just get like, it's already a bunch of numbers, and then I would just
+use some judgment to figure out which columns do I want to divide to, like you
+can imagine standardizing them, then they all are weighted the same.
+But it seems like, not having thought about this very much, it seems like
+embedding models just don't seem unnecessary and not a great fit for this problem.
+Yeah, I guess, let me think.
+I can probably come up with one case that could make sense for the construction
+project I work with, which is that if I am chunking like slivers of sort of
+specification tables, that there might be some similarity between like three over
+four versus like quarter inch screw or something like that.
+And then what we're really doing is we're trying to make the embedding model
+robust to like all the different commas or the pipe commas and like a markdown
+table and just making sure that like, like it's robust to like commas versus
+markdown, like pipes, but I think that's the only example I can think of is like
+really robustness against like this formatting behavior.
+And I guess tables of text also would be very different from tables of numbers.
+Yeah.
+I think, I think for specs, it might make sense, but that's, that's the only
+example where I think something weird could probably, you could benefit from
+the tokenization.
+Sudhir says, why do I prefer LanceDB versus other bunch of databases?
+I prefer LanceDB in prototyping primarily because their API makes hybrid
+search and re-ranking very simple.
+And so I can just basically pass on a string and say mode equals hybrid dot
+rerank, and I kind of get exactly what I'm looking for.
+And on top of that, because of the way they do their arrow representation, that
+same table I can write SQL against, which allows me to build both hybrids, like
+rerankers, hybrid search and text to SQL with a single backend.
+And that's just something that I find pretty convenient.
+And then the difference between why I use that versus something like Postgres is
+just because of the fact that for LanceDB, it's all built on object storage.
+And so it's just, it's almost like a, it's like SQLite plus vectors plus text
+search, and I think that works pretty well in a local setting.
+There's also tons of reasons not to use like LanceDB, like for example, a
+robust like cloud solution, right?
+Their LanceDB does not have full text search yet, for example, but you know, I
+think, I think there are pros and cons to every vector database.
+Like I use ChromaDB if I want to set up an application in like 10 minutes.
+ChromaDB is like the easiest thing to set up.
+Whereas like LanceDB and Timberpuffer really benefit from the way they do object storage.
+If I know that I have a thousand or like a hundred thousand users, I can partition
+each file and S3 to be the index of a single user, and then what I had to load
+in memory is a very small object.
+Whereas if I want to make a recommendation for a hundred million
+SKUs in a e-commerce website, then the pine cone or Vespa is going to be a better
+option because it's a single index with tons and tons of vectors rather than
+many indices of, of like millions of vectors.
+But I've really only tried like Lance, Chroma, pine cone for some of the projects.
+Cool.
+Was there any other questions, any thoughts, concerns, feedback from the course?
+Oh, Lewis.
+Howdy, howdy.
+Was just curious how you've seen people do like confidence scores on responses from LLMs.
+I guess, yeah, there are different ways of doing it.
+Like a additional step after the sort of generation steps of asking for these, this
+content, like are there any hallucinations?
+Like what's your sort of, what are the, what's the level of changes that have
+been made to the original content?
+But yeah, I'm curious what you've seen.
+So are you saying like, can we ask the language model to self-grade
+its own generated response?
+Yeah, I guess for context.
+So co-founder of a company that automates responding to RFPs,
+request for proposals and like security questionnaires, stuff like that.
+So yeah, we find how they've responded to similar requirements in the past.
+And then run that through an LLM to sort of rewrite the response to address
+the new requirement, but yeah, depending on how different those requirements are,
+like it can make pretty significant changes.
+And so the way we've sort of handled it so far is using the
+relevance score from Rerank.
+So essentially if the past sort of requirements, very similar, we can
+assume that the language model won't have had to make too many changes.
+So they can sort of trust the response.
+Right.
+But yeah, yeah, that's curious.
+I guess my second question is what, what does your user do with the confidence score?
+Yeah.
+So they sort the responses and the ones that have a lower confidence score, they
+would sort of put more time into making sure that they've sort of reviewed
+manually themselves first.
+Right, right.
+Yeah.
+Okay.
+I guess the first thing I would do is try to reduce the notion of confidence
+to be like much more quantifiable metrics.
+So for example, like whether or not we have a citation.
+Yeah.
+It's like a much smaller, it's a much more quantifiable thing.
+Like, okay, if this response just has no citation because I couldn't find
+something explicit, okay, there's an issue.
+Right.
+Then you could say, okay, in the presence of a citation, there's a bunch of different,
+different kinds of like string metrics.
+What is the like string distance between my general response and the citation response?
+Right.
+Yeah.
+I don't think that like, I don't think we'll be like 11 sign distance, but there's,
+there's going to be something right.
+That's going to help us sort of compute a difference.
+Okay.
+Does it have a citation score?
+If so, is there some match?
+And then you can do even more complex things where you can have the language
+model grade individual systems situations.
+Right.
+And so there is the, if, if no citations, like red light, if citations, we can
+compute the string distance.
+And obviously if you just sort of like quoted verbatim, what this, the document
+said, maybe this is something I feel good about if there's a big gap, then we can
+sort of triage to some LLM greater where again, we want to sort of, like with this,
+I'm, I mostly use like rubrics, right?
+Where there's, there's like maybe a score that I care about.
+There are examples of good pairs and bad pairs.
+And then you can just say, okay, given these citations, do these citations
+align with what you quoted?
+And then, so you, you kind of have like a hierarchy of like complexity that you
+can sort of play with on a sliding scale.
+Yeah.
+So that's one thing.
+I also think if you're using local models, there is this avenue that you can
+explore with like attention mechanisms, but I, I don't really think about those
+things anymore just because I use, I only use open AI.
+I don't know if Dan has anything else to think about some of those things.
+Yeah.
+I mean, the attention angle is an interesting one.
+The only other thing I'd say is I think there's, and maybe you've already thought
+about this, there's probably a lot to do just with the UI of making sure that
+whatever you're pulling out gets highlighted so that someone can easily sit
+side by side, see here's the thing we wrote.
+But then side by side, like he has highlighted texts that we think is what
+it's pulled from, making sure that it's just surfacing the citations in a transparent way.
+Yeah.
+Awesome.
+Yeah, that's really cool.
+Well, I also give a very specific prompting tip.
+I dramatically improve the results that we get, which is, and in my, in my
+accreditation, that we're going to basically have like fields that are kind
+of softly defined and then responses that we generate for each field.
+So one thing that we found in practice that works like very well is for every
+field, instead of just saying like, give me the field title and the response.
+I say, first, give me the field title, then reiterate the
+instructions for that field table.
+So now like basically the, the latest generated text is, has already attended
+to the instructions in your prompt.
+And then you say, repeat back all the relevant sections from the original
+context, and then you generate the response.
+And like the interpretation is basically all the data that you want the language
+model to attend to now is just in a very focused area of the text.
+It became field, instructions, sources, and then the text.
+And then you basically, if you just ask for that data in XML, you can just
+throw out the instructions and the sources that you generate.
+And what we found is it just makes the quality of the answer much higher in general.
+And so an example could be, here's a one hour transcript.
+Here's like six pages of our pricing documentation.
+What kind of pricing should we offer this customer?
+And now it says like, okay, first let's meet, let me reiterate what the
+pricing options that might look relevant.
+Let me then return the conversation snippets that made us think that this is
+the right variables we care about for this pricing formula, and then we like
+sort of use the LLM to compute the pricing formula.
+And what this also means is when you do this review process, if you really
+care, you can actually refer back to the sources that the language model set and
+the source and the instruction, the language model tried to debug.
+So you just sort of like, when you do lose confidence, you can just basically
+look at the language model and say like, what, what were you thinking?
+And if the instructions don't show up, we can sort of reiterate and work on the
+prompt and effectively what you're doing is you're allowing yourself to say,
+okay, when I reviewed this, there's a computed confidence score, but also
+there's kind of like the LLM explanation.
+And the LLM explanation does not align with the quality of the answer.
+I can go back and work on the prompt to do that.
+In general, just repeating instructions, quoting the relevant data text, and then
+giving the answer immediately is something that we like, we use in production a lot
+because it just seems to make the reasoning a lot better.
+You don't get, you kind of like repeat the hate, like find the needles,
+list them out and then, and then answer the question.
+This is kind of like a secret that I've worked out.
+Yeah.
+And that's including, like you'll include citations in your final response
+typically, or is that a curiosity?
+Yeah.
+I, in the specific thing I would do is like for all of the chunks, I just give
+each one like an artificial ID and then I, in my prompt, I say treat these
+IDs as if they're like URLs and when you give a citation, just include them in
+like square brackets, here's an example.
+And then as long as you sort of like organize the chunks in your code for
+every citation, then you could just basically say, okay, this one part,
+my regular expression part out of two.
+Let me figure out what citation two is and I can now render them side by side.
+And then if I want to use an LLM, I can say given what you said, plus citation
+two, LLM, tell me if this was interpreted correctly.
+And so there's a lot of things you can do with planar on citations.
+I'll try to be more concrete in week six when we talk about some of this
+like response generation stuff, but that has been like a very, very impactful
+thing, like just making, making them, making the language on repeat
+itself has been very good.
+Yeah.
+Awesome.
+That's super helpful.
+Thanks.
+Yeah.
+Sorry about the, sorry for the ramble.
+It's something that just works like magic to me.
+So I'm like very superstitious about it.
+Yeah.
+Yeah.
+Yeah.
+And I'll have to note that testing a lot of different things.
+Yeah.
+I think we're at time.
+My laptop is at 2% battery.
+So if I just hang up all of a sudden, I apologize, but yeah, if there's any other
+questions again, just say, feel free to message the Ask Instructors channel.
+If you did not join that channel, make sure to join and yeah, I'll see you guys
+next week if there's no more questions.
+Awesome.
+Thank you.
+Take care everyone.
+Thanks everyone.
+Thanks everyone.

@@ -1,0 +1,598 @@
+I'm really excited to bring in a good buddy of mine, a scholar this week.
+I think we've known each other for 10 years now.
+When we were just sort of starting out our data science machine learning careers.
+You've been at like us, you've been sort of like a staff level engineer at like LinkedIn,
+a couple of like VP roles now.
+And so you've joined me in the independent consulting journey.
+And so it's really fun to sort of talk to practitioners because again, like we said
+before, you know, if you talk to vendors or they're like founders, sometimes it gets
+very salesy. But, you know, all of our conversations are very strategic, tactical.
+And, you know, I've always learned a lot from you.
+So I'm really excited to learn from you a little bit more and also share you with the
+rest of the team.
+Awesome, thanks. Yeah, so just to kind of like kick it off, Jason already kind of
+introduced me a little bit, but just a quick recap on like who I am and why you
+should maybe pay attention to me.
+So I've been working in AI for over 10 years, a lot of large companies like Google
+and LinkedIn and have worked in health care, particularly building AI based medical
+devices for mental health and have operated all the way at the VP level, managing
+all of engineering and data science.
+A lot of experience in making teams go fast, a lot of experience in obviously
+regulated industry and a lot of experience at building large scale.
+And, you know, kind of what this nets out to is I've seen a lot of AI projects fail
+and I've also seen them transform businesses.
+And so just wanted to share, as I've been consulting, some of the common patterns
+that I keep seeing over and over again and sort of some things you can do to fix
+them, essentially. And at the end, I'll kind of like have a checklist that you can
+download that's kind of like all of these anti-patterns that you should like check
+for in your own systems.
+So, you know, you don't need to take notes, I would say.
+So if I were to summarize and so this is kind of like what Jason asked me earlier,
+if you were on the call already, but I think if you're going to take away one
+thing from this talk, it's the same thing that Jason and Amal and all these people
+kind of like continue to blow out and it's look at your data.
+You really need to start from your user, understand what they want, work backwards,
+and then you need to look at your data at every step.
+It's not sufficient to just look at the inputs and outputs when you have a complex
+system with multiple steps, because the problems might be somewhere in the middle.
+And then once you do that, you'll get ideas and you just need to apply them and adapt
+your system. And you basically want to make that whole loop go as fast as possible.
+The teams who can make that loop go as fast as possible are the ones who win.
+And that is pretty invariable.
+So just to kind of like level set all of the examples I'm going to give come from
+actual consulting clients I've had.
+I haven't approved a lot of this content with these clients, and so I'm not going to
+tell you which companies they are in case you know who they are.
+But I'll talk about like what the basic use cases are.
+So there's five that I'm kind of pulling from.
+One is a sort of customer support knowledge base.
+There's a medical advice chat bot, financial news summarization and academic research
+assistant and e-commerce product comparison.
+I'll give a little bit more detail on each of these just so we kind of level set sort
+of what is this client's product actually look like.
+And that'll help ground the challenges that we talk about in a little bit.
+So for the customer support knowledge base, this is a SaaS company and they have a
+bunch of guides, some FAQs, release notes, and they basically have a lot of queries
+coming in that might typically go to customer support person like how do I reset
+an API key, why is my login failing after an update.
+And so we have content sources that come from tutorials, from HTML pages, maybe
+some troubleshooting articles.
+We have PDF manuals that are sometimes shared out by customer success folks.
+And like system diagrams from solution engineers.
+And then we have like change logs to describe like the system as it changes over time.
+And so some of the challenges, you know, multiple formats here, we have like a lot
+of templating that includes a lot of like irrelevant information in these documents.
+And also these documents are frequently updated.
+So the medical advice chat bot, this is something where there's a chat bot for
+patients to ask questions about pretty much general health behaviors.
+And so really focused on if you have like a chronic condition like diabetes or
+something, you know, you might want help understanding like what lifestyle changes
+you should do to manage your blood sugar.
+Content sources we have here, medical journal PDFs.
+Sometimes we have patient leaflets that kind of come in a doc X format.
+And then sometimes we have guidelines that are authored by doctors, also usually
+like in a doc X format.
+Some of the challenges is a sensitive domain.
+Sometimes there's complex document layouts.
+And also we want to make sure that we have up to date medical info.
+Sometimes the guidelines change and you need to make sure you're keeping up with
+that when you're giving patients advice.
+Financial news summarization.
+So basically there's an investment firm and they kind of have this internal tool to
+summarize daily market news for industries they care about.
+And when I was working with them, they particularly cared about the
+semiconductor industry.
+They were doing making some moves in place there.
+And so it would be asking questions like, you know, very, very broad, like what's the
+latest on semiconductor stocks?
+And really they just wanted a summary of sort of like what are like the key stocks
+that are changing and why might they be changing?
+And so the content sources, basically news articles about these companies, research
+reports and filings like SEC filings.
+And then we had some RSS feeds that were converted to HTML pages.
+You know, have the same varied formats.
+There's a lot of domain specific jargon that can be hard to manage in a sort of rag
+pipeline. And also, this is something that's obviously changing day by day.
+So very rapid updates.
+Academic research assistant.
+This was something that some students were essentially using to help them do
+literature review type of work.
+And so they would ask pretty broad questions like what prior work exists on deep
+reinforcement learning for robotics.
+So these were folks that were trying to do literature review largely for machine
+learning based problems.
+So we have like La Tech generated journal articles, conference slide decks,
+theses and dissertations that were published as PDFs.
+A lot of complex layouts, tables with experimental results, multi-column text
+that starts to become hard to extract were some of the challenges.
+And then the last one, e-commerce product.
+So this was basically there was an online chat bot where you could ask it to help
+you compare products and you could ask specific questions about it.
+So like, I want to compare the battery life between this model phone versus that
+model phone and it could pull data out of product specs, essentially.
+And so the content sources we had were product manuals, spec sheets, and then
+customer reviews.
+So just combining some of the structured data that we had with some of the
+unstructured data and avoiding like a lot of the irrelevant boilerplate stuff were
+some of the challenges.
+So that's kind of like level setting on the sort of different products that some
+of these anti-patterns will come from.
+And so to help us understand a little bit about, you know, to have like a schema
+under which to put all these anti-patterns, I've kind of broken up the basic rag form
+into a few different steps that you might think about.
+So the first is data collection and curation.
+You want to make sure that like you actually have the right documents to answer the
+queries that you're trying to answer.
+And this is a very basic thing of if you collect, you know, documents about
+international politics and you're trying to answer questions about local politics,
+probably not going to be anything relevant there.
+And so you really need to make sure you're getting documents from the right place and
+curating them effectively.
+Extraction and enrichment.
+You want to make sure you represent the documents well.
+You want to make sure that they have all the metadata that you need.
+And sometimes with complex formats like DocX or PDF, that might involve some
+extraction step of extracting the relevant information out of it.
+Sometimes it might be combining with other data sources that you have.
+And next step is indexing and storage.
+This is setting up the documents so you can retrieve them easily.
+So in here, you might chunk your documents into pieces that can be easily retrieved.
+You might set up embeddings.
+You might set up other types of indices like inverse text or you might set up like
+a BM-25 index, but you want to set up your data so that it's easy to retrieve for the
+types of queries you're asking.
+Then you have retrieval, which, you know, arguably these next two steps you could put
+into one retrieval and re-ranking.
+But retrieval, I typically think of that as like, hey, we want to go and grab all the
+documents that might be relevant.
+And so we're really focused on high recall.
+And then re-ranking, we want to like only get the best documents.
+So we want to be high precision and filter out anything that's irrelevant from there.
+And then the last step is the generation.
+Now that you've collected all of the documents that you feel are relevant here, now
+you're going to let the LLM do its thing and generate an answer.
+All right.
+So let's go through some of the things that can happen at the data collection and
+curation phase.
+First thing is documents with varied encodings or formats.
+So something I've seen and I should also pause to say every single anti-pattern in
+this presentation, even though I talk about a specific example, I've seen each one
+three times or more over like 10 clients.
+So, you know, that should tell you that these are all like fairly common things that
+come up.
+So basically a lot of times I see clients that have documents that basically disappear
+and they don't even know what's happening.
+And it comes down to like errors with parsing certain encoding formats and they just
+silently drop it and don't have robust error handling.
+So in the medical chat, advice chat bot product, they had a rag pipeline and they
+kind of assumed all documents were UTF-8 and there were a lot that were Latin one.
+And they just dropped the documents that didn't fit that.
+Anytime they hit an error, they just like skip the document and kept going.
+And so they ended up dropping 21% of their corpus, which is a lot.
+And so, you know, this is a case where you have a silent failure.
+It's the worst kind.
+Your index is shrinking.
+You don't even know.
+Users just start getting bad answers and you lose trust.
+So here, you know, at the end of the day, really make sure you understand like what
+kinds of formats and codings, et cetera, your documents are in and what you need to
+handle when you have to handle document formats that maybe you're not used to
+handling, try to use robust parsers for it.
+So use off the shelf libraries where you can.
+Anytime you have a failure, you really want to be monitoring that so that you at least
+know when things are being dropped.
+And then you always want to monitor the number of items you have at each stage to
+make sure it makes sense.
+So, you know, if you were monitoring the number of documents you have, you should
+notice that like, Hey, we started with a hundred and now we have like less than 80.
+You know, there's a problem somewhere.
+Next thing, your relevant document sets.
+So this kind of goes to the curation aspect.
+The reality is when you have documents in your index that aren't relevant for any
+query, your user might ask, that's kind of like a ticking time bomb, just waiting for
+it to like get retrieved for some query.
+And so really you want to like curate the documents you include in your index so that
+it's only the stuff that's relevant for the types of queries you intend to serve.
+And so with the financial news summarization, that RAG index kind of contained every
+finance article initially.
+And so really what they cared about was kind of updates on the industry and not things
+like general macroeconomic trends, but they were basically indexing things about general
+macroeconomic trends.
+And sometimes those would get pulled and then the summaries would be kind of strange
+and not helpful.
+And so the more irrelevant documents you have, the harder the retrieval is going to be
+to get rights.
+So if you have documents that are just not useful for anything, just cut them out at
+the source.
+Sometimes another way this reveals itself is not necessarily even documents that are
+not relevant for any query, but you might have categories of queries where one set of
+documents is relevant for one type of query and a different set of documents is relevant
+for another type.
+And so tagging those documents with certain metadata so that you can apply metadata
+filtering, definitely a big leverage.
+And then lastly, over time, this stuff tends to change.
+User behavior changes.
+You might want to support more queries.
+So make sure you're looking at actual query logs to refine those filters over time.
+Extraction and enrichment.
+Big problem with people working with PDFs today is information not being extracted
+correctly.
+And in particular, trying to extract tables is difficult.
+And so with this academic research assistant, basically there were tables that needed to
+be extracted and put into retrieved in the rag component so that we actually reported
+the thing that the user cared about.
+But a lot of off the shelf tools for PDF extraction are not very good at table extraction.
+And so you have to be very careful about the assets or artifacts that are pulled out of
+your documents.
+And you have to make sure that those extractions kind of have the data in a reasonable
+format.
+And so that's another component that you need to monitor.
+And so where you can use tools that are specifically built for the types of artifacts
+you want to extract out.
+So if you really need the tables extracted out, make sure you're focused on finding an
+extraction tool that specifically works well with tables.
+And then always validate.
+Again, this comes back to just looking at your data.
+You know, when you're like extracting data out of a document, that's kind of a step that
+could be unreliable.
+You want to go and look at those chunks that you're extracting out to make sure they make
+sense and are kind of meeting the accuracy that you require for your use case.
+Next thing is chunking too small.
+I often see this, I think largely, you know, there's lots of people who talk about whether
+or not rag is dead.
+And, you know, I see most people that implement rag start with chunking, not because
+chunking is necessarily like required or useful for their case, but because they copy and
+pasted some tutorial or they had AI coding assistant generate it and the AI coding
+assistant has just read all of the early tutorials that really like chunked things pretty
+into pretty tiny segments just because models at the time didn't have longer contexts.
+And so you really want to be careful with this because the smaller the chunk is, the less
+meaning it's going to have.
+And sometimes you end up with chunks that are too small and that kind of just dilutes the
+context.
+And so, you know, with the e-commerce product that I worked on, basically, they were
+initially just like splitting these spec sheets into like really tiny 200 character
+snippets.
+And so like no chunk actually had all of the information needed.
+And so like it really just hallucinated most of the time.
+And that originally affected like 13 percent of their queries, which is a lot.
+In general, the models actually worked well enough where we didn't even need to chunk
+the spec sheets at all.
+We just throw it throw it in outright.
+And so make sure you're not chunking too small.
+You know, use the long context and see how small chunks need to make.
+Make sure you're chunking by semantic boundaries.
+That makes sense.
+And make sure you're keeping context together.
+There's also other techniques that I'll talk about a little bit later.
+Things like contextual retrieval or late chunking that can help bring some more global
+information and context into smaller chunks if you really do need to have the smaller
+chunk.
+Next one, somewhat related, is keeping bad chunks.
+So with that customer support, not only do you need to have the smaller chunk, but you
+know, keeping bad chunks.
+So with that customer support knowledge base, there were basically support pages that
+included like a footer that basically just had like copyright information.
+And based on how the chunking worked, basically these were kept around as like a single
+chunk, like this weird just copyright thing.
+Obviously, it's probably not going to be helpful to answer any user's query.
+And on top of that, if you're keeping that around, probably you're also not filtering
+duplicates and that copyright is at the bottom of every page.
+And so if sporadically, for whatever reason, there's a query that matches the footer
+very highly, probably you're going to get a bunch of copies of that footer and it's
+going to crowd out the actual relevant things.
+And if you're just using naive vector search, especially a lot of times these vectors
+are normalized, meaning things that are like low information like this, you know, they
+have the same magnitude as any other vector.
+And so like whatever similarity process you're running often will return something like
+this if there isn't something else that like highly matches.
+And so this can cause a lot of noise in your rag.
+So generally, make sure you look at your chunks again, look at your data.
+I recommend looking at the shortest chunks, like take like the five percent shortest
+chunks that you have and manually inspect them to see if there's anything weird.
+You can deduplicate identical chunks by computing some form of content hash.
+You can do it in an exact way if you want, or you can do it in a more semantic way where
+you're just checking semantic similarity is above some threshold.
+But, yeah, making sure all of the chunks that you have are good, definitely worthwhile.
+Some of the things I've seen in indexing and storage first is naive embedding usage.
+So this is kind of like what we'll talk about, like chunking a little bit.
+So something I think a lot of people don't appreciate or recognize jumping into rag,
+most embeddings are trained for semantic similarity.
+So they're really good at like scoring highly with synonyms.
+So if you have two sentences that are using different words, but fundamentally mean the
+same thing, they're going to have like very, very similar embeddings.
+But when you think about like how vector stores are often used, you have these document
+chunks and then you have questions that come in.
+The form of a question is not generally the same as the form of your document or document
+chunks. And so a lot of these techniques that we see in retrieval, including query
+expansion, late chunking, contextual retrieval, they're really about trying to make the
+query and document chunks look closer.
+And that way, when you go and use an embedding lookup, you get more of what you want.
+So, you know, definitely, I think the sort of three different approaches you can take
+here, query expansion, which is really like, hey, let's find ways to modify the query to
+look more like the document that adds latency to your hot path.
+And so I think a lot of people tend to not start there.
+You can also modify your documents at indexing time with things like late chunking or
+contextual retrieval to make those look a little bit more like your queries.
+But the other thing you can also do is fine tune your embeddings and that can help.
+So definitely like a mix of those three techniques, I would say, like definitely high
+leverage. Next thing is no check for index staleness.
+And so this matters a lot for those use cases where things are changing a lot.
+So basically, we have this query where an investor had asked in the financial news
+summarization about the latest semiconductor earnings, but silently the index hadn't
+been refreshed in two weeks, meaning it did not have new data.
+And we actually got like the previous Q1 data and, you know, it took a while for them
+to even recognize what had happened.
+And so the reality here is, you know, when you have a use case where you need up to
+date information, you need to make sure you're tracking the sort of staleness of that
+information to make sure you're getting the information that you expect.
+And, you know, how much staleness is appropriate depends on the use case.
+You know, this is a use case where we expected to have updates every day.
+And so as soon as something goes beyond like 24 hours or something, that's a problem.
+In some use cases, you might even add this as a filter in your retrieval where, hey,
+if the last updated timestamp of this document is older than a week or something, maybe we
+don't even return it. And that way you kind of protect yourself from pulling now stale
+information into your pipeline.
+But yeah, really, the big thing here is just like making sure you're monitoring like how
+stale your index is at any given point.
+Moving on to some stuff in retrieval.
+First thing is accepting big queries.
+So, you know, with this medical advice chatbot, I found that there were a lot of people who
+typed in queries like health tips and it's like that's a very vague query.
+Don't know what exactly the user wants.
+And the reality is like when you accept queries like that, you know, you're forcing the rag
+system to kind of just like retrieve anything.
+And, you know, health tips is going to match with a lot of things with like roughly the
+same sort of like score.
+And so like really it's like hard to like actually like answer the user's query and
+satisfy like what they're actually looking for.
+And so generally you want to like detect low information queries through some method, and
+it might just be heuristics like, you know, if it has a lot of stop words, it's a short
+length. And then you want to essentially either prompt users for clarification, ask them to
+give you more information so that you get a well formed query from them.
+Or you might even just route vague queries to some kind of like fallback and say like, you
+know, hey, I'm not sure what you mean, you know, check out these FAQs or, you know, in
+some use cases, it might make sense to pass them off to a human, but really just, you
+know, not taking queries that like you kind of know up front that you're not going to do
+well on. Accepting off topic queries is also a common problem.
+So, you know, a lot of this is people trying to just break your system.
+But with the product comparison, we had a shopper enter the query, write a poem about
+unicorns, and they didn't have many filters or cutoffs.
+And so it just kind of retrieved some somewhat random product reviews and generated this weird
+poem that was like mixing the kitchen appliances it had retrieved.
+And that's probably not something you want your product to do, even if we might think it's
+a little fun. And so we want to make sure that we're forcing queries to be in the domain.
+So similar to the last one of accepting vague queries, you know, we can build something to
+help us classify. So building some kind of intent classifier to help you detect off topic
+requests, that can be another LLM.
+And it often, in my experience, can be a pretty small LLM.
+So it doesn't add a whole lot to your latency.
+And or another thing is you can instruct your main LLM to kind of have a
+multiple type of response where instead of only outputting the answer, it has the choice to
+output a reject. So that's kind of like merging that intent classifier into your sort of main
+LLM call. And so that kind of pushes it into the generation phase.
+But definitely that's something that's helpful.
+And the last thing, use relevance thresholds and cutoffs to, you know, not return documents that
+are you don't always need to return documents.
+Sometimes there's queries that just like, hey, we don't have good documents for this.
+And you want to avoid returning things because then that's just going to make the generation phase
+go awry because you've included a bunch of not relevant info.
+Oops, lack of task breakdown.
+Another big thing. So the reality is we're often asking these AI systems to do a lot.
+And very often over time, you'll notice that there are patterns of the types of queries users ask.
+So, for instance, in this customer support knowledge base, the common query that kept coming up was
+what is my billing date? And we basically had this complete rag workflow.
+And this is a case where, like, you know, if we know what the user's intent is there, we can actually
+just do a simple like user metadata lookup.
+Every time you're using like an LLM to do something, you're probably going to have higher cost,
+higher latency and probably lower consistency of user experience.
+Because even if you do a really great job of like making your LLM work, you know, you're probably
+still less than two nines, meaning you're probably less than 99 percent, you know, accurate, for lack
+of a better word. And that means that you have like a percentage of time where like you're
+generating the wrong answer. And so as much as possible, you want to like reduce the surface area
+of where you can return a wrong answer. So again, this is another place where intent
+classification is really helpful. And so you can start to basically find those common
+queries and basically convert it from this LLM driven thing to more structured workflow.
+And if I remember correctly, I think Jason literally just wrote a tweet about this.
+I independently wrote this slide before reading that tweet.
+But yeah, so definitely it's a it's a common thing that people are seeing.
+You know, it's not just me. Oh, one other thing on the task breakdown.
+Another way that you can get more consistency, lower latency and cost, sometimes you can
+semantically cache answers. This doesn't always make sense.
+You have to think about it carefully in your use case.
+But, you know, if you've gone through the process of like identifying the correct answer to a query,
+and if another user asks the exact same question, why run it through an LLM again?
+Just return the same answer you gave last time. When the answers have things that are personalized
+to the user, that starts to become more difficult. But yeah, for suffice to say, if you have
+something that's less personalized, that becomes an option.
+Next thing, not evaluating for false negatives. So very often, you know, especially folks that have been
+in Jason's RAD course, I'm sure you go through a process of like evaluating sort of the relevancy
+of the documents you're retrieving. Very often I find people that are doing some evaluation of the
+relevancy are not actually evaluating for false negatives. They're only looking at the documents
+that we decided to give to the LLM and rating whether they're relevant or not. And, you know,
+I love this sort of like lamp post cartoon where it's like, you know, you lost your keys and you're
+looking under the light post because that's where the light is. And that's usually like a similar
+vibe. So you really want to know not only, hey, out of the documents I chose, which ones were
+actually relevant and which ones weren't. And that tells you a little bit about your false positive
+rate. You also want to know, hey, the documents that I didn't decide to include and I didn't
+retrieve, were any of those relevant? Because that'll give you other insights on how to kind
+of improve your retrieval. And so, you know, I saw this with this academic research assistant.
+So basically there were papers that were relevant for the queries and they were kind of just outside
+the retrieval window that they had been using. And when they were checking the evaluation,
+they basically were only looking at those 10 documents that were included. And basically
+a lot of the leverage and improving the system was outside of that window. So, you know, the fix to
+this is you want to go beyond the window when you're logging things, beyond just what you include
+or give to the LLM or the generation phase. You want to make sure you're able to either log or
+reproduce sort of the scores for your ranking or retrieval. That way you can kind of look at how
+well your retrieval matches like actual relevancy and not have it biased just by the stuff that you
+gave to the LLM. And so this might lead you to like adjusting retrieval parameters, like increasing
+K, refining embeddings so that you capture those missed hits. Next thing, no visibility and retrieval
+sufficiency. So similar, I see a lot of people annotating and evaluating the relevancy of
+documents. I see very few people annotating the sufficiency of retrieval. At the end of the day,
+I don't care if you got four relevant documents. If with those four relevant documents, I can't
+sufficiently answer the user's query. So I think a lot about sort of how coarse your annotations
+and evaluations are. So, you know, at the highest level, I care about whether the whole RAG system
+gave the user the right answer. The next thing I care about is, you know, if we didn't get the
+right answer, was the retrieval sufficient? And then retrieval relevance is one level below that.
+You know, if the retrieval wasn't relevant, did I get any relevant documents or how many did I get?
+And then you can start to ask, okay, why wasn't it sufficient? Do I have all of the information in
+my corpus and I just couldn't get it, find it? Or do I just like not have the documents in my corpus
+to answer this kind of query? But retrieval sufficiency, annotating that actually gives you
+a very quick lens into where to focus your time. You end up having this nice little quadrant of
+answer correct, retrieval sufficient, answer correct, retrieval insufficient, answer incorrect,
+retrieval sufficient, answer incorrect, retrieval insufficient. And each of those quadrants has a
+different way to look at it and handle it. And so this tends to be like a pretty powerful tool
+that I don't see people using very often. Talk a little bit about re-ranking problems.
+One, overusing boosting. So boosting, for those who are not aware, is essentially, it's really hard
+to get your re-ranker, especially an off-the-shelf one, to do precisely what you want. And a really
+easy tool or knob you have is to just fiddle with the ranking score a little bit. So you might just
+add a thing. So like with this financial news summarization, basically, since they cared about
+the semiconductor industry, they wanted to boost documents related to that. And so they added some
+boosting rule for that. They wanted to boost recent things. They wanted to boost buzzwords that were
+related to earnings. But basically, they added so many of these that it started to become really
+difficult to understand how the system was working. And so boosting, generally, I think, is a little
+bit of a hack. The reality is in building real systems, you sometimes have to resort to hacks
+to get the behavior you want. When you overuse this, it starts to make the system a little bit
+more complex. And so really minimize the manual boosting rules that you're adding. And if you start
+getting to the point where you need much better performance, that starts to signal to you that
+maybe you need to train your own cross-encoder re-ranker so that it adapts to the data you actually
+have. Allowing face palm results. So this is something that I kind of faced a lot when I
+worked on recommendation systems at LinkedIn. There's this infamous example where there was a
+CEO that went and looked at job recommendations, and we recommended them an internship. And the CEO
+made a tweet about it, and it blew up, and big issue. So there's a lot of times where your
+retrieval is going to kind of return these kind of face palm results. Results that are just so
+obviously bad that you wonder how it ever got there. And a lot of this is because those lower
+layers of retrieval, again, are optimizing for high recall. Meaning we're getting anything that
+might be relevant. And so your re-ranking layer needs to be really good at kind of pushing all
+of the cruft to the bottom. And so one thing you really want to do is make sure a lot of these
+face palm results that you're monitoring them. So first, do everything you can to get rid of them.
+So apply metadata filters to exclude certain document types that you know aren't going to be
+relevant for the query. Sometimes when you have, if you have complex use cases where you're
+crawling and you're getting a lot of documents from unknown sources, sometimes you need to blacklist
+domains, known bad titles, other things that typically have spammy content.
+Going back to looking at your chunks, you want to make sure you're removing all of those low value
+chunks. But also you want to make sure you're monitoring your system. The reality is like
+rag systems can get pretty complex and they can fail in interesting ways. And sometimes you think
+you fixed the issues that led to face palm results and then suddenly the metadata fields
+aren't getting populated that you filter on and now those things aren't getting filtered again.
+And so having sort of a set of queries that at some point has returned face palm results that
+you run periodically and review, really good tool just to go through and see like, hey, are we getting
+these face palm results? And there's things you can do to automate the looking at that too,
+by building some sort of like AI judge or verifier. This is the biggest one, the most common mistake
+I see across the industry, increasing complexity without evals. The number of times I walk into
+a client project and they have told me, we know exactly what the problem is. So we implemented this
+open search index with four different retrieval paths and re-ranking on top,
+whereas they were just using simple database lookups before. The number of times I've seen
+something like that without them having evals, I would say 90 plus percent of the time the new
+system did worse after you evaluated it. And so a big, big piece of advice here, it's easy to fool
+yourself into thinking you know what the problem is. Maybe you do. I don't think I'm smart enough
+to take that bet, so I like to have evals to help as guardrails. So make sure you always have evals.
+Anytime you're significantly increasing the complexity of your rag system,
+you're increasing the maintenance cost. You are adding implementation burden that's taking away
+and providing opportunity cost. So you want to make really sure that it's going to be worth the
+time. And so having evals is, in my opinion, the only way you can meaningfully do that.
+And we'll talk about some stuff in generation and then wrap up.
+So in generation, I often see people trying to use simple rag systems for reasoning-based queries.
+If you have a simple rag system that really just has one step of retrieval,
+it can't really connect dots between things. So if with this academic research assistant,
+there was this query where someone was asking how one thing affected another, and they were just
+doing a one-step retrieval. The challenge with that is you kind of need to pull things.
+We needed to pull research papers that depended on what we learned from the first retrieval,
+because there's kind of like multiple dots that we need to connect there.
+And so a lot of times, single pass or simple rag like this can't handle that. So anytime you have
+a use case like this, and by the way, I would say 90% plus people do not have this use case.
+Most people have fairly simple, straightforward rag system setups. But if you do have this problem
+or challenge in your product, adopting agentic rag workflows can be super helpful. So you can
+interleave retrieval and reasoning. Doing things that pre-compute some synthesis documents. So
+if you kind of have some sense of things that are related, you can essentially add
+metadata like this to the documents. In some cases, you can also construct knowledge graphs
+that help you retrieve things on a more like edge basis. And then you can kind of traverse the graph
+in a way where you get things that are connected. So again, this is something I think most people
+don't have. But when you do have this problem, like a simple rag system is probably not going to
+cut it. And I think this is the last anti-pattern I see. No output guardrails for hallucinations.
+And I think this is the last anti-pattern I see. No output guardrails for hallucination.
+So in the medical advice chatbot, there was a patient that asked for the side effects of a drug.
+And the LLM hallucinated a side effect. And that's bad for a medical chatbot use case. That's really
+bad. And so the best technique I've found for reducing hallucination and rag, first thing is
+to make sure your LLM output is forced to provide citations in line. And then you validate each
+citation to make sure it exists. And then you semantically validate that each citation
+actually relates to the content that was done. And if you don't know how to do semantic validation,
+Jason has some great tutorials doing it with instructor. It's pretty simple and straightforward
+to get set up with it. But yeah. And so that's everything I had. I think Jason probably has some
+questions. There's some links here, but we'll send out these slides afterwards. So feel free to not
+have to grab the links right now. That was great. Oh my God. Yeah, I definitely learned a lot from
+this. And I think the rest of the audience also agrees. A lot of comments are just talking about
+how great the slides are and how everyone's really excited to follow up on this. Given that we only
+have 10 minutes, I'll go through a couple of the questions here. Man, I feel like I should really
+bring you on for another separate office hours. But yeah, let's jump into some questions here.
+I think that the first one is probably a question that everyone's thinking about. I try not to focus
+too much on tools, but do you have your preferred stack for working with these different pieces
+in the RAC pipeline? Whether that's OCR, whether that's embeddings, whether that's evals.
+We'd love to hear more. Yeah, I tend to not be too attached to tools. I will say that the tool that
+I've been using a lot for evals lately is something called LilyPad from some folks at
+Miroscope. It's in a beta. But for some context on why I use that tool, the clients that I work with
+are usually not AI engineers. I think that a lot of the observability and eval products
+aren't very good at enforcing best practices, particularly around versioning what you're doing.
+LilyPad kind of bakes that in as a first-class concern.
+The end result is when I'm working with folks who don't have an AI background,
+they don't really need to think about doing the right thing. It's just like just using the tool.
+They kind of do the right thing. But if you're coming from a different background,
+other tools might make sense. I would say often I'm coming in and there are already tools that
+are being used, and I try to just meet clients where they are. And so it's kind of like I just
+use whatever stack they're using. Yeah, definitely makes sense. I think it's hard to sort of come in
+and also convincingly use other different tools, especially when vendor approval and stuff like that
+can be a pain sometimes. This is a question I really like, which is,
+how important have you found meta-tagging of chunks in practice?
+I will say that probably 40% of the clients I've worked with have indexes that are so small
+that it doesn't matter. Most people are actually not working with very large data.
+And then there's even customers that do have a lot of data. Very often they're B2B companies
+where each of their customers has segregated data. It would never make sense to query across
+customers. And so within customer, it's like there's not a whole lot of data still. So I'd say it's
+fairly rare or uncommon to have enough data where I think meta-data tagging really provides
+high leverage. I would say that the diversity of queries that you're answering
+and the scale of the data that you have is really going to be the two important dimensions here.
+If you have high diversity and high scale of documents, then the meta-data tagging becomes
+a lot more useful. Yeah, I would also add it really depends on what kind of data exists
+and what kind of questions people are asking. One of the things that really surprised me with one
+client was that most of the time the questions being asked were actually around the authorship,
+ownership, and when things have been changed. And so that really is just like a created by, modified
+by, modified at meta-data tags. And once we were able to just embed those tags into the text chunks
+themselves, rather than just as a property filter against, we were able to answer like 20% more
+questions. This was a use case where like legal documents are changing and you can ask a question
+that's like, what has changed? Who made the change? And that is a meta-data filter. So that is
+meta-data that can just be appended to each text chunk. I guess another question people are asking
+are around the tools for things like OCR and table extraction. Again, I think that really depends on
+what people's preferences are. You know, there's Azure has tools. Dockling is a great open source
+tool. We have a talk with Reducto next week on basically how they are used for like government
+agencies and like Manta, for example. But are there any live questions people want to ask?
+Feel free to just raise your hand and we can go there as well.
+Okay, let's go through some other questions. A lot of these are just around chunking.
+You indicated a percentage of queries affected. How are you measuring that metric?
+Yes, you'll notice I didn't have it in every single case. But really, the thing that I help
+my clients do is go through a structured evaluation process, which includes like defining an error
+taxonomy. And basically, it just came from either manual annotation, or in some cases, when we were
+a little bit more mature in the process, we had a sort of automated judge or classifier that could
+classify the types of errors. And so it was basically off of that we had like an eval set
+of queries, and then you would run through our annotation process and then make a pivot table.
+And if you want to learn how to do that, I guess a plug for Hamal and Shreya have an upcoming evals
+course, the last live cohort they're running. It's fantastic. I've been in it for the first cohort.
+Great lessons and learnings. Let me see if I can find the link here.
+I'll add it to the follow-up email as well. Awesome. Given that this is the last six minutes,
+the one question I ask everyone is, what is the one question you feel like we didn't ask that we
+should have? Good question.
+I think the thing that
+probably is top of mind that this presentation doesn't go into too much depth on
+is really how do you do rag in a privacy preserving way or do like personal rag.
+I think that that's something that's like totally missed out of this presentation
+and somewhat important in the medical chatbot case.
+Yeah, in personalization here, do you mean like memory? Do you mean something else?
+I mean, if you've ever used the feature where like on Google, you can search and it will search
+your own documents, but like other people can't search your documents, like how do you make rag
+work in that case? Basically, a little bit of governance, a little bit of like, it's governance,
+but it's also like, you know, eval becomes like an interesting question there. Like how do you eval
+that system even? Yeah, I'm trying to get the OpenAI memory team to come on and give a chat,
+so we'll see if we can learn anything new. Awesome. Scholar, thank you so much. We will
+have the YouTube video out probably in the next couple of weeks and then before then, we will
+basically share with everyone the slides, the link to LilyPad, and also some study notes that people
+can reference and we can go from there. So, yeah, Scholar, thank you so much. We have to
+learn a ton. Hopefully, I can get you to co-publish a blog post or come on to OfficeOut at some time.
+This was a really, really great talk. Awesome. Thanks, everyone. Take care, everyone.

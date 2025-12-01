@@ -1,0 +1,494 @@
+Hey, in this episode of improving rag applications, I'm excited to
+invite Joe Burgum, a distinguished engineer at Vespa AI to talk about
+the importance of building custom evaluations for rag applications.
+He explains why off the shelf models and academic benchmarks might not
+generalize to your specific use cases and provides a step-by-step guide
+on creating personalized relevancy data sets.
+So you get some feeling about some method or technique.
+The way you can do this is that you're building your own relevancy data set.
+He also answers the question that's been on everyone's mind.
+Can we actually train language models as a judge?
+We can actually calibrate on using a large language model as a judge and
+align that prompt with the human preference that we find from the
+golden set on the human evaluation.
+He also mentions the often missing baseline.
+The M25 is actually a pretty solid baseline.
+It also avoids the fixed vocabulary of transformer models because they
+cannot learn representations of just if you're adding random words, random
+like a product or a zip code.
+My name is Joe Christen Burgum and I work at Vespa AI as a distinguished engineer.
+I actually had been working on Vespa and with the Vespa team since 2007.
+As you can see, I'm quite old and gray, not like you youngsters.
+I've been doing this for some time and I'm going to talk a little about building
+evals for information achiever.
+Like I love the title of your course, this systematically improving rag.
+And in this talk about how we can go about building evals for the R step.
+So, so I guess I'll just jump right into it.
+You can drop the messages.
+I will have plenty of time, actually, because Benjamin is not joining.
+So I'll leave plenty of room to ask any questions you like.
+I have a lot of knowledge about both dense retrieval, vector,
+multi vector, beam 25, I might throw in a whole take as well.
+So keep a good size chunk for, for questions on basically anything.
+So, yeah.
+So this talk is building evals.
+Yeah.
+I'm a distinguished engineer.
+In my spare time, I post memes to Twitter.
+So, oh, and this talk, I'll talk a little bit about retrieving information
+into the large language model prompt or the vision-like large language model.
+The R in rag and evolutions and how you can go about building your own evalations
+so that you can impress your CTO or maybe you are even the CTO.
+So, and rag, of course, most of you are familiar with this.
+You threaten the model to perform some action and we want to use retrieval
+system to retrieve up-to-date context so that we can stuff into the prompt.
+The prompt context limits are now longer, but still we can only about fit
+about eight megabytes of text still like with Gemini Flash and Gemini Pro
+we have 1 million context lines.
+So it's about eight megabytes of text.
+So I still think that retrieval is useful.
+In this example, it's not a classical rag, but you can use retrieval to
+find context-sensitive examples.
+If an employee is doing classification, I'm actually quite excited about that.
+I wrote a blog post about that a few days ago or a few weeks ago, sorry, but
+you use retrieval as a technique for finding context-sensitive examples when
+you're doing in-context learning.
+But most of our excited about rag is in the context of question answering, where
+you're using some retrieval system to retrieve information and then perform
+question answering.
+And that was also the original concept of rag introduced, I think around 2020, 2021.
+But any case, these techniques that I'll talk about later and evaluations really
+independent of what you're using your rag part of your platform.
+Reference architecture, people talk about vector databases, search engines,
+et cetera, et cetera, but the kind of overall is that you have some kind of,
+or you have some language models, some prompting, maybe you have some routing.
+In this case, it will be like high level.
+I won't go into settling chroma or selling VESPA or selling elastic
+search or whatnot, so you can pretty much use any of those for a retrieval system.
+All right.
+So when I talk about retrieval system, could mean anything or any type of method.
+And these systems produce some output and each of the steps you can add at each
+of the steps independently or the full chain.
+Yeah.
+So that's interesting.
+And unfortunately there's a lot of complexity involved in rag and every
+day there's a new thread on Twitter, like new model, new large language model,
+disk capabilities, this view tree, some other advanced techniques you need to
+learn about new 7 billion embedding model.
+So there's a lot, a lot of stuff going on and you might be tempted to try this
+and that and maybe change the vector, maybe use PG vector or use sparring
+coin or lance DB or VESPA or whatnot.
+So there are a lot of types, dev rels going around trying to sell different
+techniques and so there's a lot of things that is going on and, but the
+R component in, in rag is really about information retrieval and information
+retrieval is basically the process of obtaining some relevant information
+based on the information need expressed into a textual query around brushing.
+And this is like a huge field of research that has been basically occupying
+some of the brightest minds in computer science for decades, like I'm thinking
+about Google, Facebook, Bing, Microsoft, both in search systems, but also in
+recommender system, right?
+So there are a lot of people that has put a lot of years and effort into
+this entirely new field.
+And when you have this kind of retrieval system, and if we think about the slide
+that I had earlier on, like any kind of system, like if it's a file, if it's
+numPo, it doesn't matter, but you have some into query and this retrieval system
+might do multiple different steps, query planning, query unwind, embeddings,
+whatnot.
+We abstract that away.
+In essence, you input a query to this system and you get back a
+ranked list of documents.
+That's the kind of core.
+And then we can look at the documents that we get back from this system for a
+given query, and then we can basically judge these, are they the documents that
+are retrieved, are they relevant for the query?
+And then typically we could have like binary judgments saying that, oh, is it
+relevant or irrelevant, or we can have some kind of graded labeling schema where
+you can say that, oh, this, this passage is actually, or document is actually very
+relevant for the question.
+It fully answers the questions or it's slightly relevant or maybe it's irrelevant
+or it's so bad that my boss will fire me.
+So they're like, you can have this type of graded systems, graded evaluation of me.
+Ham, he put out this tweet that got my interest.
+I think it was actually yesterday.
+And grading relevancies is not trivial.
+Right.
+So Google has their search engine quality evaluation guidelines.
+This is a PDF with a hundred pages that they give out to the human evaluators that
+are evaluating their search results.
+Going into what is relevance, how should you judge the results and judge them on
+this scale and so forth.
+It's not that trivial actually too.
+And also the relevancy is subjective because if you're looking at the query log
+and someone searched for Apple, and then you're asked to judge a set of results
+coming back from our retrieval engine, we don't actually know what that given user
+was looking for, right?
+Because it could mean the fruit, it could mean the company, right?
+And when that user is getting back information from the retrieval engine and he
+meant the fruit, but he got back to the company, he might be judging the
+results as irrelevant, right?
+So relevancy is subjective.
+So there's, there's very hard to have like one ground truth.
+And typically when they're editing these systems, if you have two humans, they
+might disagree or, or over the relevancy of a given query, right?
+And you have that kind of graded or relevancy judgments for query and
+document pairs, we can run some evaluations to say something about how
+good the retrieval system is at retrieving relevant information for a given query.
+And to do that in academia, there are a set of information retrieval data sets.
+Trek conferences be going for, I don't know, 20 years, spanning decades with
+various interests from new search to search at large scale and so forth.
+So multiple different tasks.
+Ms. Marco, Pasadue and document ranking is a large relevancy data set that
+was released by Bing, the was like around 2018, 2019, and it's one of the biggest
+data set that is also used to both evaluate methods, but also use this data
+for training retrieval models to learn how to retrieve an algorithm.
+The beer benchmark is also very popular to add models and the focus there is to
+take a given model or retrieval model, be it embedding or be it by BM 25 or BM 42.
+Doesn't matter.
+You can evaluate in a zero shot man.
+And by zero shot, I'm meaning that you haven't been exposed to any of the
+training data in those collections.
+You're basically taking your model, indexing the documents, and then
+evaluating the system in a zero shot.
+And then there's a set of ranking metrics, which tries to measure
+how well this retrieval system.
+And typically we have Rico at K.
+So we have a depth of the ranking list that we're looking at.
+So K equals 10 would be to only consider the 10 first documents or
+texts and passages or whatnot returned by the retrieval system.
+And I typically say that, okay, Rico at K actually measures, are you getting all
+the relevant results that you have in the collection, but in a large collection,
+you might not know all of the documents that are relevant for a query.
+So Rico at K is typically in, there's some level of discussion around Rico at K,
+some what it means and so forth.
+So, but it's essentially information with GVL.
+It's about if you have a set of annotated documents that are at a certain
+relevance label, you're measuring if the system is able to retrieve all those.
+Precision at K is about removing irrelevant results so that you're
+presenting nothing but relevant results in the first K-giver positions.
+Then G is a complex metric, more complex.
+It takes into account the graded relevancy labels.
+So if we use a graded schema where you say irrelevant, center-relevant or
+higher relevant, and this G tries to measure that, so if you're placing a
+very relevant result in position one, you get a perfect score, and if you're
+placing the perfect result further down, you get a decay.
+Also you have reciprocal rank and also maybe the most common one, which is
+at GTBM, which is looks good to me.
+And we want to kind of move away from that.
+And in the industry, of course, it's not only about relevancy, but there's
+also metrics and feedback like click, dwell time, e-commerce, it will be
+like add to chart, of course, e-commerce revenue is important.
+And in those systems, typically we have multiple objectives.
+So you want to optimize relevancy, but at the same time, you might want to
+also optimize revenue or time spent on your stock and so forth.
+And importantly, when you are looking at M for beer or these kinds of benchmarks,
+each of the queries are weighted the same way.
+So that means it doesn't take into account the frequency of the queries.
+So in your system, you might have some queries that are more
+popular than others, right?
+So typically these follows like an 80-20 distribution, where just a few
+20% of the unique queries are maybe 80% of the total one.
+So when you're sampling systems and building evals, you should take
+that into account as well.
+And of course, like your CEO is likely to, to search for.
+Hey, are your rag applications falling short, despite using
+the latest frameworks and models?
+You're not alone.
+I'm Jason Liu and I've helped a dozen companies improve their AI applications.
+I've developed a systematic approach that delivers results.
+If you want to check it out, join my free six-week email course and learn the
+techniques I use in my own consulting practice.
+That way you can stop guessing at what works and measure what matters.
+Just check out improving rag.com.
+So to try to do better than looks good to me, the dirty secret that they've
+been hiding from you is to try to measure.
+But in order to measure, you should try to build your own evaluation data set.
+And that's the main portion of my, my talk.
+And also when we're looking at Twitter hype or MTab or what have you, it doesn't
+necessarily generalize to yours, particular use case, right?
+I know a lot of you are building rag in different contexts.
+Finance might be shopping.
+It might be in academic sense.
+It's not so likely that the MTab score.
+Translates directly to your delay.
+Right.
+So to get some feeling about some method or technique, the way you can do this is
+that you're building your own relevant citizen.
+The motivation is that, as I said, those models that are trained on different types
+of data might not generalize to you, your queries or your documents and off the
+shelf models might also not generalize to your case.
+And typically what we see based on the last year is that many of these models
+being trained in a way that they are performing well on the MTab, the massive
+text embedding benchmark or beer, meaning that when you apply it to your specific
+use case, they might not perform so well.
+And if we have this kind of evaluation data set, this allows us to do kind
+of quicker iteration if we want to change some parameter, if you want to change
+embedding, or if you want to change the way we're doing retrieval, if we want to
+add a re-ranking to the makes if we want to do a query, it will allow you to do a
+quicker evaluation and actually get feedback from this relevant simulation data set
+that you built.
+And this step actually has three simple steps.
+Simple steps.
+I mean, and the first one is the one where you have to come up with queries and run
+these queries against a retrieval system and get them.
+You could do it, or you can have a domain expert for what you're building for the
+use case you're building for, if you're building for healthcare or health
+information and things like that, you might want to have a domain expert.
+And after we've done that, we can actually calibrate on using a large language model
+as a judge and align that prompt with the human preference that we find from the
+golden set on the human evaluation.
+And then once we have that, we can actually start using kind of a prompt to
+rate more data and build a larger data set.
+So I'll go more into details on these three steps.
+Yeah.
+So this work or my talk here is not come out of thin air.
+There's been a lot of research over the last two years on this and use a large
+language model as a judge for relevancy.
+And most of the research finds that the frontier models can actually accurately
+predict the structure preferences, but we need still to collaborate that with our
+domain expert in our data.
+So we kind of entirely trust that if we just let the large language model with
+this given prompt, that it will evaluate it perfectly with our golden set.
+So we need the first step and the second step to kind of calibrate things and
+align it with our human preferences.
+And once we have that, it allows us to expand this kind of training data,
+expand the training set.
+And then finally, we can also use this to further improve to for fine tuning.
+I know people are talking about funding models or rewrite their suit allows.
+Not only the system, but also to improve the system and
+umbrella is also very recent work.
+The umbrella paper and the method there that they're proposing, that's going to
+be used actually to evaluate ongoing track, the retrieval conference topic,
+which is about rag, actually.
+That's going to be exciting to see what kind of techniques will actually be
+working well, I mean, in this, and they will actually use a large language
+models as a judge.
+So, and, but how do you get about and start bootstrapping this relevant data set?
+So this relevant data set consists of a query and the document and the relevancy
+label, so it's quite simple.
+It's a triple.
+And if you already have real traffic, but you can sample queries from
+your production traffic, preferably with them starting with head traffic.
+So most opera queries are the middle.
+At least that's, that's a good starting point.
+Don't have traffic.
+You can ask a large language model to generate queries for your content.
+So you take all of the content and generate questions, but it's also
+not so easy to get that right.
+So preferred traffic, if you actually have traffic and it, this process
+doesn't need to be fancy.
+You don't need any fancy tools for this, right?
+You can just jump this into a simple tab, separate and fire.
+Right.
+So, and you have to choose if you have grades, you want to grade the results.
+I find that I'm sure relevance is on the great and Google and most
+of the people are using that.
+So I think that's great.
+You can also kind of try to write down your thoughts about how to
+evaluate the relevancy.
+The PDF that I linked to earlier with Google guidelines, because those
+kind of guidelines, you can also add to the prompt when you are instructing
+the large language models to evaluate the relevance for you.
+Once you have that data and you can start analyzing and you have your kind
+of Google group data set with the relevancy label for each of these
+query and document pairs, then you can ask the large language model to also
+grade using the kind of system level instructions that I previously shown.
+And then you can see if they align.
+So this is our confusion matrix and it's called that because all of us get
+confused when they see it and take a rundown of it.
+So human label on the, on the left, on the Y axis.
+So we have zero one two, right?
+So this is the assignment by the, by the human and on the X axis, we have GPT-4 label.
+So if you see on the upper left, there are 10 very document pairs where there
+is agreement between the human label and the GPT-4 label.
+And there is one item up to the upper right where the human has assigned that
+this document is irrelevant while the GPT has assigned it a label of two,
+meaning that it's highly relevant.
+So there is those, the strong.
+However, also when you look at further down to the right, you have where the
+human has assigned the relevancy score of two and the GPT-4 label assigned by
+GPT is also true to the 30 of those.
+This is not a great result in terms of accuracy, but what we're using this for
+is to judging a system to run for ranking.
+In this graph, we actually show that there is a strong correlation between how
+the human will judge the result versus the GPT-4 judgment.
+Each of these blue line, blue dots are points that measures a given retrieval
+method, the way of ranking the results and the average of all these queries.
+When it's being ranked by the system, and then we evaluate it with either
+the human judgment or the GPT judgment.
+And here we can see that if we got a good score from the human on the ranking run,
+we also get a good score by using the GPT labels.
+This is quite promising because it also demonstrates that we can actually use
+this calibrated model to evaluate the results.
+And once we have that, we can actually start sampling more data.
+So if we started with the golden set, which is relatively small, we can now
+start to evaluate more data from production because we have the calibrated
+prompt, so now we can actually use that data to get relevancy labels for more
+data, right?
+And more data is better because then we are measuring more.
+So this allows you then to grow this golden set and this relevancy data set.
+You can use them to tweak your retrieval system and then you can measure, for
+example, NT and you can also use this evaluation to train models and also to
+kind of use those type of label data to further refine and fine tune your
+retrieval and ranking pipeline.
+And by doing that, you can then end up where you can, instead of saying that,
+yeah, we changed something for a retrieval, we can say that, okay, we actually
+deploy the change that increases MGZD by such and such for this type of queries.
+Right.
+Because here there's like different retrieval methods and we have measured
+how well they're doing using, ignore what type of method it is, right?
+Because this will be different for your domain.
+But the point is that then you can add these different methods or different
+types of way of doing it.
+And then you can actually deploy that and actually have before you actually put
+it into production, have GPDT evaluate the results.
+So I'm very excited about this.
+And there's also, of course, now that you can use large language models as a judge,
+you can also use large language models as rankers, right?
+So if you have aligned the prompt, you can also use this to, if you can afford it,
+also allow the large language models to actually rank the documents, right?
+So first you can use the retrieval phase, then also use the large language
+models to rank the documents and file.
+So answer the question if that's the kind of task that you are building rank for.
+So, and the motivation for having these kinds of representations in
+information retrieval, we was talking about sparse representations of
+queries and texts or documents.
+For example, you might heard of BM25, the traditional keyword scouring used in
+popular search engines like Elastic also in Vespa is that typically you want to
+avoid scoring all the documents in your collection, right?
+So if you have a collection of documents, you can basically do a
+grep or iterate through all of them.
+Take the query, run some scoring function, sort them by this score, and then you
+have your top K ranked docs, right?
+But if you have billions of documents or millions of large documents, this is
+not very efficient in terms of compute.
+You can distribute and get latency down, but it is simply not so efficient.
+So we want to try to have some kind of index that can, allows us to kind of
+add some pre-processing steps, then we can run the query and do this scoring
+function, but without having to score every single document.
+So this is what information with Chewool is so focused about building
+these kinds of representations.
+And one example of representation is of course, text embedding, where you embed,
+many of you are familiar with OpenAI, Cohedair, et cetera, et cetera.
+Those are typically called dense representations, but there are also
+sparse representations where you can use like classical data structures that's
+been around for a long time, like the inverted index, then you can accelerate
+the search using this kind of sparse representation, using various dynamic
+pruning algorithms, for example, WAND is one of them, BM1 that are multiple.
+Then you have, and these basically are unsupervised, most of them, like
+BM25 is unsupervised, but it's still kind of analysis your corpus because it
+builds this TF IDF model of your data.
+So we kind of know switch off the, what are the important words, but it's still
+treating the tech as a bag of words.
+Then you have more advanced methods that are more recent, that's also using neural
+networks where you can use supervision, meaning that if you have training data,
+and you can actually learn the importance of the words in the context of the other words.
+You use a transformer model for this typically.
+And there you have supervised representations.
+Then you have dense representations, vector search embedding, what not.
+Similar here to accelerate the search.
+You can build a vector index, there are multiple different algorithms,
+the vector databases that are specializing in this with different techniques.
+Here you can accelerate the search, but you also introduce an error by doing that.
+You are introducing an approximate.
+So in order to accelerate, to avoid scoring all the documents, then you will
+lose some precision, meaning that you might not actually retrieve the relevant
+result because of this error that you're introducing.
+And these are mainly using transfer learning, meaning that you're
+taking an embedding model, you're not fine tuning it.
+And you're just using it for your domain.
+And this is popular, right?
+So you can open AI, I think open AI really made the text embedding
+retrieval or embedding retrieval, like commodity or a lot of developers
+outside of the information, which we will see are circles.
+And you'll represent this in this latent space and this vector embedding space.
+And then the score is simply the call-line similarity.
+Of course, if you have a small amount of vectors, it doesn't really
+matter what kind of technique you're using, you can use Navi or whatnot.
+Right.
+Because root for searching this data, it doesn't take a lot of time.
+And there's some challenges with this.
+So under the group of text embedding models, most of them are using
+an encoder based model like BERT.
+And each of the input words in the query are represented as a contextualized
+vector in the output layer.
+But then since you want to kind of reduce space, you pull this into one vector.
+So you lose some information by doing this, right?
+Transforming the input into one vector.
+You do this for the query and you do this for the document and you no longer
+have any kind of attention between the query tokens and the document tokens.
+You're just looking at the vector representation.
+And most of these have context-length limits.
+So you need to chunk.
+And even if the app allow you to input a longer text, the longer the text is,
+obviously because of this pooling step, the representation, the vector
+representation becomes more diluted.
+And in order to have great representations for retrieval, you
+need training data, labeled data.
+So when you're taking an embedding model of the shell, like OpenAI, and you're
+not doing anything with that model for your domain, right?
+Then that formant of that model heavily depends on what the data it was trained
+on, because that will determine how well that generalizes to your type of queries,
+your type of documents.
+And BM-25 is a simple algorithm.
+So research on beer and many other benchmarks shows that BM-25, the
+traditional keyword matching method has plenty of limitations.
+It also provides you a very simple out of the box baseline.
+It's cheap, small.
+There are also more recent Python friendly libraries that can do this.
+But in my experience, it's a very good baseline.
+There's a lot of different techniques and so forth, but BM-25 is actually
+a pretty solid baseline.
+It also avoids the fixed vocabulary of transformer models because they cannot
+learn representations of just, if you're adding random words, random, like a
+product or a zip code, they haven't learned a good representation of that.
+So with a traditional keyword search, you avoid these kind of
+spectacular failure cases.
+Like broccoli, actually tokenized into multiple tokens, like bro, for, so you
+might get really weird results sometimes.
+Yeah.
+I'm for a long context when you basically want to retrieve over maybe
+documents that are longer, we do see that simple BM-25, ignore the
+Colbert stuff for now, but a simple BM-25 baseline actually out of forms,
+models that, at least on this benchmark, on actually documents that are quite long,
+in this case, 2000 tokens.
+So here actually the simple baseline works much better than models that are
+quite expensive, both to run interference with and also expensive because of the
+vector storage and also to search this large vector representation.
+And yeah, of course, if you're using like engines that are capable of
+combining these into hybrid, you can combine both and supervised representations
+and also sparse representations or the BM-25 starting point.
+But hybrid search also, a lot of people mean different things when they talk
+about hybrids, so it's also not a single, simple bullet, but going back to the
+original talk, if you take the time to do this actually exercise, to build your own
+relevance in data set, then you can actually decide that, Hey, I'm just
+going to stick with B5, that works great for my use case, or opening is actually
+a lot better for my use case.
+Or if I'm adding a hybrid boost here, I'm actually getting better results, right?
+So that allows you to take these kinds of decisions without listening to me or
+listening to other hypes or dev rels, hyping up this model or that model, right?
+It gives you the confidence and the tool to actually improve retrieval without just
+listening to whatever people are saying on Twitter or like me saying something.
+That's the thing I want to, even if there are multiple different methods.
+Yes, I'm excited about Colbert, I'm excited about visual representations,
+called Pali and so forth.
+And, but having this evaluation data sets allows you to take informed decisions
+and then finally systematically improving retrieval.
+And if you see an article like, Hey, we do this, this technique where you rewrite
+the query using the large language model.
+Okay.
+That sounds interesting, right?
+But you can just plug that into your pipeline then, and then evaluate and see,
+Oh, that actually brings some improvement to my use case or no, it doesn't make any
+sense because it's not improving anything.
+And I'm adding 500 milliseconds of latency and cost to my pipeline.
+So that's, that's basically what I had.
+Thanks for watching.
+If you liked that video, make sure to like, and subscribe.
+And if you want to learn more, check out improvingrag.com.
+We're going to talk about the foundations and not frameworks.
+Over six emails, you're going to learn how to overcome absence blindness, as well
+as how to fine tune language models, understanding diverse query types, improving
+multimodal rag, and ultimately smart question routing and build up UX that
+collects user feedback.
+Just check out improvingrag.com and fill out this quick email address at the bottom.
+Thanks.

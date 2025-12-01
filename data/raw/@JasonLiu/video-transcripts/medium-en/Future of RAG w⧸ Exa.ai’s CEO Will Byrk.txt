@@ -1,0 +1,683 @@
+Okay, everyone, thanks for coming to this talk.
+I'm super excited to tell you about Semantic Search over the Web.
+And thank you, Jason, for inviting me to this.
+As you've heard, he's a longtime friend and yeah, great guy.
+And so yeah, I'm super excited to tell you about Semantic Search.
+The best, in my opinion, the best presentations are stories.
+So I'm just going to tell you a story about EXA and the way we think about search and
+how it's evolved.
+And I think through that story, we'll learn a lot of cool things.
+And then we can have questions at the end.
+Okay, so like any good story, let's go back in time to 30 years ago.
+So the year is 1998.
+And Google feels magical, right?
+I don't know, probably a lot of people on this call weren't around then.
+In 1998, when you typed in Australia to Google, you would actually get the homepage of Australia,
+australia.com and the Wikipedia page for Australia and other really high quality resources.
+And this to people was magical, because unlike previous search engines like Yahoo and Ask
+Jeeves that could also handle keyword search, the big insight with Google was PageRank,
+this algorithm that looked at the structure of the web and which websites linked to other
+websites and they were able to figure out what are the highest quality sites.
+And so this was the state of the art of search at the time.
+Okay, let's now skip in our story to 2021.
+Well now, in 2021, GB3 felt magical, it had recently come out, but Google felt ancient.
+So I remember playing with GB3 in 2021, and I would type in like a sentence or a whole
+paragraph and it would understand the subtleties of my language, of my paragraph, and then
+it would respond exactly with a response that really understood what I was saying.
+And it was amazing.
+And then at the same time we had Google, where I would type in like a simple query like why
+to start a cycling carton.
+And it would not actually return me things that match exactly what I said, it would return
+me like how to plant a cycling carton.
+And that's just one example of how like Google wasn't actually understanding the subtleties
+of my language at all.
+And so the insight was like, wait, what if we could build a search engine that understood
+language as well as GB3?
+What if we got a search engine that understood me and understood the web and could return
+exactly what I wanted?
+I was super excited by this idea.
+And we were like, okay, let's go build a company and do it.
+And so we went to Y Combinator, we raised some money, and then of course we spent half
+of our money on a GPU cluster as every startup should.
+I'm just kidding.
+But we've got like 80, 100s.
+This is what they look like.
+It's pretty cool.
+They're still running today.
+And the goal was like, hey, like Google's algorithm, it's great for certain types of
+things, but not for complex queries.
+What if we could train models, train AI models like LLMs into the search algorithm itself
+to understand more complex queries?
+And so it was like a neural approach to search, the search algorithm, as opposed to a keyword
+approach, like with Google.
+And so basically we did research.
+We just went heads down for like a year and a half, just banging our head against the
+wall of this problem, trying out all sorts of different architectures, like transformer-based
+architectures towards search, reading tons of papers, making tons of data sets, failing
+a bunch of times.
+And eventually we actually like, like, you know, here's just some training curves.
+This is I think the training curve that was one of our models that actually worked really
+well.
+We tried this new technique and it was like, it suddenly worked.
+We were able to like take text and predict links based on that text using a fully embedding
+space approach that no one had tried before.
+And it was magical.
+And we were super excited.
+And we launched it in November 2022 on Twitter.
+A lot of people felt like this was like the next generation of search.
+Like, you know, for example, someone said like, this is the first time I felt there's been
+a step change in search since using background in the late 90s.
+And that was a beautiful comment.
+Nat Friedman liked it.
+OK, so that was November 2022.
+And a couple of weeks later, this happened.
+Pretty small tweet, you know, like today we launched TadgweeT, tried talking with it here.
+I actually didn't at the time, I didn't think it was that big of a deal because I had been
+playing with GPT-3 all the time.
+But so the world, it was a huge deal because it was the world's first interaction with LLMs
+on a large scale.
+And this is a visual depiction of San Francisco at the time.
+The world was, the whole like software world was going through this tectonic shift because
+like the way we get information seemed to be radically changing.
+And this was, is a visual depiction of the exiteam at the same time.
+You know, we were building search and suddenly the entire information ecosystem was shifting
+and going through tectonic shifts.
+We were thinking a lot about like, OK, is search even needed?
+Like, what is search in this new world where these AI systems can just like return you,
+like can interact with you in all these crazy ways?
+And we quickly realized that actually search is extremely needed in this new world with
+LLMs because LLMs haven't memorized the whole web.
+So if you ask an LLM like find me cool personal sites of engineers in San Francisco, the LLM
+is just not like GPT-4, would not be able to return you results that match because it
+doesn't memorize all the personal sites of engineers in San Francisco and organize it
+in its head in that way.
+There's a cool like information theoretical argument you can make here where just look
+at the number of bytes in GPT-4 and the number of bytes on the web.
+So like GPT-4, maybe we don't know exactly how many parameters, but probably like a couple
+of trillion parameters.
+Each one's maybe a couple of bytes.
+It's less than 10 terabytes.
+But the internet is trillions of documents and that's like millions of terabytes.
+And that's just text.
+And then when you go to images and video, obviously you go like crazy big.
+So like the LLM simply cannot memorize the entire web.
+It has to do if you want to ask it about the web, it can't it has to use retrieval.
+OK, and one cool thing I tried here once was I looked at Wikipedia articles of people
+ordered by popularity.
+So like let's say Albert Einstein was near the top.
+And of course, LLMs know the birthday of Albert Einstein.
+They've memorized that because they've seen him many times.
+However, if you go to like the 20,000th person, like some soccer player, it's not going to
+know the birthday of that person.
+And so you realize that like LLMs, they seem like they memorize a lot, but actually the
+web is gigantic.
+It's really, really big.
+But when you combine an LLM with a search engine like EXA, you could actually do much
+more powerful things like finding cool personal sites of engineers and SF.
+And it actually, you know, it searches EXA gets personal sites and then it analyzes all
+that content and gives you a personalized response.
+Now, this like this was kind of, you know, in twenty twenty two days, this was kind of
+innovative. Now everyone knows that search plus LLMs is super powerful.
+It's a super hot topic. I think what people don't realize is what type of search LLMs
+want. And this is like an interesting insight that still hasn't like proliferated.
+And the inside is that like traditional search engines like Google and Bing, they weren't
+built for LLMs. They were built for humans and LLMs are very different.
+So like humans, this kind of looks like the way you would search on a search engine like
+this GIF. Humans want to type simple keywords because they're lazy.
+They don't they can't type full sentences and they want to find like one, maybe a couple
+links because they're not going to go analyze a ton of information.
+And so Google built a keyword based algorithm for humans.
+It makes a lot of sense. Like Google built a search engine to handle their consumers
+and they've done they did a great job.
+The thing is, though, that like AIs are very different from humans.
+And if you want to build a search engine for AIs, you should do things differently
+because AIs, they don't use simple queries.
+They're not lazy at all. They could instantly output a complex query, specifying
+exactly what they want. And they don't just want one link.
+They want like tons of knowledge. Give me all the knowledge because they can just gobble
+it up instantly. And so to make an optimal search engine for AIs, you really
+should use a different algorithm than Google.
+It would kind of be actually insane if the same search engine that was optimal for
+humans would also be optimal for this very different creature.
+And so we actually realized that we were building us when we were building our new
+search engine called Exa, it was actually pretty perfect for this new A.I.
+world. Pretty lucky.
+And let's just go through some examples like more specifically, like how why AIs are
+different from humans in terms of what search they want.
+So one like AIs want precise, controllable information.
+So imagine. So, by the way, when I say AIs, I'm talking about like A.I.
+products that you guys would all build.
+Like if you're building some, imagine you're building like a tool for VCs to find and
+analyze like company information because they want to go make deals.
+Well, when the VC asked A.I.
+like, hey, I want to I want to invest in something like huge, something that feels
+like Bell Labs. Well, then their A.I.
+tool will then go and search a search engine and it wants to find startups working on
+something huge, feels like Bell Labs.
+The problem is that like search engines like Google, they weren't they don't actually
+give you exactly what you asked for.
+They kind of give you the kind of things that humans click on.
+Like this is a great result for humans.
+Humans click on Reddit. They like people like reading Reddit.
+It's cool UI and or Quora and like looking at the information inside that.
+But actually, I'm just like, give me the information I asked for because I said I want
+startups working on something huge. So give me a list of startups.
+Give me 10, give me 100. Like it needs like a search engine that actually respects exactly
+what it asked for. So like the A.I.
+would search for startups working on something huge.
+It would get a list of startups.
+Then maybe it would look for like, hey, give me people, people's profiles that are
+working on something similar because I want to talk to them.
+OK, well, then the search engine should be able to do that, too.
+So what you want is a search engine that could like repeatedly return exactly what the
+A.I. asked for, as opposed to like a search engine that was like optimized for what
+humans click on. Hopefully that makes sense.
+So that's just one example of how A.I.s are different than humans.
+Another thing, the way A.I.s and humans search differently is that A.I.s want to search
+with lots of context. If you have some A.I. system inside your product and you ask it
+some question, it has a ton of context on you and the whole conversation, like let's
+say it's a chat, it has the whole chat as context.
+Like you should be able to search with all that context.
+The problem with current search engines is they can't like traditional search engines
+like Google, because they can't handle queries that take in like multiple paragraphs.
+They literally have keyword limits, they're keyword search engines.
+And so they'd have to convert your complex context into keywords, which loses a ton of
+information, search those and then return that.
+That's very inefficient. That's not optimal.
+That's not how you would design a search engine if you knew you were building it for A.I.s.
+Whereas Excel can actually handle like long context queries natively.
+And we'll talk about like a little bit how Excel works and why we can do this.
+And so when you ask for like, you know, this is in this query, it's like some text from the
+GP3 paper and like find me some similar papers, some find me papers with similar ideas.
+And like Google would just return like the same paper multiple times.
+That's not exactly that's not what you want.
+That's not what you asked for. Whereas Excel would return actually like similar papers to GP3.
+So A.I.s want to search with lots of context, bigger queries, long, long, giant queries.
+Another way that A.I.s and humans are different is A.I.s want comprehensiveness.
+Like humans, when they search again, they want like a few links because like humans are lazy and
+they don't have like infinite capacity to analyze information.
+But an A.I. does. We now have these systems like test on compute systems like O3, right, that could
+like just like just gobble up tons of information.
+So you need a search engine that exposes that to the A.I.
+So like, for example, if you're again, if you're the VC and you say, hey, give me every startup
+funded by YC working on A.I. and and also give me all the information about them like batch and
+status, like you need a surgeon that can handle that.
+Like like traditional surgeons were not built for the system.
+And to build something that could actually give you like thousands of results, you need to to design
+it differently. And X actually can do this.
+Excel can do this. So those are a few of the ways A.I.s are different.
+I think when you think about it more, you'll realize that A.I.s are very different and it's just a
+completely different paradigm. And so if you want to build a search engine for A.I.s, you should
+build it differently. I think more broadly, one interesting way I've been thinking about
+just like search as a whole is that the space of possible search queries is very broad.
+And like traditional search engines like Google have trained us to only think about this, like
+if you see on the top left, it's like keyword bubble of the space is the gray zone, like all
+the possible queries and the blue is like things that the tools can handle right now.
+And so like stripe pricing over here on the top left, that's like a Google has trained us to search
+like that. Right. But there's actually like many different types of queries that people might want
+to make that go way beyond what Google can handle. And I think Chachabie T. was very
+showed the world this because like their Chachabie T. like queries are very, very different from
+Google. You might like paste your entire code error and say like, hey, find me places on the
+web where people have had this problem and how they solved it. Like that's a query that's very
+different. And if sometimes I forget and I paste that into Google search and I like just can't
+handle it because it's not it wasn't built to handle like these like long paragraph queries.
+And so like those are like a Chachabie T. like queries where it's like explain this to me or
+any sort of way you interact with Chachabie T. But then there are also all sorts of other
+queries that like Chachabie T. can handle. So like semantic queries on the left side,
+it's like people in SF who know assembly language. That's like a semantic query that neither Google
+or Chachabie T. can handle. And actually X is quite good at those. And then there are lots of
+more queries. So there's like super complex queries I've labeled on the bottom right. There's like
+find me every article that argues X and not Y from an author like Z. And you can fill in the blanks.
+But you never even think to search this, right? Because you know that search tools can't handle
+that. So like when you think search, you never think of this. But actually, if search tools could
+handle that, you would search these all the time because you would have like you'd be able to
+analyze the web like any way you want. And it would be magical. And then just more broadly,
+like at the bottom left, there's like just the queries and no one has even thought up to try it.
+So I'm very confident that there are many, many types of queries that go beyond the ones listed
+here that we haven't even thought of because our tools can't handle it. And as we build the tools,
+we think of new queries similar to how like when as we as LLMs get better, you think of new ways
+to interact with LLMs. I think the space of possible search queries is very broad. I think
+that's a really important takeaway from this call for this talk. Okay. And so just the way
+we think about Exa in this space, because there's a lot of like information, there's a lot of noise
+about like the search right now. It's a very hot topic. And it's like, I think it's helpful to
+have this like just like picture in your mind of like, where Exa stands. There's like the search
+infrastructure companies that actually like Google, Bing, and Exa that actually crawl the web
+and index it and process it so that they could expose, so that you could like get information
+from those indexes. And then there are the AI applications that build on top. So like Gemini
+is actually an AI app built on top of Google. It's like an LLM built on top of Google results.
+And like, so Gemini will repeatedly call Google. And similarly, like search GBT will repeatedly
+call Bing and like other AI startups will repeatedly call these search engines. So like Exa
+is trying to be the search infrastructure. And we want to be able to handle all these possible
+queries. That's our goal. You know, we're not all the way there yet. But we're doing we can
+handle a lot of these. Cool. And just like, just just more clearly how Exa fits in, you would have
+like some AI app on the left side. Whenever your AI application needs some information from the web,
+it should form a query, send that to Exa, Exa is connected to the web, Exa sends back information
+that's most relevant to that query. And then you go use that information in some downstream
+processing. And our goal with Exa is like expose the best possible API, like, allow your AI to
+search whatever it needs, like whatever whatever toggles or filters it needs to get the information
+it wants. Okay. Okay. And so now hopefully that you understand the space and our goals.
+I'll talk a little bit about like how Exa works on a high level, and then we'll dive deeper into one
+of these components. So yeah, I mean, when you're building a web search engine, and not for the
+faint of heart, it's pretty hard. Everything is massive scale. But here are the basic components,
+right? So like first, you got to gather your URLs to crawl. Then the web is massive, it's trillions
+of URLs. At least right now, Exa is not going to get all trillions. But you get some large subset
+of those URLs to crawl. Then you have this like distributed crawling system to go crawl them.
+And there are like different formats and stuff like PDFs and stuff like that, that you need like,
+you know, complex crawlers to handle. And then you need to then just simply store it. And like,
+even just thinking about the way we store things is super important. Because if you store it
+incorrectly, it's gonna be really annoying to do like all sorts of batch jobs over petabytes of data.
+So we use S3. And we thought a lot about our storage format. And then we okay, so now you have
+you gather all these documents, that's the easy part. Now you have to process those documents,
+pre process them into a format such that you could retrieve over them later, right? So in like
+the Google case, or let's call it the 1998 Google case, they would like pre process the web into
+like a page rank score, and like a list of keywords that are contained inside that document. That's a
+pre processing step. And then that allows you for you to do fast retrieval at search time. Exa's
+approach is different, we use embeddings. So we'll take your documents in the web and embed them. And
+then so that's the pre processing is converting them into embeddings and various other formats.
+Okay, then once you have this, like you pre process all the documents into some format,
+you have to put them inside a database to ingest into a so in our case, we ingest into a custom
+neural database that we built. Okay, now you have this database, and now you have, of course,
+have to serve it to users. And it's a massive database, and you can have very high volume
+users. So that's pretty complex to serve that too. And like clouds are not they don't not very easy
+to use GPUs on sometimes. So it's kind of complex, but and then okay, so that's the whole system.
+And then you serve that to your users. So that's a general like, broad overview of Exa system.
+Each component here is quite complex. And so I want to dive into one of them. This like rust base
+vector database. So over here, I guess you can't see my mouse, but I'm hovering over that one.
+Cool. So diving deep into this database. Okay, so what is the goal here? So Exa processes these
+documents. And we use an embedding space algorithm. So we take each document, and run it through an
+embeddings model that we've trained. And it outputs an embedding and embedding vector, the same thing
+there. It's a list of floats that capture the meaning of that document. And there's a lot of
+secret sauce that goes into an embedding model that's really good at like precise
+pre processing of documents such that they can be retrieved well. But I'm more interested here and
+after that, where we get, we actually get the list of floats from the from each document. So we have
+billions of documents, and we have billions of lists of these embeddings. And now when a query
+comes in, you have to embed the query and compare it to each of these embeddings of each document
+embeddings, you have billions of embedding comparisons. And that's actually a very important
+and that's extremely slow. It's also really expensive to run. So we have this problem of like,
+it would be ridiculously expensive and ridiculously slow if we just did a naive like cosine
+similarity between the query embedding and the document embeddings. So how do we make this faster
+and cheaper? Okay, so we've, so and also there are like, vector databases to build this kind of stuff,
+but we decided to build our own, because well, one, like any sort of performance gain we make,
+would actually save us a ton of money. So it made sense for us. And we were willing to like build
+versus buy. But also because we don't just want to do embedding search, we want to go beyond just
+simple embedding search and we already have. And so it was the right call because now like,
+because we control our own vector database, we could build on it in all sorts of crazy ways.
+So okay, but to be here, if we're talking specifically about the embedding search,
+so there are a few techniques that make this embedding search faster and cheaper. So here are
+four I've listed, the four major ones. So the first one is we use this training paradigm called
+Matrioshka, which when we train our embedding model, what we do is we train our embedding model to
+output an embedding, but also the first half of that embedding should be a good representation
+of the whole embedding. Meaning if for some reason we cut our embedding in half, we just took the
+first half, you know, that would be a pretty good approximation of the whole embedding. And then
+actually, again, if we cut that half into a quarter, that quarter would also be a good
+approximation of the whole embedding and so on. So like, we would have what we get is like an
+embedding that inside it contains different embedding sizes that each are a good representation of the
+whole embedding, kind of like a Matrioshka doll, that's where the name came from. And what this
+is helpful for, because we don't actually have to serve the full embedding, which would be too slow,
+we would use the lower dimensions, maybe like the 128 dimension vector instead of the 1024 dimension
+vector. And we'd serve that and it would be an approximation of the full vector. All these methods,
+by the way, they're approximations because you could literally calculate the amount of
+operations you'd have to do to do a full embedding search and it's just not tractable. So you have
+to do all sorts of clever approximations. And you do that because you're anyway, because like the
+vector space is not actually like perfectly random. Okay, so Matrioshka is one method where you could
+compress the vectors. There are other compression methods, but Matrioshka is just, we found really
+good. Another technique beyond Matrioshka is like, let's say once you have these compressed
+embeddings, now what you could do is you could cluster them. And you can see here on the top
+right, there are like different clusters of embeddings. One might be like, it's actually
+cool. We could like look at the web and we've like clustered the web and looked at it visually. And
+you see like all the archive papers are on the top left and like all the blog posts on the bottom and
+the math blog posts are like within that cluster. And it's like, you can actually like kind of like
+project the web onto a 2D space into clusters. And the clusters are actually multi-dimensional,
+you know, many hundreds of dimensions, but you could, yeah, you could like cluster these
+embedding vectors. And then when you do a search, you can only search over the clusters that are
+closest to your query. And so what you're doing is you have like a thousand clusters. Let's say you
+only search over the top three clusters. You just save 300 X in terms of speed. So that's ridiculous
+speed up. But again, it's approximation, but it's pretty good. Another one we do is, yeah, even still
+using 128 dimensions or whatever it is, it's too much, it's too big and it's too slow. So you can
+at the bottom left, you see we convert it into Booleans. So instead of having floats, we just
+convert our floats into Booleans. And so now it's like a very approximate, it's shorter and Boolean.
+So it's super approximate, but it's extremely fast. But even then it's too slow because like
+when you're doing over billions of documents, billions of binary compressed embeddings using
+clustering, it's still too slow. And then we, so a lot of the advances or the speed ups we got were
+from like going into the actually assembly and like the SIMD operations on the like low level
+stuff on the CPU to like really optimize it to just get all the juice out of the system that we
+could. We have a blog post on this if you want to see more detail. But I think, so that was just
+like a, I wanted to highlight that component of the system because that's just one component
+of our whole system to build this, to make it work. And every component is like pretty crazy
+and complex like that because when you're doing things on massive scale, you just have to deal
+with all these questions. Okay. Let's see. Okay. So I thought I would then share just a quick
+example of, so we have this like exosystem, like maybe just a quick how you could use it in your,
+oh no, my API, how you could use it in your system. Okay. Let's go to,
+I thought it'd be cool to,
+by the way, like, so we have a dashboard and we have
+like different routes you could use to search. So there's all sorts of different routes.
+So there's search. Actually, let's just go to the homepage and we have this cool nifty thing where
+you can actually just talk to your LLM about how to use EXA. So I would say like build me an app
+to do similarity search. That'll just be helpful for it. So actually like the LLM just, it has all
+the, it uses rag, like local rag. It has all the documentation in its context window and it will
+just tell you how to use the X API. And so you guys could just use this to find information,
+like find similar results or search in various ways. I guess I just want to highlight here,
+like this is the place where you could do searches. I'll just run the search.
+So you get a list of results, like all the data you want. I think what's interesting is the
+philosophy here is we want to give users like full ability to toggle the search engine however
+they want and create their own really like customized search engine. So for example,
+you could choose obviously a number of results, but like different date ranges and domain filters
+and even things like categories, like maybe you only want to search over companies or research
+papers or news articles or maybe you don't want news articles and stuff like that. And so we want
+the philosophy here is we want to give users full control, give the AI system full control to get
+information they want. And it's a very different philosophy from like Google, which is like, hey,
+all consumers are kind of similar. We kind of like want to like abstract away all the complexity,
+but I think because we're serving like businesses and products, we want to like actually let you
+toggle it. Anyway, I won't go too far deep into this, but like a recent endpoint we've
+released recently was this like answer endpoint, which is pretty cool. Like instead of, you know,
+often like AI applications, they don't just want the results themselves. They just want like a
+quick answer. So you could do that and you can get like a streamed answer. Pretty cool. Okay,
+let's go back to the presentation.
+Okay, so that's how we expose our search to our users. Okay, so getting closer to the end now,
+it's helpful to think about where we're going. So like the goal of EXA really is perfect search.
+And what that means is we want to be able to handle everything, like every possible query.
+And I think when you start looking at actual examples, it becomes a lot clearer how cool this
+is. So I wrote a blog post recently where explaining like, what does perfect search mean?
+And so just, I thought it'd be helpful to go through some categories here. So like,
+what does perfect search for people mean? Well, it would mean you could do things like, hey,
+I'm creating a discord of best prompting practices. Like find me anyone who's ever thought
+deeply about this on the web. Like, can you do that right now on search engines? Like, no,
+you can't. But if you could, then you would be able to create communities on the fly,
+and it would bring the world together in beautiful ways. Or like, you know,
+and it would bring the world together in beautiful ways. Or like, who in Berlin has written about new
+search algorithms? So I'm going to Berlin. It's like, Jason would love this, like, right? Like,
+Jason would do a meetup with people. Okay, that's like perfect search for people. Or like, what about,
+oh, I had perfect multimodal search twice. But what perfect multimodal search mean? Okay, well,
+it means like, if I want to find images of shirts without stripes that have cool mix of colors,
+like a Jackson Pollock, I should be able to do that. But actually, with like traditional search
+engines like Google, if you search like shirts without stripes, images of shirts without stripes,
+you'll actually get shirts with stripes, which is crazy. You can try this out on Google, shirts
+without stripes, okay, shirts with stripes. And the reason is because it's doing keyword based
+search. It's not doing like a semantic based understanding. And so yeah, there are other
+things you could do like, you know, perfectly curated music. I would love this, like, find me
+Hans Zimmer like music with a fast beat similar to the song Supermarine, which is a great song.
+Like, you can't do that right now. So there are all sorts of searches that you could, that you
+would be able to do if you had a perfect search engine. Or you could do like crazy analyses,
+like at the bottom right, like, search like analyses of X of like, you know, some topic by
+liberal authors, and then analyses of that topic by conservative authors, and then analyses of
+that topic by conservative authors who used to be liberal, like, you'd be able to like,
+control the information you find in all these powerful ways. And I think people don't realize
+how much like, more like the world's knowledge would actually be in your head, like at your
+fingertips. It's still abstract, I think, like, but hopefully these examples help you see.
+I think one really interesting insight here, that is definitely true, is that perfect search
+requires test time compute. So like, all these queries, I just mentioned these complex queries,
+there's no way they could return in half a second, like traditional search engines were used to,
+because they're just too complex, they require more compute. And very similar to how LLMs
+require, like, like for for simple things, you can use GB 40. But for complex things,
+you need 03, because it just like it fundamentally requires, is a hard, it's like fundamentally
+hard, fundamentally hard search. And so like, X is really thinking a lot about like, test time
+compute search. So what does test on compute for search mean? Well, it means your search could
+sometimes take half a second, but sometimes it could take a minute or 10 minutes or an hour,
+or a day for super complex things. And of course, we want to optimize that as much as possible. But
+but it's just fundamentally a hard problem. So and we have this new product called websites
+that tries to address exactly this. So like, for example, if you want, find me research papers
+about cell regeneration technology, co written by an MD and a technologist, like that's a hard
+query, we could actually handle it pretty well. But it'll take some time to get all the results.
+So if you want 20 results, it'll take, you know, a minute, if you want 1000 results, or all the
+results, it might take hours. But you know, for certain queries, you're willing to wait that long.
+So this is a very different paradigm for thinking about search, this test on compute search, and it
+is the way to handle to get the perfect search. Okay, and then I'm just like, you know, now in our
+story, we started in 1998, maybe 30 years later, is search solved? Is this gray zone completely
+filled with like some tool that can handle it? I don't know if 2028 is the I would say like,
+2028 search will be amazing, like magical. And we'll look back on 2025. I'll be like, oh,
+my god, like they didn't know anything about the world. I still think that there will be many,
+many different things to go beyond. After 2020, there'll be many different types of searches that
+will still not be possible. Because search is a very broad concept. It's not even just web search,
+it's search over any information that might involve like satellite data, and like data that's
+not on the public web. And so I think this is a beautiful mission that will last a long time.
+And similar to like LMS and intelligence, it's like, no matter how good your LMS is,
+you can always do better. I think similarly, no matter how good your search is, you can always
+do better. Okay, and that is the presentation. I hope that was interesting. Oh, great. I think
+I learned a lot more about sort of the mindset that you guys have when tackling, tackling search.
+I definitely need to do some some website work now. I can do some marketing, find some hires on people.
+A lot of fun. I guess I would love to ask one question particular on building these systems.
+I think, you know, I think probably now I've spoken to Glean and you guys, and I feel like
+you guys are the, you two have done the most work in building these sort of horizontal search systems.
+I think there's a lot of people here who are building like very much like vertical
+search systems. Maybe it's over vertical medical records, maybe it's over, you know,
+legal documents, etc. How do you think they should prioritize their development? You know,
+it might not be they should fine tune their own embedding models. It might not be they should
+build their own battery database. But where do you think the low hang fruit is in terms of building
+these search systems? I see. So if you want to build like a like a system over like, like all
+like 100, like 200 million research papers, what's the right way to go about it? I think the search
+problem becomes easier, of course, like the small the fewer options you have, and you don't have to
+use fancy techniques. Like when you're trying to do search over tens of billions of websites,
+100, billions of websites, it's a very different problem. It's very different beast than searching
+over 200 million research papers. So I mean, the hybrid approaches like combining keyword methods
+and embeddings based methods are pretty good for most things. I think it depends you have to think
+about your query distribution, like are your queries like simple ones, like if you're doing
+research paper search, it's like gbd3 paper, or is it complex ones? Like, what's like a paper such
+that people have this experiment setup that feels like this other setup? Like, if you're doing more
+complex ones, you're going to need to potentially train your own models. I think for a lot of use
+cases, it's like a simple keyword plus embeddings based system could work pretty well.
+And then I guess another question was like, how about things like query expansion or, you know,
+like, what we're like, if we had like, you know, 36 months to build something, like what would be
+the kinds of experiments you would be running or pushing these teams to run? I see. Yeah, I mean,
+you could get pretty far these days with like query expansion, meaning like you take your query,
+and then you like expand it into like hundreds of words, and then search a keyword base with all
+those words, and then get the top results and re rank. Like that's another technique that would
+work well. I think it depends on I mean, yeah, that works quite well. Again, like that will not be as
+good as like these like semantic type queries, but it should work pretty well for for a lot of things.
+Cool. Let's jump into a couple of the uploaded questions, and then we can do some live questions
+in the end. I think a lot of people are really curious, like, how do you see yourself different
+from companies like perplexity, or even just like the generic chat, GBT plus search?
+Yeah, well, I think there aren't too many. Again, it comes back to this, like this slide,
+which like we think of ourselves as search infrastructure, there aren't too many companies
+that are actually like crawling the web and providing like a search over it. I think the word
+search has been used in many different ways, like search GBT uses search infrastructure under the
+hood. So like, X can power all the systems, right? Like we want to, we want to be search
+infrastructure that powers all these applications. And so that's kind of like where we stand. I think
+our big insight is where we like, as I've said in the talk, like, we believe that
+current search engines aren't good enough. Like a lot of people are okay, like wrapping, well,
+they used to like, use Bing API, but that's being dedicated. But like, a lot of people are okay with
+like the Bing API. But actually, like, a lot of people aren't because like, because again, like,
+AI applications are very different from humans. And so like, we believe that there are tons of
+companies and we started to see this, that like tons of companies that need like search that goes
+beyond things like the Bing API. So we just want to be like an API that is just the most powerful
+one, the most customizable one and power all these applications that you guys mentioned.
+Is there going to be like a X deep research tool coming out soon? I realized that,
+you know, when I try open AI's deep research, it might cite like 70 documents. And when I use
+Claude's deep research, it cites like 1000 documents, which I was actually pretty impressed
+with. But I think when you shared a little bit more about your, you know, search for humans is
+very much like mean reciprocal rank optimized, whereas I search for AI's actually, you know,
+I want to be able to use all 1000 documents. Like, where do you think exit position is relative
+to things like deep research? Yes, I would say I would stay tuned for that. I think we kind of,
+we've really been focused in the past on like the search infrastructure part and like expected
+others or hope that others would build on top of that. I think what we found is like,
+we could actually build these applications to like deep research on top of our search.
+And so yeah, I would say to a lot of cool releases coming in the next few days and few weeks.
+Exciting. I'm excited to start paying for one more deep research that's gonna cost me $200 a month.
+Yeah. Does exit have any plans on doing things like audio, visual and video,
+like audio and visual models? I thought you mentioned things like playing songs or whatnot.
+I think that's pretty, pretty. Yeah, for sure. I mean, again, like our goals are we want to be
+perfect search over the web and beyond. And so like, all that is part of our mission, I think,
+as a startup with limited resources, we have to be smart and clever. And, and like, you know,
+we have to be ready for when we have enough resources, we could go do images and videos
+because there are a lot like, like the storage costs would go insane. Like our audio costs are
+already insane. And so we will definitely do it. I would say not this quarter, but you know,
+at some point soon. This is a funny question. How does exit figure out things behind paywalls?
+We don't we only we search over things that are not by people.
+Oh, okay. So I guess there's like maybe the solution is like doing like,
+partnerships like I does, but that's a different set of business problems.
+Oh, this is an interesting question. As content creators, how can we make sure that our content
+gets indexed in exit? Is there like such a thing as like SEO in the this new world? Is it just
+prompting myself to say like, you know, put this number one? I think, yeah, yeah, no, it's a good
+question. We don't have like a formal system for that yet. But I think like there will be like SEO
+for AI systems. I think it's a fascinating space because like, what is SEO? Like, well, often people
+think of SEO in negative context. It's like, like, you know, one thing that's beautiful about X is
+like we could actually because we train our model. So we've optimized our system to try to return
+high quality information. So we actually typically avoid SEO. So in a way that Google doesn't. And,
+but we're not big enough yet where people are trying to like super optimize for our system.
+But let's say once we get really big, people are going to be like, oh, how can I hack X? I think
+it's like a lot harder, I believe, to, to SEO hack X, because it's an embedding this base neural
+search algorithm, as opposed to like hacking like a keyword based algorithm like Google. So hopefully
+we're more immune to SEO. I think also just like LMS are smart enough to know what is SEO and what's
+not. And so you can just like classify things as SEO or SEO or not SEO and just like remove those.
+I think Google has like weird incentives where they actually like don't want to remove things
+because they make money more money from it. But like we're very much incentivized just to give
+you the highest quality information. Anyway, it's a little different from your question of like, how
+do you add stuff? We don't have a system yet, but we will. Yeah, because I imagine right now, you know,
+SEO really is about getting the click, but there's no click happening in the exit loop. It's like,
+maybe whether or not data is being cited, whether you have to like own the model that does the
+siting. That's right. I think the whole ecosystem is like shifting and it's like, like that's
+SpongeBob clip and it's, it's not clear how things will turn out. That's what's settled. But I think
+all these things are on the table. Makes sense. Makes sense. Now there's a person asked,
+why not train an embedding model to begin with rather than using the Marioshka embeddings?
+Why not train? Oh, embedding model to compressed? Yeah, you could do that. It's a bit of work. Just
+like the, it's annoying. Like you don't know what compressed, what size you will use in your vector
+database. And so if you train a model for one dimension size, and you'll have to like retrain
+it to be a different size, you could do that though. Also a nice property is if you have,
+let's say you have, so one thing we do is we search over the compressed vector. And then,
+so then we get like some candidates and then we re-rank using the full vector. Because you get like
+imagine a billion things to a hundred using compressed method. And then you take your hundred
+and look at the true embedding size, full embedding, and then re-rank to like get the top 10.
+If you did that with the methods versus proposing, you would have to have two different models to
+output two different embeddings. That would be two X inference costs. So it's like, it also saves
+you inference costs because you only have to pass the document through once. Got it. Got it. Oh,
+interesting. So you just use the larger embedding to re-rank. Do you have separate re-ranking
+models? Like for example, Coheer has the embedding model, but then they also have a cross encoder
+that does re-ranking. Here is, yes, we have two layers. Yeah. Yeah. We have multiple layers.
+Yeah. So like I, every, the optimal system, and this is I think fundamental to search is like you,
+you keep doing like lower, like you keep doing different techniques as you filter from a trillion
+things to a billion, to a million, to a thousand, to a hundred. You should just like use different
+techniques at each layer. And so it's optimal to use like a super approximate thing to get from a
+trillion to billion, then a less approximate method to get from a billion to a million and so
+forth. So the binary embedding, sorry, the compressed embedding, and machro-scan embedding
+to the full embedding, that's only one part of that pipeline. Got it. Okay. Yeah. I guess, you
+know, top 50 over a trillion things might not get you a very good recall. Yes, exactly. Cool.
+As I go over some of these questions, feel free to like use the Zoom's like hand raise mechanic
+if you want to ask a live question. I think we've got like 15 minutes left. Let me see. Oh, how much
+synthetic data generation do you do for things like creating complex search queries? I think
+this is critical. Like the data we train on is obviously, like everyone knows that it's like
+super important. Synthetic data is something we have done recently and have really good results.
+So it's pretty important. Yeah. Especially for like the out of like super out of distribution.
+It's out of distribution because no one searches that way. It's like, I see you're kind of breaking
+out of the blue bubble within this like, you know, huge universe. Like all the LMS have discovered,
+a lot of the techniques that the LMS companies like opening I have discovered apply really well
+to search to. We have similar methods. And so like this whole like 03 teaching itself by trying out
+lots of programs, like asking itself questions and then solving them and then teaching based on
+that. Like we use similar techniques. We're just getting started. But I'm pretty excited.
+Yeah. I'm excited to see the blog posts. I feel like, yeah, you're definitely getting probably
+weirder queries out of some of the other search companies. That's right. Like, you know, most of
+my perplexity searches are like recipes or like how to do instructions. And for you guys, it's like,
+I want every YC batch company that's raised less than 10 million who's looking for a head of AI.
+That's right. Exactly. Do you handle things like authority and recency within the model? Do you
+also have I guess another way to ask this is do you have re-rankers that use additional metadata,
+right? Like authority, relevancy, recency. Yes, for efficiency purposes, better to bake that
+into the embeddings model because like, okay, one way to think about is like, if you're let's say
+your embedding model didn't have any notion of authority, then when you were filtered from a
+trillion to a hundred, none of them are authoritative. So even if your re-ranker is
+the best authority re-ranker ever, it's not going to do anything. So you got to bake it into each
+stage as much as possible. I see. But authority is a hard problem. It's also, I think what's harder
+about this is the subjective problem. What is authority? And like, I think solving the
+philosophical problem might be even harder than the technical problem, which is crazy.
+Yeah. Yeah. I guess, I guess when I think about it, I mostly think about it in terms of like
+searching internal documents. Well, Glean's example is, you know, the wifi password is
+a seven-year-old document, but it's the most authoritative thing ever because it's being
+at referenced a bunch. But I guess on the internet, yeah, you're right. There is like a philosophical
+like, oh yeah. My solution to the philosophical problem is give the user the ability to specify
+their solutions to the philosophical problem. Like you could have like a system prompt that's
+like, hey, this is what I consider authoritative and this is what I don't. And then so you just
+like give full control to the user. You need a search engine that's smart enough to handle that.
+You can't Google something like, hey, like I think like WebMD is not authoritative and I think this
+other thing is authoritative and then search your, like you can't do that, right? But you should.
+And so like I dream of a world where everyone has their own customizable search engine.
+It's also, I think, yeah. And it really does get to philosophy of like almost like freedom. It's
+like, I really like people at the company really think of like, if you give full control to the
+user to specify what they want, you are freeing them from the whatever, like whatever like ideology
+that your search engine, like previous search engines had. Right. So it's pretty big deal.
+I love this. The alignment problem, but in search, I guess. I think, I think the alignment problem
+in search is a huge thing. And like people don't think about it. It's actually, it's a nice way of
+putting it. I do have a cool question. I can't find the, and raise on the phone. Sorry. So what
+is a document for you? Like you mentioned that you're embedding and I guess embeddings are six,
+but taxes varying the left. So do you embed war and peace or is there like a limit? Like
+is there any chunking involved? There is a limit. Chunking is something that's on our mind, but it's
+not like you could do a lot. You can do pretty well without chunking, but chunking is definitely
+important. Oh, interesting. Cause I guess you're not working with like large PDFs. It's like a
+website sort of has a very natural. That makes sense. That makes sense. Yeah. It's like, I think,
+I think many people now are just like embedding at each PDF page under the assumption that humans
+have done a good job organizing pages to be sort of relevant rather than trying to like turn it to
+markdown first and then chunking the markdown. Right. That's funny. You can imagine adversarial
+web where like the first part of the document is very different from the last part. And then like
+it would be really hard to search everything. Yeah. The structure of the way. I mean, a lot of these
+things are easier because the structure of the web is, was organized by humans who are pretty
+reasonable. Yeah. Lots of incentives in the past. Great. With 10 minutes left, I, this is the
+question I ask everybody, which is like, what is a question you wish you, like the audience asked
+you? Like, what is something you think has been really important that we haven't really caught up
+on or, or noticed? This is, this is the test time compute running right now. It's just doing, it's
+just a monkey clapping. Oh, actually let me ask you a smaller question. Would you ever do
+Excel for internal data? We're starting with the search over public data. I think it's hard to say
+how the world will change. You're going to enter the glean market, but I think there's a huge
+market for just like really good search over the public web. Can't your question. Oh, maybe like,
+why hasn't anyone done this before? I mean, like that, like, yeah. What's going on here? Like,
+like why we're like a small starter. Like, why are we trying to, like, we're talking about like
+reinventing search and like, why is no one else doing it? I think like what I've realized,
+it's pretty obvious now, but like, like incentives for like the financial incentives for a company,
+like why hasn't, well, basically why hasn't Google doing this? And I think financial incentives are
+ridiculously important and like Google just doesn't make more money, like significant more money by
+like, like pre-processing their gigantic index in all the ways that Excel wants to. They are making
+$200 billion a year from their current approach. And it's just really hard to shift a company to
+like do a totally different paradigm. And I think this is like a fascinating property of companies.
+I'm noticing as even as we get bigger, it's hard to shift the company in all sorts of ways. And
+like if you're a gigantic company with like $2 billion in revenue for a certain method, it's like,
+it's really hard to even care about smaller markets, but those smaller markets become,
+I mean, it's basically innovators, innovators dilemma. But I do think the search space is
+big enough where like there are lots of winners. And I, again, like that, that San Francisco going
+through an earthquake thing is the right vibe where it's like, I think the, and we're seeing
+this in the news, like the entire search space is shifting. It's unclear how the dust will settle.
+There's obviously everywhere. Yeah. And it's, it looks like, you know,
+search APIs are literally just getting shut down now. I know, like I suppose there's some people
+from deep research on the Google side. They're like, yeah, we need different search APIs.
+And I'm now realizing it is because, you know, they're kind of optimizing for like reciprocal
+rank versus whatever this new thing is, which is like, I actually want a thousand results,
+or I want to do deep research with 10,000 web articles. Right. And the space of possible
+searches, like, like we show with that circle is so broad that it's, it's actually really hard
+for one company to like be the perfect at everything. So it's just, it's like bifurcating
+in all these ways. It's like splintering and there's just like, it's a big market for like
+knowledge. I mean, again, this is a knowledge, knowledge market, right? Big. Jan?
+Yeah. You, you talked about Google not being interested in, in setting something up like this.
+So what is your business model? How, how, how is your company going to survive, you know,
+the fierce competition that exists? Yeah. So the big difference is we don't make more money from
+ads. We sell a usage base like per query. So per thousand queries, you'll pay some amount of dollars.
+And so our, our finance, our incentive is to make people like the search as much as possible,
+like get the highest quality information so that they use it more. Whereas Google's incentive is
+like, you know, making them click on ads like a little bit, right. Like they also need to keep
+the search high quality enough that people don't like still use it. So they're not. So,
+but like they're the, the optimization functions are different. And when you have these AI systems
+that you can optimize towards some objective, the objective really matters. Does that answer
+your question? Are you afraid that some of those big companies will buy you? Well, I guess that
+would be up to me to decide, but I, I want to see this problem through. I've worked in this
+problem for four years. Like I want to solve, I want to solve this. I, at this point, it's like
+my mission in life. So I think because we go, because we have these very pristine incentives,
+like we are very, our, our mission is very aligned with our financial incentives. So it's a very
+beautiful thing. And so I don't want to, yeah, I don't, I don't want to. Search worth paying for.
+Right. I think that's the thing I would love to be able to say, like, yeah, I want to spend like
+a thousand dollars on like LLM compute and $80 on like search compute to do like a report that is
+going to help me make a decision about what I buy or how I invest.
+Let's do the last question. Then we'll let you go. Well, Shurayan. Hey, I just want to do,
+trying to understand more and more about IR. I came across, how would you distinguish yourself
+from Superlinked actually? From what is that? Superlinked. There's Daniels,
+Snowanova's, he worked in Google. Oh yeah. I think they're doing a talk sometime later in the month,
+but they do a lot of like encoders. Yeah, they have an encoder. They do boosting, filtering,
+re-ranking, all of that stuff. And so take a look. I mean, you had a talk on Maven on, on evals
+recently. So it looked kind of similar to what EXA was doing. So we're just very interested in
+understanding what. Yeah, I'll definitely check it out. While you are here, I want to know anything
+you can point us to a blog post or anything about IR, latest in IR. I mean, we have some posts on
+our system on exa.ai slash blog. We'll share a link at the end of like to all the attendees and
+we'll include like, we'll LinkedIn, Twitter, and some blog posts as well. Thank you. Thank you so
+much. Loved it. Thank you. Yeah. Then how can we stay in touch with EXA? Yeah, I will share a bunch
+of links afterwards on what EXA is up to. Now I feel like I just go sort of, oh, I guess one
+difference I'll call for Superlinked is I think Superlinked is more close, is closer to a database.
+Right. The auto database, the auto database. That's right. Yeah.
+Yeah. Yeah. I think the question is if they can store a trillion records. Yeah. Things break down
+every time you do tax. Yeah. I'm excited. I'm excited to hear what kind of more GPS you started
+dropping millions of dollars on. Great. Well, thank you so much. I learned a lot about search.
+I'm actually really curious to read some of these blog posts now. Maybe I'll just, I'll just email
+you offline and just ask for some recommended readings and then we can share that with the
+team. As always. Yeah. Well, thank you so much. Yeah. Thanks everyone. That was so fun. For
+attending. Thank you. Loved it. Follow up in the emails. Take care, everyone.

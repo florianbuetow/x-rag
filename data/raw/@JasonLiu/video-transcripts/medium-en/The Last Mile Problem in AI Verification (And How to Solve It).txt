@@ -1,0 +1,364 @@
+I'm really excited to bring in my friend, Leonard Tang, the co-founder and CEO of Hayes
+Labs.
+We'll talk a little bit more about how to use LLM as a judge in production.
+They'll talk about why single LLM judges fail, talk a little bit more about how we can scale
+things in production, and also talk a little bit more about some of the tinier reward models
+that you've been training in a couple of Askable ones.
+And with that, you know, Leonard, take it away.
+Thanks so much, Jason, for the intro.
+Super excited to be here and share a little bit more about how we think about evaluations
+and judging.
+As Quick Intro, I'm Leonard, co-founder and CEO of Hayes Labs.
+We're all about establishing trust and building a reliability for A applications that our
+customers are trying to ship.
+And we ultimately see trust as being a direct fallout by having really great metrics and
+really great evaluation, and also really great data, in particular, synthetic data to test
+the application.
+So our company is essentially combining both the question of what metric do you apply?
+So what is the judge that you should be creating?
+And also, what is the data that you should be sending to your system to try and tease
+out the bugs and corner cases and the behavior that you may or may not anticipate out in
+the wild?
+So that's the corner sort of what we do.
+It's probably easiest to understand our perspective on evals in contrast to the way that standard
+evals are done today, right?
+So if you are building an AI land, you are probably very familiar with this slide here,
+which is the standard way that people build evals through this sort of unit testing idea
+or golden data set creation idea.
+Essentially you've got the inputs, expected outputs.
+You try and see if the inputs lead to outputs that match the expected output.
+And this is the way that people have been doing evals for forever, essentially.
+We think that's a good start, but it misses a lot in the Gen.EI era, specifically because
+Gen.EI applications are unbounded in the outputs that it can return and also they're very sensitive
+to the input.
+And unit tests are good to measure the behaviors of a finite system with structured outputs
+and structured output space, but they're less so useful for the sort of very legit discontinuous
+fuzzy artifacts that is AI.
+And specifically the main challenge that we see a lot of customers run into is the following,
+where it might look like your AI is doing well on a certain set of inputs, but if you
+slightly perturb that inputs into some augmentation, you may actually end up with wildly different
+outputs on the other side, right?
+And this is the core thing that makes building with AI so difficult.
+We call this the last mile problem, right?
+The set of unknown unknown bugs in corner cases that exists in the latent space of your
+model and the application that powers.
+There's a lot of unknown reliability and risk challenges that are hard to uncover without
+some serious stress testing and iteration, and that's sort of the key spot that we are
+helping customers in.
+So the reason I say that standard evals are insufficient is as follows.
+With a unit test, with a finite set of inputs, you only ever know how good your application
+is on those set of inputs, right?
+Again, if you perturb those inputs slightly, you might actually end up with a very different
+story in terms of how your AI application actually does.
+And this is purely a question of coverage.
+You just haven't seen enough data, you haven't seen enough augmentations and perturbations
+to know how well your AI system will really perform out in the wild.
+You lack the denseness and coverage of the real world production scenarios to understand
+how well your AI is doing.
+That's a key and salient failure with evals.
+The other core thing that we see customers struggle a lot with is what is the actual
+right metric to act as the arbiter of quality on the output of an application, right?
+It's not like we're working in code where we can write programmatic verification or
+check for invariants or actually write proper unit tests.
+We need to somehow look at this unstructured dump of texts from an AI application and somehow
+transform that into a scalar value, right?
+And this is quite difficult.
+The real idea and the real platonic ideal would be to drop in a human subject matter
+expert and have them constantly oversee the application.
+Of course, that's not quite scalable.
+And so the key challenge is how do you come up with a faithful metric?
+And this is what we're going to be talking a lot about today with how we approach treating
+judges specifically through scaling judge time compute.
+I do want to mention that the judges, as we see them, are useful in a variety of different
+ways.
+Of course, you can use judges to power an offline evaluation where you just collect
+some data.
+You collect data through your system and then you score the results using a judge.
+You can, of course, use the judges in production to constantly analyze new data coming to the
+system and measure your application forms out in the wild.
+We use judges specifically at Haze to power our simulation testing, right?
+We basically try and simulate user interactions with broad degrees of coverage against your
+application.
+And we judge the results of your AI app and we use that to feed the next round of simulation.
+And this is the way that we try and solve the last-minute problem for customers.
+This helps essentially bring in a lot of bugs that you would experience in production into
+development instead.
+And that's what we use our judges for.
+OK, but onto the topic of today's talk, we're going to talk about how we create high quality,
+high fidelity, high human alignment judges through scaling judge time compute.
+First, I do want to call out that, of course, it's a good idea to start with a standard
+and simple LLM as a judge, where I'm sure people are familiar, but you essentially prompt
+an LLM to ask it what it thinks about some other LLM output or LLM app's output, right?
+You essentially ask it to act as some sort of judge and translate some text into a scalar value.
+Now, it sounds good in the abstracts.
+LLMs are powerful, of course, maybe we can just ask them to act as a verifier.
+But in practice, we see and also customers see a lot of failure modes and biases with
+these judges.
+They're brittle and sensitive.
+They're not well calibrated.
+They produce kind of senseless scores that are extremely spiky around the edges, right?
+I give you really low scores, really high scores.
+The judges themselves hallucinate a lot given that they are language models themselves.
+And most saliently, I think it's actually very difficult to know when you have a good
+judge that is reliable, that is aligned with the human.
+And the key question here is, of course, how do you judge the judge?
+To see a lot more examples of what I'm talking about here, we actually have an undocumented
+list of all these different failure modes in the link down below.
+We can send this after the talk.
+We don't have to litany of the different failures and sufferings that people run into as a standard
+LLMs as a judge.
+But of course, if we think about what is the most valuable thing in AI today, it is judging, right?
+At this point, it's actually pretty easy to spend a lot of tokens generating something, right?
+Generating text and generating tokens is not the hard part.
+The hard part writ large, not just in AI, is knowing if the thing that you produced, knowing if the
+artifact you produced actually achieves the task that you intended it to achieve, right?
+This is where a lot of, of course, the human labor market will shift in the next coming years, right?
+As the actual start to proliferate within different organizations and enterprises, we'll have a lot
+more stuff to look at and we'll no longer need to like throw interns at different menial
+generation tasks, but a lot of the difficulty will be knowing and steering and auditing the actual quality
+of the output.
+And so, of course, the question is how do you judge these things, right?
+And I would say specifically judging in fuzzy, non-inherently verifiable domains, so not code, not math,
+not simulations, is the actually economically valuable thing.
+For example, how do you know whether a legal made the rights, a lawyer made the right annotations to some
+legal document?
+Or, for example, how do you know that a certain piece of essay writing really meets the standards of a PhD
+student?
+This is the real question of where we need to go.
+So our approach at Hays to solving this broad verification problem is to scale computes.
+So, of course, we've seen at this point different ways of scaling compute.
+We've seen it in the pre-training regime, right, where people just scale up more and more models and more and
+more data and crawl the internet and so on.
+So there was pre-training scaling.
+More recently, of course, we've seen the notion of inference time scaling.
+So, of course, training reasoning models that spend more time at inference generating and thinking and
+reflecting to come up with the final solution.
+And, of course, this has been a lot of the focus of the last, call it seven, eight months.
+I think the real question and where we should really be putting our resources is scaling the judge.
+So not scaling the underlying generation, but scaling the verifier of whatever is generated.
+And I'll explain in this talk the two ways that we approach Hays.
+So if we think about scaling judge, there's basically two ends of the spectrum.
+We can either scale some sort of model to act as the judge itself, right?
+So train a reasoning model to act as a judge.
+Or we can think about fixing the model and building on top of the model.
+So scaling the system around the model, i.e. by creating judge agents.
+There's a lot of approaches that sit somewhere along the spectrum, but these are the two extremes that I want to talk about today.
+So first, I want to share a little bit more about what does it mean to actually train a reasoning model to act as a judge?
+What does it mean to scale judge model inference?
+The reason we want to do this, by the way, is that, of course, standard LM judges are biased and they lack cocaine rationales.
+And they are not quite well calibrated. They're not specific to the use case.
+The reason we train reasoning models is that we can assuage a lot of those pains and get very specific with the sort of criteria that our judge is ultimately going to use.
+The example I'm specifically going to reference here is what we call instance level rubric creation, wherein people have probably used standard LM's as a judge,
+where you'll try and pen a generic rubric in the instruction prompts or the system prompts of some sort of model and apply this rubric across all different examples and hope that it generalizes.
+And that's the standard way that rubrics are treated for LM judges.
+This doesn't really work in high skill, high complexity settings where you actually have to get very precise on any given inputs, the actual desiderata and criteria of that input.
+So as an example, if you were to be an investment banker, let's say treating slide decks for some sort of investment report,
+the sort of quality of the investment may be very different. If, for example, you're trying to pitch a short position versus a long position, right, the actual desiderata and the ideal characteristics you're looking for into these scenarios is very, very different.
+And so you have to apply some sort of different rubrics on each of those tasks.
+The way that we do this, or the way that we achieve these specific rubrics is by, of course, training these reasoning judges.
+Specifically, the goal is, can we generate query specific rubrics? Based on those rubrics, can we then generate rationales that are aligned to each of the items in the rubric?
+And then finally, of course, can we aggregate the scores on each of these critiques for each of those rubric criteria to come to a final numerical rating?
+The way that we do this from an implementation perspective is as follows, right? We're going to essentially train the reasoning judge via RL.
+But the key question is, what is the right reward that will incentivize instance level rubrics? How do we actually get that specific granularity and behavior into our reasoning judge?
+And the approach is actually quite simple, right? We can use a human's ground truth rating of any particular query and the response from the application with respect to the query.
+And we essentially see, can we train the judge with the following reward, which is, does the judge's output, does the score that the judge outputs match the human score?
+And if it does, that's perfect. We give the judge a strong signal, in this case, a one, one out of one. And if the judge does not match the human score, we'll essentially give it a negative one reward.
+And this simple reward is actually enough to incentivize the right sort of feedback to elicit the right specific instance level criteria in the way that we intended on the earlier slide.
+I should also point out that the ground truth can be flexible enough to accommodate different types of scoring tasks. So we can do not just given a single output, give me a score in that output.
+We can also do relative rankings or pairwise rankings or endway rankings where given a query and call it K different outputs, we can choose the best out of the K or rank the best out of the K using the same judge.
+And we sort of mix and match these rewards across these different tasks so that we have a strong general judge model.
+So this is a general practice that we use in lots for different customers and for different settings and for use cases. We have happened to also open source a few very cheap, but still very performant versions of these internal reasoning judges that we're training.
+Specifically, we have changed these two models J1, micro and J1, which are these absurdly tiny judge models. They're 1.7 billion parameters and 600 million parameters each that are trained for the pairwise preference task.
+So, specifically, this is given one query, and then two responses. Can you ask these judge models, the J1 models, to choose the better response with respect to the query.
+And they implement the sort of query specific generation that I was talking about on the previous slides.
+As it turns out, using the methods that we use to train reasoning judges for our customers, we're able to train these tiny open source models that are actually very competitive with models that are one order of magnitude, two orders of magnitude, even three orders of magnitude
+larger than our J1 models. And the specific task that we're benchmarking against here is reward bench, which is of course the gold standard for measuring judges and reward models.
+So reward bench essentially has all these different data points where it's query pair of responses and essentially ask an LLM or ask a judge, which of the responses is better suited for that particular query.
+So as you can see, J1 micro down here scores 80.7% on reward bench, which is comparable with COD3 opus, it's comparable with GPT-40 mini 2024. It beats out TULU 270B, beats out LAMA370B, and of course it does quite a well better than the original baseline model that J1 was fine tuned off of, which is coin three.
+So yeah, again, these models are essentially at least two orders, three orders of magnitude larger than J1, but because of the specific way that we are scaling judge time compute, we're able to match the performance of these much larger models using a tiny 1.7 million parameter model.
+So here we see our 600 million parameter version of J1, J1 nano, do comparatively well as well on the benchmark. So not quite as well as J1 micro of course given it's less parameters, but it matches CPT-3.5 turbo, it matches contextual LAMA330B, it matches and beats significantly TULU 2.513B, and so on and so forth.
+So the actual baseline model that we fine tune off of, coin three, 600 million parameter model scores zero on the reward bench task, but through our fine tuning, we're actually able to boost it by quite a bit, 262.35.
+And so similar pattern here, right, even though we have a tiny model, the way that we are scaling judge time compute is quite specific and quite beneficial for improving the performance of these smaller models.
+And so that's J1 micro and J1 nano.
+So I spent the last few minutes talking a lot about how we can scale the model, right, scale the actual reasoning capabilities and the specific criteria that a judge model will use.
+And this is great. It's really quite impressive how often that such a simple approach can work for different customer scenarios.
+And so the key downside of course in doing this is that you need to be able to have some sort of intuition and taste and ability to train these models very quickly, based on very limited data.
+And sometimes you know you're working with customers that don't have that much data, and you need some sort of alternative that is not, you know, essentially churning a reasoning model.
+And so the broad other approach that we take as a company to scaling judges for our customers is to, again, fix the model that we're calling, but scale the system around the model, or in other words, design evaluation focused AI agents.
+The way that we do this is through a library that we open source to call verdict. Specifically, it is a library for piecing together LLM calls in a way that is specifically beneficial to the judging task.
+And it's a library that we like to say is for scaling just time computes.
+In more technical terms, verdicts, as we see it is a very nice and opinionated and prescriptive declarative framework for building judge agents.
+And it balls in particular a lot from the scalable oversight literature in a safety.
+So all the primitives, and all the architectures, and all the ways that you stitch together the primitives and the architectures in verdict are leveraging the best in class architectures from scalable oversight.
+And this involves things like, you know, on assembling judges together involves self reflecting and self correcting judges involves doing tournaments and round robins and debates across different judges, all in service of getting to an
+unbiased and fully transparent and also easy to audit set of reasoning in ultimate service of producing a final judge score. Right.
+We see that a lot of these ideas allow you to use much less data to configure the judge agents, because there's the strong inductive biases for for architectures that are going to be good for the task.
+Anyways, there's also a lot of other great benefits that verdict brings out of the box.
+It's, you know, it's massively concurrent so you can run dozens of thousands of events through verdict with no problem.
+There's great rate limitings you don't lose any data.
+We integrate nicely with DS PI, if you are using DS PI, both as a metric, and also as a language program. So, what I mean by this is you can use verdict systems for the judge systems as a metric to power language programs through the DSPi framework,
+but you can also use DSPi to compile better verdict agents so it's it's mutually beneficial in a sense.
+And, of course, using a verdict you're actually able to come up with quite strong judge agents that are there soda on benchmarks that require very little data fitting that require very little inference, and are also very competitive with models that are at the frontier
+from the frontier labs.
+We see here, a couple of examples of what verdict systems look like. Right. So it's actually quite easy to pen down a very sophisticated judge system, and just a couple of lines of code, and we'll step through a few examples in a second.
+So essentially you can see here that the core primitives that we have in verdict are accessible call units. These units are calls to an LM.
+And you can stitch these calls together arbitrarily, and what we call a layer form.
+And you can sort of stick them together within layers or across layers and so on and so forth. But again the key thing I want to point out is that the types of units that we support are very much scoped to the evaluation task.
+So here we see, for example, a simple debate architecture, where you have two units to conversation units that we call it, arguing against each other as proponents and opponent for some particular criteria that it's trying to argue for.
+So we stitch this together, and basically run a consecutive debate through three layers, until we come up with a final solution, so you can see the printed architecture graph down here.
+And similarly we have other best of K judges, direct score judges, etc, that are stackable and composable with other units in the same way.
+So we're going to talk more about the way that we orchestrate instruments, these systems, and if they're a GitHub or through our docs.
+So, you know fun architecture aside, the real reason that verticals is worth mentioning here is that it is just incredibly powerful.
+And so, it balances both performance and quality and accuracy of judging with relatively low cost and relatively low latency. Right. And so just to set some context here.
+When we released verdict back in February, the best reasoning models on the market and publicly available were 01 and 03mini.
+And we found that using verdicts, we're actually able to beat out both 03mini and 01 in terms of performance, so judge accuracy, as well as latency and cost on the specific task of expert QA, so expert QA is essentially expert verification of question
+and answering tasks.
+So you can see here that verdicts is at 79.19% accuracy on this task.
+It costs us $51 to run the full set of experiments we needed to run for expert QA so run it just on a single pass of QA.
+01 only achieved 69% accuracy, but it costs over three times as much money. And it's also, you know, 10 times as slow in terms of the latency through the system at any given point.
+So, similarly, you know, while 03mini was a lot cheaper and slightly faster than verdict at the time. It was also over 15% worse than verdicts on the same task.
+And same is true obviously of course for QD40 and Claude 3.5 sonnet as well.
+Again, I think a lot of the benefit that you get out of verdicts, and the way that we scale these judge systems is that we chose specifically the right primitives and architectures that once stitched together would be incredibly powerful for the
+And again, a lot of this comes back to barring great insights from the scalable oversight literature, barring great insights from the debates and persuasion and eval literature, and baking this into a usable framework that anybody can pick up relatively quickly.
+So, of course all of this is work is quite cool just purely in academic and research sense. But we do see customers actually using verdict quite a bit on a day by day basis and of course also using our custom trained reward judge models.
+One specific example I want to call it here is Vogent. So Vogent is a voice agent company that provides incredible agents for customer support and a variety of other tasks.
+So, one of the key examples that Vogent was facing was that to distribute their voice agents across a lot of different industries and verticals and customers.
+There's actually a lot of different idiosyncratic criteria that different customers need to adhere to, right. It was basically impossible to define a single judge or a single evaluator that worked across the board as a single API column for all these different
+use cases.
+And so what Vogent did at the time was essentially users define themselves, what sort of desired and undesired behaviors they wanted to allow and permit their voice agents to do, and do this entirely through natural language.
+But what Vogent soon realized was that these prompted evaluators so they basically ingested the user specifications and turned it into an LM judge with the prompts.
+Vogent found that these prompted judge evaluators were pretty terrible at being well-aligned with human judgments, and moreover that their accuracy was quite poor and unreliable and high variance and ultimately inconsistent for the use case.
+And so this was the core problem that Vogent was facing at the time.
+We ended up demoing Verdict to the budget team a couple months ago.
+And soon they actually realized that they were able to use Verdict to accomplish the intended goal of having very granular and specific rubric criteria that was unique to the actual use case in the customer that they wanted to create a valid response.
+They were also able to use a Verdict system to score and generate rationales based on the instance level and granular rubric criteria that existed for each of these individual use cases and customers.
+And then they're ultimately able to ensemble and aggregate all these different scores together into one final metric.
+Ultimately, we see this sort of as the natural analog of an ensemble unit test in JudgeLand.
+And indeed if you look at the actual architecture that powers the Verdict, the Vogent Verdict system, you can see here that it is indeed an ensemble of these different score judges, where they produce specific rubrics, they score the results based on the rubrics,
+they self-reflects, and then they aggregate all these results finally together.
+And so we think of this as sort of an ensemble of judges or an ensemble unit test, so to speak.
+Ultimately, as a result of this architecture, Vogent saw a 38% increase in the alignment between their judge system and their human evaluators.
+And this is of course a huge step up from where they were at before.
+Cool. So that's all for today in terms of talking about scaling judge time computes.
+As we've sort of seen, there's two extreme ends of the spectrum we can think about for scaling judge time computes. There's either scaling the model itself, or there's scaling the system around the model.
+And in both instances, we see a lot of lifts beyond just making a single LLM call.
+And it is really our belief that this verifier task, this judging task, requires a lot more compute and a lot more thought.
+We are of course trying to push this as much as possible, specifically in non-verifiable fuzzy domains that I really think have the most to be gained from some great AI advancements.
+But I'll pause here and see if there are any questions from the crowd.
+Sweet, thank you for that. Let's jump in. As always, Marion just shared a link in the chat. It's linked to Slido. There you can upload the questions you want if you're answered and add your own as well.
+I think my first question actually is around the Vogent example. Was there fine-duning involved for this kind of task, or is it very much the case that the base CA1 models lost a little bit of prompting and verdict was enough to get those results?
+That's a good question. There's no fine-tuning involved. What there was, however, is essentially a way to do architecture search.
+So, you know, verdict is great. So verdict, the way I like to frame it, it's sort of like a pie torch in the sense of if you are a power user, or if you really understand what's going on, it's pretty easy for you to write the right architecture and do well for whatever task you're going to do well on.
+But it's also often the case that you do not have the expertise that's required to come up with the right architecture from a get-go. And so the way that we solve this is we have a bunch of, let's call it a pool of potential architectures that would be useful after some task.
+There's some data that you can improve it with respect to. There's some metric you can improve it with respect to. And we essentially search over a bunch of these different combinations of architectures and architecture in the pool to come up with the best proposal for the user.
+So that's sort of what was involved with coming up with the Vorgens system.
+Yeah. And when you mentioned this verifiers concept, is it the case that it always has to be a pairwise or loop-wise rating, or can you also still do as-and-fail ratings?
+I asked only because I feel like in the offline context, it's probably easier to create pairwise data. But in the online context, that might look a little bit different.
+For sure. So the J1 models are just pairwise, but we have our own internal reasoning models that are meant for binary tasks or whatever categorical output tasks.
+Verdicts also came in while doing arbitrary outputs. You can basically, I mean, it's just a declarative framework.
+You specify the relative schemas on the input and output of each of the units. And then as long as you have parity between schemas across different units, you can just spit out whatever you like at the end.
+Have you sort of seen a distribution between how many of your customers are using this for offline versus online testing?
+Yeah, that's a good question. So because a lot of our customers are enterprise customers, they are still primarily in development of their application.
+And as a natural result, they're doing most of their evals offline. But there's also some customers that are using our judges in production to collect data and collect analytics about how well their system is doing, and also as guardrails too.
+I see. I see. I guess another question I'm curious about is around the data size. Right? So if I am someone like Vogen, how much data do I really need to have better performance like this?
+Is it going to be, is it like thousands of synthetic data examples? Is it dozens of higher quality human labels? I think a lot of folks don't have a good idea of how much data they need to be able to align a judge model with human preferences or experts.
+Yeah.
+It's a good question. And it does depend a ton on the task as is always the case.
+I would say that anywhere from a couple of dozen examples upwards to a couple hundred examples is probably enough for our alignment purposes. We can go even deeper and even sparser with our data.
+We are actually about to release a new method for basically densifying the reward space or densifying the preference space of our customers based on what of the data they provide to us in a way that allows you to save a lot more data and human
+effort as part of the preference collection process.
+So yeah, in general, it's nothing like, you know, it's not like we're training instructs GPT and we need to collect like hundreds of thousands of examples or we're training like it's Rockets HHRLHF models, but we also need, you know, dozens of thousands of examples.
+I think because the base models are strong enough at this point and they're also constantly improving.
+We really need that much data to align us in that last mile to the final use case.
+See. Yeah, and it is primarily just because of the fact that like, we are expecting these lower volume examples to be already very high quality like I think one of the risks that it will have is they'll just create like, you know, 20 synthetic
+data, and then they realize they can't learn that much but you get higher quality examples with like better, you know, differentiation between like, you know, good and bad.
+How much of the data quality matter in these examples.
+I mean, yeah, it matters a ton, right, it matters a ton.
+So, going back to, you know, sort of the thing that we didn't talk too much about today, but one of the other core parts of the Hayes platform.
+You know, I think the data that is most valuable is essentially the data that teaches you something about your application.
+And specifically something, it teaches you something about how that application failed.
+So the bugs are the most valuable data right the inputs that led to an undesired behavior on the most valuable data.
+So I'm not going to keep parody with, you know, general positive examples and positive tests but I really think you learn the most when your system fails.
+And for this reason, we spend a lot of time generating synthetic data in a way that is intentionally meant to discover the bugs and corner cases right so what we're trying to discover those high value.
+And I think that's one of the key instances of failures that a generic LLM sort of synthetic data approach will not discover. I think this is also true in production obviously, you know, a bug in development is so much easier to fix than a bug out in production.
+And the idea and the philosophy is trying to pull in all that data into the testing process itself.
+So I think it's, it's of course, you know, people should think prudently about what actual preference data they're using for the eval's.
+And I would say, you know, the more adversarial you can be, or at least the less generic you can be the better it is for these case.
+Thanks, that makes sense. Um, there's one question to you that I don't think I can comment on but what is your opinion on deep six grm or self principled critique tuning for scaling judgment time compute.
+I don't know this is if this makes sense to you.
+So, I mean, this is quite similar. You know we said that paper down here, it's similar in principle to how we approach.
+I think it's a great, you know, it's a great general framework. I think there's also like, much more complicated things that you can do.
+But I think it's about the most simple instantiation of a reasoning judge that's one might come up with. And it's a good place to start for a lot of different use cases, and obviously, as the paper showed it does reasonably well on the benchmarks.
+Obviously, as the paper showed it does reasonably well on the benchmarks.
+And I think it's pretty easy to
+reproduce yourself in a variety of different contexts.
+Got it.
+Um, let me see what else there is. Yeah, something I'm curious a bit more about as well. Can you talk a little bit more about the scalable oversight work that you had a cited earlier.
+Yeah.
+So, I sort of ran right through this for the sake of time in the presentation but so if folks are not familiar with scalable oversight is broadly this this research direction that asks in the event of superintelligent AIs, how do we oversee those superintelligent
+superintelligent AIs with much weaker entities i.e. humans right so that's that's that's the origins of scalable oversight. How do you continue to monitor and oversee these increasingly complex and sophisticated and intelligent entities, when the
+the actual overseer is not so capable.
+So that's that's sort of the scale of oversight backdrop.
+So, as you can imagine, a lot of the
+all the solutions that fell out of the scalable oversight project has a lot to do with oversight and oversight in automated sense right so it's it's almost never going to be the case where you have a human constantly looking at a super intelligent AI is the sort of the question
+how do you call in the human to look at this for intelligent or superintelligent AI, and absent of having this this very bespoke and high touch overseer. How do you know when to flag when things are going wrong.
+So that's a great research that came out in the service of trying to do those automated checks. And so that's what I mean when I say we borrow a lot of ideas from scalable oversight so one example is for sure, if you have
+And one way to get more reliable and unbiased judges is to almost always do debates between different verifiers to try and argue for either was a response good, or was it bad.
+And in the process of arguing through these different potential characteristics that would make the response good or bad. It becomes increasingly clearer and clearer whether the response was actually good bad.
+Right. So, you know, if I, as a, as a non subject matter expert, try and look at, for example, if an LM give a correct math proof or something like this, I would have no idea what the, what the, what the right answer is right.
+So if I were to non experts sort of debate each other and try and probe and see where the proof fell apart or if the proof was correct, it would become more and more obvious to me.
+Whether or not those articulations and those debate points really lined up with the underlying generation and the underlying correctness of that generation.
+And the other thing that we often like to use in the octaves that we use to power judges. The same is true for ensembles right.
+And it's just oftentimes more useful to have a wide diversity of models and basically biases in the room such that the biases cancel those cancel each other out in a way that gives you an overall more holistically unbiased example results.
+So, you know, we have a lot of these problems with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the, with the
+teams and setups that scale oversight produce that are obviously useful for the study of monitoring super intelligence, but it's also just useful right now for monitoring the intelligence that we do have.
+And so that's what I mean when I say we borrow a lot of ideas from scalable oversight.
+I see. And it looks like right now like the reward bench.
+Eval for example is mostly around the question answering set of problems right.
+For now, yes, just Q&A, although we also, I mean our customers are doing more than just Q&A it's there to have full agents and we are monitoring the entire traces and so on.
+Yeah, can you talk a little bit more about that because I feel like you know, I made a joke recently that's like, like, even six months ago it feels like most of the agent faces as a system human assistant human.
+But now it's kind of just like the assistant going off for 20 minutes with a bunch of cool calls and coming back to the user.
+How has that changed the way we think about building judges or if at all.
+Yeah, that's a good question. I mean, you can always still apply judges to essentially the input query and the final artifacts in the model.
+And of course it's a more complicated task but with sufficient data, and the right preferences to collect it's more or less the same task.
+What I would suggest of course is applying judges not just on the input and the final ultimate output from the agent but also on every single component of the agents.
+So, if at all there is, you know, a handoff between some component of the agent or a reroute or there is some sort of local work that the agent is doing, you should probably be testing that component pretty aggressively and coming up with judges pretty aggressively
+for whatever behavior exists there.
+This is almost always what we do with our customers too.
+Cool, I guess.
+I was just wondering here, I was like, you know, do you think there is like one core thing that's practitioners are sort of not thinking about enough these days, you know, for example, I think this question is on like when do I want to lean on humans when do I want to lean on
+I'm judges, but I'm curious to hear your thoughts here like what is the question that you think many practitioners are not asking themselves when they're building these systems.
+Yeah.
+The first thing that the manufacturer knows to do but doesn't really do well is the articulation of what exactly they want their agents to do in the first place.
+And specifically what makes a good or bad response from the agent.
+I think we are, you know, for people who are builders they just love to build and sort of build their way towards the right solution.
+And I think that's really not always the right, not always the right process right oftentimes I think product owners have a lot to say, certainly legal compliance risk security teams have a lot to say in what the actual agent should or should not do,
+and I think people should spend more and more time trying to think about the way to articulate that that notion of quality to ultimately be able to implement a scalable and checkable notion of quality.
+I think it's tough but I think it's a skill that everybody will need to improve at, especially as we have more and more agent assistant and co pilots and so on.
+So, again, as alluded to earlier, it'll be easier and easier to produce artifacts, but the the work will inevitably shift towards verifying and auditing but then those artifacts are correct or not.
+Yeah.
+I think some examples like, I know you probably can't go into customer details but like just examples of different industries of like what that actually means I think someone here asked about like creative writing like what is creative writing.
+Right, I know in coding agents, sometimes my coding agent will just delete the tests.
+Yeah, and then that's, that's a successful run but really is, you know, the judge should have been able to catch that.
+I think the nice thing with code though is actually the users of code of the coding agents are able to pretty reasonably and quickly check whether or not the logic is correct right so even though there's like high risk and high likelihood,
+there's this high downside. There's a large downside of failure and also a large likelihood of failure. The, the audit complexity is fairly low, like developers know how to read code, and therefore it's like pretty easy to check whether or not your agent is doing the
+Obviously like it was making like 20,000 line changes, or like 20,000 line diffs and it becomes more difficult, but like relatively it's it's it's somewhat easier to verify.
+There aren't definitely entire categories of tasks where verification is almost as difficult as generation. For example, if you're a lawyer, coming up with annotations or red lines or some legal documents
+to actually check that the annotations make sense requires you to like read the entire document more or less right and have a full understanding of the documents to know whether or not the annotation suggested actually fit within the scope of fit within the
+scope of the document so that's an example which I think you know, with the right assistance, it becomes a lot easier to just make some changes proposed changes, but you still need to have the right intuition expertise to verify those changes are correct.
+Okay, that makes sense.
+Someone asked, well, how do you think about your pricing for his labs.
+That would be rather.
+Yeah, I mean, it's it's just, it's usage based pricing, right, the more test that will run, the more that people hit our judge models and judge systems, the more that we charge, there is also like a flat subscription.
+She did the platform as well.
+Cool, I think we're basically a time we have like three four minutes left. Do you think there's anything else or any other message you want to send to the, you know, listeners leaders.
+Yeah, well, I think, again, I'm always very excited about thinking about verification and judging and so on. I think definitely stay tuned. We're about to release a lot more things in the public around newer and newer judgment and so we have in particular
+So, the next thing I want to do in conversation with Jason earlier is this way to effectively get much denser preferences without having that much human data.
+So, it's a very clever process of relative rankings and so on, and I'm excited to share some of that with the community.
+But yeah, in short, I think this is ultimately the only problem that matters in the eye, right, it's gonna be cheaper, it's gonna be easier, it's gonna be almost zero friction to produce a ton of AI content, but it's a question of like, is that content actually
+And I think that's essentially the problem that we're trying to solve.
+Yeah, the example I've always give a lot of folks is like, you know, I think there's a lot of videos or examples of people making demos where you're able to sort of draw the bow back and loose the arrow.
+But no one really good idea like what it means for the other head its target and evalus is is generally the only way you can find out other other other than that you just sort of monitor turn and loss of revenue and that's that's yeah one step more downstream.
+Great. I mean, yeah, Leonard, thank you so much for this. I've definitely learned a lot. I think I got to read more about the scalable oversight work. It sounds really interesting.
+Yeah, I have not really even thought about this like notion of a debate so this has been very helpful. Awesome. All right, I'm back everyone. Take care everyone.
+Thanks so much, guys.

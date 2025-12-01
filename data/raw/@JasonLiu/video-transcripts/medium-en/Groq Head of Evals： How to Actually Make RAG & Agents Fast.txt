@@ -1,0 +1,764 @@
+For everyone who's participating right now and those who are watching the videos, I want
+to ask, watching the videos, what is the one thing you want them to be thinking about?
+What is the one thing they're going to take away from this talk?
+I would say that speed definitely matters when it comes to agents.
+Somebody who's using an agent does not want to see a flow agent.
+They want to get their answer as quickly as possible.
+People are impatient.
+And I'm going to be sharing strategies on how you can make it faster and make it a better
+experience for your users.
+There will just be one slide that says use Croc.
+All right.
+Let's jump in.
+Take it away.
+All right.
+Hi, everyone.
+For those of you who don't know me, I'm Arush.
+I lead evals at Croc.
+The scope of my role goes from bringing up new models on Croc hardware to working with
+customers to figure out how Croc is good for their specific use case.
+So a lot of the customers who I interact with, one of their biggest bottlenecks and one of
+the reasons that they turn to Croc is latency.
+When they have some sort of agent workflow, they find that when they're using OpenAI or
+Google or Anthropic, their agent workflow is taking like 45 seconds to a minute.
+And they see Croc and they see that we're fast.
+And they're like, please, can you help us speed this up?
+So today I want to dig into a few actionable strategies on how you can reduce the latency
+of your agents.
+And to be very honest with you, some of those ways are not going to include using Croc.
+This isn't going to be a talk where I just show fast inference because that's not the
+only way you can reduce the latency of your agents.
+So a lot of the strategies that I'll be sharing, you'll be able to use even if you don't want
+to use our product.
+So maybe we can start with something about breaking down what exactly I mean by latency
+and what are the key metrics that you should be paying attention to when you're building
+an agent.
+So the first one that, so we have four of them here, right?
+TTFT, TPS, E2E latency and step latency.
+So I'm going to go down this list and I'm going to basically define each one of them.
+So TTFT is time to first token.
+A lot of you guys might know what this is.
+This is the delay from the moment that the user sends the request or the agent decides
+its next step until the very first piece of output starts rendering.
+This includes everything, which is receiving the request, building the prompt, calling
+the model, starting to generate.
+So from our testing, users start to feel frustrated around the 500 millisecond to one second mark
+when it comes to time to first token.
+Unfortunately, that time to first token has sort of been normalized with a lot of the
+larger models that are out there.
+But a lot of more general users seem to think that something is broken if their software
+isn't responding within a second or two.
+The second one is tokens per second.
+So once like text starts appearing, how fast does it flow?
+So at 100 tokens per second, which sounds fast, right, a detailed like a thousand token
+response still takes 10 seconds just to generate.
+This is after TTFT.
+The third one is end-to-end latency.
+This is what the users actually experience.
+This is the total time from the question or the start of when you call your agent to when
+you get your complete answer.
+It's not just the sum of step latencies, which we'll get to later.
+But actually, let me go to step latencies first.
+So step latency is one that you guys may not have heard of before for the stock.
+But in its essence, step latency is how long it takes for one step of an agent to run,
+right?
+So agents work in steps.
+They'll observe the situation.
+They'll think about it.
+They'll decide what to do, do it, process the results.
+So each step has its own latency that can include like time for the LLM to reason or
+time for it to call external tools or APIs and to parse and integrate results.
+And then of course, overhead from state management.
+Right.
+So going back to end-to-end latency, it's not just like the sum of step latencies because
+agents don't always run linearly, right?
+They can backtrack, retry failed operations, refine their approaches.
+A task that could take 30 seconds can balloon to 90 seconds when things go wrong.
+So maybe we can do a little demo of what exactly I mean by these metrics.
+Right.
+So in case you guys don't know, Grok has there, we recently built an agent system called Compound
+Beta, which basically integrates web search and code execution into like the actual LLM
+call.
+So you don't have to deal with like building your own agents and kind of, you know, create
+all the infrastructure on like web search tools, APIs and code execution.
+It's called Compound Beta and Compound Beta Mini.
+If you guys want to check it out, console.grok.com, there's the show.
+One of the only shows we'll have in this talk.
+And then so I'm going to ask Compound Beta Mini, like who is Jason Lu from 567?
+We're going to see how fast it runs.
+That was pretty quick.
+So in this agent, this is like a very simple agent.
+The first thing that Compound Beta Mini is going to do is it's going to figure out like
+what exactly it needs to do.
+So it's going to conduct a search.
+Then after that, it's going to call the search tool, get its results back.
+And then after that, it's going to summarize what it got from the search and return it
+to the user.
+So in total, that took around, how long did this take?
+Yeah, like six tenths of a second.
+Now, if we compare this with Perplexity Sonar, which is another similar compound system where
+Perplexity integrates some form of web search into their LLM and allows you to access it
+by API the same way we do with Compound Beta.
+Still going, two seconds, three seconds.
+By the time you get the full response, which is pretty similar, it's been 11.24 seconds.
+So I want you guys to think, what do you think is going to be like a better user experience?
+Something where the user gets the response back in less than a second or one where it takes
+11 seconds.
+Right.
+Okay.
+So we've kind of illustrated how latency can compound in real agents.
+But maybe let's walk through a more complex example than just a web search request.
+So let's say you have a travel planning agent.
+I know that travel planning agents are kind of overused in terms of for agent demos.
+Bear with me.
+So a travel planning agent can have multiple steps.
+Right.
+And so the first step is going to be to parse the request.
+The agent needs to understand what you're asking for.
+Right.
+That's one LLM call.
+That's one second.
+Step two to three, you're going to search for flights.
+The agent calls a flight API and then uses the LLM to parse results.
+It does the same thing for hotels.
+Searches for hotels near where you're looking for.
+That's another tool call.
+Then it's going to filter options, which is a bunch of internal logic,
+maybe another LLM call or a call to a reranker.
+Actually, the demo here that I'm trying to show is like,
+you're trying to book a flight to NYC from SF and book some tickets to MoMA.
+So then it's going to find museum tickets, which is another tool call and a web action.
+And it's going to draft its itinerary.
+Then it's going to check the cost, refine and format the output.
+This is all like nine steps total.
+And this will take a decent amount of time.
+Let's say the step latency for each of these steps
+can go anywhere between one to three seconds.
+In my notes here, I have that it takes 11 seconds total.
+But that's the happy path.
+What really happens?
+Let's say the flight search returns too many results,
+so the agent needs to refine the search.
+That adds another three seconds.
+The first hotel API call fails and needs a retry, add another two seconds.
+The agent realizes it should also check transportation options.
+That's another four seconds.
+So now we're at 20 seconds, and that's still optimistic.
+I've seen agents spiral into these loops,
+where they're essentially debugging their own queries.
+A 30-second task becomes like two minutes.
+A user does not want to wait two minutes for a response from an AI system.
+All right.
+So the key insight here is that latency doesn't just add up.
+It also multiplies with complexity.
+So each decision point, each potential retry,
+and each refinement step will compound the problem.
+So how do you fix this?
+I'm not just here to tell you guys what the problem is,
+but I'm also here to tell you how you can make your agents actually faster.
+So I have a few optimization strategies for in total.
+So the first one is faster core inference.
+Right.
+You can use a faster or smaller model,
+like Lama 3.370b instead of like GBT-40.
+You can also just accelerate the model itself by quantizing it,
+from like FP16 to in-date, or using like a hosted provider like Brock,
+which uses where we use our own custom silicon to accelerate the model.
+You can use efficient runtimes, such as xLama, sgLang, LLM,
+or you can train like a faster or smaller model to mimic the larger or slower one.
+The second way that you can optimize your latency
+is not actually by attacking the latency at all.
+All you need to do is stream the intermediate steps.
+Right.
+Essentially, the user doesn't need the response as quickly as possible.
+Right.
+They just need to know that something is happening.
+Right.
+So if you've seen deep research from on chat GPT,
+you can see that when you send off like a deep research job,
+all that's, you don't just get like a progress bar that keeps loading.
+You don't just get like a progress bar that keeps loading for a solid 30 minutes.
+You can also see exactly what the deep research is doing.
+Right. Like what websites it's searching for, like what its thought process is.
+This allows your users to understand that something is actually happening,
+and you're not just sitting there looking at a blank screen.
+There's another pattern that I've seen a lot of startups do.
+There's a concept in UX called progressive refinement, where
+the, in the context of agents, this means that the agent will first stream in like a quick acknowledgement of what exactly you're trying to get it to do, then like a rough answer.
+And then it'll iteratively provide like better answers based off of all the data and the steps that it's going through.
+Right.
+For us as developers, this is great if you're, if the audience for your agent is a developer,
+because developers love to see the internal state of any kind of data.
+Of an agent, and for more general users, they see how the agent works and they get an idea of how exactly
+you're providing it with actionable steps.
+How exactly the agent is
+going through the process of solving the user's problem.
+So the third method is parallelism.
+So optimizing sort of an agent graph.
+Right.
+So if we look at our travel example,
+once we know like the destination and the dates for where we're trying to do,
+why are we searching for flights and then hotels and then activities?
+Right. These don't depend on each other.
+You can run them simultaneously, right?
+Three two second operations in parallel takes two seconds total, not six.
+But this requires rethinking your agent architecture.
+You need to map out what exactly the dependencies are.
+What information does each step actually need?
+Often this is much less than you think.
+So there are two types of like parallelism that I like to,
+that I like to implement when I'm making an agent.
+The first one is data parallelism, which is processing multiple documents or search results
+simultaneously.
+And number two is task parallelism,
+which is running different types of operations at the same time.
+Right.
+And then the fourth optimization that I have for like when you're reducing latency
+is using speed improvements to make agents better, not just faster.
+So you've made your agent faster with either core inference, streaming intermediate steps,
+parallelism, or any other form of like speed improvement.
+But you can also invest these speed gains into quality, right?
+If you've cut your latency for your agent from let's say 20 seconds to 10 seconds,
+you now have like 10 seconds of budget to spend.
+So how do you invest it?
+Right.
+You can invest, you can give these, all of these 10 seconds back to the user
+and just make your agent have the same quality, but make it be faster.
+But you can also increase the quality for the same amount of time.
+Right.
+So you can do this by implementing other strategies for quality improvement,
+like best event sampling or multi-path reasoning slash mixture of agents,
+and then more thorough like tool use.
+All right.
+So wait one second.
+Sorry, I'm lagging.
+All right.
+So best event sampling, for example, which is where you ask an LLM to,
+you call an LLM with the same prompt multiple times and you ask it to pick the best one.
+You can also do,
+um,
+you can also do like self-consistency, which is like having the agent solve problems multiple ways
+and then verifying that they agree.
+This catches like many fairly failure modes, but requires two to three times the amount of inference.
+You can do verification loops where after the agent generates a plan,
+you can have it critique its own plan and then revise.
+But yeah, so those are the four methods, right?
+Faster core inference, streaming intermediate steps,
+parallelism, and then investing your speed gains into quality.
+So a few key takeaways for from this talk.
+Number one is that latency compounds, right?
+Multi-step agents will amplify delays, understand your TTFT tokens per second,
+step latency and end-to-end latency.
+Number two is to measure everything.
+So make sure you're tracking each of these different metrics.
+Then you can attack latency on multiple fronts with core inference, streaming, and concurrency.
+And then you can, your speed can unlock quality, right?
+You can reinvest time savings into better reasoning, sampling, and verification.
+I think that's about it for what I have here.
+But if you have any questions, Jason.
+Yeah, I have a couple questions.
+Yeah, let's make sure we give some folks some time to leave them in the chat.
+So again, there's a link.
+You can add your questions there and we'll up with them.
+One thing I'm actually really curious about is, you know, I think
+historically with these, you know, machine learning system that were not LLM based,
+if you were getting latency improvements, you're always going to be better off.
+And I really like this perspective of actually just going back and reinvesting latency gains.
+One thing that was a big issue for the recommendation systems world was you would find that,
+you know, even at a project in like 2019 where we improved the latency of our system by 500
+milliseconds and it was an incremental $8 million in revenue.
+Do you feel like companies, do you think LLMs today are able to do, have those kind of results yet?
+Like, I'm curious if anyone has said, you know, we use GROK and just through latency alone,
+we're making more revenue.
+We have more bookings because things are like working.
+I'm really curious if you've seen any kind of results like that in the wild.
+Definitely.
+I've heard of a lot of anecdotes and I've seen a lot of companies who have switched over to GROK
+and they've started using faster inference.
+They've cut down their response times and they've gotten excellent feedback from their customers
+who have said that, you know, you've shaved off, like the experience of your product seems so much
+better and they've been able to demo these things and like existing like sales calls and things and
+said, hey, we just cut our latency by like 50% and that provided an edge over other competitors
+who had the same product, but it was slow.
+I see.
+Yeah, but it sounds like we're not at a place yet where we kind of know that, okay, if you had a,
+you know, LLM booking agent, if it was 10% faster, there's actually going to be like more bookings.
+Yeah, I don't think we're at that stage yet, but those agents are, even though they've been around
+for like a few years, they're still quite nascent, right?
+Yeah.
+Not enough people or companies know how to build them in such a way.
+Makes sense, makes sense.
+I've seen some, like, and I guess on my RN, but yeah, I don't think we've ever seen any kind of
+real research yet on like how latency affects the bottom line, but forget about that, forget about
+that.
+Yeah.
+Yeah.
+Yeah, let's jump into some questions.
+In terms of the people you're working with, like, what are your favorite tools to measure
+things like latency and how do you embed them into your workflows?
+Is it DidaDog?
+Is it, you know, LogFire?
+Is it BrainTrust?
+What have folks been using recently?
+I think BrainTrust, I think we interact with a lot of startups who are closer to, you know,
+like what the cutting edge is, and I think BrainTrust has been the tool of choice for a lot of
+companies when it comes to like evals and instrumentation around like measuring latency
+and things.
+We've also seen a lot of cases of like larger companies rolling their own instrumentation
+stacks for this.
+Again, it comes back to the point where it's like the industry is very much still
+in its early stages and people don't know what the best thing to use for something like this
+is.
+Makes sense.
+Yeah, I guess what kind of workflows have you seen around the latency work?
+I think, you know, for most of what I've done in the past, it's just been, we track everything
+in DidaDog, we had these group buys, we sort of just tackle things as they come, but do
+you feel like there's any difference in trying to optimize these LLM apps versus these traditional
+applications?
+I feel like with traditional applications, it's much more deterministic what each step
+is and what the latency of each step is.
+And you can provide like proper alerting about, let's say, I don't know, this API is taking
+five seconds instead of the 500 milliseconds that it's supposed to take.
+But with LLMs, it's much harder to kind of figure out
+like how long exactly an LLM call is going to take or how many steps this is going to take.
+So I think it's not as much like alerting, but more just logging and having robust dashboards
+for how long each step is taking or how long your overall agent workflow is taking.
+And trying to go just monitoring that and figuring out
+where the bottlenecks are a little more intelligent.
+Like a lot more thought needs to be put into how latency is tracked and it's still very much
+like an early stage.
+Yeah, makes sense.
+I think even this idea that you can turn on this reasoning and now to figure out like what is the
+budget I have for both performance cost, could it cost more tokens and the latency of these systems
+take a little bit longer.
+Have you noticed any specific domains that are more or less sensitive to these kind of
+latency things?
+Like the example I always give is like e-commerce when they're trying to sell something.
+But I'm curious what you've seen elsewhere.
+I think definitely more in the consumer space, like e-commerce, chat apps, or like customer support
+is like a huge thing that people are going to customer support because they're annoyed, right?
+They don't want to wait even longer for a response.
+Yeah.
+What else?
+I think just generally latency is something that doesn't hurt to have.
+Doesn't hurt to have and like latency in any way kind of pisses people off.
+So having less of it is just generally a good idea.
+That's a good question.
+Can you give an example of what you mean by data parallelism versus parallelism?
+Yeah.
+So for data parallelism,
+let's say you have like 20, you have 20 documents, right?
+And you want to, you need to process them in some way.
+I feel like data parallelism is like a subset of task parallelism, which is very
+determinant on what you're working with.
+How do I explain this?
+Maybe it's a good opportunity to have a data parallelism blog post for a VOD page.
+Maybe it is, yeah.
+We can follow up on that if you'd like.
+Yes, let's do that.
+Awesome.
+Let's do some other questions before we jump into some of the live questions.
+Oh, this is a good one.
+How do you think about things like caching mechanisms?
+I have my own answer, but I'm curious if you would hear your thoughts.
+I think caching is definitely a method that I should have covered in this talk that I didn't.
+But yeah, a lot of providers,
+like there's prefix caching and then there's like actual like
+LLM prompt caching that you can do on your end.
+I think prefix caching is immensely useful.
+So you should be structuring your prompts and like your agent workflows in a way that
+an API provider can have more cache hits than cache misses,
+which means like trying to keep as much of like the large context at the top
+of like your prompts and then any changes that you make, like additional data or things
+should come after like your, after like previous chat turns.
+You can also use things like light LLM to like actually cache identical prompts
+so that you don't even have to call the LLM provider that that can be
+incredibly useful for saving LLM cost and latency.
+What are your thoughts on it?
+I mean, I think a lot of it could be also around,
+like one of the things I like to do is do almost like caching chains of thought.
+And so, you know, maybe in the first time you run this tool, you might have to,
+so not to change the answers to questions, right?
+So for example, maybe the first time I ask a question,
+I have to retrieve 10 documents, genuine answer.
+And if I have some user feedback that says this is a good answer,
+next time that answer is part of the context.
+And the idea is like instead of actually doing the caching,
+and the idea is like instead of actually doing all this reasoning to get the answers,
+like by the way, here are the 10 people context, here's like three baked answers.
+You don't have to reason as much to get the original answer.
+You just sort of like recite, repeat yourself.
+That could be one way of doing it or building a UI that says,
+let me just render those three answers first and then start streaming out tokens.
+And so the idea is that the latency here is, you know, I can have some
+classical code paths that render answers that sort of reduce the time the first token does zero.
+And so at least I'm seeing something on the page before I generate a new answer, right?
+It's almost like showing the links first and then showing the tokens streams out.
+And it checks out.
+So let's also do some live questions.
+So if folks can see the react, you can sort of raise your hand
+and we'll call out some questions that way.
+And then as people are sort of figuring out the hand raise mechanism,
+I'll go over a couple more questions.
+This one is also really good.
+I have some thoughts here, but how far are we from having systems that are so fast and cheap
+that charging for a token won't make sense anymore?
+I think it's different because your GROK will probably
+likely remain in that world for a little bit longer.
+But yeah, I'm curious.
+I think it's going to be a while until that happens because the cheaper and cheaper that
+the tokens get and the faster and faster that the tokens get, the more you're going to throw at
+every single agent or problem.
+But I do think that the cost is going to go down to close to negligible levels within
+two to three years.
+But it also depends on like very hardware specific things because that's like the hardware
+iteration speed is kind of like the bottleneck here.
+The chips need to be efficient enough for it to be for like the cost to go down.
+That's what we're working on with like a V2 chip.
+Trying to just increase the throughput so much that cost just hits the floor.
+Yeah, I think the other thing to call out really two things is once these costs go down to zero,
+again, you can kind of reinvest the latency and reinvest the budget.
+I just say, well, I want to generate like 10 answers and take the mean or something like that.
+Exactly.
+I think the thing that might not be on the inference businesses but on the application later
+is I've seen a lot of companies now price on success.
+So for example, Sierra, they use Chat Boss to do customer service.
+And what they do is they don't charge you whether or not the conversation is long or short.
+They charge you when the ticket is closed.
+And I think Sierra says, we take a dollar every time we answer one support ticket
+and it is closed and the customer is happy.
+And that's actually really exciting because what it means is if they do get all these savings,
+they don't make less money because they're not going any faster.
+And so they use a company like Grok and say, you know what, we're going to do way more complex
+things because all I'm trying to do is close this ticket to get that return.
+And how much things cost in the interim, those are things that we can optimize for.
+And so I think once companies start thinking about pricing on
+outcome, pricing for the results of the work done and rather than the work itself, I think
+it's going to be sort of like another explosion of what is possible in terms of the businesses
+that we people operate.
+I think we're getting pretty close now.
+If I just do like multi-agent simulations and they're twice as cheap, I'll just do four times
+more because my goal is to get that dollar to close that ticket.
+And as long as it's affordable, it's affordable.
+Yeah.
+Manoj, do you want to ask a question?
+Yeah, for sure.
+First of all, thanks, guys.
+Great content.
+Learned a lot.
+I just had a question on all these evals that we're talking about are very quantifiable.
+But take the trip planner example.
+What about the subjective criteria and how do you evaluate that in agentic systems?
+How good is the trip planner?
+What are the evals that you would use for that when there are multiple steps?
+And then related to that, you could have something where you optimize for local
+steps, but the global might change.
+You know what I mean by that is the flight might come in much later or like the hotel booking
+might be, you might miss a museum trip because the flight is coming too late
+because you're optimizing each or something.
+So the subjective criteria and also quantitative criteria that might not
+meet the goal of what you do normally.
+So I was just wondering, how do you evaluate subjective criteria and then
+local versus maximum in agentic systems?
+I think that makes a lot of sense.
+I think the most important thing is you need to look at it on every layer of the stack.
+Right?
+So first of all, you can get direct user feedback on your agent and whether it's
+actually performing the way that you'd like it to.
+The way if you've seen in like chat, they have like the thumbs up and thumbs down button.
+That's the way you can do it.
+But when you're looking at
+reproduction, yeah, sorry.
+I was thinking more about before it goes out live, maybe you don't have a program or whatever,
+but I was just trying to figure out what are the best practices you've seen, especially with
+subjective criteria.
+Let's look at the
+the quantifier.
+I'm happy to chime in as well afterwards.
+Sorry?
+I'm happy to chime in afterwards as well.
+Yeah.
+I think first of all, you're going to need to figure out what model is specific,
+like best for like the specific use cases, like the specific steps within the agent so that you can
+for that, you'd probably try to build your own evals.
+Or first of all, what the trip planner's like original goal is, and then what the goal is
+for each step, like maybe a specific bespoke eval for like finding the best flights given the specific
+piece of data.
+And then, yeah, honestly, it's very much just building subjective, very bespoke evals for your
+for your specific use case.
+I think Jason would be able to explain this a little better than I am.
+But yeah, I think the real call out here is that you just can't do that much reproduction.
+Like you can, you know, there have been companies where they will do and do simulations where
+they'll say, you know what, we're going to make like 45 different personas, or we're going to
+have a rider come in and set up all these sort of hypothetical situations, and then run evals on
+that.
+But ultimately, you at some level, what you need to release is you need to release a simpler
+version of that product and start getting real traffic, because the long tail of failure modes
+are things that are very hard to predict.
+So that's one thing.
+Once you do that, then once you start enumerating these failure modes, what you end up doing in
+practice, you either sort of write some kind of LLM as a judge, you sort of make sure that they
+are aligned with human preferences on whether the quality is good or bad.
+So for example, you know, given a conversation history that happened, can I predict the user
+frustration or how often has the user requested different results?
+How often has the LLM called the tool incorrectly?
+And you can basically do this process of taking the conversation, extracting structured data out of
+those conversations, and then doing the data analysis.
+And it's often going to be the case where you kind of have these plots of, you know, our
+conversations that are very long, do they result in more revenue or less revenue?
+You know, is the number of terms predictive of like customer satisfaction?
+How often are we predicting frustration or assistant errors?
+And really what we try to do is we try to sort of suppress that curve as much as possible.
+But that's usually generally how things have worked in practice.
+It's hard to sort of enumerate these failure modes all ahead of time, just because people
+tend to be really weird when they're talking to these systems and testing the limits of what
+these systems can do.
+Do you have a follow up?
+One quick follow up.
+Is there any resource for, you know, best practices for subjective criteria or is there
+a website that, you know, people contribute?
+Because, you know, these are like the things you mentioned out here, you know, it takes a
+long time to figure these things out.
+And I was just wondering if there's a resource that you guys have come across or if there's
+a site where these are kind of cataloged that that might be an inspiration, if nothing else.
+A lot of it has been tried.
+I actually have documented as much as I can in like my own blog and in some of the cohort
+stuff that I do, but a lot of it has been kind of locked away because they're so specific,
+right?
+Because if you work for a consumer application, you kind of want to optimize for time spent,
+right?
+Like one of the things I'm working on with this, like call voice AIs, like actually,
+turns out voice AIs, they're really good at doing upsells and like,
+so we should start building out like upsell workflows.
+Well, a lot of this comes down to the fact that my goal is to release a product as quickly
+as possible, do data analysis over the conversations that are happening, and then prioritize what's
+going on, right?
+Like we talked about this issue where like, you know, car bookings could be cheaper and
+the flight arrives.
+Well, really what I would do is I would do my data analysis in the call history and go,
+well, this is a 5% problem.
+Right now, we should just add some prompts that say like, we don't handle this case.
+But if it turns out it's a 70% problem, maybe the solution is actually just changing the
+set of tools that we use, right?
+Maybe we have a single endpoint that returns flight details and call bookings at the same
+time, and then we can like solve some parts of that system in code.
+But a lot of it is around prioritization as the research and the product develops,
+and then we can kind of like make decisions post hoc.
+It's really, really hard to predict these things ahead of time.
+Yeah.
+Thank you.
+No worries.
+Mate, Nate?
+I think it's Mate.
+We'll see.
+Mate.
+Mate.
+Oh, sorry.
+Mate.
+Mate.
+Mate.
+Yes.
+Mate.
+So my question is...
+No, no worries.
+I actually, yeah.
+So my question is around, like I guess most people use larger LMS for most of the tasks.
+I've read maybe last year more about these surrogates where you would use a large model
+to trade a small model.
+Some of these tasks might be more like, maybe you're using an LLM for parsing parameters
+from an API or whatever, and you could actually use like a text classifier or even a regular...
+Would you go into that level of trying to optimize latency?
+And then sometimes, because maybe you can get away with like,
+I don't know, fine tuning a BERT or just a smaller model for a narrow use case.
+Is that still a thing worth looking into or not?
+I think it definitely is.
+You want if I take this on?
+Yeah.
+Oh, go for it.
+I definitely have some thoughts on this because I think a lot of the consulting work I've done
+is sort of around this, a team comes up to me and says, which model should we use?
+Or should we use this embedding model or that embedding model?
+And ultimately, it's going to be the case that we're not really optimizing for latency.
+We're optimizing for some high level business objective and we have a budget.
+The real question is, how do we spend this budget?
+And latency is one way of doing it.
+But if we trained our own model, now we're thinking, well, now we've invest our time
+building out these new models.
+Maybe when will the next model come out?
+Is that going to be an issue?
+You know, if we can't host these models on a inference server, do we now own all of the
+inference?
+Do we now have to hire someone who's finding CUDA errors and reading the VLLM docs and
+understanding how to optimize GP utilization?
+And if we do train this model, what performance improvement is worth this other investment?
+Because if you did SFT and your model is 4% better, I might tell you
+maybe this is not worth it because you're going to dedicate a whole engineer to fine
+tuning and doing inference.
+But I think if we wait three months, the next model is going to come out.
+It's going to be a lot better.
+So I really think about it in terms of having this portfolio of budget to allocate.
+And it's really going to be a question of not just is it worth making it faster, but
+is the performance improvement worth the latency improvement, worth the maintenance cost,
+worth the inference cost and stuff like that?
+And so that's kind of like how I try to think about that kind of question.
+But there have been times where we fine tune and vetting models and we get 20%
+improvement.
+It's like, oh my God, we have to do this.
+It's also like a question of iterative improvement, right?
+As long as you're able to ship an MVP, you can always work on optimizations
+like on each layer later on.
+So it doesn't have to be like a one and done sort of thing.
+Yeah, maybe just a quick follow up on that.
+I totally take that point.
+If your goal is to develop an app and that's where you spend your time, but then
+if you're developing a platform where you want other people to develop their rag apps
+and everyone is using the biggest model for each of their tasks,
+there it can be actually potentially a big save because what I see many times, at least
+agents in a company is like everyone is calling the biggest one for everything.
+And then they do get like, you know, 30 seconds.
+So at pretty long latencies and it is a problem.
+Yeah, I think if you're building a platform, I'd be curious, like, what are the actual
+KPIs?
+Right.
+Are we worried that people are going to turn off the platform?
+Is it the case that, you know, they're paying $20 a month and it's costing us $16 an API
+cost and maybe I want to improve margin?
+Yeah, I can imagine there's a lot of different and obstituting there.
+Yeah, thanks.
+Gentlemen, Jason, just a sec, Arush, will you please put the latency slides back up
+for just a few minutes?
+Thanks.
+Thanks so much.
+This is a great question because I think about this all the time.
+Have your evals changed in interesting ways beyond being able to do more evals because
+Grok is so much faster?
+Absolutely.
+Like, Grok's systems can just handle, it can just like turn through so many tokens so
+quickly and having basically unrestricted access to just screwing around with them has
+been like, I've been able to like iterate on my evals so much more quickly when I can
+run an entire MMLU run, which is like 14,000 questions in like 30 seconds.
+So yeah, I've been able to like stretch like the sort of evals that I run and the sort
+of evals that I build a lot just based off of, based off of fast inference because the
+iteration speed is also just so much higher for things like this.
+Yeah, I think they also benefit in terms of sort of getting any kind of statistical power.
+You know, I think if I was to run my evals using 3.0 and with a lazy plus 0.3 with a lazy
+prompt, you know, maybe I can only test a hundred things.
+And so it's a visualization I can make because it has very wide error bars.
+And it's like, well, I can't get into a thousand things because one, it's going to cost me
+$800 every time I run this and every time I run this is going to take 40 minutes.
+Right.
+And so I don't feel good about changing three things in a prompt or changing two things
+in a system and then rerunning these things isn't going to cost me too much time.
+But with Grok, it is the case.
+Well, now I can just test 5,000 things and I have really good confidence whether or not
+things are improving.
+I feel really good about making smaller changes and having things run very quickly.
+I think it has really changed the way we do and think about experimentation and experimentation
+with a lot of velocity.
+Yeah, definitely.
+I'm off.
+Like an, oh, an eval run.
+No, no, please, please, please finish, Arush.
+Yep.
+An eval run on OpenAI's O1 can cost thousands of dollars and on, let's say, Lamaform Maverick
+on Grok, it can cost like two bucks.
+It's like a huge difference of being able to iterate on your own product and on your
+own evals, cost and latency-wise.
+I feel the follow-up to that one.
+Are there interesting user experiences that you are seeing?
+What's the most interesting user experience beyond just getting a response within sixth
+tenth of a second?
+Just simply because you can do so much more within the budget, just like Jason described.
+I have a second.
+I can do so many things.
+What's the most interesting user experience, maybe qualitatively different, that you've
+seen compared to what regular or bigger models can do?
+I think a big one is real-time intelligent co-pilots.
+I'm sure if you've seen things like Meta's Ray-Ban glasses, where they have that thing
+where you can say, hey Meta, and you can ask it about what's going on around you.
+A big issue that they have is that they try to run a lot of their stuff on-device, and
+that leads to basically terrible quality when it comes to actually answering questions.
+And if they have to answer a more detailed or in-depth question, they're looking at a
+screen and they're like, what does this chart mean?
+They have to call out to an API, let's say something like Meta's internal llama API,
+and it'll take a few seconds for the user to get their response back.
+But when you're using something like Grok, the user can get a response back within half
+a second, and that allows them to just have a much better user experience, and you can
+have real-time updating things that every time a user is in front of...
+If you have a heads-up display, you can have a live update of what's happening around you
+or behind you by just continuously pulling Grok's API with data from cameras and what's
+happening around you.
+I'll also add one thing that I'm really excited about is if code assistance can run on something
+as fast as Grok, primarily because I think at some point, the inference to update your
+code might be as fast as the website building or the app recompiling, and I think that's
+going to also dramatically change the ergonomics of building applications.
+I would love a world where I just have a website, it captures the voice, and I just say,
+okay, I can move that a little bit to the left, and it'll just move because the code
+has been edited.
+I have RSI, so I can't code that much, so I think those experiences are really exciting.
+I think a lot of it is the real-time conversations.
+That's a good question.
+Yeah, this might be more of a question for you, Jason, but latency obviously is a potentially
+important metric, as we talked about for certain use cases right now.
+Developers are probably willing to wait a little bit longer, especially since they have ways
+of launching multiple agentic flows at once and stuff like that, but I'm wondering, for
+those cases more out to consumers, there's obviously other metrics, evals, that potentially
+come before, I guess, in your experience, when has latency come in the eval, be folded
+in as part of your eval toolset?
+When does that come into play realistically?
+I don't really think of it internally.
+I feel like evals are now overloaded.
+Usually how I think about these production systems is they have a bunch of plots and
+visualizations, and there's a certain shape of the curve I want to have.
+The question is, does the time spent on this application result in more churn or less churn?
+Is it the case that if your conversations take longer, people are more unsatisfied?
+If that's the case, then latency is really important, but maybe it's okay.
+The other thing is how much time do people spend per session?
+Is it the case that people are getting used to kicking jobs off, or am I staring at the
+screen?
+The way that we perceive latency in Devon is very different than the way that we perceive
+latency in Cloud Code versus even in Cursor.
+There's a lot of product aspects at play.
+I usually think about is it affecting churn?
+Is it affecting time spent?
+Is time spent predictive of revenue?
+Maybe that's too business-focused, but that's generally how I think about these kinds of
+things.
+Really what I'm looking at are not evals where I have conversations that are passing and
+failing.
+I'm looking at session time versus churn rates.
+There are people who are taking too long, just more unhappy, or they're even happier.
+Those are the things that really matter to me, especially in these cases where agents
+are doing things like sales.
+Latency really, really, really matters.
+But if it was a call transcript follow-up, maybe it doesn't matter as much.
+I like booking systems, for example.
+I'm used to having someone take an afternoon to book an entire trip.
+It's okay that maybe the AI takes 30 seconds.
+There's a sweet spot per application for every kind of consumer app.
+It sounds like it's important for PMs to potentially define that metric and measure that over
+time in production.
+It's effects on other more important metrics.
+These are all inputs to predict satisfaction, churn, revenue.
+Sometimes it doesn't matter.
+I think we have four minutes, which is pretty solid.
+We have another talk coming up in maybe 10 minutes from now.
+I will make sure we get everyone some time to take a break, get some water, go to the
+bathroom.
+I mean, thank you, Arush.
+I feel like one of the big things I'm taking away is really thinking about this.
+How do we reinvest that latency back in the system?
+That's been a pretty good insight upon bringing that back to everyone else in the cohort.
+I guess before we go, Arush, is there a question you wish we asked?
+I think most of the questions are actually quite good.
+Yeah, I think honestly, you guys asked a lot of great questions.
+Thank you, Jason, so much for setting this up and being a great co-host.
+Thank you so much.
+Thank you.
+I appreciate your time.
+I hope I'll see you in Palo Alto.
+All right.
+Awesome.
+Take care, everyone.
+We'll be back in like 10 minutes.
+Bye.

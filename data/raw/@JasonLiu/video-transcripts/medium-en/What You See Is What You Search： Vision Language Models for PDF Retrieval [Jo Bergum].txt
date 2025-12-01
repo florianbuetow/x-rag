@@ -1,0 +1,679 @@
+I think I was in your first court as well, and I was got a lot of great questions.
+So I'm hoping for that today as well.
+I think there was a Slido link posted on your Slack so you can get your questions in.
+And I'm Joe.
+I work at Vespa and I'll talk about what you see is what you search and using
+vision language models for PDF retrieval.
+Yeah.
+So I'll give a quick introduction, talk a little bit about indexing and searching
+PDFs, quite popular for a rag to handle PDF formats.
+It turns out a lot of important information in those document types.
+Talk a little bit about vision language models.
+Most of you probably played around with them.
+Then I introduced you to cold poly.
+So that's a retrieval model that's based on using vision language models.
+And talk a little bit about scaling that to larger collections in case you have
+millions of PDFs, a little bit about rag with the LMS and then some Q and A.
+So you can ask all the questions.
+PDFs is like messy, right?
+There's a lot of different formats, exporter tools, lots of different information,
+layouts, some of these even aren't really text, they're just an image embedded in
+the files, so that's kind of challenging.
+So it's always been fascinating to try to build search over PDF documents, right?
+And it has also a lot of like really important information in the visual
+clues, tables, charts, and as I said, embedded images.
+And of course, when the whole rag wave hype started, there were like lots of
+demos, like chat with your PDFs.
+So it's kind of been popular for some time.
+So you need some kind of extraction pipeline here to extract data.
+For example, if you want to use text search or embedding based search or any
+type of search solution, you typically have to transform your data into text.
+But this process is quite messy.
+There's probably, there's probably like hundreds of different tools that tries to
+extract information out of PDF documents, but there are several issues with it.
+For example, embedded images, the whole thing here in the yellow line is
+actually an embedded image.
+It's difficult to extract that information without having a OCR pipeline.
+Also typically the ordering and the layout or the font size that could emphasize
+the importance, it's not really well extracted when you use some of the, at
+least some of the bad part, PDF parsers.
+It's like example of the nice looking document on the left side and the right
+side after going through a rough text extraction routine.
+So the whole kind of the word, the first words here, sustainability is not like
+the first word in the extracted text.
+And that can have like impact on embedding search or even text search, like with PM25.
+In any case, why are we extracting the text in the first place?
+So why are we doing that?
+That's because historically you had to do that in order to use a text search engine.
+Right.
+And if you're using like a text search engine, like Elasticsearch or RESTPAR or
+anything, you still have to map the text data so that you can use a text search
+index and now with more popularity around embedding, embedding based retrieval,
+vector database and so forth.
+Then you're in addition embedding the text.
+Right.
+And then there's a lot of different other models, FirstBlade, OpenAI,
+lots of different models.
+And also such an interesting area where there's a lot of money and a lot of
+investment in extract, right?
+There are a lot of technologies.
+There's a well-known project called Appasha Tika that is
+handling multiple different formats.
+There are several companies, right, funded to solve this problem.
+You have unstructured, then you also have from the hyperscalers, you have
+different type of solutions, you have Lama Cloud, so it's like really hot area.
+But in terms of that, vision language models are also pretty good at reading
+screenshots of PDF documents and vision language models, I think was the most
+exciting development in 2024, like last year, and so much happened and really
+I would say dramatic progress.
+And broadly, like BLMs are defined as this multi-model that can both take
+text and image as input and then generate text, right?
+So you can give it an image and ask, for example, what's in the image,
+and then have the model answer.
+So there's a great introduction blog post from the excellent
+Huginface team linked here.
+I will share the slides with Jason afterwards so we can link it up to
+the course material so you can click on the links and also the frontier models
+like GPT-4, 4.5, Gemini have really great vision capabilities.
+And I talked about last year, 2024, there was like a lot of progress, right?
+The early days to like able to search for cats on the internet and you're
+doing embedding based retrieval, then OpenAI came with a vision capable model.
+And after that, the last part of 2024 was just wild with lots of different
+models from providers, closed source, also open source alternative.
+Where, by the way, 2025, this last slide I made last year, accuracy is like
+different types of tasks, like image classification or OCR type of tasks.
+And lots of progress on this.
+And one of the models that was released last year was PolyGemma.
+And this was Google's kind of cutting edge, open weight, not open source, but
+open weight visual language model that's been trained and have these
+kind of OCR capabilities.
+You can, for example, use the question answering on the right side here.
+There's a demo from a Huginface space demo where I've given it a
+screenshot, a PDF page.
+Like the entire page in a PDF.
+That's one input.
+The other input is a question.
+Like what is the percentage of produced water that is reused?
+Then it reads this information and comes out with the answer.
+But that's given one page.
+And I think this, for example, is also using an open source model from Qwenn.
+And similar, I give it a image.
+It's quite advanced.
+And I think I asked it like, what is going on in this image?
+And it outputs this and explains the image in a really well way, because
+this is like I take to my manager and say, Hey, you know, we did this
+optimizations, present this data.
+It's a really lot of things going on here.
+And the VLM basically perfectly explains what's going on in this image.
+It compares these lines, it defines what they are.
+It also says that the latency have decreased a lot, indicating improved
+performance, and that's exactly what this graph is showing.
+So I was mind blown by all the progress VLMs had in the last year.
+Then talk about Co-Poly.
+And the researchers behind Co-Poly realized that we have these really
+powerful VLMs, so maybe we can try to replace the text only embedding models.
+Right?
+So open AI embedding models or Coheer, previous generation text embedding
+models that takes some text input and then produces a vector representation.
+What if we can just take a screenshot and use the VLM as the kind of backbone
+to produce the vector embedding.
+They also argued that in this industry, right, you have all these kind of
+messy PDFs and the performance bottleneck is typically in the extraction process,
+not so much in actual choosing the embedding model or VM25.
+And I think everyone that has tried to do PDF search can testify that
+extraction is really important.
+But with Co-Poly, you essentially bypass all of this because you're not going
+through a text extraction routine.
+So they illustrate this in the paper on the top here, they said, okay, you have
+a PDF, you have to do text extraction.
+And in order to identify if there are embeddable images, things that you
+can't extract text from, you have to do OCR.
+And also you would like to do layout detection to figure out where the elements
+are actually laid out on the page.
+And then you can put this into a vector database or a search engine by
+cast this capability and then perform retrieval.
+And they say that, okay, let's just take a screenshot of the page, give it to
+Polygamma, obtain some vector representation and perform a similarity
+calculation over this data.
+So that's for me, when I saw this, it was like, wow, what are you just
+embedding the screenshot of the entire page?
+Like you don't have to do the text extraction at all.
+You don't have to deal with chunking.
+There's probably millions of hours worth of videos on YouTube, right?
+Dedicated to chunking, chunk size, split size, whatnot, right?
+Here it's just bypass that.
+So I was like really intrigued when I saw this paper and copoly is short for
+contextualized late interaction over polygamas.
+That's a lot, right?
+So let's try to break that down.
+It builds on two concepts.
+It uses the embeddings to obtain multiple embeddings out of one page.
+And that's the, that's the contextualized embeddings.
+I'll talk, give more concrete examples here, but take the screenshot of the
+page and obtain these multi vector representations.
+And then similar for a text query, you do the same thing and then you also
+obtain multiple vector representations.
+And then there's the late interaction part here.
+You can do both of these like independently.
+And the scoring is about the late interaction between the representations
+of the credit text versus the page, the page screenshot.
+And I can call this like a by encoder architecture because of this, because
+you can take all your PDFs, run them through this model and obtain the
+embeddings and then do that offline.
+And at the online stage, where there's a user using your system, you encode just
+the query and you don't have to encode the document.
+That's why it's called a by encoder or a two tower.
+It's also popular to call this kind of architecture.
+But one more difference from embeddings from Coheer or OpenAI is that here you
+have multiple embeddings representing the query text, and you also have multiple
+embeddings to represent the screenshot of the page.
+And to summarize Co-Poly, what's the key things about Co-Poly is that you can
+perform this kind of matching and retrieval without actually doing text
+extraction, you avoid an OCR in your document processing pipeline, you don't
+have to do any kind of layout detection.
+So it greatly has a great potential to reduce the complexity of your
+document processing pipeline.
+And also as the paper demonstrate is that you can also get better relevancy,
+at least on this benchmark that they demonstrate on.
+And I think it's like really strong future direction because you avoid all
+this complexity and it's also is the method that generalized to a lot of
+different formats, right?
+So essentially can you print it?
+You can also search it, right?
+So I think that's very powerful in terms of like, if you can render it on the
+page, you know, operator from OpenAI and things, what you're seeing on your
+page and the text, if you can screenshot that, run it to Co-Poly is essentially
+searchable without having to deal with different types of formats, just taking
+the image.
+So let's go a little bit into the real details of Co-Poly.
+The underlying vision language model takes a screenshot of a PDF page, not
+the whole document, but one page at a time.
+And it essentially divides this image into what they call patches.
+So, but you can also think about like a grid cell and one page essentially is
+1024 cells and each of these cells or patches are represented as a vector,
+128 dimensional vector.
+And if you, for example, do a text query with six, or sorry, you also in
+addition, they do add a prefix.
+So it turns out to from 1024 into 2030 vectors because they add a token
+prefix, which is describe the image and they obtain the embedding.
+So this is kind of a situation that each of the areas or each of the cells are
+represented as a vector and you do this on a per page level, not the whole PDF.
+So if you have one PDF, you first extract all the pages and then you run each of
+the pages through Co-Poly and then you obtain these multidimensional tensor
+with 1030 vectors.
+And on the query side, you run it through the same vision language model.
+Remember you can both input text and image and there you also have the same
+dimensionality, so each of the query tokens are in the question or query is
+converted into a 128 dimensional vector.
+This is the same.
+And they also do some kind of query expansion there to expand the
+query so you have slightly longer.
+Also it's actually token.
+So after you tokenize the text with the tokenizer that is associated
+with this public MIMO.
+In the bi-encoder architecture, you have the document side representations
+and you have the query representation.
+And the scoring is what is referenced as the kind of late interaction and
+late interaction was actually introduced five years ago by the same author of
+the DSPy library and the benefit of this is that this kind of scoring mechanism
+has, is easier to train, to learn this kind of representation and it takes,
+I think the next slide actually explains it a little bit better, but you do a lot
+of dot products between all the query tokens and all the patch embeddings.
+And then you take a sum over all the query tokens.
+So this is tries to illustrate the maximum similarity function that is used
+and it's called late interaction.
+It essentially calculates a similarity matrix between all the query token
+vectors and all the patch level embeddings and finds the maximum patch
+similarity for a query token.
+In this example, we say that, okay, we have four patches with vector
+representation and we have two query tokens and then we, so water here is
+represented as a vector one, four, a two dimensional vector, then we calculate
+the dot product between the water vector with all the patch vectors.
+So that in this case is four dot products.
+And then we pick the maximum score to represent the score for water.
+And then we do the same thing for recycle.
+There's a different vector and those are contextualized.
+So the, if you change the order of those words, the vector representation
+will be different.
+Same thing, you calculate all the dot products and then you find the maximum
+and the final late interaction or maximum is the, is the sum of these two.
+And if you have six query tokens, then you will have to do this
+process like six times.
+So that's the kind of overview.
+The great thing about this is that it gives you explainability on
+a per query token basis, right?
+If you map everything of the entire page into one vector and all the
+query tokens into one vector, you can simply just say something, okay, it
+was retrieved, we have no idea why we can just hand wave in the direction
+of how the model was trained with this late interaction or maximum, we can
+actually inspect what are the areas of the page that each of the tokens,
+query tokens are attended to in the scoring.
+So it gives you also, in addition to being a quite good retrieval model,
+it also gives you the expert aspect, which can be handy in some cases.
+And then theoretically, you just perform this.
+If you have a collection of PDF pages, you score all of them, the same process
+as you do with the regular search, right?
+But there are ways to optimize this kind of process using different types of
+techniques, but you have this scoring that you calculate the maximum for this
+page, for this page, for this page, for this page, for the same query input.
+And then essentially just sort them by this score, the late interaction or
+the maximum score.
+That's essentially the same thing that you're using with Elasticseq or Vespa
+or others, you're scoring these documents and the score is a proxy
+for the relevancy to the query.
+Then there are techniques to accelerate this to avoid having to linearly
+score all of the documents in the entire collection.
+And so where did these vectors come from, right?
+When you have the polygama model, you have to have label data to
+train these representations.
+So what the authors did in the paper is that they took the polygama model, the
+base model, and they froze it, meaning that during training, they don't update
+the parameters, then they have this adapter, almost like a LoRa adapter.
+And that's what is trained during the training process.
+And this kind of updates the weights, but in order to do this, you have relevancy
+and the relevancy data is typically a query, a page, and if that page is
+relevant to the query or not.
+And then you have typically 10 to 20,000 examples like that, that you can actually
+train, and this also gives you the possibility to fine tune polygama for
+your specific domain, potentially using synthetic data.
+And how does this compare with traditional methods, right?
+Chunking, DM25, vector search, and they also introduced this Vidoor benchmark,
+where they compare with different other types of models on different types of
+datasets, this table is a little bit, it's a handful, but you can notice, for
+example, the blue highlights datasets that essentially regular text extraction
+methods doesn't work at all.
+Because these datasets contains infographics or embeddable images that
+you are not able to extract text from.
+So in the result table here, they compare a traditional keyword search
+scoring mechanism, DM25, that you will find in historical search engines and
+compare it with relatively good embedding model from BGE, call M3.
+So you get some numbers there for NGCG, then they compare using both text
+extraction plus OCR, then you can see that you suddenly get results because
+then you're able to extract some of the text.
+The bottom line here is that call poly out before these different types of
+methods on these datasets and with a large, rather large margin, I would say.
+And then on the right side, there's like these different datasets.
+They're not so big.
+So it's like not millions of pages.
+And also it's, so most of the datasets have like 500 documents.
+So it's, that's a weakness, I would say, with the benchmark, but in terms of
+relevancy, you go for the text extraction, you go from NGCG score of around 6.6.
+Oh, sorry, 66 and you go to 81.
+So that's a rather significant improvement.
+Even for the datasets where BM25 and embedding model is also doing quite well.
+If you, for example, look at health and you can see a standard BM25 gives you 82.
+But call poly that is just operating on the visual representations gives you 94.
+Right.
+So even if you don't have a lot of figures or things like that, it's
+actually working pretty well.
+But still this is on your data.
+Sorry, on this benchmark, you have to figure out how it performs.
+If you want to have a little on your task and your, your domain,
+I think that's, that's important.
+And these are some samples from this benchmark, like what type of documents
+are in the, in the samples gives you an idea of what the data looks like.
+All right.
+So it's quite complex.
+Some of these, these documents more samples.
+So there's like a big diff mix of PDF pages.
+There's some of them are clearly like scanned records, even with handwriting.
+And some are like fancy financial reports with lots of different visual information.
+Yeah.
+So it covered like BLM's call poly.
+I talked about the scoring function.
+I can talk a little bit about how to scale copoly to if you have millions of documents,
+right?
+Because as we said here, you have a lot of vectors, right?
+Because each of the pages are represented by 1030 vectors.
+Right.
+So that's a lot of vectors.
+And this is the math involved in the, in the copoly maximum calculation.
+So they compute because you calculate all these dot product is it's quadratic.
+Almost like the attention mechanism in a regular large language model.
+Storage part scales with the number of documents you have.
+And the number of cash vectors and the vector denied.
+So these are the kind of parameters.
+And of course you have to do inference as well, but I ignore that.
+You have to run inference with the actual model to obtain the vectors.
+But I usually deal with the things that this after that.
+So I ignore it.
+So there are a couple of things you can do to scale this.
+You can one, you can reduce the number of patch vectors and you don't have the
+explainability feature because then you're saying that in the image, there's a lot
+of areas that is not really important.
+That is why that is overlapping.
+So you're basically clustering them so that you can represent one page with fewer
+vectors.
+You can also reduce the position of the vector.
+So you have in a normal way, you have a lot of float vectors, four bytes per value.
+You can reduce this and that reduces storage.
+For instance, you can use a bit even instead of a full float, you can use a bit that
+gives you a 30 X reduction in the memory or storage footprint.
+You can also scale the compute by replacing the float dot products with a binary
+similarity metrics, meaning, for example, using an inverted hamming.
+And this also improves compute by four X.
+So that's how you can scale this and make it more efficient.
+And this compares performance latency using float representations versus using bit
+representations.
+So you can almost four times faster.
+But the most important part here is that you reduce the storage requirements by 32 X.
+And this is, I think, is cool because it turns out you don't need all those float
+information to encode this data accurately.
+And in the call on the in the VDOR benchmark, doing this kind of quantization doesn't
+really hurt relevancy accuracy.
+So when you start doing things like that, you have to also evaluate like if there's
+an impact on the metrics and then you can use approximate techniques like put this into
+a nearest neighbor index and do kind of a cascade retrieval or face retrieval and
+ranking. So I won't touch on that in detail.
+You'll find information about that from multiple different vendors of how you can
+put this together and also invest, but you can do this so that you can scale even to
+two billion scale data sets.
+So I'll talk a little bit about RAG with VLM because with VLM you can build
+the entire RAG pipeline.
+But the thing is that then you have to have kind of a visual capable LLM for the
+generative stake of the RAG pipeline.
+So there you typically use Colpaili as your kind of candidate retrieval.
+And then you retrieve pages and then you put top K or into the generative model and
+have it summarize what you can do.
+Here's an example of a RAG where I use the Gemini AI Studio, upload it one big PDF.
+That PDF is like 35,000 tokens and ask it the question.
+Right. And internally, they're using also the same technique when you're uploading a
+PDF, they're converting it to images and giving all those images to the model.
+And nowadays they have longer context window than before.
+So if you have a single PDF, you might not and you can afford it, then you might not
+have to have Colpaili or retrieval stage at all.
+But if you have many, many PDFs that you want to retrieve over, then it becomes relevant
+to filter information and not input everything to the generative stake.
+And also there's an interesting benchmark called MML long benchmark.
+And they find that VLM are better at answering questions about pages and complex pages when
+they're giving a visual representation of the image instead of going through text
+shrunking OCR pipeline.
+So I think that's also interesting that they can actually answer questions better when
+they're giving a screenshot of the page than when they are giving extracted text extracted.
+Yeah, I'm more on the question is more like, does it work from my data or how does this
+compare with ABCD?
+You have to evaluate.
+The model is snapshot trained on certain specific data that might not match your domain.
+But there is an interesting direction, and that is to fine tune Colpaili by using
+syntax queries.
+I think Jason, I think some of the first tutorial material you had was around synthetic
+queries. So that's essentially taking your corpus, running it to a capable VLM model
+and have it generate questions about the pages and then use that as the relevancy data to
+fine tune the model.
+So that's how you can go about adopting Colpaili or the Colpaili architecture to your
+domain. And better if you actually have real production queries, you can use that too.
+And nowadays with more capable VLMs, it's also easier and also lower cost.
+It's also easier to generate good relevancy data that you can actually use to tune or
+fine tune Colpaili for your domain and your type of documents.
+Can't you use just a frontier model for this?
+Yes, you can use a frontier model for this as long as you can fit everything into the
+context window of that model.
+Colpaili is about taking the capabilities of the VLM and scaling that to larger scale of
+collections where you cannot really upload everything to the frontier model.
+Right. That's the case.
+I think it's a very promising direction.
+I'm hoping to see more checkpoints.
+I'm hoping to see more embedding providers provide embedding models for specific domains,
+for specific file formats based on VLMs.
+So I'm hoping to see like legal PDF embedding model based on VLMs, like more general
+checkpoint. I was hoping for that, but I think Voyage was in that direction.
+But they got acquired by MongoDB this week.
+So I'm hoping to see someone else step up.
+And there are a lot of new VLMs, new models coming out.
+But of course, this is also you have to run Colpaili, then you have to run it with
+Transformers library.
+So there's some set of calls.
+It's not like easily available behind a nice looking API.
+That's probably the biggest downside of Colpaili.
+But Voyage, their latest embedding model, is also able to encode images in a pretty
+good way of PDF documents, but still not perfect, but it's a step in the right
+direction. I also have some resources and you can check out.
+I did a lot of content around Colpaili because I was really excited about this
+direction to be able to search in this information without going through chunking,
+embedding and all those messy processes.
+So I was quite excited there for some time.
+And if you want to, you can follow me on Twitter.
+I'm pretty responsive on Twitter.
+My handle is there.
+And that's how I got to know Jason as well.
+Thank you for having me here.
+I see the chat is full.
+So I really welcome all questions.
+I hope I can think through some of the questions.
+Yeah, let's run through some of these.
+I am curious, even now, there's no single vendor that just allows you to upload a
+bunch of PDFs and be able to do retrieval, right?
+It's still quite manual or have the cloud providers to support this?
+Yeah.
+I mean, there are some high level services, right?
+That's more in the kind of enterprise search, glean, those type of like more
+like high level services.
+And then you have things like unstructured or that takes care of that part, but not
+the vector part, not the retrieval part and not the ranking part.
+So you have to, you have to glue together quite a few things if you want to kind of
+have control over how you do retrieval and fine tune and re-ranking and business
+logic and whatnot.
+So that's the thing you have.
+If you really need that kind of build that type of thing, then you cannot really
+use glean or they don't give you the option to tune things or adapt it to your
+domain.
+Makes sense.
+The top voted question, I think you answered this somewhat around just whether or
+not we can fit everything into context, but with the latest improvements in
+Gemini, like flash, for example, and other models, do you think Copali and these
+kinds of tools are still so relevant?
+I think they're relevant because even if you, sorry, there's a lot of use cases
+that are dead related to rag because of long context, right?
+No doubt about it.
+Single PDF, just upload it to Gemini and do whatever you want to.
+Right.
+But then there are cases where you have larger document collections.
+That's the key point, right?
+If you have a millions of PDFs or even 10,000 PDFs, and even if you could fit 10,000
+PDFs into the context window, it's also you pay for the tokens.
+You also have quite significant latency, even with prefix caching.
+So I think it's still also relevant for lower volume, but like a couple of PDFs.
+Yeah.
+I talked to some company the other day and they were, they had like 3000
+documents and I said, yeah, I'm not sure if you need a vector search or a search
+engine at all for this, because you have, don't have very strict latency requirements.
+And the cost is quite low.
+You don't have a lot of volume.
+So why don't you use the prefix feature of the language models?
+And there's like, okay.
+Plus I think with reasoning models as well, you use some of that context
+window or output as well, that you can fit more instructions and
+examples and things like that.
+Yeah.
+There's one thing that's for sure.
+I think the context windows will just increase.
+So, but I'm not sure if they will increase to web scale data sets.
+Um, second question here is, I don't think I know exactly what it's asking, but are
+there any benchmarks for PDF embedding models specifically for charts and graphs?
+I know like Reducto has come up with some models.
+I don't know if Gemini has like certain evals on reading complex charts and graphs,
+but I'm curious to hear more about what you think.
+I think the Vidor benchmark that Copali introduced is at least one of the
+benchmarks that includes complex formats.
+I'm not aware of that many others, other benchmarks out there.
+Yeah.
+So you're dropping some links in the chat.
+Yeah.
+Cause we get all put into the same, same page.
+Let me see.
+We have 54 team and SS.
+Let's do maybe like one or two more questions from the Slido and then
+we go to live questions.
+So people want to raise their hands if we do that now and we'll get to those.
+Yeah, that would be fantastic.
+Yeah.
+So what do you think of the main trade-offs are using Copali?
+So for example, is it less reliable in some cases?
+Is it more difficult to verify information in other cases?
+I'm personally really curious if there's specific industries you've seen that
+work well with Copali and ones that don't.
+Yeah.
+So Copali is a checkpoint in time.
+I see it.
+I see it.
+I'm more excited about the direction than the actual checkpoint, right?
+So the checkpoint is there.
+It's trained on the data that the researchers gathered.
+So it doesn't necessarily translate to very legal, heavy tax if, or special,
+specific type of financial or insurance reports.
+And the key there, I think, is to use synthetic query generation and try to,
+to fine tune the model for, for optimal performance.
+So I will not generalize and say that it works in this and that it works best for
+data types that looks like the data that it was trained on.
+So you have to look a little bit in the actual benchmark to see.
+Sorry for a long-winded answer.
+No, it's all very, very helpful.
+Albert, do you have a question?
+Yeah.
+Thanks, Joe.
+Really love this talk.
+I had a question about the future of latent interaction.
+So I noticed you said that you can create like nearest neighbor index for the images.
+We're using a Cobra in production and we do like a BN20, nearest neighbor
+and then BN25 and at the last stage is Cobra.
+But do you see a future where we can do Cobra?
+Like, I know it's hard to scale, but could there perhaps be a way to compress
+the tensor into like, into a single vector?
+Cause you can also fine tune Cobra, right?
+And I'm assuming that's a more granular way of fine tuning.
+Yeah.
+It's a fantastic question.
+Actually in the talk, I talked about this embedding model called BGEM3.
+The unique thing about that model is that they allow you to obtain three
+different representations of the input.
+A sparse representation, a single dense representation and a
+multi-vector dense representation.
+So with that type of model, it's obvious to use the single dense representation
+and put that into the nearest neighbor index and do retrieval with that
+representation and then use the copolysingles, the multi-vectors in the reranking layer.
+Unfortunately, that approach haven't really caught my mainstream.
+So I, but I would love to see more in that direction where you jointly train
+both copoly multi-vector representation or whole-vector multi-vector representation
+and a single vector representation.
+Yeah.
+I'll look into that.
+That seems very exciting.
+Hmm.
+Yeah.
+The M3 papers is a work reading, I think.
+The only downside there is that they didn't do any kind of dimensionality reduction.
+So they still retain a lot of float vectors per, sorry, float values for their
+multi-vector copoly representation.
+Or Colbert to be precise.
+I guess I'm going to selfishly ask a question here.
+Like when it comes to these kind of joint models like Colbert, Copoly with these
+bi-incodable, what company do you think is, like, whose responsibility is it to
+build these kinds of things?
+Like maybe it's a Cohere, but I don't know if they do a lot of like PDF processing.
+Is it going to be like a Reducto and a LamaPars where they're going to own things end to end?
+I'm really curious what you think about the ecosystem so far.
+I think my favorite, I'm not sure if I'm allowed to say that, but I was excited
+about Voyage, maybe because of the people and the cool name, I don't know.
+They were going in this direction.
+There's another that I'm hoping will step up that is Nomik.
+Cohere also has embedding models that can accept both text and image.
+So you can go the route, but I think there's room for more players in this market.
+And there's to offer this kind of more high level embedding models for
+different file formats and domains.
+Someone wants to explore that and pitch it to VC and you can say,
+Joe thinks it's a good idea.
+Yeah.
+I definitely thought about thinking, starting something earlier, like maybe in 2023,
+but the market was pretty tough and pretty challenging then.
+Yeah.
+Paul's question is pretty interesting.
+Copoly's paper uses NDCG at five.
+Do you think our ranking metric is a good fit with a task of question and extraction?
+I think it is.
+Yeah, this is also, this is always a good question.
+Most of the information retrieval papers focus on precision and
+this is G is a precision oriented metric.
+You might argue that in the case where we have a generative state, that we
+are, should look more towards recall and are we retrieving all the relevant information?
+So it's a valid question, I think.
+But there's usually correlation between those two in some sense as well.
+And regularly when you talk about recall, it's really difficult as well when you
+have a large collection because you don't really know all the relevant
+information in the index.
+That's really what in the information retrieval sense, what recall is about.
+Do you actually find all the relevant documents that are annotated relevant,
+but then we don't have that luxury in practice.
+Paul, I saw that you omitted.
+Do you want to follow up?
+Yeah, I think maybe you already stated this, but in finance applications, where
+you're really extracting a table, you're interested in a particular cell, and
+you see in DCG5, it was not, we need the actual table and for that there've been
+these other metrics, tree edit distances.
+It just seems like in the entire field of extraction, there's different
+subgroups that are doing very, very different things against different metrics.
+What do you think of these various camps?
+I think so the COPOLI and the metrics there are really focusing about, here's
+the question, here's a collection of documents, where are you able when you're
+doing the retrieval with this type of method, where are you placing the relevant
+document in the ranked list?
+That's all.
+There's nothing else, right?
+It doesn't care about if you can actually run that and extract and do another
+metric and you mentioned table extraction, things like that.
+Would be in my view, in my opinion, for the later stage, right?
+More into the, in the rag pipeline, you have retrieve and then you generate
+or you retrieve and then you extract, right?
+So it tries to measure how well the, just the retrieval part.
+So yeah, as you said, it's a basic thing, but it's also a nice way of
+just measuring the retrieval part.
+And I think that's also important, like overall to try to measure each of the
+things that you have in your system, right?
+You have the retrieval, you have the generative stage.
+If you have something else, you can, if you have query classification, you
+could do some evaluation of that.
+So you can quantify, you know, if I change my query routing, rewriting in this way,
+you know, does the overall improve or not?
+And yes, it's complex.
+Thanks.
+Any more live questions?
+We've got four minutes left.
+We probably do one more live question before we wrap things up.
+Well, let me just do one more and then I'll let you go.
+I see the glass of wine in the background.
+It's been a long week.
+Nice.
+Oh, this is a question that might, might be interesting to hear your thoughts about.
+Like what are the best practice for handing things like PII when it comes to
+this kind of retrieval and representations and whatnot.
+I don't really have an answer for this myself.
+So I'm just very curious what your thoughts are.
+Yeah.
+I think that's a really great question.
+And if you, yeah, I would say copality doesn't really care or take care of that at all.
+Right.
+So that's one of the things where you might want to keep both kind of type of complex
+pipelines.
+I know there are APIs from different services that provides this sort of service.
+I think that's really good argument against not building your entire pipeline.
+Only using the visual representations because the visual representation, I don't
+know if there are that many services or techniques that can identify PII.
+I think the security level stuff is something that all these different companies will
+slowly develop solutions for.
+Maybe a vendor will pop up in that space, but yeah, I was very curious about your
+answer.
+Cool.
+I think with that, we can probably wrap it up.
+Joe, thank you so much for staying up late and getting some questions answered.
+And yeah, I think it's funny because both your talk and Anton's talk from
+Kromo all really focused on just like fine tuning your own vetting models.
+So I'm really glad that more people are sort of talking about that.
+I feel like last year was very esoteric and maybe scary concept, but now it's
+been a lot more popular.
+That's good to hear.
+All right.
+Thank you for having me.
+Thank you everyone.
+See you next week.
+Bye bye.
+Bye bye.
+Thank you.

@@ -1,0 +1,727 @@
+So everyone says RAG is dead.
+That's definitely not true.
+It turns out the R in RAG stands for retrieval and I think there's been very few retrieval
+experts willing to talk about this kind of stuff, mostly because the real ones are tend
+to just be building things.
+You know, the recommendations is some people, like on Netflix, they're just at Netflix,
+you know, working on these systems and not really thinking about writing blog posts on
+how to fine tune embedding models or what a user interaction is.
+And for the most part, the generation in RAG, that's now going to be delegated to these
+foundational models, right?
+Like 03, you're not going to put out compete 03 reasoning if you need any of these things.
+And so retrieval is actually the only thing you have control over.
+And this is why I'm really excited to bring in today's guest, Hamish.
+He's the founder of Search IO.
+He's also a fellow physicist and now he's the VP of AI at Algolia.
+And you know, I think he's basically spent over a decade turning, you know, information
+retrieval log in it and to just lift in these, you know, search results.
+I'm really excited to have you go over some of the results you've seen and how you think
+about building things in an agentic way and how we can apply this information to how we
+again just improve the R in RAG.
+So yeah, Hamish, take it away.
+All right, cool.
+Good to be here.
+So as everyone heard, my name's Hamish and I'm here to talk about self-improving data
+driven feedback loops.
+So internally we call them learning loops, but I'm going to cover a lot of ground today
+and give you a bit of a background in terms of how we think about things.
+So a little bit about me.
+You heard background in physics used to design lasers, which is a little bit of a different
+world to search, but I've been in and around data and search for about 10 years now.
+I designed and built multiple search engines, so I'm kind of familiar with this space.
+So the whole RAG and agents has been a very interesting evolution for me.
+Search I was acquired by Algolia and so I'm now at Algolia leading up AI.
+So today I want to cover a little bit of a background on Algolia because I think it'll
+give people context into why, you know, we think about the world a little bit differently
+to others talk about RAG and agents, how we think about that solving the iron rag is
+Jason mentioned.
+And then a couple of demos, the Algolia query language, which is kind of an internal thing
+at the moment, but may end up being externalized.
+And then how we use that for things like dynamic query planning and learning loops.
+So I'm not sure how many people in this talk are familiar with Algolia, but if you want
+to get some background in terms of the company, I think the best way to do it is the numbers.
+And we do about 5 billion queries a day.
+We collect about a billion events a day.
+So things like clicks and purchases, we get a lot of signal back in terms of search and
+we use that to help optimize search.
+And so a lot of applications like e-commerce, for instance, things like purchases are very
+useful to help you automatically tune search to work better.
+So we also, we do about 10 billion indexing events a day.
+And I think a couple of the other interesting things on here, we do over 30,000 AI model
+inferences per second.
+That might actually be higher now.
+I'm not sure, but that was the last number that I had internally was what we were doing.
+And we support over 100 data centers and 1500 clusters.
+And so the main takeaway from that is that your cost to put code in production is quite
+high.
+If you have 1500 clusters, then your considerations are a little bit different to what most people
+are talking about when they think about prototyping something like search or RAG.
+And the hard truth behind that is that what is cool, and we see a lot of cool things on
+X and everywhere else, but they just don't work at scale.
+And you have to think about things in very different ways to make them work at our scale.
+So some other notables, I think one of the interesting things, which was the historical
+Algolia did relevance differently and used a tiebreak relevance, which is different to
+the Lucene and the Vespa families of the world that use things like BM25.
+Internally, we just don't see BM25 as competitive at all.
+And there's a lot of reasons for that, but it's just not, it's quite interesting to see
+how well regarded it is in the community at the moment, because we just don't see it as
+a great technique.
+We use neural hashes for vector search, which is a binary based approach.
+And it's still better than all of the other methods that we've seen out there today in
+terms of trade-offs, but we're a little bit opinionated there because we've spent a lot
+of time on the technology, a lot of time tuning it, and we understand it deeply.
+So that's quite opinionated, but it's worked well.
+And then some other interesting things, we have five nines SLA with a thousand times payback
+on a lot of contracts.
+So when you're thinking about the downtime that you're allowed to have, it's very small.
+It's in the order of a few seconds a month, I think about 20 seconds a month or something
+like that.
+And when you move to four nines, you're talking about minutes of downtime a month, which for
+some of our customers, that is hundreds of thousands or millions of dollars that they
+would lose if we were down.
+So this is a really big consideration for us.
+And again, that's why we pay such a high price for getting things like code deployment into
+production.
+And so some other notables there, we do our own in-house DNS.
+We have our own ways to isolate data and also to isolate failure and other things.
+We run private data centers and all three public clouds.
+So we've got a lot of different compute primitives to manage.
+So that work kind of a little bit differently.
+And from an AI perspective, my team has five PhDs training, NLMs, VLMs, and a bunch of
+other proprietary models.
+There's others in-house at Algolier as well.
+So not just me.
+So there's probably a bunch more PhDs, definitely a lot more in AI and ML.
+And we also have extensive benchmarking and eval capabilities.
+So one of the ones that I will give a background on shortly, which is the buy encoders.
+We generally, if a new model comes available publicly, we'll have it in our benchmarks
+within a couple of hours typically.
+So these are some of the models that are used by Algolier.
+And I think I put this in because I think it highlights that search is not a singular
+problem.
+I think there's a group of people that think you're just going to plug in vector search,
+and suddenly search is going to work.
+And the reality is quite different.
+The reality is there's a lot of different techniques that need to be used and they need
+to be combined in a way that they work together to produce a better outcome.
+And so that ends up becoming a little bit more like LEGO than what people most might
+think.
+And it's not a single system, but it's a multi-system that you need to manage.
+So I mentioned benchmarks before.
+Buy encoders is one example where we have a benchmark internally.
+And this benchmark has over 50 datasets that are used for the benchmark.
+So we have things like MTEB.
+We don't really care about MTEB, but we use it to just kind of have a second validation
+that we're not breaking the generalization of models and that they kind of have a generalized
+understanding.
+But for the most part, we have datasets around the use cases that our customers support.
+And so some of these here are Econ-focused, but we also have a bunch of other use cases.
+And so we run all these models through.
+We know where they're good, where they're not good.
+And then immediately when new models come up, we put them straight into this list and
+we can kind of see which ones are worth using, building upon, who's going to be competitive,
+et cetera.
+But we have really good model capabilities internally as the TLDR.
+So moving on to RAG and agents and how we think about that world.
+I think very simply we think about it as, and Jason mentioned this in the intro, you
+are probably not going to build a better 03.
+It's just the way it is.
+I mean, maybe there's people in this audience that can do that, but it's probably our only
+that it's probably unlikely.
+So the generative side, we kind of, we think about outsourcing that we partner, et cetera.
+In the tooling capacity, we think about a bunch of different tools that we would use
+internally.
+But the most important one of those for things like grounding and getting real-time
+information.
+And obviously we're a search company, so it's a little bit of a self-fulfilling prophecy,
+but memory and retrieval is for us is the biggest problem.
+And here we've mentioned that you can do things like reading files.
+You can do grab, you can use databases, you can public search, but private search data
+makes up around, I think about 95% of all data and about 80% of that is unstructured.
+So when you look at the, probably the best tool in the, here private search indexes are
+extremely valuable for retrieval, augmented generation.
+And so that's one of the focuses for us.
+Solving the R in RAG and how we think about that.
+No silver bullets, multiple systems, multiple APIs.
+And it's not, there's not one thing that is going to take you from being okay to great.
+There's, it's an ensemble of different techniques that you need to put together in different
+ways to get the outcome.
+And this can even be different on a query by query basis.
+And so really the only way to figure that out and optimize is to iterate faster.
+And so internally, one of our biggest focuses is how do we go faster?
+And so speeding up the loop is one of the things that I think about all the time.
+And interestingly, seeing Andres talk the other day, he talked about this in a human
+capacity, when you're looking about AI verifiable AI loops, he talked about how you want to keep
+AI on a tight leash.
+So you want to kind of constrain what AI is doing because that gives you a better chance
+of success.
+And then you want a really fast verification loop.
+And so when I saw this, I kind of smiled because it's very similar to how we think about
+creating these learning loops to improve retrieval.
+And so I'm going to take you through how we approach that.
+So firstly, composability, we want to test new ideas in production in seconds.
+And we want to do that without any deployments.
+So that kind of sounds funny.
+How do you test in production without doing any deployments?
+But that's really thinking about how do you make everything that you do composable so you can just
+define a query, which would be similar to how you think about SQL.
+You can send a query and run totally different functionality, but you don't have to actually
+ship new database features to do that.
+You're just composing the pieces that you have in different ways.
+And so that's useful because it constrains the system.
+Unlike code, where you can do anything.
+If you're looking at a composable system, you have a limited surface area of things
+that are possible, but then they can be combined in almost an unlimited number of ways.
+And so we've seen that this has enabled us to start decoupling the feature teams from
+the production loop and the production loop is much slower.
+And so that's been useful.
+And then we also have non-engineers who are able to experiment and validate ideas.
+And so to give an example, we've had both CSMs, demo engineers, and product managers
+all jump into this world and being able to change the algorithm and see what it would do.
+And then use that to recommend to engineering that they make changes.
+So that's the part of the AI part of the loop in this case, but it's human.
+And then you have the validation part, which is the simulation.
+And for us, we do, it's very similar to back testing in finance.
+We want to take a historical set of queries.
+We want to replay them.
+We want to see how we improve things or have we made them worse.
+And we can also do that with synthetic data.
+So if we don't have any historical performance data, we can use synthetic
+data like LLM judgments to backfill that.
+And so that becomes the validation part of the loop.
+And when you put that together, you have the ability to create new algorithms in seconds,
+validate them, and make sure that they are going to give you an improvement in minutes.
+And then you can put that loop into action and run it 24 seven while you're asleep.
+And so we haven't quite got there to the last bit,
+but that's what we're working towards at the moment.
+So this is kind of just a diagram simply showing the flow,
+but humans can drive this with a goal.
+And then you update the workflow, which is basically an internal composable query language.
+You back test it.
+If it's worse, you just try again.
+If it's better, it goes into the production loop.
+And so if you look at the actual tooling that we use internally for this,
+we have, there's four components to it.
+Today, I'm going to talk about, I'll show you a demo, I mean, of workflows,
+which is the top part.
+How do you compose new algorithms?
+And then I'm going to show a little bit around the simulation,
+which is how do you run back tests to validate that the idea is good.
+And these are the two important parts of the loop.
+So demo time.
+I'll explain this a little bit.
+So this is an internal UI for us that we use.
+Our staff can come in here and play around.
+On the left, you have our internal query language that we can use.
+And so in this case, it's just running a simple keyword request.
+Over here, you can kind of play around with the results.
+So if I run a request for say iPhone, I get these results.
+There's some weird results in the list.
+This is a demo set, so don't worry too much about that.
+But also it is actually representative of e-commerce,
+where people will say, they'll mention the word iPhone
+in the description or something.
+And so you end up with irrelevant results, but they match on keywords.
+And you can play around with different things here.
+So if I showed you a set of vector results, for instance,
+on the left is a vector request that's being made.
+And on the right, you can see for the same query iPhone,
+you're actually getting a lot better results for iPhone.
+And so in some cases, vector search works better.
+In some cases, it works worse than keyword, but we can look at both of those.
+And then we can also look at hybrid combinations as well.
+So in here, we've got this query language.
+We can define what we want it to do.
+We can edit that if we want.
+But one of the nice things is we can come in here and click on this simulate tab.
+And then I can give this, this is a keyword base.
+I can hit start.
+And then what this will do is it will take the workflow that we've got over here
+and it will start running a back test to try to validate
+how well does this actually work.
+And so this will run along the background.
+And while that's running, I'll come back to the search tab here.
+And then I'll show you some other things that you can do.
+And so this is a secondary example that is extending
+keyword requests to include signals from a feature store.
+And so this part here is actually saying we're going to go and grab information
+from a feature store and we're going to pull that back into the query.
+So in this case, we're looking for information that for this particular query,
+records have been clicked on before.
+What records have been converted before.
+And then we also have a ranking efficiency, which is a metric that we calculate
+out internally to counteract position bias.
+And so we're taking those signals and then we're adding a new signal,
+which is a weighted algorithm here, which is basically just a weighted sum.
+And so we're creating our own ranking formula.
+And then we're using the rank function here to basically say,
+go and reorder those results by my rank.
+And so if we come back in and we run a search for iPhone,
+we'll see that we've actually got better results here than
+what we had for a pure keyword search.
+And so looking at the signal table and so the signals,
+when we think about creating signals, it's essentially an input to what you may use
+for ranking or re-ranking.
+And so in this case, we pulled the click data and we created a column called clicks.
+So that's a signal.
+We did the same thing for conversions with the same thing for ranking efficiency.
+And then in this last piece here, we created our own ranking formula
+that combines these together.
+And then we ordered the results by our ranking formula.
+And so this is a simple example.
+Your ranking formula may be a learn to rank model or something more advanced,
+but the key idea here is that you can pull these signals in
+and you can create your own custom ranking.
+And then you can see how will that actually work in practice.
+And so if I come in here, let me refresh this.
+We should be seeing, yeah, okay.
+Sorry, these are segmented by the base workflow,
+which is why it needs a hit show all.
+But so for the previous one here, we've got now got an ndcg at 10
+and we've got a recall at 10.
+So we've got a measurement now to see over thousands of queries.
+You know, it took a minute or so, but now we have a measure of how good that base keyword was.
+And then we can take this one and so the keyword, let's call it keyword my rank.
+And then we'll start that one off too.
+And so now we're going to see we've added data from a feature store
+and then we're adding that into the ranking function.
+And we're going to see if it actually outperforms the original keyword query.
+So there's a lot, a lot that you can do here.
+And I think it's, it's, I'm only going to show a very limited set of functionality today
+because it's, there's, there's almost too much to share,
+but there's built-in documentation in here.
+And if a team internally has a new API, they can add in a new function.
+So when we see things like this sort of keyword request, that internally is wrapping an API,
+but it means that the teams that are building features on top of all our internal functionality,
+they don't need to know how all the internals work.
+They can just use the functionality and then put it together in different ways.
+So another simple example here, and this example is just using the, the re-ranking again,
+it's going to a feature store here, which is, is the, this here.
+It's using the lower bound confidence of what we think the ranking efficiency should be.
+It's creating a signal here.
+So if we run a search again, you should see, you should see the, the, the, the, the, the,
+the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the,
+by the signal.
+So this is, this is similar to the previous one, but instead of using clicks and conversions,
+it's just using ranking efficiency.
+So again, we've seen the previous one is actually completed, but I'll keep one off here.
+This is keyword and ranking efficiency.
+I'll kick that off as well, but we can see that we've, we've now evaluated two algorithms
+in a couple of minutes.
+And this, the second one that we ran here, we had a pretty big leap in performance.
+We increased recall massively 47 to 72, and we increased the, the ranking score as well,
+which is great.
+And so this is kind of what at the moment engineers can do internally.
+Product people, CSMs, they can come in and play around with the algorithms,
+but eventually we want AI to write these workflows for us.
+And so this is why we're kind of preparing our own documentation and our own language
+to, for that to happen.
+So coming back to these examples, I will pull a hybrid example.
+And so hybrid by hybrid, I mean, this is running both a keyword and a vector request,
+and then putting the results back together.
+This is also doing things like creating signals.
+One of the interesting things people might see this here, we've got a parallel.
+And so if you do this in a, in a workflow, it will go and run all of those requests in
+parallel and they will wait for them to complete.
+And before it continues on in the flow.
+So you can do a lot of performance optimization in here.
+And you'll typically see this with not just two things, but it might be going out to the
+feature store to get information as well, running multiple requests.
+Could be running recommendations or whatever, and pulls that information back in.
+You have a concept of annotations and so an annotation, and you might see it in the code
+here is basically something that you want to log.
+So if you want to log something and this goes into BigQuery behind the scenes for us,
+anything that you want to log, you can log.
+So if you have some algorithm change and you want to mark that in the logs, you can
+do that.
+And the signal table is also there, but that's taking in all of the scores that are relevant
+to ranking.
+And that also gets recorded into BigQuery.
+So if somebody's coming along to look into your new algorithm, they actually have access
+to all of these things that have been logged on all the historical queries as well.
+So this is an example of a hybrid key and vector.
+It's doing RRF.
+Here's alpha is 0.2.
+Maybe you want to change that to 0.6 and see what difference it makes.
+And you'll see that this pulls in more of the vector results and pushes down more of
+the keyword.
+And so we see an increase in the quality of the result here, but that just happens to
+be for this particular query, but it might be different for others.
+And so that's why, of course, you want to use the Simulate tab.
+The other one's finished now.
+And again, we can see this is actually another improvement.
+We've increased both the NDCC and recall again.
+But I won't keep doing simulations.
+You kind of get the point that you make a change and you can validate it in minutes.
+And just to reiterate, this is running in production.
+So if I change this query language that works on the left and I run it, that is injecting
+that request into production clusters and running the algorithm that I've chosen in
+production and then returning the results to me.
+So this is not a staging or anything else.
+This is actually running on production clusters.
+So I'll move on from algorithms to RAG because I think it's useful to see how you can set
+this up in something like RAG.
+Well, that's not going to be useful because it's an empty query, but let's try something like
+on to the campaign.
+Then we'll run a more complex one there because an empty one doesn't make a lot of sense.
+This looks a bit janky the way that this is done in the UI here by doing the multi-line approach,
+but you can pull these in from index settings.
+And so you can see other index settings here that are being pulled in from config.
+But in this case, we're writing it actually into the workflow because we think it's more
+useful so you can see what's going on.
+We're trying to tell the model that we're staff member at e-commerce.
+We're putting the query into the prompt.
+And then we've got a prompt template here, so we're injecting the results that we get
+back from the query.
+In this case, it's a vector search.
+And then we're going to put those into the prompt and then we're going to send the prompt
+to GBT-40-mini and look at the response that comes back.
+And that's what we see here.
+And so in this case, you're going to get a response back, you know, camping in Yosemite
+during the winter.
+Incredible experience.
+I can vouch for that, but yeah, it can be very, very cold.
+And so this is telling you what things you should buy.
+You can look down at the bottom and you can see, again, we still have annotations.
+So we added things like the prompt templates in.
+You don't have to do that.
+And we also can look at the raw results.
+And so these are the raw results that come back from the vector search.
+And you can see that they're different to the ones that are being recommended by GenAI.
+And GenAI has looked over the results and picked these ones are the ones that are important
+to answer the query.
+And so that's a simple example of how you can take a vector search in RAG and then display
+that to see how that would work.
+Eventually, we don't have this today, but we want to get to the point where the simulations
+can also do evals for generated responses.
+And we're not at that point today, but we're working on it.
+And I think that's quite interesting.
+And then the last example that I wanted to show quickly was rewriting a query.
+And so this is kind of, again, it's a little bit more verbose than what it needs to be.
+But we're taking an input request and then we're saying, you know, you're a staff member.
+If it gets zero results, which in this case it doesn't, but say it got zero results,
+then we want to rewrite this query.
+And then we put the query in and then we ask GPT-40 Mini to rewrite the query.
+And so in this case, you can do things.
+My example here is iPhone for my friend.
+And you can run that query and see what would have actually happened.
+And in here, this is the rewritten query.
+So it's taken iPhone for my grandma and then it's changed that query to smartphone for the elderly.
+And then it's running a request on smartphone for the elderly.
+So this is just kind of example of things that you can do.
+Again, you may take one query and then say, break it into four or five more queries.
+And then you can run them all in parallel, for example, and then pull them back together
+and combine them.
+A lot of things that you can do.
+But I think this probably gives an idea of what is possible and what we're working towards.
+And so I would conclude by coming back to the slides here.
+And noting that we've got to the point where we can experiment in real time, in production,
+with production data.
+We can validate if changes that we make are better.
+And we can do that in minutes, which is the goal of the fast verification.
+We have dynamic query planning.
+I didn't show too much of that today, but you can do things like,
+you can increase the weight of vector results if historically keyword results have been poorly
+performing for that query, for instance.
+And there's a lot of different things that you can do.
+And so we've got learning loops now, operational and running in production, which is fantastic.
+And in future, we're moving towards gen AI writing our algorithms.
+And that is truly getting to the point where we want to wake up the next day.
+We want to see that agents have written dozens of new search algorithms and they've found
+interesting new ways to do things that have been successful.
+And then we've put those into tests and we've already collected data and it's all happened
+while we slept.
+And then lastly, we're moving towards adding agents and distinct tooling capability in workflows
+so that you can connect to an external system.
+So if you have an external tool or an external MCP server or something like that, you can pull
+that directly into workflow and then use that with your Algolia retrieval.
+That is all I have to run through.
+I hope it was useful and ready to take questions.
+Yeah, we've actually had some very similar things at Stitch Fix, but there is where I wish
+the algorithms existed back then because I would just get merchandising or someone coming
+in and saying, hey, can you help me run a simulation to figure out if we changed our
+P sale function to optimize for margin instead of click through rate?
+This is the kind of stuff that would be super cool to get a Slack message that says,
+this is working, this isn't working.
+And I really love this.
+I think one of the things I talk a lot about in the newsletter is this idea of focusing
+on leading metrics versus lagging metrics.
+Everyone comes in and they say, Jason, can you make the AI better?
+In the same way, when you come to a personal trainer, you ask, can I lose weight?
+But the only thing that will impact that is how much you eat and how much you work out.
+I left a comment in the chat that I was like, at the companies I worked with the first two months,
+we'll be lucky if we get 10 experiments out a week.
+That's a gold star.
+And just being able to kick these things off really quickly, I think, is something that
+researchers are very familiar with, but I think engineers think less of this
+experimentation work with Vilela and mostly just like, is the feature built or not?
+Yes, I agree.
+That's the shift I'm seeing also at Algolia since joining.
+I think Algolia was more, historically came from this control world where they wanted to give
+engineers, you can control everything.
+So you have this real deterministic outcome.
+And then as AI and ML has just perforated everything, you can't do that anymore because
+it's beyond the capability of our customers to say, this is how I want the system to work.
+It's too complicated.
+And so you need to start thinking about experimentations and how do you speed that up?
+And it is particularly challenging for us with 1,500 production clusters.
+It gets a lot harder to do.
+Yeah.
+Yeah, let me just take a look at the questions.
+For anyone else, feel free to just look at the slider link we shared in the chat and then
+you can just ask questions and upload questions there.
+I think a lot of folks actually had a few questions on your thoughts on the text ranking
+stuff. The first question says, could you please share more about your perspective that
+BM25 is not competitive?
+What is the broader AI community missing?
+I think it depends on the use case.
+So if you're matching really long queries with really long documents, then it makes more
+sense because it's just you're doing a statistical keyword bag of words match and it kind of
+corrects for some of the inconsistencies in document length and things like that.
+But at the heart, it's nearly a 50 year old metric.
+I think it's from the 80s, I believe originally.
+And it doesn't take into account things like sequences.
+In e-commerce, there's always the example shirt dress versus dress shirt.
+BM25, they're the same thing.
+It doesn't have any distinction.
+There's no...
+BM25F changed it a bit because you've got field weights, but by default, if you don't
+have field weights and you have data with lots of different fields with some more useful,
+that's different.
+It's an averaging approach over a lot of information.
+And so for a lot of things where you want more precision, you would prefer to have a
+max match.
+So if you have multiple matches in a document, you would like to see the fragment that has
+a better match, whereas it kind of averages everything.
+So there's a bunch of reasons.
+Yes, not because...
+Yes, not as a great example.
+Yes.
+Yeah, especially because I think when we move into this conversational form of search, these
+are the kind of things that get really complex.
+I think at Stitch
+Floral.
+Yes.
+Do we need to remove florality as a property?
+Maybe we can do this in the embeddings by doing some arithmetic, but it doesn't improve there.
+I will say one thing, which is in terms of the distribution, BM25 is very useful if the
+person who is searching this document was the creator of the document.
+If I am the programmer and I want to search code, very useful.
+If I am a speaker and I'm searching previous transcripts, very useful.
+But in many, many cases, that is not what's actually happening.
+If I'm searching over other YouTube videos, then I might actually search forests and mean
+trees.
+And those are some good examples there.
+Yep.
+Yeah, you're right.
+And that's why I did say it's use case dependent, and that's very true.
+Yeah.
+We're also curious to hear more about this tie break text relevance.
+I've never actually heard of that before.
+I'm curious if you could describe a little bit of what that actually is.
+Yeah, it's interesting, but it's one of the things that made Argolea grow really, really fast.
+And I think a lot of search systems, they were asking you to wait all your fields and figure out
+do the tokenization.
+How do you do matches across multiple fields?
+You know, all these kinds of things that are, if you want to configure a search engine and
+you understand search, you can do that.
+But for the average customer, they didn't have that capability.
+They just want search to work.
+And so the tie breaker was really a way to simplify that approach and say, you know, to
+the user, this is more important than this is more important than this, than this, than this.
+And it basically doesn't or sort order based on the things that you mark as most important,
+which in a lot of cases gets you a long way there.
+And then there's a lot of tricks behind the scenes.
+It's kind of, it's funny for me being acquired by Argolea because we, you know, prior to
+being acquired by Argolea, we would compete against Argolea.
+And I remember in the early days, some of the competition against Argolea, we just couldn't
+figure out why they were beating us in certain cases.
+And it was really frustrating that this sort of simplistic approach was working so well.
+But there's a lot of sort of tricks behind the scenes that are not evident that Argolea has
+figured out over the years, just because there's so much data and scale.
+It's been able to do that.
+Yeah.
+So it comes across as simple, but a lot of others have copied this as well.
+And so, you know, you've got Millisearch and others have copied what Argolea did.
+And the other reason that it's quite useful is that it means that you can basically at index time,
+you can do a lot of the work on pre-ordering the data.
+And so if you want to answer large, like over large data sets in single digit milliseconds,
+it is easily the best way to do it because you're not doing the work at query time.
+You're doing the work of the sorting at index time.
+But that has other disadvantages for obvious.
+I've seen a lot of different like vertical rag SaaS companies, I guess,
+require a lot of like daytime filtering or like, you know, I think in legal context,
+there's been a lot of crews are just like, who modified this last?
+Or, you know, who is responsible for making these changes or who's the owner of these projects?
+And show me all the documents that I've been modifying the past like three days.
+Is my understanding that like, if we can just encode sort of the distribution of
+metadata that we want to further against, this will allow us to
+define the weights of those filter boosts better?
+You can, although Tyebrick's thinking more about the text relevance
+Got it.
+And some of the ranking, like it's also the scoring based ranking, not so much for
+filtering. But we have a lot of things internally to automatically inject filters
+and things like that based on context.
+Do you guys do a lot of synthetic data generation in terms of like computing things like evals?
+For NDCG and for recall, these are probably just from collect data in the past, but
+I'm curious, I'll be with less of that impressions data.
+Yeah, that it is a really good question because it's actually for recall clickstream data is not
+that useful. And it is, but it's not in the sense that say if you have clickstream data from
+keyword searches, and then you bring in vector search, none of the you'll have no data on the
+results that the vector search is bringing in because they've never appeared in the clickstream
+and so by default, you will see that you have not improved recall at all, but in actual fact,
+you have. And so we typically, if we're looking at ranking, we try to use clickstream. If we're
+looking at recall, we try to pull in LLM judgments for all of the things that are in the top sets
+for all of the different things you're comparing, because then you can actually say I've looked at
+all of the things bought back by these different algorithms and I've judged them.
+And I've judged them and then you can get a more accurate measure on recall. So yeah, we do a lot of
+LLM judgments and we do a lot of synthetic data generation, particularly for things like model
+training. And so we'll do things like we have our own data, but then we'll augment that with
+translations or we'll make subtle changes. And we do things to create mass training sets for LLMs.
+So I'm actually about to do a project where we do a lot of these LLM judgments to
+improve relevancy. Do you have any quick tips or gotchas that you could...
+Yeah, that's a great question. I think the main one is we've found that the accuracy,
+if you're doing a binary judgment, is really high, like something like 97%. The accuracy,
+if you do say a four graded relevance, is like 60%. And so depending, I mean, others might have
+been able to get consistently higher, but across the data sets that we use for benchmarking,
+we have not been able to get that up significantly. I think the synthetic LLM judgments,
+when you're really looking at gray area relevance, you can't rely on that. And some of the mistakes
+that they make in that can be pretty extreme. And so I'd love other people to tell me that we
+can solve. And if you can please reach out and tell me. But at the moment, no, I think stick to
+binary judgments and then figure out how to do this sort of graded relevance some other way.
+Yeah, I've definitely heard the same thing. I think in the past, we used to be able to use the
+logits. But now that we have a lot of grading systems, use chain of thought, it's harder to
+control that more. Are you guys leaning towards more cheaper models, higher volume of data,
+or is it actually like, you know, more expensive models with less volume, or even just more
+tons of models and more volume because it's actually worth it? Another good question,
+we've gone bigger models. We used to do smaller ones because we're like, how do we make this
+cost equation at scale? And then we started to go to bigger models. And so now we use,
+for things like embeddings, we use models around five or 600 million parameters. And reason being
+that you can capture more context across multiple fields. And so you get better results. You know,
+people there's this debate around multi vector representation, single vector representation.
+If you go to much bigger models, you can get single vector representations that are actually
+pretty good. And so in a trade off sense, that kind of works. And then the other thing is that
+we've found that you can, we have a global caching CDN on top of our inference network.
+So if different customers run the same inference for the same query, we don't calculate it twice.
+We already have it, so have it straight from CDN. And so I think at the moment around 93%
+of embedding requests for Algolia come from cache. Wow. That's actually really surprising.
+Yeah. We didn't know what it would be, but once we saw what the numbers were like, we thought,
+okay, well now we're confident that we should go to bigger models because the amortization of the
+caching now makes that make a lot more sense. And then I guess to add onto that, it was a model size
+for the LLM judges. Is that sort of the same story as well? We're willing to use like an O3
+to do the LLM judge rather than, you know, borrow many because the quality is just so much better
+and it's a one-time cost. It's interesting. And we probably should retry this with something like
+O3 for the graded relevance, because I think you can cheaper model for binary relevance for sure,
+and go faster. We would have been willing to pay for graded relevance, pay more, but at the time,
+it didn't work, but we haven't gone to some of the new models and retried that, I don't believe. So
+we should do that because that might be the thing that gets you to a graded relevance that
+is actually useful. I see. And the graded relevance is good because that quality of data
+can improve the ranking models just like way more than any binary task. Right? Yeah. Yeah, that's
+right. I mean, you think you're breaking retrieval and ranking into two discrete problems really
+helps with the retrieval because it's kind of binary recall. But for ranking, ranking is a lot
+harder. But you know, it's interesting because when you do things like generative apps,
+I think it comes to me, it was Joe from VASPA was talking about data going slower. So previously,
+you wanted this high precision users will only look at one or two results. So you have to get
+the ranking perfect. Whereas now we're moving into a world where we're more, we'll take 50 results
+because we just want more information for context. But we don't mind if we get it slower. So recall
+is now probably more important for things like RAG than what the precedents in the past. So it's
+kind of this interesting trade off there. I see because I noticed in your experimentation that
+there was no latency column. Usually when I think about e-commerce settings, it's like, well,
+like every 100 milliseconds is 1% revenues. I don't care if the recall is 20% or if it's twice
+as slow. It's generally saying that customers are getting more familiar with higher latency,
+or less sensitive to higher latency. I think that they're definitely less if you're doing a RAG style
+and a lot more value back, then you're willing to wait. Searching for iPhone, you want it right
+there right now. And so there are two very different modalities. And I think you got a kind of plan
+for them both differently. I see. I see. This is interesting. I guess the one question I ask
+everyone at the end is just, what is a question you think practitioners are not asking, but they
+should? I wish you'd told me this before. I don't know. Off the top of my head, I'm not sure. But
+some of the questions you asked were actually really good ones for people to think about.
+Everything in search is trade off. And so that's probably the question is, have you got the trade
+off right? And that governs everything we do. Because yes, we can do better. But I had this
+discussion with a customer and they said, but why can't you run generative on every one of our
+queries? And I said, are you willing to pay a thousand times more than what you pay today?
+And they just looked at me like I was crazy. And so of course we won't. And I said, well,
+we're not going to do it because that's the reality. If you need to get a margin on it.
+And so it's all trade offs. And I think a lot of people, they don't think about that.
+You see people experiment and they're doing the latest greatest thing. That's cool. But
+does it actually work? Will it be cost effective? Can you scale it? Is each piece in the puzzle
+good enough? Can you do it cheaper, faster, whatever?
+Luke Gromen That makes a lot of sense. I think,
+yeah, I think oftentimes when companies reach out to me and they say like, can you make the AI better,
+it's always a matter of me pushing them to commit to a budget. It's like, well, yes,
+you can use these 10 techniques to make your recall go up 9%. But it's 9% worth the cost of
+ownership is 9% worth the latency hit is 9% worth the maintenance complexity knowing that
+the next model might just be able to use your tools to get the job done.
+Jason Vale And how do they respond out of interest?
+Cause I think that's a...
+Luke Gromen I think they really sit down and have to
+think about it. You know, like some people will come to me and they say, hey, Jason,
+four oh is great, but we kind of want to do our own inference. How much do you think that's going
+to cost and say, well, your opening eye bill is $10,000 a month. You can go to $4,000 a month if
+you hire an engineer for $500,000 a year. And then they realize, okay, like we really need to think
+on a bigger scale. And you know, when the next model has 10 times more context, what do you do?
+Jason Vale Right.
+Luke Gromen I think people are much more open to thinking
+about it, but it takes them a long time to come back with an answer. I have another example at
+Stitch Fix where we had this knob on diversity. And people at the company said, oh, we want more
+diverse things because more diversity will show our customers that we have more inventory. And
+my first question is like, how much money are you willing to lose? Right. Like I understand that
+we're recommending a lot of white t-shirts and black pants because that's what generates revenue.
+And it turns this diversity higher. Are you willing to lose $50 million because this is
+a positioning marketing investment? Then all of a sudden that conversation becomes more difficult.
+Jason Vale But I'm sorry, same time. Exactly. Yeah, very interesting.
+Luke Gromen Yeah, I think a lot of it really is like there is a budget and some part of that
+budget actually is a dollar amount. And can we have a conversation about that?
+Jason Vale Yeah, and it's interesting in industries like e-commerce as well, where the
+margins can be so small that the incremental gains of using really advanced stuff are often
+not worth it, which is kind of interesting. I'd love to have people be able to set a budget on
+this is how much we want to spend per query. And then we just do as much as we can because
+there's use cases where it is worth spending that extra money and there's use tests where
+it's just not worth it to them. But it's very hard to communicate that in market because you
+have people look at you search and say, you know, oh, it's crap. And it's like, yeah, but you don't
+want to pay for the smart stuff. So that's what you get. Not that we're crap. It's just because
+that's within the bounds of the constraints you're giving us. That's what you get.
+Luke Gromen Totally. I think I've mostly thought about this in terms of like dollars per page,
+per PDF. You know, it's like if you're making investment decisions, maybe you're willing to
+pay a dollar per page. You're processing financial reports. But if you're doing like a rag up,
+like a personal assistant, maybe I don't want to pay a dollar per email. Yeah,
+because if the sales email, I'm willing to pay $30 for a good sales email, because if it doubles
+my conversion rate on $100,000 contracts, I think those conversations are pretty eye opening for a
+lot of folks who, again, I think come from the engineering world and not the research quantitative
+
+Sanyam Bhutani Totally. And that's my whole day is dealing with trade offs like that. And that
+are not the things that people think about. It's not about making it the best. It's all the other
+things.
+Luke Gromen Yeah. If I could have one request, I would love to see Algollia come up with a blog
+post that talks about chat bot latency and conversion. We've seen thousands of blog posts
+on ecommerce where it's like, I think one time we introduced caching as districts,
+cut three milliseconds, and it was 1% revenue gain.
+Sanyam Bhutani Yes, they're reconsidering.
+Luke Gromen But what does that look like for, you know,
+using a reasoning model versus the non reasoning model? Like, I would be surprised if the reasoning
+model is like, 5% better. But the latency cost is probably not worth it. But I would love to see
+that research. And I don't think anyone is really in a world where they can measure that. Yeah.
+Sanyam Bhutani Yeah, we should look at it. I don't think we know either, honestly, I think
+hearing people debate about this stuff entirely, but we should look at it.
+Luke Gromen Yeah, because we're going from like 100 milliseconds to like seven.
+Sanyam Bhutani And that the thing for me is you not only
+spending a lot more, but you have to you have to deliver a lot more value because you basically,
+you're taking that person's time and you have to make it worthwhile. And you say with the economy,
+you see that people don't want to wait, it's not worth their time to wait. And so seven seconds is
+a long, it's a long time, you got to deliver a lot of value. Luke Gromen Exactly. Like, I think I
+would be so curious to see, you know, like, to go from 40 to 03 is 20 times more expensive in tokens.
+It's like 10 times longer in latency. But I would be surprised if it's even like 1% better
+conversion. Like, I think we're getting off. We should talk about this a little bit more.
+Sanyam Bhutani Yeah, yeah.
+Luke Gromen Yeah, so I'm nerding out a little bit from like the ecom side of things. But
+we only have two minutes left. So let's make sure we are able to wrap up as well. Yeah, I think this
+is useful for like the 10% of people who are trying to actually make money with LLM. So I think it's a
+good segue. Great. I mean, that was super informative. I'm really curious to just
+chat with you a little bit more maybe on the the budgeting side of things. So they did something
+that most people are very not familiar with. And as always, we'll send follow ups at the end. And
+yeah, if there's any parting words, Amish, you can find you on Instagram, not Instagram,
+Twitter and LinkedIn. And yeah,
+Sanyam Bhutani LinkedIn. LinkedIn is a bit of a ghost town. I don't go there often.
+But you can find me on Twitter, X, whatever. And yeah, or reach out, send comments, feedback.
+Thanks for attending. You got something out of it. So thanks for coming.
+I definitely did. Yeah. Thank you so much. All right. Thanks, Jason. Awesome. Bye.

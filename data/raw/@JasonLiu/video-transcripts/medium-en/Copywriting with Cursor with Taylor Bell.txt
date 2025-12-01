@@ -1,0 +1,689 @@
+The goal of today and the goal of looking at copywriting in general is to be able to
+raise that awareness about yourself and what you can offer in a way that's compelling to
+other people.
+So let's tell you a little bit about me.
+I started my career as a technical writer.
+I used to write technical manuals for Wi-Fi spectrum analysis products, really technical
+kind of dry, kind of boring stuff.
+And then while I was studying computer science at school, my background is in communication
+theory with a minor in computer science, which is kind of a unique, hold on a second, my
+screen just moved on me, kind of a unique background there.
+Also worked in marketing.
+I've been a scrum master and a product owner again at that Wi-Fi company and then on some
+other products.
+Most recently for about the last almost a decade, I worked on content engineering efforts
+for developer education products that moved into the seven figures.
+So that goes from instructional design of like what the course is actually going to
+contain, the actual writing of lessons based on videos of the product.
+And then on from there, I already mentioned the technical manuals, landing products, landing
+pages, excuse me, and marketing materials.
+And lately for the past several years, like from before chat GPT was even released, around
+the time of GPT two, I had started working on automation around that kind of marriage
+of writing and AI.
+And there you go.
+I built automations around that.
+And then I also most recently co-authored total typescript, which is a book that will
+be published by no starch coming up soon.
+And I used everything I'm going to show you today.
+I used while writing that draft.
+And yeah, I'm currently consulting as well.
+Today here's the plan.
+We're going to talk about the writing environment setup.
+I'm assuming that everybody in the audience has used cursor or at least are aware of it.
+And I guess vibe coding is becoming increasingly popular, but we're going to go in a little
+bit of a different way.
+And we'll do this through a four phase demo of a writing project.
+And then if we have time at the end, there'll be some Q&A and then maybe going deeper into
+the demo.
+So the demo that we're going to do is, I guess, before I skip ahead.
+So our demo will be writing a pitch for consulting services.
+So this is going to be similar to what Jason teaches in his workshop, but go a little bit
+more in depth.
+So let's start talking about setting up cursor as a writing environment.
+So first of all, cursor is a fork of Visual Studio Code.
+I'll kind of go a little bit fast through this because I'm assuming that we all have
+experience with this.
+But so it can do, cursor can do everything that Visual Studio Code can do, but then it
+has AI features built in as well.
+One of these features is the ability to have contextual awareness of your entire project.
+And it has AI powered auto completion, chat, and agentic code generation features.
+I would push up my glasses if I still wore them when I say that.
+It also has web search capabilities built in and it supports specific configuration
+rules.
+And these are all things that we're going to look at in the lens of content creation.
+One of the features in VS Code and cursor that I like to point out that a lot of people
+miss is there is an outline view in the lower corner.
+And this is, it will show you in your markdown where different heading levels are.
+It's great not only for getting started, like instead of starting with a blank page, you
+can set up an outline for yourself with different heading levels.
+And this is a good way to search through that.
+Or if you're using an existing document, it makes it easy to kind of get a feel for
+where you are.
+All of these are the kind of accordion expando things just for the record.
+Also down there is a timeline view.
+This is also super useful.
+Think of this kind of like in Google Docs or something where you have that like that
+history of what the edits were.
+So this will let you kind of do a diff between what's changed.
+And this is something that's better on the small scale in case you aren't using Git.
+I don't know why you aren't.
+If you're not, please learn Git.
+But this will help you out there.
+Then the search feature, I'm on a Mac.
+I think that on Windows, everything that says command is a control.
+Don't quote me on that.
+But this ties in with that headline view of shift command O, and then you can start typing
+a different heading like words from it.
+So this is something that will also help you navigate Docs.
+So this is something that it works in code, too.
+A lot of people seem to miss that it's there.
+And now for this, these are some extensions that I use for writing specifics.
+So Markdown all in one is it gives you shortcuts for things like highlighting text and hitting
+command B to turn it into bold.
+But it's Markdown.
+So it's things like that.
+It also enhances the Markdown previews.
+Mermaid chart support.
+I used and one of Jason's emails built a mermaid chart to explain kind of the consulting
+ecosystem, which is pretty cool.
+Markdown lint is very similar to ESLint or other tools like that.
+It will find problems in a document based on a set of rules.
+Commonly when using an AI generation, an AI generated document, there might be things
+like too many spaces that you don't like, or maybe it uses bold for a heading.
+Bold text is a heading instead of an actual heading level.
+Change case is handy for swapping between camel case, kebab case, stuff like that.
+Code spell checker is a code spell checker.
+And local history is something that is kind of going off that timeline view.
+It is somewhere between that and Git where entire versions of your file are saved in
+a .history folder in the root of your project.
+And that's super handy for not having to remember to Git commit and then it will catch
+stuff that the timeline view misses.
+And then jumpy2, I don't use all the time, but sometimes it's pretty clutch.
+It's just like what's it called?
+The Vim plugin whose name I forget.
+But anyways, it lets you jump to something, to a word.
+I'll show it in a few.
+It will make way more sense.
+And then again, a quick overview of the key cursor features that I use when writing.
+The quick inline AI edits.
+That is done with command K.
+The AI sidebar, which is where ask and agent mode are.
+This is also where most of the changes in cursor take place, it seems.
+There's a lot of UI changes they do.
+Context awareness of your project.
+I'll just skip those next couple of clicks.
+And then cursor rules we'll talk about.
+What we won't talk about today is MCP servers and the custom edit mode feature that recently
+came out.
+These are awesome.
+Definitely check them out, but we won't do it today.
+For the demo, let's take a look at how we would write a consulting pitch email.
+We're going to do this iteratively and build out the strategy behind it as we go.
+I'd like to point out now also that while this process that we're doing for this demo
+uses cursor, the process could be applicable to any AI front end or writing your own scripts.
+But hey, we're talking about cursor today, right?
+Okay, so phase zero.
+We're going to start with a naive prompting approach.
+And we'll do this using cursors ask mode, which is essentially a regular chat.
+It doesn't have the agent features where it won't create or change your files or do anything
+like that.
+It will just ask you ask a question and it answers it in the thing.
+And we will do this with a basic write an email to get new clients as a copywriter prompt.
+So I am going to switch my screen share to cursor and close that terminal out.
+And so I did do one ahead of time just to see.
+But demo, the demo gods might be on my side, but I pre pre made the demo just in case.
+We'll see what happens here.
+Close the sidebar.
+Oh, see, I didn't tell it to search the web.
+So this is interesting.
+This is why I did this ahead of time.
+I'm kind of surprised that it's doing that like that.
+Oh, I see.
+Because I didn't set the model.
+Let's use a 3.7 on it.
+See, this is why I pre generate this stuff.
+It still wants to search.
+Let's just close that and pretend.
+I do have MCP servers enabled.
+Yep.
+So that's why I did this without that.
+Thanks, Alex, for the comment there.
+This is why I did this.
+The prompt, write me an email to get new clients as a copywriter.
+I think when we were all getting used to GPT stuff, we probably did a similar prompt to
+this.
+So what we have here, and because cursor has a UI bug, where if you close the sidebar and
+then reopen, it will cut off the sides.
+That is really cool that that says, let's just say it said professional.
+All right.
+Subject, elevate your brand with compelling copywriting, grabbing attention and holding
+its crucial.
+Does it connect?
+Professional copyright.
+This probably had a sentence that got cut off, which is weird.
+I help businesses like yours.
+This is kind of just generic.
+It's better than nothing.
+It's maybe better than starting with a blank page.
+But it's just like, you can't tell that I'm trying to sell consulting services or find
+a client or anything like that.
+It's better than nothing.
+It's better than a blank page.
+But if I got this email, it just doesn't do it for me.
+So let's go back to the slides and let's keep going here.
+So this is where the Ada framework comes in.
+The Ada framework is one that Jason uses in his AI consulting workshop.
+It's a classic framework.
+I'm going to take a drink of water.
+See, I'm so excited.
+I haven't done a presentation in so long and I just love talking about this stuff.
+So it's one of the older frameworks.
+It's been around for over 100 years.
+And let's take a look at what it is.
+It's attention, interest, desire, and action.
+The attention, the goal of attention, you want to capture audience focus.
+You want to stand out with a pattern interrupt.
+And a pattern interrupt is that's something that's kind of an unexpected thing that it
+doesn't follow what the reader necessarily expects.
+It's either in some ways a subject line, like one of Jason's emails, my $700 an hour mistake
+is a pattern interrupt because it doesn't seem like $700 an hour would be a mistake.
+It actually seems kind of awesome.
+In other examples might be when couples are like, we're so close, we finish each other's
+and then you either think sentences or sandwiches because those are the two ways that sentence
+is ended.
+But maybe they finish each other's, I don't know what they finish.
+You fill in your own blank there.
+And then you can do that with using headlines and what I call non-no questions.
+It's best to, one of the best practices that I was taught by one of my mentors and I've
+seen over the years is that you don't want to start an email or a landing page with a
+question that somebody could answer no to.
+Because if they answer no, they're not going to read anymore.
+So the next phase is interest.
+This is a progression from attention to get the reader interested in what you're talking
+about.
+This is where you would elaborate on the problem or the core solution.
+In this case is jobs to be done, which is a kind of a theory for product design.
+And it's kind of outside the scope of right now, but worth looking up if you're not familiar.
+And it clearly connects the topics to the reader's needs.
+For desire, you want to create an emotional connection if you can.
+And talking with, you know, a technical audience and developers talking about emotions is kind
+of like not necessarily cool, I guess.
+One of the things that would count as emotional connection is part of Jason's story of having
+the wrist injury that kind of ended his career, it seemed like.
+So that's something that makes you relatable, makes you or your company that sort of thing.
+And highlight benefits over features always.
+And proactively address objections.
+And then finally the action, you want to provide a clear call to action.
+So tell the person what you want them to do.
+Sign up, click here, do this.
+Try to bring in some urgency.
+And it's best to do this in a way that is not, what's the word, like a false urgency
+sort of thing.
+Like, don't just say you have 30 seconds because that's all there is.
+And then make the next steps obvious and easy.
+So now that we've kind of made an outline of this, or now that we know what the ADF
+Let's change the prompt that we just did to name drop it and rely on the model's own
+understanding and knowledge of it instead of like, we're not going to give it any more
+context.
+Let me switch my terminal to the next branch if I can find the command for terminal because
+shift command P everybody.
+And this is, I'm going to phase one.
+And I got, let's see, I got a control minus minus or control minus tilde.
+Sorry.
+I am on a three quarter size keyboard that has no tilde.
+The tilde is set as the function and escape, but it's a really weird feeling on my little
+keyboard.
+And then just check in the chat before I switch here.
+See if I'm missing anything.
+Comment from Remy.
+I'm curious to try slide dev with cursor.
+This is slide dev right now.
+I'm using it.
+Pretty cool.
+All right.
+So I'm going to switch screens back to cursor.
+And so we still have our naive prompting approach open.
+And I am not going to do that.
+I am going to go to zero one Ada without explanation.
+So this is the prompt that I used in cursors ask bar.
+Again, not going to try to do it live because of course it doesn't work the way it did when
+I did this.
+But so all we've done here.
+The only difference is we've told it to follow the Ada framework.
+We're still using Gemini Pro 325, which is been pretty awesome in my opinion.
+Let's take a look at these side by side.
+We have we notice here that the response has added the kind of fake headings.
+This I hope further drives the point that you should never ever just blindly accept
+whatever the model gives you and ship it.
+That is not a good idea.
+So attention.
+Are you struggling to convert website visitors into paying customers?
+Is your marketing message falling flat?
+See when I read stuff like this I picture like those black and white like the infomercials
+where the beginning is in black and white and then like what's his name comes out and
+like slaps the duct tape on the boat or whatever.
+So does your current marketing copy truly connect?
+Like it's trying to be a little more clever.
+The imagine here.
+So that's good.
+So it starts to kind of like imagining is a good thing.
+I don't necessarily use that word when I write, but this explains why copywriting is important.
+Gets you interested in it.
+Desire.
+I help businesses like yours.
+This is what I've done.
+See my problem with this is this says I a lot like I do this, I do this, I do this.
+Like you haven't really demonstrated that you understand the problems, but better.
+It's still better than this.
+I guess like it's still an improvement.
+And then action.
+Let's schedule a call.
+That's awesome.
+Yeah.
+Check out my portfolio.
+Pretty good.
+Pretty solid on the whole.
+And all we did was add this directive to follow the copywriting framework.
+Let's go back and look at where is the button.
+There it is.
+Let's go back to some slides.
+Am I talking way too fast?
+Like I guess I'm almost like I guess I'm on time.
+Prompt with the ADA explanation.
+So we're going to do basically the same thing, but this time we're going to use the exact
+explanation from the slide that I just showed.
+And you'll notice that this time I put the parts of my prompt in XML tags.
+I'm a big fan of this.
+I do this almost every time.
+I would say probably 90% of the time I will structure my prompts with XML tags like this.
+And to jump back to cursor because Zoom makes it so easy to do, I will toggle the terminal
+and then GCO phase two.
+I'll share a link to this repo if anybody is interested in that.
+So now that we have ADA without explanation, let's open up 02 with brief explanation.
+And I did two versions of this, one with Claude and one with Gemini.
+And I did this before, right as I ran out of credits for the day for Gemini, which is
+a classic.
+Okay, so first let's look at these back and forth together with the no explanation one.
+So I'm running cursor in a little tiny window in the top corner of my monitor with a large
+font so I feel a little bit weird.
+That's only one of the reasons I feel weird.
+So Gemini, Gemini.
+And then now we can see here the prompt had the stuff in the explanation.
+Ever wonder how many people land on your site get confused and leave?
+I could say no, because I've never wondered that.
+A better question would be like, how many?
+Because how many you can't say no to how many.
+Strong clear copy isn't nice to have.
+It's the engine that turns visitors into leads and leads into sales.
+Not too bad.
+I like that more on the whole than what's over there.
+Poor copy can cost your business, fails to connect.
+You got to grab attention instantly.
+So yeah, I help businesses like yours do this.
+Desire, action.
+Yeah, like that's not too bad, actually.
+And then Claude version, totally different formatting.
+Kind of underwhelming, really.
+I think I give the nod to Gemini.
+But I think that the point here is that hopefully you can see that we've applied just a little
+bit of context and this is already that much better.
+I'm talking way more about the examples than I had intended to, by the way, but I can't
+help it.
+So in order to make things better, we're going to introduce the idea of including context
+with cursor.
+You might probably be aware that the at symbol allows you to bring in a lot of different
+information.
+You can bring in files, documentation from the web, even past chats.
+What we're going to do now for our writing is we're going to use the at web feature to
+search in order to expand the speaker bio that is about me that we wrote at.
+We didn't write it.
+I wrote it.
+The royal we wrote it.
+Let's bring in the web and build out an example of fleshing out an audience profile for the
+writing based on the speaker bio that's in bio.md.
+The way that we'll do this is we'll use at file to include bio.md in the prompt, which
+will be the exact bullet point contents from the beginning of the slide, the beginning
+of the slideshow, rather.
+At web, we'll search this query with the additional info from the file and the slides
+will probably be shared.
+I'm sure the answer is yes.
+I haven't thought that far ahead yet.
+You can also use a get plugin to change your branches and such, but classic.
+So under resources, we have a bio.md file.
+This is these are the bullets from the slide where I introduced myself.
+So what I did is using that prompt that I shared, here is first I did this without a
+web search, actually.
+All I asked for was an audience profile.
+And what's interesting about this is when you don't know exactly what elements to include
+as additional context in a prompt, doing something like this, kind of rolling the dice and see
+that like the model itself looks at profile and it says, so demographics, technical background,
+pain points.
+So this is all stuff that has been surmised just from the bullet points in the bio that
+I provided.
+And we're going to use this output as it is for this demo, but hopefully you can kind
+of feel your wheels turning about, like maybe you should dig deeper into these kind of segments.
+Like if these are the parts that make up an audience profile.
+This is Gemini with the web.
+So this again, this is different than Sonnet's not web version.
+And I'm looking at chat at the same time.
+I should probably move this over.
+Guessing the characteristics of the audience based not the speaker bio, based on the speaker
+bio.
+Yeah.
+So I think that what it's done is like it's assuming that I want to write content for
+the person in the bio.
+So it's almost like kind of getting meta where I'm directing the model to write a persuasive
+email that would persuade Taylor Bell to hire somebody for copywriting services.
+So in that way, I think that it would have been with bio.md for the sake of like the
+real world, I would probably make that like my profile MD.
+And then I would say like, this is who you're taking the role on of.
+So there's that idea of like when you prompt that you give a context and a role and a task
+and constraints.
+So on this audience profile from Gemini, now it's called the strategic innovator.
+So demographics, psychographics, forward thinking, analytical and results driven.
+Yep.
+It's kind of funny to read in AI write this stuff about you based on just a few bullet
+points of your background.
+But this is again, like these are things that like these values, this is something that
+could be leveraged into that kind of emotional side of connecting.
+And then again, this is same idea with Sonnet and comparing the comparing the three of what
+kind of sections show up.
+These are all like really good like signposts.
+Ian asks, have you tried using cursor rules for these things instead?
+Have I got a slide for you?
+Yes.
+The answer is yes.
+Here's a screenshot that I took of cursor doing that.
+This shows that it's that it's searching the web.
+So it looked for how to write a speaker bio bio examples.
+So very cool thing.
+So that is the rest of that part of the repo.
+And now back to the slide.
+Cursor rules for AI interaction.
+How about that?
+So cursor rules.
+Cursor has a special folder dot cursor slash rules directory.
+And these are things that you can this rules are read automatically when launching cursor.
+It has access to them.
+It doesn't necessarily use them unless you tell it to when creating rules.
+You can have it applied to every chat and edit that you make.
+You can set it to match certain globs.
+In this case, MD is the right thing.
+Agent requested tells the agent to decide when it applies or not, which we'll take a
+look at.
+And then manual would you would have to write at rule name in order to apply it.
+So when using the we can use the agent to create an audience definition file.
+And this is where what Josh was bringing up earlier is where I kind of in the demo, I
+conflated the audience versus like writer thing.
+There is something that I want to point out that agent is the default interaction mode
+now.
+I have it set.
+It used to be called YOLO mode.
+Now it's called auto run.
+And you can't see it in the screenshot, but I have RM in my command deny list because
+I don't want it to delete stuff.
+I will do that myself.
+And here is a prompt that here's the prompt that created the the audience profiles that
+we looked at.
+Let me jump back to to know.
+I'll keep talking about rules for a second.
+Rules in this case, using rules for for Markdown stuff, it will help us create reusable writing
+patterns.
+We won't have to put those XML tags of Ada info every time we write helps be consistent
+with voice tone style structure.
+And they're easy to share and reuse because you can just check them into your repo.
+So, we can see here where I've prompted the agent to create the rules based on the content
+of the MD files.
+And that brings in phase three, which we'll switch to to look at in a second.
+And here we were creating rules using the agent that we can then bring in and and call
+up.
+So now once the rules are in place, we have an Ada rule in place that Ada rules in place
+where we can use that same Ada name drop prompt that we used earlier.
+And you can see here that cursor has brought in the rules to make it happen.
+Let's switch back.
+I think I resize the window.
+Does it still look all right?
+I can put it back where it was.
+GCO phase three rules creation.
+OK, so close some of this looks fine.
+Cool.
+So, on the other side of dot cursor, I have created separate rule files for the audience
+profile.
+And so this is one of the markdown files that that I showed earlier.
+If it looks fine at both, I'll make it a little bit bigger.
+So, this is the demographic psychographic stuff.
+So, this is audience profile and MDC.
+This one's auto attached.
+So, every in this project, in this particular project, every prompt that is made will include
+the audience profile.
+So, we set up separate rules like with help from the agent, as we saw in the screenshot
+earlier, set up separate rules for action, attention, desire, and interest.
+So, what we did here is this goes further than the XML that we provided.
+So, this was the agent used this, searched the web, found additional like action stuff.
+Here it gave examples of technical CTAs and alternatives.
+Again, this is all totally machine written.
+You would in the real world write this stuff yourself.
+It kind of demonstrates like this is now what?
+Probably a page and a half about just the action part.
+So that's pretty cool.
+Then with the rules, we can see that let's compare the sonnet one to the brief explanation.
+Yeah.
+So, sample file with the rules.
+Yeah.
+I'll share a link to the GitHub repo afterwards.
+And yeah, it will have all these files in it.
+You will have to know how to change branches, but you can ask the chat that, huh?
+Okay.
+So, remember how short this ADA with a brief explanation.
+So the prompt when we had the XML versus with the rules, and this is the same model.
+It's still a pretty short email, but it's a little bit, it feels a little bit better.
+Again, I can't say it enough.
+Don't ever send something without editing it fully.
+Please don't.
+That's 3.5 versus 3.7.
+So 3.7 here on the left.
+Almost the same.
+So it still brings in that, oh, this time it's 78% instead of 73.
+Don't know where these stats come from, but you can see that it kind of gives an example
+of what I've done as a copywriter, which again, I haven't done, but not to belabor the point.
+I'll switch back to the slides now.
+Is this making sense for people?
+I feel like I'm talking really fast, and maybe too much, but not enough.
+But really, the practical workflow that we've done here, and the one that I follow generally,
+is research phase.
+So the audience, the scope, the goals.
+What are you trying to do with the piece of content that you're creating?
+The rule creation, again, style, tone, and structure.
+Advice on email length, short, yes.
+So after you create the rules, and the rules should hold for most of your projects, generate
+content iteratively.
+What we didn't do in the demo, and looking at the clock, I don't know if there will be
+time.
+I almost always start with an outline.
+I did not start with an outline in the demo, but what I would do is I would say, since
+we have rules for action, interest, desire, attention is first, rather, I would say, based
+on these rules, here's my goal, this is my audience, outline something with each letter
+of the way.
+And then refine and rewrite.
+You got to edit the generated content.
+It needs to feel like you wrote it, and by you, I mean you, a human being.
+There's so many things where even in papers on archive and stuff, it's like, why are you
+using all these 30-letter words?
+It's not necessary.
+And there's so much more to talk about.
+Email me to chat whenever, taylor at Copywriting.dev.
+But some of these might have come up in the chat.
+I feel like I saw some, but questions about prompt management, so templates, content development,
+repo structures, editing practices to find your voice, tone, and style, workflow automation
+and tooling.
+I've scripted most of this stuff out.
+Lots of research.
+I call it agent-ish, because I very much am a fan of human in the loop.
+I don't know if I mentioned that enough.
+So that's the presentation.
+I guess we'll do some Q&A, maybe some more live demo.
+I didn't realize how long I talked for already.
+Should I scroll back through?
+I think we can just jump into some of the questions first and then see if anyone is
+interested in...
+Okay.
+Let me stop sharing.
+Stop sharing the screen.
+I'll share answers and stuff.
+Sounds good.
+Sounds good.
+I mean, I have an opinion on this, but I'm curious what your thoughts are on this.
+What are the main advantages of using Cursor over a custom GPT or cloud project?
+So I spend a lot of time in VS Code before Cursor even came out.
+There's just so many more.
+Having a development background in particular, I'm predisposed to using a development tool
+with things like even just using Vim mode.
+I mash, escape a lot.
+And so there's things that just don't translate for me in a browser.
+But that's kind of what the beauty about this workflow, this general workflow of iteratively
+changing the prompt structure, that will work in chat GPT UI.
+It will work on writer.com or whatever it is.
+It will work anywhere.
+And so really, even though this demo was about Cursor, it also is more actually about the
+workflow and the strategy behind prompting towards copywriting rather than...
+You can dig a hole with a screwdriver.
+It probably won't work that well.
+My mom used to build furniture when I was a kid with a meat tenderizer and a butter knife.
+And we eventually got actual tools.
+But really, it's like, that's what that jobs to be done theory is.
+It's like, what's the thing you actually want to do?
+Hopefully that answers that a bit.
+This is a question.
+I mean, I have some examples of my own, but what would be some examples for you on a non-no question?
+A non-no question.
+When was the last time is a good one.
+There used to be one that's taken out of context.
+It wouldn't sound good.
+It's like, do you still?
+Like, do you still you could say no to?
+I'm changing.
+I'm not going to say the thing out loud that I thought I was going to say out loud.
+When was the last time?
+How often?
+Where do you?
+How do you?
+Anything that like, are you having trouble converting leads?
+Nope.
+Next email.
+Like anything that like you can't nope out of immediately.
+That's like a question like that.
+But you said you have some like what are some of yours?
+Yeah, I mean, the one I have, especially because oftentimes I my issue is once I get the first call, they sort of ignore future calls.
+And so if I know what their concerns are, the question I like to ask is, are you still committed to result people?
+For example, if people want to learn more about consulting and then they stop replying to emails like, hey, are you still concerned?
+You could say you could say you could say no to that, though.
+So the way that I might reframe that is where have your priorities shifted to?
+Or like, it looks like your priorities have shifted.
+Like instead of asking them, just say, it seems that you're not committed to this anymore.
+Instead of are you still committed?
+Well, yeah, but you know, I got busy.
+But like, it seems you don't care.
+Like something like that is well, it's not even a question anymore.
+So I guess it doesn't fully fit the brief.
+But that makes sense.
+I definitely want to love to have like a swipe file for some of these non no questions.
+That is a very good idea.
+Swipe file for for the folks at home.
+That is when you find pieces of content or advertisements or emails or anything that like resonated with you.
+I like to think of it as like this thing got me to buy something.
+So I want to take this and understand the structure of what it was.
+And so that's where kind of in the demo of where it's like here's the email where, you know, Jim and I put like attention interest.
+Do that on your own with stuff that you read.
+Like, what is it that that made you resonate with a particular piece of content?
+And then it's you kind of make your own template from there almost like then.
+Yeah, it's a swipe because you swiped it from somebody else and you swipe structure, not not wording as much as possible.
+Sweet. This is a question.
+I mean, I have opinions as well.
+But one of the questions is for cold outbound, is it a good idea to include a calendar link for convenience or wait for them to apply before scheduling?
+Why don't you answer this one?
+I think this one's more directly applicable for.
+Yeah, I mean, to me, it's like I just want to reduce as much friction as possible.
+And it really depends on how much inbound I'm getting.
+Right. So if I have no inbound, I'm probably going to be reaching out to people, including the kind of link.
+If I have a lot more inbound, maybe I am just reaching out to people who are very interested.
+In which case, if they're all just really important people, I'll still include the kind of link.
+I'm spamming 10000 emails, but that might not be something I would do as much.
+I mostly think about it as just what what are the friction points I'm trying to introduce to get the customers I want?
+Yeah, I think I'm in line with that.
+I think that that knowing the scope of your of how how many people are you trying to send a calendar link to?
+So, yeah, like most questions in development, the answer is it depends.
+But, yeah, I think, Jason, I think you had it right right on for for this particular scenario.
+Another question, I think I'm curious as well to hear from you is if you could change a couple of things about cursor in terms of copywriting, what would you what would you change?
+Oh, see, that's interesting.
+I think that one of the things that that I would change about cursor in general and this like it extends to writing also is I don't know if you all follow the Reddit,
+but like there's a lot of people who almost take personal offense to changes in the in the UI and the behavior of the agent.
+I've had things where it will change stuff in files that has nothing to do with what I was just doing or it will undo stuff that I put back or I'll or I'll reject certain things and not other things.
+So I think that some sort of so it has it has like the restore checkpoints feature.
+But then I want something that's between the timeline of what you changed and that local history and get and restore to a checkpoint.
+Like, sometimes I feel like the the undo isn't as undo as it should be.
+Like, I kind of want to go back to the red green a little bit easier sometimes, but still have the ability to edit a green thing would be nice.
+But yeah, so I guess that would be it.
+I guess just like the file changing stuff.
+Have you tried using things like windsurf?
+I have not tried windsurf yet.
+I would I'm interested in in kind of applying the same process.
+I actually thought about doing some sort of like a like a shootout where I do the same thing across like Klein windsurf Rue code or whatever it's called.
+It's just Rue maybe.
+But yeah, there's I haven't yet.
+The short answer is no.
+That was that was a yes or no question.
+And I could have I mean, I've been using cloud code and it's actually been really, really good.
+How much are you spending on it?
+I spend like two hundred dollars a week.
+Yeah, so I don't.
+I'm doing my 20.
+I have like I have like hours and hours of seminars and lectures I got to go through this like or materials.
+It's been like it is it is pretty incredible.
+And really, like it's it's all like you stuff.
+So like I haven't really I haven't delved into the world of Claude code yet.
+I would never I would never write that for the record.
+But like it's the fact that it's 200 bucks, like it's really easy to be like 200 books.
+And it's like I spent more than that on beer last month.
+So like maybe not actually.
+No, not last month.
+But I but I have before.
+The point is expense is like what's your time worth?
+Basically.
+Exactly, exactly.
+Maybe you can end it with this question here.
+So do you have any plugins you use to make your experience with slide slide up even better?
+It was just slide up and cursor.
+Yeah. So it's funny is this is the first time I've really used it.
+And I haven't I didn't install any plug in plugins for it.
+I am using the never night theme, something.
+But it's been really fun to write slides and markdown because as as I'm sure everybody knows by now,
+like I spend a lot of time writing markdown.
+I think that my my tip for the slides is slide.
+So slide dev lets you have a slides dot markdown file dot MD where you import slides instead of writing it all in one giant file.
+So I would say write your slide separately.
+But yeah, I didn't really do too much generation on the slides.
+I kind of knew what I what I wanted to do.
+But I use the cursor docs feature to help me like kind of rearrange stuff.
+I'd never written view before.
+And some of the you don't really have to write that much view.
+But there's some I come from react land.
+It's just like some of the stuff's a little different.
+But yeah, that's awesome.
+I think with five minutes left, we can probably wrap this up just because I also have to prepare for another meeting right after this.
+But do you want to just share maybe your contact information one more time and then we can make sure that we include everything on the follow up email.
+Yeah, you can find me at Copywriting.dev.
+It's just a simple landing page right now.
+I really want to talk about this stuff more.
+This is the first time I've really been able to talk out loud about it.
+I come from like a back like from being behind the scenes.
+Copywriting.dev, Taylor at Copywriting.dev is my email for that.
+I'm on Twitter at at Taylor Bell.
+I don't tweet very much and I delete a lot of tweets five minutes after writing them.
+But yeah, I think that's probably the easiest spot.
+Writing me an email about whatever like this is like obviously I like talking about this stuff and clearly very excitable.
+I need to work on my SEO. Yes, I do.
+And that landing page is a ConvertKit landing page that I just put up like three weeks ago.
+But yes, I will work on the SEO and I got lots of stuff to write about.
+Awesome. Thank you, everyone.
+Cool. Yeah. Thanks, everybody. See you around.
+Take care.

@@ -1,0 +1,929 @@
+Welcome everyone.
+And you know, I think if you're attending this talk, probably it's because you've already
+sort of thought about things like building up a virtual AI.
+And if you have, then you generally know that what ends up happening is that these AI demos
+work really well.
+But as you get into production and start focusing on the last mile of delivery to a natural
+customer, that's when things fall apart, right?
+And generally it's because of a lack of context when you're building these workflows.
+And really it's because understanding what good is, is very hard, right?
+It's not going to be just a pass fail for many of these issues.
+It's going to be whether or not our domain experts feel like this is good enough to be
+shipped to production.
+And so I'm really excited to invite my friend, a guest, Chris Lovejoy.
+Previously you were like an MD from Cambridge.
+Now you're working as the head of clinical AI at a company called Interior, which works
+on LLM native clinician led AI.
+And mostly you've been building out these agents to put domain experts to work, put
+them into the loop and figure out what we can actually build.
+And so in the next 30 minutes, you'll learn a little bit more about how you should be
+thinking about how to leverage your domain experts.
+I think you're surprising take on whether or not you think prompting versus fine tuning
+is the way to go.
+And ultimately, how do you build trust with the customers of these specialized tools?
+And so with that, any other questions we can post on the slide.
+And yeah, Chris, the floor is yours.
+Appreciate it, Jason.
+Thanks for the intro.
+So as Jason mentioned, hi everybody, I'm Chris, and I'm going to be sharing some lessons
+about building agents in vertical industries.
+And specifically, I'm going to talk about a few things.
+So firstly, a bit about how you can use domain experts to really supercharge AI development
+and why I think that building a custom UI is one of the highest leverage things you can
+do to support them in this.
+I'm going to share why I think that prompting beats fine tuning for verticalized agents
+in the vast majority of cases, but also why you need to go beyond just like prompt engineering
+and what are some kind of more advanced prompting techniques that you should absolutely consider.
+And then finally, a bit about how to get and maintain customer trust through things like
+intelligent performance monitoring and building a secure LL native architecture.
+And then depending on time, I have a kind of a little bonus lesson I can share, but if
+not, we'll go into Q&A.
+So we'll see how we do.
+And then a brief background about me and where these lessons are coming from.
+So as Jason mentioned, I spent eight years training and then working as a doctor, which
+is really where I saw how impactful AI had the potential to be if implemented correctly.
+And I then went back to college to study machine learning and learn things from first principles.
+But then when I tried to apply those principles in the real world, I realized that actually
+many of the principles were either outdated or were really challenging to apply in verticals.
+And I think this has become increasingly true kind of post chat in the world.
+And so I found I had to keep on reinventing the playbook.
+So I did this first at Sarah Care, where I built out the AI function and Sarah Care was
+a tech enabled home care company that recently hit 500 million ARR.
+And then again, at various other companies, I kind of felt like I was reinventing the
+playbook there as well. Companies I worked at, consulted for, including my own companies
+all the way up until today at Anterior, which is very much an LL native company where we're
+using LMS for health care admin.
+And I think also one experience I've had is that while health care was very much the first
+vertical that I worked in, since then I've worked across multiple different verticals,
+including education, recruiting and retail.
+And I think a lot of the principles and probably the majority of the principles apply across
+all these verticals. And explicitly, I think the content of this talk, I'm talking to those
+principles that are generalizable.
+And before I dive into those lessons, I just want to take a quick step back and ask the
+question, why is it so hard to successfully apply LLMS to specialized industries?
+So I think there's a few reasons.
+Two that come to mind are firstly, this last mile problem.
+And the last mile problem is the challenge of taking powerful models and getting them
+to work well in the specific context of a certain customer and a certain industry.
+And really what I've seen is that the challenge is no longer in the quality of the results.
+It's no longer in the quality of the reasoning.
+Maybe two, three years ago, these models would often fail in their kind of reasoning in a
+clinical context or an illegal context or elsewhere.
+And I think that's no longer true.
+I think now the errors that I see are around the model not having the context on specifically
+how workflow is performed in that industry.
+And I think another component that is also making it difficult to apply LLMS in vertical
+industries is it's harder to define what exactly is good and what is correct.
+And you really need a domain expert here to basically translate that.
+And so not just anybody can come and kind of build and evaluate these applications in
+these industries.
+It's there's like extra steps that you need to take.
+And I'll talk about what I think that should look like.
+OK, so on this first point of how can domain experts supercharge AI developments?
+So there's this maxim that many of you will have heard of that one of the most important
+things when building LLM products is to look at your data.
+But what if your data looks something like this?
+You have your AI generates now, but this is a this is a legal example.
+And I'm not a lawyer.
+I wouldn't know whether this is right or wrong and in what way it might be wrong.
+So you therefore can't just look at your data yourself.
+It's not it's not often as simple as that.
+What you need to do is empower domain experts to actually look at and then translate that
+data into something actionable.
+And I think what that can look like is something like the following.
+So let's say you have your production application.
+It's live. It's generating some kind of AI outputs.
+I propose that you want to then use domain expert reviews to take those outputs and make
+a number of of kind of useful inferences from that.
+And so four of the top things I think you should be looking to get are you want to get
+performance metrics.
+So how well is your AI doing?
+Like how accurate is it if it's making some kind of decision or what kind of characteristics
+and traits are you are you is it kind of performing at what sort of scores are you
+getting and then where it's not performing well.
+What are the specific failure modes that you've noticed in your AI as well?
+And then also suggested improvements.
+So how might you actually improve your system?
+What are different things that maybe you could even automatically put into your into your
+agents and into the context that might improve things and then also input and output pairs.
+And I'll touch a little bit later on how that can be useful and what that might look like.
+But if you're able to do domain expert reviews and get these kind of outputs, there's a number
+of helpful things that you can then concretely do with that.
+The first of those is it enables you to quite nicely prioritize work.
+You know, you're using production data.
+So this is very representative of the kind of data you're going to be getting going
+forward. And you can plot graphs like this.
+So for any particular error metric, any particular way in which like the kind of metric that
+you most care about, your customer most cares about, you can see what sort of failure modes
+are most contributing to that.
+And therefore, where do you want to focus your efforts to improve them?
+What you can also then do is get these ready made failure mode data sets because you've
+reviewed from production.
+You've said when it's wrong and in what way you now have these example inputs that your
+AI received that were wrong and you can group them by failure mode and then you can give
+that to an engineer and they can make changes and they can see what's the impact on the
+performance. So these groups by particular failure modes.
+And if you initially came from production, you probably have zero percent accuracy.
+But as you make changes, you go to retest it and see what the impact is.
+And that lets you do things like this, where you're making changes to your pipeline and
+maybe between different increments along the X axis here, you're improving certain
+failure modes and deliberately like focusing on how you can improve those.
+And then you'll see jumps in that and points over time and you kind of get this gradual
+trend over time. And then you can obviously also then check that you're not regressing
+on any other failure modes once you're making those changes as well.
+And the overall process that this enables and why I think this is really powerful for
+vertical AI applications is that this is kind of a continuous loop that you can perform
+that really embeds context about a specific way that a customer performs and a specific
+way in which the AI is wrong for that particular customer today and lead this full
+iteration loop to then improve it.
+So it looks something like this. So you have your production application, you're getting
+your AI outputs, which gives you the performance and the categorization of failure modes.
+You can then give that to a PM.
+And in my experience, it often makes sense for this to be a domain expert PM.
+They can then specify a failure mode that they want to be fixed based on the priorities
+and how much it's impacting the top line metric.
+They can give it to this engineer.
+This engineer can test against that ready made failure mode data sets.
+They can keep on making changes and see what sort of impact it has.
+And then once they're happy that they've come up with some changes that really improve
+it, they can give it back to the PM.
+The PM has the full context on all the different work that's going on and the kind of
+downstream impacts this might have and can then make decisions about going live.
+And you can do this whole process in a very short period of time if you have all these
+kind of fundamentals in place.
+And I've talked more about this in more detail here at this link, so feel free to check
+out the full video.
+But this is kind of like the I think a very powerful process that can really enable you
+to solve this last mile problem.
+But that's kind of downstream.
+That's once you're getting these different pieces of information that you want, your
+performance metrics, your failure modes.
+The next question then is how do you actually perform the reviews that get this kind of
+information?
+And you can often start in a relatively low tech way.
+People often start with Google Sheets or maybe you look at the raw traces of the data
+raw traces in Langfuse.
+There are also various like EVAL vendors that will give you these dashboards.
+But my take here is that you very quickly run into limitations with a lot of these
+approaches. For example, it's not easy to integrate the downstream data that you're
+generating from these reviews into your production application.
+And you can also run into limits of what you can present.
+So obviously in a Google Sheets, you have a 2D view and it's very hard to like surface
+the kind of context that you might want to.
+Whereas I think that building a custom review dashboard is really the way to go because
+it solves these problems. It gives you maximum freedom over how you can present that.
+And it's very easy to then embed that data downstream into your system.
+And so this is an example custom UI that we built at Anterior.
+And here on the right hand side, you have your medical record and then you have this
+other tab for your medical guidelines.
+You can kind of scroll up and down.
+So all of the context that you might need is available.
+And then the left hand side is the specific question that the AI is answering right now.
+So you have the context where it is and then you have the question, you have the AI's
+answer, and then you have this box at the bottom which enables you to then annotate
+that. And it's this annotation box that enables you to get these four pieces of
+interest. So you can say what's correct or incorrect.
+And by doing that, you're getting performance metrics.
+You're seeing how often are you correct and you can chop and change that based on
+different axes of interest.
+You're getting the failure modes because there's this button here for tagging the
+failure mode. You click on that and it opens up the failure mode taxonomy that you
+can then select from.
+And for suggested improvements, the way that we do that is you have this domain
+knowledge button. You can click on that and you can then insert some kind of domain
+knowledge that you think if the LLM had had that domain knowledge, it would have
+been correct on this particular question.
+And for input output pairs, you can also then have this drop down, which enables
+you to specify what is a correct output.
+So you have all the input information here, the context, and then you get a
+correct output. And that can be helpful in a number of ways.
+And I think the general principles when building a custom UI, my kind of
+proposition is that there are three things you want to be optimizing for.
+And the first of those is high quality reviews.
+I think if given the choice, you want a low volume of high quality reviews rather
+than high quality, high volume of low quality.
+And this is because you really want to be able to trust the metrics that you're
+generating. And you might use this data downstream, maybe for fine tuning models
+or maybe for actually concretely putting it into your production application.
+And so, you know, you really want to be able to trust that.
+But equally, you also don't want your reviewers to spend ages doing every review
+and get review fatigue.
+So you also want to minimize the time taken.
+And then the third point of generating actionable data, that's basically
+generating these kind of outputs that I'm talking about.
+And I think there's three high level principles that I always try and keep in
+mind when building out custom UIs that I think meet these objectives.
+So the first is optimizing for clearly surfacing all the required context.
+So in the example that I showed on the right hand side, we had the kind of wider
+context and everything that the user might need is there and they can like
+scroll through it.
+But we're abstracting some of it away.
+So it's not like overbearing on the screen.
+And on the left hand side, you have the more specific context for the user to
+drill into, which then is kind of also helpful to have that separation kind of
+cognitively.
+And then I think, you know, you want to have all the information available, but
+then you don't want to overburden.
+So you might use like a show like tabs, sidebars, nesting, different sort of
+techniques to abstract things away.
+And then for the second principle of optimizing the review flow sequence, my
+take here is that you want to form an opinion on what the ideal review flow is
+and then kind of bake that into your custom UI.
+And that might be through visual cues.
+It might be actually by enforcing that the reviewer does certain things step by
+step.
+And then you want to invest effort in really minimizing the friction of
+performing that review.
+So making sure the information is available in the right place so that you
+preventing scrolling, clicking kind of too much, too much manual work on behalf
+of the reviewer.
+And the process that I've seen helpful for this is doing a lot of shadowing of
+domain experts doing these reviews and understand, you know, what are the natural
+variation in flows?
+Because typically I've seen actually these reviewers often have their own flows
+and then forming some sort of opinion on what you think makes the most sense and
+baking that in.
+So that's the first point on my second kind of lesson here is around prompting
+versus fine tuning.
+And I think this is obviously kind of common question and probably the answer to
+this is continually evolving over time as well.
+My take today is that for the majority of cases for vertical applications, better
+prompting is more important than fine tuning models and it's a better way to
+improve performance.
+And I think this relates to the fact that in verticals, the typical issues you'll
+face are around having the right context rather than the reasoning of the model.
+So with fine tuning, it's often not necessary because actually out of the box
+models today are great even at domain specific reasoning.
+You know, they have that kind of trade data in their training data.
+And also, I think whenever you're doing fine tuning, you're adding a bit of
+complexity that you're not necessarily adding if you're prompting.
+So, you know, you might be fine tuning per task and then you might fine tune
+across different customers as well.
+So you're having like lots of different models that you're having to manage and
+you need to monitor the performance for all of those models.
+I think with fine tuning, you're also doing that at a specific point in time
+using a certain set of data and actually the way a workflow is being performed or
+the way an organization operates kind of all over the time.
+So that performance can naturally deteriorate.
+And so, yeah, this is why I think prompting is often an optimal solution.
+I think the arguments for fine tuning outside of performance can still
+absolutely be there.
+So things like optimizing for speed, optimizing for reducing costs and for
+scalability, all that sort of thing.
+But I think as a first go-to, my take is that prompting for improving
+performance is typically the best place to start.
+But I think on the prompting front, my push would be that I think just actually
+tweaking the prompts themselves and really over optimizing those can be quite
+brittle because it's fiddly, you know, every time you change a prompt and change
+some words, you might improve in one area, cause problems in another area.
+There's also a degree of model dependency.
+So some prompts might work well for some LLM and then less well for another LLM,
+but you really want to have the ability to kind of chop and change large language
+models to keep on top of progress.
+And then I think also the static point is true as well.
+If you're using static prompts, then as I said, the organizations and
+workflows can continually evolve and change over time and how they operate.
+And therefore the kind of prompts themselves can become stale.
+And so two techniques that I think really are very effective in vertical
+AI applications are firstly context augmentation.
+And so this is using a domain expert, a data expert generated knowledge base.
+And kind of like injecting that into the prompt context.
+So in the, in the UI I showed before, we had this add domain knowledge button.
+You might, you have your domain experts who might then add in some information
+that can then get retrieved at inference time and used by the model.
+And here at the bottom left, there's an example of this happening in, in finance.
+Where, you know, an example bit of domain knowledge might be that for some
+specific regional bank, they define a high net worth individual as follows.
+And this might be really important for when an LM is performing some sort of
+decision making around, around high net worth individuals, because actually
+different banks will have different definitions.
+And so you really want to give the model that's operating in that specific
+customer's context, understanding of how that customer makes that definition.
+And yeah, and so these are other finance examples as well.
+And then I mentioned before input and output pair examples, and this is,
+this is useful for in context learning.
+And what's helpful here is, you know, sometimes with prompts, it can get tricky
+to explain things explicitly yourself.
+And actually really what you want to do is just show it through examples.
+And so you can do a few shot prompts where you put in, you know, seven, 10, 12,
+sometimes more examples of input output pairs.
+And you can do smart things like you can put an input output pair, which was
+initially wrong, and then put the correction from a domain reviewer.
+And that's going to help the LM to not make that mistake in future.
+And again, this is something that you would want to retrieve in real time,
+you know, while doing inference.
+And kind of the next point here that really builds on top of this is that you
+can actually go beyond just tweaking this kind of context and doing this very
+dynamically and in an automated way using evaluations.
+And this is particularly helpful as you start to scale and serve many different
+customers across different workflows.
+And what this can look like is you have your domain expert UI, they're generating
+new domain knowledge or an input output pairs, and they kind of live in a domain
+knowledge base here, you then have these evals you can run against.
+Which could be failure mode data sets, could be other evals that you build.
+And you can see which of these are useful and in what sort of contexts, and you can
+use them in real time retrieval of that knowledge in your actual application
+pipeline.
+And the retrieval here, sometimes you can do keyword matching.
+So for example, for the ultra high net worth individual one, you might be keyword
+matching on that text or the acronym and this other thing.
+You can also do semantic similarity.
+You can wait by recency, which helps with the fact that things trend over time.
+And there might be changes in the precise workflow.
+And you can do things like optimizing for diversity by picking input output pairs
+that are most similar to your query, but that are most different to the existing
+input output pairs.
+And this is, I guess, the main, the main, like, I think advantage I see here being
+that you're really baking in what is the most recent relevant information you have
+on how a particular context, how particular like workflow is performed and giving that
+dynamically to the element context.
+And therefore you're really doing this real time and kind of as, as, um, as
+closely customer as possible.
+Okay.
+So third and final lesson, um, plus or minus the bonus lesson is about getting and
+maintaining customer trust and through performance monitoring and a secure
+eliminated architecture.
+So when I think about getting trust, uh, from a customer for a verticalized agent,
+I think of three primary things.
+The first is getting confidence in AI's performance.
+The second is confidence that you're handling data securely and correctly.
+And then thirdly, that you're aware of these LLM specific attack vectors that
+continually evolving and you're, you're taking active efforts to mitigate those.
+So in terms of the first one, achieving AI confidence by monitoring and reporting
+performance, I think there's a few, a few things here that, um, I've seen work well
+in practice.
+The first of these is doing reviews of production outputs and getting these
+performance metrics.
+And you can use a UI like, like the kind of UIs that I've, I've shown.
+Um, and then with those metrics reporting those two customers, whether
+that's bi-weekly or monthly, um, but giving them, giving them insight.
+Um, it's particularly obviously relevant in a kind of enterprise context where
+they want to understand how things are performing.
+Um, and as things scale, you will then obviously run into this case where you
+can't review all AI outputs and it doesn't make sense to, but you'll need to
+define a sampling strategy such that you're therefore reviewing the highest
+priority cases.
+And this can be things based, um, such as uncertainty.
+Uh, this can be looking for outliers.
+This could be stratified sampling based on certain characteristics.
+And then you want to also have an internal response protocol such that
+whenever performance deviates below certain targets or SLAs, you have some
+way to respond to that.
+And this is things like defining who has responsibility for the performance and
+improving it, what kind of techniques you might use, um, and how do you make
+sure that when you're closing that loop, you're not introducing any other errors.
+Um, and you know, with things like regression data sets.
+And then finally, um, you can use LMS judge evaluators to help scale the,
+the ability to monitor.
+I think explicitly this is, I would recommend not starting with this.
+I think it makes a lot of sense just to start with human initially and really
+kind of get the ball rolling.
+And then later you can always introduce as LM as judge.
+Um, but it can be very helpful once you're starting to run into problems of
+scale to be able to, to be able to use this.
+So I'm just going to talk through a specific case study that I was involved
+with, um, where we were using evals for mission critical healthcare application.
+And I've shared this in more detail, um, earlier this year in New York at the
+AI engineer summit, so you can see the recording of that, um, if interested.
+Um, but the, the kind of problem setting was that we had an AI agent that was
+answering medical questions like this.
+So does the patient have a brain MRI suspicious for multiple sclerosis
+and giving some output answers.
+But because the agent was processing a large volume of cases, there was no way
+that the customer, that the user, um, could actually review all of those cases.
+And they could, you know, review around 5%.
+And so if you have all of your AI outputs and the 5% here represented by the red,
+all the ones that you're, um, able to review because you have capacity, then
+you have these two questions for the cases to review, you have to ask, okay,
+which cases should I review?
+And then for all of the ones which you don't have capacity to review, the
+question is, how did you do on those cases?
+And we use an LM as judge to solve this.
+Um, so you have your kind of input, it goes through the actual pipeline itself,
+generates some kind of outputs that would then be passed to an LM as
+judge.
+And what the LM as judge would do is it would use a scoring system.
+It was reference free.
+So it didn't know what the actual answer was, and this was happening real time.
+Um, it would then generate some kind of confidence in that original answer.
+And in this case, we're answering yes, no questions.
+Um, and so therefore you can use that confidence and set a threshold to
+determine what the predicted correct output is.
+So if, for example, your, um, your initial pipeline said that, yes, the
+answer is correct and your confidence was low, then you might flip that.
+And actually the LM as judge thinks the answer is no.
+Um, this can be helpful in a couple of ways.
+So firstly, with the predicted outputs, you can therefore get these performance
+metrics, like I talked about, which you can then communicate with customers and
+use internally to understand how you're doing and to drive efforts.
+Um, and you can also then get alignment because for this subset of cases where
+you're doing both human reviews and LM as judge reviews, you can compare how
+much do they align with each other.
+And that gives you insight into the performance of the LM as judge.
+And then the second part of this is that the confidence grading you get, you can
+actually directly use that to prioritize reviews.
+And so we built the system that's used these confidence grading from the LM as
+judge, it used other factors such as procedure costs, the risk of bias and
+error rate on that guideline.
+And then of all of the cases that you have, you can rank them and you can
+prioritize which ones you want to do reviews on.
+And this made this really positive feedback loop where the LM as judge was
+servicing cases to review and prioritizing those we then had human reviews were
+then actually review those cases and determining the accuracy of the reference
+for evil, the LM as judge.
+So we then make changes and improve the reference for evil.
+And we kind of kept on doing that, um, leading to these improvements.
+And then once it gets to a certain point and the accuracy of the LM judge
+system is strong enough, you can then actually put it in the pipeline itself.
+So now what we, uh, now what is live in production is that the input comes in,
+you get the LLM pipeline being activated and generate some kind of outputs.
+It then goes to the reference for evil.
+It then goes to the reference for evil, the LM as judge.
+And if it's confidence, it will then go ahead and return that to the customer
+as it would have before.
+But if it's not confident, then it can go and take another action, which might
+be sending it to another LLM or doing some initial processing, or maybe even
+escalating for a human review before returning it to the customer.
+Um, and so that's about confidence in the performance of the AI.
+The, uh, other points I want to touch on is around data handling and LM
+specific attack vectors.
+I think on data handling, there are many different things to think about three
+kind of top considerations that come to mind.
+The first is that I think it makes sense to map out your data uses strategy early
+on, um, and this is for things like how you want to use customer data for
+performance monitoring, um, how you might want to use it for fine tuning.
+And I've seen this be particularly important in enterprise.
+Um, and the reason I say early is because it's helpful to be able to discuss
+these things in the contracting phase.
+You can avoid this scenario where later on, uh, things are a bit ambiguous about
+how you can actually use that data.
+Um, and you're therefore not sure necessarily what you actually can do with it.
+Um, and I think it's helpful to come to these, um, contract negotiations and
+discussions with an opinion on how you want to use the data.
+Um, I think one reason that's important is because a lot of customers that are
+kind of buying these, these products are often still operating in kind of old
+traditional machine learning paradigms.
+So they're actually not even necessarily sure what they should be asking for and
+what's what like sensible data, um, use of strategy looks like.
+Um, but I think then, you know, come with that opinion and then have a collaborative
+discussion because actually it might depend on the specific customer, what
+they're interested in, uh, you know, in some cases, some might really want to
+fine tune a model and get some sort of performance gains.
+Um, others might explicitly not want to fine tune a model and therefore don't want
+you to be able to do that.
+Um, and an opinion here, you know, typical things you might consider is
+agreements to hold onto data, to do QA and performance monitoring for like three
+months or six months.
+Um, maybe you want the option to do fine tuning experiments.
+And then for those experiments, you would only train on that customer's data and
+that model would only ever be available for that customer.
+And these kinds of exclusivity things, I think are often important.
+Um, but in general, yeah, it's useful.
+You would just like have that strategy early on and kind of iterate on that
+with customers.
+Um, second point here is, you know, it's worth being ready to offer customers
+isolated, single-tenant environments with their own database instance, perhaps
+their own model instance, um, just having that in mind because some customers will,
+will explicitly want that.
+And then I think a final point on data I want to call out is considering investing
+in synthetic data generation, whether you want to use that data for performance
+monitoring or for fine tuning.
+I think, um, depending on the complexity of the data that you work with, it can
+be, it can often be quite hard to make synthetic data that is an accurate
+representation of production data.
+But that doesn't necessarily mean that it can't be helpful.
+Um, and one way that I've seen really, uh, the, the data has been helpful is that
+you can be serving different customers doing this process I've described and
+identifying certain failure modes.
+And then you can generate your own synthetic data based on those failure
+modes, and there are actually matters less whether that data maps to the
+same input data distribution.
+What's more important is that it's able to elicit the failure modes, because then
+you can create these failure mode data sets and you don't have the same
+restrictions with that data compared to, for example, you have a customer data,
+maybe you have an agreement, you only hold onto it for three months.
+If you build your own synthetic data, but it still elicits those failure modes,
+then that's useful kind of IP that you have as a company and that you can use
+indefinitely.
+Um, so those kinds of things, I think are really helpful.
+And then just finally to touch on a couple of, um, LM specific security
+considerations.
+Um, you know, you may well have heard of things like prompt injections where a
+malicious actor can, can, um, get instructions, uh, into the inputs that,
+that make your LM act in ways that you don't want it to.
+And as best practices here, like doing input filtering and I've seen some kind
+of elegant solutions around wrapping the initial query in another LLM that
+basically is just classified to see whether this might be a prompt injection.
+Uh, things like validating the outputs, requiring human approval for high risk
+actions, then obviously preventing sensitive information disclosure, often
+in vertical industries, you're working with, uh, sensitive industry data.
+And you might want to do things like sanitizing the data where you remove
+certain information such as PII before you send it off to an LM or before you
+do any training, uh, and you want to avoid things like data and model poisoning,
+which is where somebody kind of deliberately puts adversarial examples into a training
+set, um, for things like backdoor attacks for maybe just even reducing the
+accuracy of your LLM.
+Um, and best practices there are things like track your data origins, uh,
+inspect your data before doing training, use data version control, this sort of
+thing.
+And I think the, the kind of high level point here is this space is very much
+like evolving and, uh, it's worth just exerting some effort to keep on top of
+it.
+Um, this is a report here from OWASP that I think is, is a pretty, um, decent
+summary of what some of the top risks are and what some of the best practices
+are, but you just want to be able to, um, you know, kind of keep on top of that
+and, and, and have an opinion, um, make that into your products.
+Okay.
+So, um, I have this bonus lesson, which I think is, uh, it's in a couple of
+slides, maybe like five minutes.
+Um, Jason, what do you think?
+Should we dive into Q and a?
+First of all, I love to see this.
+Okay.
+Cool.
+All right.
+And in which case let's go through this one and then we'll, yeah, I think the
+chat agrees as well.
+Cool.
+Awesome.
+All right.
+So, uh, which domain experts did you hire and how should you use them?
+So my, my opinion here really is I think there's a lot to be said for hiring a
+principal domain experts, and this is somebody who has ultimate responsibility
+for the performance of your AI and defining what's good, defining what's
+correct in certain circumstances.
+And I think the argument for, for this is one is organizational having them as a,
+as a DRI, as a directly responsible individual helps you to move faster.
+You avoid consensus by committee.
+Um, sometimes you'll have uncertainty over whether, you know, some kind of
+nuanced output is, is good or not, or is correct or not having somebody who can
+make the final decision on that is really helpful and kind of like unblocks
+you to, to move faster.
+I think, um, because this person can be very important, it makes sense to
+hire them as early as possible.
+Um, bake their kind of thinking into your products and really give them
+ownership so that they, they, um, hang around.
+And I think the reason this person is important is that they can really build
+perhaps the best intuition in your whole company for how your AI system performs
+and how it can be improved.
+Um, because they'll spend a lot of time looking at the data,
+looking at these interactions.
+They have the domain expertise so they can therefore interpret it.
+Um, and then they can also play this very important role of actually going beyond
+just looking at the data itself and designing and creating this, this high
+level system around that.
+A lot of the things I've been talking about, um, in this talk, like I think it
+makes sense for them to really be steering that.
+And so, um, you know, explicitly a few other things that they can help you with.
+As you scale and you're generating more AI outputs, you'll probably want to hire
+a team of reviewers and they can help with that.
+You'll also then want to define your sampling strategy.
+So you're picking the most relevant subset of cases to review.
+You'll want to analyze review data.
+You'll want to monitor performance of different reviewers.
+So are all your reviewers performing above a certain standard?
+Do they agree with each other?
+Um, things like steering product development, prioritizing engineering
+work, uh, talking to customers can be helpful, um, explaining things and also
+understanding what the customers care about.
+And then obviously the things I touched on, like improving the actual AI
+performance itself, tweaking prompts, adding domain knowledge, that's that sort
+of thing.
+And so, um, when it comes to actually hiring the, this principal domain experts,
+my proposition and my take here really is that you want somebody who has as many
+of these kinds of experiences, um, on the right-hand side as well, as well as
+their domain expertise.
+So you kind of want them to meet a critical domain expertise threshold.
+And we can talk, you know, in the Q and a bit about a bit more about what that
+looks like, but it's very helpful if they have management leadership experience
+because then they can manage this team of reviewers that you hire at, and they
+can hire those reviewers from their industry connections.
+Um, and likewise, if they have statistic experience, they can define your
+sampling strategy, they can review the data, um, they can stay a product
+development, um, if they have product skills, this kind of thing.
+Um, and you know, as an example at anterior, and if you use a self
+reference here, I was, I played this role at anterior.
+So, um, I was initially reviewing medical outputs, um, like kind of medical AI
+outputs, um, because my medical background, and then as things grew, you
+know, I had my network in, in healthcare, I could quickly find reviewers.
+I have a background in data science, so I had to find our sampling strategy,
+that sort of thing.
+Um, and then I'm also a software engineer, so I kind of could get hands on
+with like the AI implementations and, and trying to steer things on that side.
+And I think in general, you know, having one person who really, um, kind of
+steers and owns on this side of things enables you as an organization
+to, to move much more quickly.
+Um, cool.
+So that's everything I wanted to cover.
+Um, before we go into Q and A's, um, just quick call outs.
+So if you are a business that's working in a vertical industry, you know, I'd
+love to share learnings and talk about some of the problems you're working on.
+Um, and I have some, some limited capacity to chat, but if you scan this
+QR code, um, if you want to book some time with me, I also have a personal
+mailing list, uh, the link is here on the right hand, on the left hand side
+where I share, you know, my learnings as I'm building out different
+vertical AI applications.
+And I am sharing a free ebook on building AI in vertical industries
+towards the end of October.
+Um, so if you want to email notification when I release that, um, feel free
+to sign up here, um, but yes, thank you for your attention and, uh, yeah, we'll
+dive into questions.
+That was great.
+Thank you so much.
+I feel like as for the, the talks on domain experts, you know, having a DRI
+makes, makes a lot of sense, but I find that in most cases it is just the case
+that, oh, by the way, Jason, we have a couple of folks, I, I, one of our, like
+customers that will look at some things for us and it's, I think that DRI is,
+uh, pretty, pretty critical.
+Um, yeah, so if you don't mind, let's jump into some questions and see
+what, how much we can get through.
+All right.
+Um, the first question is around like, you know, the transition from maybe
+what we would consider like a traditional rag system where we do this, like one
+shot search and then we build up the context, um, compared to like a deeper
+like agentic rag chat bot, like how have you thought about these kinds of
+differences and building the applications you're seeing these days?
+Um, yeah, it's a good question.
+I mean, I think, um, it's obviously important to have the, the kind of
+different context available for these agentic systems to be able to kind of
+call on them and setting up such that explicitly they're, they're able to, um,
+kind of access the context that they need for the relevant decisions that
+they're making.
+So some part of it, um, from an agentic context is, you know, if, if a certain
+task is being performed, uh, what are the types of context that that might need?
+And how do you make sure that they can like surface those available and the
+methods that you might use for retrieval in one context might be different from
+in another context because it really kind of depends on the relative
+priorities, um, for whatever particular task you're being, you're performing at
+that time.
+Yeah, I would also call out another fast, which is a fact that Colin will give
+another talk I talked about, which is this idea that the agents are much more
+persistent in the way that it does search.
+And so one of the benefits of having an agentic system is you're really trading
+off a bunch of latency during inference time, but the agentic system will
+try, try, try again.
+It might do five tool calls, read some information, do five more tool calls.
+And so if you think that the information is very hard to find, right.
+Where maybe your embedding search or your full-text search is only like 60%,
+70% accurate.
+Having an agent in the loop really allows you to improve the end to end recall
+of the system.
+Um, another call out, another question someone had was around data extraction
+and data triage.
+It says, what do you think, do you think we should be separating data extraction
+tasks from data triage tasks in the ingestion phase?
+Um, and just help me understand that one.
+So as in, uh, data ingestion versus data triage.
+Yeah.
+Maybe if the person asking the question could maybe just leave another comment
+in the chat, but, um, I can imagine something, maybe this interpreting this
+question as we've already talked about, but I think it's a question that's
+a bunch of data coming in.
+Maybe some of them are health records.
+Some of them are, you know, schedule.
+Some of them are, you know, scans of other data.
+I guess there is sort of one stage, which is understanding what the data is about
+and the second stage of extracting the data out.
+Maybe it's kind of structured form or anything like that.
+Yeah, no, that's a great call out.
+And I think, um, my experience I've seen, I've seen it be very powerful
+understanding, like building an understanding of the context of that
+data that's come in.
+Uh, so whether it's like you have somebody who have medical records, it
+might be a couple of hundred pages long and they might have like different
+encounters and different types of information.
+I've seen performance like be very significantly improved by actually, uh,
+kind of getting the semantic context of, okay, this was like an encounter of a
+certain type and this was almost another type getting some sort of like
+summarization of that.
+And then when it comes to retrieving context, the agent or the system that's
+trying to find that relevant information has an understanding of that information.
+Um, I think that's particularly important.
+Yes.
+When you're working with large volumes of data and when the data is, um, yeah,
+kind of like different in nature, I think being able to separate that out,
+support retrieval is, um, I've seen it be very effective.
+Um, yeah.
+Yeah.
+I would also call out in the, in the slide that you had earlier on these, like
+failure modes, generally what will happen is as you identify these failure modes,
+you can go backwards and figure, okay, well, if these are the failure modes,
+then maybe we can do more investment in certain kinds of data categories.
+The example I always give was, uh, we first had just search over PDFs.
+And then we've found that actually what people care about is filtering for
+contracts that were signed or not signed.
+And so now we classify, is it a contract, if it was a contract,
+we extract what's signed.
+Right.
+None of this, none of this is difficult, but a lot of it is around looking at
+data and understanding what the use cases are.
+Yeah.
+Yeah.
+Another question here around, uh, what are your thoughts on handling missing data?
+Doing processing of some data points are missing.
+How do you address this issue?
+This is a very general question, but yeah.
+Yeah.
+I mean, I think, um, uh, one part of this is like, can you identify a way to
+identify if information is missing?
+And so you can explicitly have some sort of like output from the system being
+like a decision saying, Hey, information is missing and maybe like requesting
+more information, um, I guess the following question is like, okay, well,
+well, what does that system look like?
+Like how do you actually get it to know when, when information is missing?
+And that probably depends a bit on like the specific use case.
+Like is there certain information that should be available?
+Like the certain context that should be included somewhere.
+And therefore you can have like separate classifiers to pick up.
+Was that contained?
+Um, but yeah, some, I mean, sometimes it's tricky, right?
+Because you don't necessarily know what you're missing.
+Um, I think one of the component here can be more generally having like some sort
+of uncertainty threshold, for example, for returning a response.
+So maybe if your, if your system or your, your agent, um, has reviewed the relevant,
+like evidence and context, and it's just not sure where to make a decision, it can
+escalate that under like a level of uncertainty and therefore it's not
+explicitly saying it doesn't, it's missing information, but it's like, I
+don't have enough information to be confident.
+And so that's like supporting, uh, that scenario.
+That makes sense.
+And then here, you know, when, when you are finding these failure modes, how do
+you evaluate and decide where to devote effort into, you know, the various
+techniques to improve performance?
+Yeah.
+I mean, I think a lot of this is, is a bit of a judgment call.
+Um, so one thing I found helpful is trying to group failure modes, um, maybe
+based on common ways that they could be fixed.
+And actually I think I have a slide in the appendix that's relevant to this.
+Let me, yeah, I think this one.
+Uh, so for this project with like a medical necessity review, we found the
+failure modes were broadly, you know, in clinical reasoning in interpreting the
+rules that the AI needs to follow and actually in the medical record.
+And let's say you see that a bunch of failure modes are in medical record
+extraction, you can then sort of like a tackle those maybe at the same time,
+because there might be that there's some sort of pipeline you want to build that,
+uh, you know, users like OCR with large vision models and it supports both
+table extraction and photo extraction.
+Um, or, and, you know, in checkbox extraction, then you can kind of solve
+multiple failure modes at the same time.
+But I think that there's not really a hard and fast rule I can think of.
+For, you know, prioritizing these, I guess it's, it's a bit of a, it's a bit of an
+arts, you obviously have the metrics such as like how the, how are the failure
+was impacting the metrics that you really care about.
+You can look at that data.
+Um, but then the interplay is a little nuanced and I think that's where, you
+know, kind of like the PM or like maybe this domain expert PM plays this role of
+like integrating their understanding of the wider system, the types of failure
+modes, the data, but also their intuition for maybe some failure modes having
+common causes of that sort of thing.
+Um, to help steer things then.
+That makes sense.
+Um, I guess another question on this agentic rag part was, uh, someone had
+to ask, you know, with multiple tool calls and agentic rag, uh, how do you
+think about balancing the risk of degrading the user experience with latency
+versus the need for more accurate multi-step reasoning?
+And I guess here, you know, for most of your use cases, how latency
+sensitive are these things?
+Are you answering questions while the patient's there or is it like
+running in the background and.
+Yeah.
+No, and I think, I think the critical thing here is basically like, how, how is
+it being used?
+Um, because I've seen, uh, I've seen systems where it runs overnight and
+then the purpose is like it runs at nighttime and it comes back and then the
+domain expert, like a nurse or a doctor will come in and they'll have that ready
+for them and then they kind of like process it and their latency is like not
+really an issue and actually you just want to prioritize the accuracy.
+Um, but then equally in other cases, you might, it might be while a patient is in
+the medical, in the doctor's room, you actually really want to prioritize quick
+request responses and then it's more of like, and it's basically, you know, the
+time is a trade off.
+Um, and so probably like, I guess the, you know, this obviously is a case by
+case, um, basis if you can get insight into your system and what, what that
+trade off looks like.
+So, you know, if you run a quicker version of your product, what's the
+accuracy and then a slower version, what's the accuracy having that gives you the
+insight that you can lean on to make these sorts of decisions.
+But I think the primary driver is like, what's the specific, you know, context
+of your application?
+Like, uh, how's it being used and how time sensitive is that?
+Yeah.
+I think a lot of it really is not about like, is there latency or is there an
+issue or an access sheet, but just now you have some budget and you just have to
+allocate it in some effective way.
+Yeah.
+Sometimes doubly the latency isn't worth a 1% improvement in performance, but in
+the medical context, I can imagine a lot of situations where that, that actually,
+that actually is the case.
+Um, yeah.
+Down the line of, of actually doing more information retrieval, I think this is
+a question that often people ask, which is how do you manage information
+getting old or stale?
+Right.
+Does that mean like, does your domain experts like review the knowledge
+rates itself and how do you think about that workflow?
+Yeah.
+Great question.
+Um, I mean, one, one kind of quick thing you can do is you can, you can have,
+um, like a weighted preference to more recent examples.
+So let's say you have your domain knowledge base, you know, when all that
+domain knowledge was created, you can.
+Retrieve like up weight by the relative recency of that, and you can even
+introduce cutoffs.
+Like, let's say, um, you know, it's used in some particular workflow where
+guidelines are changing really quickly, or there's like, I know it's in cancer
+space and it's like new research coming out all the time.
+You might want to like actively do hard cutoffs over a certain period of time.
+But, um, yeah, I kind of think recency is, is one component of it.
+Uh, there's maybe something else I was going to say, but I can't remember what
+it was, um, yeah, maybe it'll come back to me.
+Yeah.
+One thing that I see here too is, uh, there's a really great talk that Glean
+had done a couple of months ago where they're talking about this idea of
+authority, right?
+And it's actually the case that it's not all data.
+What is not always the case that recency is the highest quality data.
+And the example they gave was like the wifi password, like in Jira, like that
+document is seven years old, but actually it is a document is like the most
+referenced, I can imagine situations where, you know, the, the, like the
+health records or something like that.
+That might be something that is like very old, but so very valuable, but it
+really highlights the case that information retrieval, authority, ranking.
+These are all very important problems.
+I'm thinking about the grad systems.
+Yeah.
+Actually, I remember the point I was going to make was also, um, yeah, I
+think sometimes getting the, like extracting explicit metadata about the
+data that you're getting.
+So for example, um, you know, you might get very unstructured medical records
+that you might receive, um, that don't really come with any metadata, but
+actually somewhere in the record, it says like, what date did this encounter
+come from?
+If you can extract that and keep that representation, then that can be helpful.
+And again, yeah, older things can absolutely be helpful.
+Like it might be an encounter from 10 years ago that's super irrelevant.
+Um, and yeah, or, or it might not be.
+Um, I guess a question that I'm personally interested in, um, which is
+around citations, like how do you, how do you guys think about citations and
+references when you know, doing things like answer generation, like, do you
+have any specific workflows around that, or do you just use like the anthropic
+citation API?
+Yeah, I think we've, we've used different approaches we've used, um, like before
+the anthropic, uh, we were either kind of doing it ourselves and like prompting,
+um, elements in certain ways to get it, to give those citations.
+Uh, I think.
+Yeah.
+Which one is we've moved more towards actually just like using
+anthropic, um, and their approach.
+Cause I think that that works quite, quite nicely.
+Um, I think what we, some takes things we've used in the past, um, that works
+well is, uh, explicitly like kind of chunking things up, doing some like kind
+of semantic similarity based chunking.
+Um, and then just when you're prompting the model, getting it to call out these,
+like, uh, UID, um, set chunks that it like used to make a decision.
+And so the kind of procedure would be say, what's the relevant evidence, like
+return the UIDs for these particular chunks, then like reason around that and
+then make the final decision.
+And so it's kind of, um, sequentially going through those and you
+therefore get the citations, uh, from that as well.
+Makes sense.
+All right.
+While I scan some of these remaining questions, um, one question that I
+always like to ask our guests is what is the question you feel like folks are not
+thinking about, are not asking themselves when building out these systems?
+Yeah, it's a great question.
+I think it probably would be, um, maybe maybe there's like central point.
+I mentioned a few times of what does your system look like for incorporating
+domain expertise?
+Um, I think there's a bit of a bias towards, you know, looking at the kind
+of latest fanciest, most sophisticated models and how you can, how you can use
+them and maybe how they're like incrementally better on some important
+benchmarks.
+And I think that is relevant, but what I often see overlooked is, uh, what is
+the process for like baking in, um, this knowledge and how do you actually like
+really minimize the friction of that process such that this almost like kind
+of happens automatically as part of you, like running, running your product.
+Um, such that your system is like always improving and adapting.
+Yeah, I think, I think that's sort of the main thing that I've noticed when,
+when working, at least with engineering teams that are less sort of science
+focused rather than the teams that are very much like mixing with data
+scientists or have like a academic background.
+It's around just believing that, you know, okay, once I build this thing,
+once I can ship it and then I work on like the next set of features, but
+instead it really is the case that with these systems, because they're so
+probabilistic, you're always trying to push the distribution in some correct
+direction and, you know, building out that flywheel is very important to, you
+know, be able to systematically improve these, these, um, applications.
+Um, with that in mind, I think, I think we're basically at time.
+We give some time for folks to wrap up and then attend the next couple of
+things they got to go to.
+Um, but yeah, Chris, thank you so much again, you know, make another call out
+to some of the links that you had shared.
+If you want to book some time with Chris, uh, there's the QR code that you see on
+the screen and if you want to check out your newsletter, it's a chrislovejoy.me
+slash email.
+And yeah, I think if you, I don't know if you can see the chat, but a lot of
+great feedback, a lot of excited folks.
+So Chris again, thank you very much.
+Cheers guys.
+Take care.

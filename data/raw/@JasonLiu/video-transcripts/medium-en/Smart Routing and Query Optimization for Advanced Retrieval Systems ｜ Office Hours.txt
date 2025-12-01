@@ -1,0 +1,592 @@
+Hi, everyone. Okay. We are at three after I expect that a few people will keep coming in the next minute or two.
+And so we'll take a moment before we actually break into breakout rooms.
+But to start out that everyone has either looked in the slack or can look at the Slack channel in the general channel.
+I've posted the topic for today's breakout room with a prompt for today's breakout room there.
+And so can read through that.
+Take a moment to think about it. We will break off into groups of about five people.
+And you may have another couple people join in the next couple minutes. We're just late to join us.
+So before we and then, like I said, we will regroup in about half an hour.
+So before I split us into breakout rooms, does anyone have any questions?
+We had a few people join in as I was saying that.
+So I'm about to split it into everyone into breakout groups.
+And we can you can talk through the topic that is the thought experiment that is the general channel in Slack.
+Here we go.
+It's Peter. I am going to add you to a breakout group.
+We just started a minute or two ago.
+The topic is in the general channel in Slack.
+Alex, I'm going to drop you into a breakout room.
+Room sound good.
+Yes. Yes. Sorry for being late.
+No problem. And then the topic is in the general channel in Slack.
+Awesome.
+Great.
+Nick Ford has a good yourself.
+Good.
+I'm going to add you to a breakout group and the topic breakout room is posted in the general channel in Slack.
+Hey, Omar.
+Hello. Sorry, mate.
+No problem.
+Given the timing, I'm guessing it.
+I think it makes more sense for you to just not jump into a breakout room.
+We're going to close them in about four minutes and then everyone's going to be going.
+Great.
+That's it.
+I will just wait.
+Jason and I actually were trying to figure out whether most people liked breakout rooms or whether a lot of people were going to join after breakout rooms.
+What's your thoughts on this?
+Well, actually I am.
+It's pretty late here.
+I'm calling from Denmark.
+I haven't actually joined these breakout sessions.
+I've always become late.
+We come back from work and then I have dinner and then now I have time to actually sit and listen in.
+So I haven't really joined the breakout sessions.
+Okay.
+It sounds like you've joined the Q&A after them in previous weeks.
+Yes.
+Yes, I have been joining.
+Like some of the weeks I've been joining the Q&A, which have been extremely good.
+I've been learning a lot, but the thing is though, I wasn't able to, I was just able to listen, but not really actually ask any questions.
+And yeah.
+Do you feel like, you said you're in Denmark, right?
+Yeah.
+And for someone in Denmark, is this course, I think like the timing is in general a little difficult.
+Is that right?
+Yeah, it's actually, it's very difficult.
+Yeah.
+So I have to do everything like after the fact, but it's a good thing that we have the offline Slack channel.
+Right?
+So it can always ask questions there, but yeah, it's a bit tough, but I think the content is, I think it's still worth the price for all the contents that and all the insights that Jason has on these web applications.
+Right?
+So the other, the other part is a bit tough to.
+Yeah.
+Is there anything that we could have done that would make it easier for you to get more, I guess you saw that we have some office hours for APAC.
+Those actually are a terrible time for you.
+Is there anything else we could have done?
+We could do European, anything else?
+Yeah.
+Yeah.
+Yeah.
+That was possible.
+Like, like the stuff that like if these, some of the sessions could be, I'm not sure how many people are from the Europe, but if the European people can join in a shared room.
+And so that'll be, I think that'll be great.
+Yeah.
+Okay.
+I'm going to start it.
+It's easy for me to get a list of who's in European time zones.
+I'll start a Slack channel and auto add everyone in European time zones.
+So at least you've got a, like a one place where all of them are.
+I'm going to make a note to myself.
+So I do that.
+And then we got one minute and we'll bring everyone back.
+So I have one session to listen to that.
+I haven't managed to get in like the last session.
+Okay.
+Is it about route routing?
+Nice.
+Yeah.
+You know, getting in there tomorrow.
+Is there a certain day of the week when you tend to catch up or has your workflow been?
+Yeah.
+Usually it has been like the day after, or maybe two days after.
+If there are a lot of meetings, like, like today, then usually it's like right now I'm just, I just listen in first.
+And then later on, I actually, when I sit down, then I take notes as well.
+So I have like go through it twice.
+Like the first time just like listening, right.
+And then later on, we like taking notes and, and thinking about it and how does it, how can I use it in my own projects?
+All right.
+Everyone's back this time.
+I think this will go a little quicker, but I do want to hear a little bit from each of the four rooms.
+I also, I'm quite curious what Chris means by raptured.
+But then so we have four rooms, maybe one person from each room.
+We'll just take a minute or so say what you thought was especially interesting or a theme that came across from multiple people in the people in your room.
+I can say something that came across from our room.
+Can you hear me?
+Yep.
+So I guess the three use cases we discussed was from, there was one case of philanthropy documents and going from philanthropy proposals into structured schema.
+Second one was ordering parts for restaurants, like ordering food.
+And the other one was industrial hardware ordering.
+And one thing that I guess we realized in the conversation is that all three of those problems is really going from semi-structured data, like somebody sends you a spreadsheet or somebody wants to order food into a structured schema.
+And the two, the two problems that came up that seem to be universal is constructing the schema.
+First of all, can be very short.
+It was like three things we care about or five things we care about.
+It's like, if you have a shortcut, I look in a restaurant, okay, there's like five products.
+It's straightforward to make the schema.
+But in the industrial hardware, I learned that there can be thousands of parts and everything can be heat treated or not heat treated and everything can be metric or this and that.
+So the schema itself, the construction of the schema was very, very complicated.
+And the second problem is somebody sends you a spreadsheet or there's a dialogue system where they want to order and they want to order a thousand parts.
+And you automatically want to populate your schema from this semi-structured data.
+That's the input.
+And then another aspect that was very common across all our use cases was, is it interactive?
+Is the system allowed to go back and say, do you want pineapple with this or do you want this to be heat treated or is the one shot?
+And synthetic data for interactive seems to be quite challenging.
+I mean, I have also seen this myself.
+So those were the common denominators was I would call this maybe extracting a schema from a semi-structured data in a dialogue or a one shot label.
+This seemed to be very common in the conversation.
+Do you want the next group to go or?
+Yeah.
+I'm gonna volunteer Chris, cause I know what they were so entranced with.
+Wait, which group is it?
+Oh, I guess I, yeah, that I was grouped here.
+Okay.
+You must be talking about me.
+All right.
+Uh, let's see.
+I think maybe my, my top takeaways were that we, we had a couple of real pretty straightforward use cases where there's, there's a query for something.
+There has to be some sort of like lookup of information and then analysis and a response in most cases, like the query planning seemed like it would be a key step in that first part.
+Like being able to like intercept that query, break it down, like figure out a plan for answering all the pieces of it and then putting it back together.
+We, we really spent a lot of time just kind of talking about our use cases.
+I don't, we didn't actually get to questions four and five, which we all thought were really interesting and we really liked the kind of pathway of these questions, but we spent a lot of time on questions one through three.
+So yeah, we talked a lot about like keyword search versus vector search keyword search being really good for some of the types of queries that we're doing.
+Talked a little bit about dancer, which is an open source framework for, for doing rag.
+Yeah.
+I don't know if I have anything more valuable to add there.
+It's all very good.
+B J Manna Condon, Sammy Seamus and Bible.
+You want to jump in?
+I'll jump in.
+We were talking about our use cases, primarily a few topics came about.
+We didn't exactly follow this, but one of the topics that we were asking about, we discussed like how do we address the range of, it's a range of queries that someone can ask.
+They could be, especially when we just put a search bar in front of them, they could just type a few keywords versus asking specific questions and how, and how we follow different, what do we do?
+I think one of the answers was for different types of queries that are different pipelines.
+So identifying the intent entity recognition of what these are talking about and then following a different pipeline.
+This may be what like querying different sources.
+I think in the, in the, in the one of our workshops, we were talking about like having different databases for different sources and putting them.
+That was, that was one route we were taking.
+The other was query planning and there were two different approaches in query planning.
+In one approach, we took simple questions and complex questions and normalized them into a structured format that the database is built for and using that, using the structured.
+So the user can ask any, like can just give keywords or very specific questions.
+It will get normalized to something and that's the one that's.
+Other approach we saw was that there are a few approaches and we just pick one, like it was still query planning, but the LLM would just pick one of those, like of a handful of approaches based on a query.
+It can, it's allowed to pick one of those approaches and that's what we'll run.
+So we were all doing query planning slightly differently and that's the main, Manikandan, is there anything else that stuck out to you?
+Yeah.
+So one thing which you also mentioned the same in terms of sometimes we would have like really underspecified queries.
+So it's not just, and most of the time we mean the system cannot actually answer those questions.
+So how can we actually like adapt our UI in terms of educate the user through either showing the follow up questions to ask or showing similar questions to ask?
+So kind of, it's not just the system alone, but overall, like the user experience in terms of how can we actually educate the user to ask a phrase?
+That is also one idea that you throw, that you mentioned.
+Yeah.
+Yeah, so beyond just looking at the backend search, backend of it, we can play around with UX as well.
+That's what we're talking about, like suggesting what the type of question the user can ask.
+Like when there's an empty blank screen, they don't know what to ask.
+So showing them what the system is capable of was one.
+And the other is if they re-ask a question, use that as a signal that the system did not answer it right and see and reconstruct a different pathway.
+Or use it like a chain of thought, but make sure that the front end can maintain that state between the user asking the question for the first time or the re-asking question.
+And that can rewrite the question in a different way.
+So those are, that's what we're talking about.
+I think the one group that we haven't heard from, I think is room one, Kristian, Dillon, Florian, Ford.
+We tried to summarize a little bit.
+We were speaking a little bit about our projects and introduced ourselves and we were in a discussion about text to SQL and also about routing and how to get it work with indices.
+And yeah, that's my main takeaway of the discussion.
+We're a few minutes behind on switching to Q&A, so maybe we'll switch to Q&A now.
+Let's do that.
+I also want to make an additional call out on the re-asking bit.
+One of the things that I've done a lot of is actually just data mining existing conversations, specifically with prompts to ask about re-asking.
+So maybe if it is like, I just basically have a prompt that says, okay, given all these conversations, can I predict that the original answer was unspecified or they were follow up questions that need to be retrieved?
+And then an experiment that I'm working on now that I don't have results on is figuring out.
+Say I ask question one, I return 10 text chunks and then I ask a follow up question that returns a different set of text chunks.
+Could I build a retriever that would have retrieved the chunks that would have been needed for the follow up questions?
+And so the idea is that in a world where today it takes people three questions to get all the context, could we do it in one or could we do it in two?
+And those are some experiments I've been playing around with.
+Yeah, the idea is like, could we actually minimize the number of questions we ask by just building a retriever that actually understands what follow up questions look like?
+And the second comment on the function calling is the fact that if you tell the language model explicitly to ask clarifying questions and you make the arguments of those functions optional, you can pass an additional context that says, maybe I have a date filter that I don't use.
+You can prompt a language model to say, hey, we could do better if you provide us a date filter.
+Or by the way, I have the ability to explicitly search requests from RFIDs or something like that.
+And again, it would just give the user a little bit more context and what's possible.
+And that's why we talked about yesterday, the idea of having these UIs, like these UIs will communicate to the user, oh, there are these date filters.
+There's actually a drop down menu where I can filter for modified date or filter by created by filters.
+And that'll give me more understanding how to use these systems because it'll likely be the case that these expert users want to use these tools very specifically.
+Yeah, I guess one thought here on what you said is there's one issue of running the retriever and making a better retriever, as you said, that would retrieve the second query.
+But I guess if you know that there's another, I guess would be to train a small model that will predict if there even will be a need for a second query.
+And then like a binary classifier that said, OK, I'm going to retrieve something on the historical data.
+You have historical data you sometimes see that you didn't answer correctly.
+You could try to train a binary classifier that will say, OK, I'm going to do a query, but this seems like a query that will need another query.
+This other query, I expect, needs additional information.
+So maybe I should go back.
+Don't even run the query.
+Ask the user, do you want flour or do you want corn 30 years before I start running my?
+So don't even run.
+So have a model that's going to say, I'm not even going to retrieve anything.
+And now I'm going to ask an extra question.
+So I don't know if anybody makes, I mean, of course you could prompt GPT, but you could make a specialized model in your domain that says don't even retrieve.
+Give me this extra information from the user first.
+And it can be a UI or it can be a dialogue.
+Yeah, I think there the question is, it's hard to integrate this model back into like, are we then going to fine tune parts of the language model to not call a tool when the things needs to call a tool?
+Whereas if we go down the route of retrieval, but really what I'm saying is if there's a conversation, there's three questions and I cite six text jumps in total.
+Could I have retrieved all those side of text jumps on the first question?
+Right. And you can bring that back to just that precision recall where maybe the, the follow up question returns chunk seven.
+And now I want to build a system where the first question also would have returned to chunk seven.
+That that is like very, again, it's like the very easy to measure.
+Whereas the choosing not to call a tool and asking a follow up question will likely be around fine tuning the generation language model.
+And those are, those require a lot more complex data.
+But I think from a data mining perspective, it makes sense to be able to identify those situations and take a look and see, OK, like what is actually going on?
+I want to mess. Let me let me be more clear. I think that's an interesting conversation.
+I don't want to mess with either LLM.
+I want to have a think of it as a tool, like another small binary classifier where I give you the question.
+I just think of it as a tool for the big LLM actually.
+Or it can be hard coded before you query the LLM at all.
+You just run the query through another small model and the small model tells you that's a good query or it tells you that's not a good query.
+Ask a follow up with these three keywords.
+So I don't know if you believe in in the pipeline in general, being a general like GPT four or it will be like Python that says I'm going to run this quick checker.
+Then I call Python.
+Then I call GPT four.
+Then I run a quick checker again.
+So I don't know if you have seen this, this type of pipelines that are small models giving me a quick bit of information so I can decide if I'm going to go to GPT four or I'm going to change the way I prompt GPT four.
+I don't know if you have seen such architectures.
+I've definitely seen situations where given the query, we change what model people use.
+So there are startups that do that.
+I think it definitely makes sense to.
+Yeah, so I've built models where given a question, I can predict like given the embedding of the question, can I predict whether or not we're going to thumbs up and a thumbs down?
+That's a very simple model because you can just basically take the logistic like logistic regression on the embeddings or random force on the embeddings.
+And if that metric is high, then we can just say, well, if there's a over 80% chance you're going to be satisfied, let's answer the question.
+Right.
+And then if it's below that, can we, can we do some of the predictions that we just dynamically say in the prompt?
+This question might be under specified.
+Please ask, like take a look at the tools we have available and do that.
+I think that totally makes sense because again, you can measure that as just if the P satisfaction is low, what can we do additionally to make it high before we generate the request?
+So I think I definitely think there's something there.
+Did I answer your question?
+Yes.
+Perfect.
+Yeah, I just wanted to add a little bit to the conversation on what Alex was bringing, because I'm curious if you actually have seen, I don't know, maybe like forcing the question to be like, it has to meet this class and it has to meet this types.
+And like, I won't search anything unless I have this criteria.
+Like this class has to be filled.
+So like my search tool won't work and won't look for anything unless it meets like, I have the filter, I have this, like, I know exactly what to look for.
+Like, have you seen any like usage around that or?
+Yeah, I think that if you go back to this like pythantic schema of these tools, really it's just a matter of, okay, what are the required arguments?
+If I allow everything to be optional, I have to handle that in the backend.
+But if I don't allow things to be optional and I say, okay, you can only do a search if both the start date and the end date filter exists.
+And if you can't do that search, then the language model has to ask a follow up question.
+So you can't, you can't do that in a prompt.
+And I've seen that work for tool calling, right?
+Where if you have like a get weather API, and if you say like, and you can prompt it's okay, only, only search the weather.
+If the user explicitly mentions the weather, otherwise ask a follow up question.
+You can define that in the prompt of the tool description.
+And if you just say, where's the weather?
+The language model can say, I have a tool that tells me how to search the weather.
+Where do you live?
+But that will always be, that will effectively be having a data set where there are unspecified questions and you're just verifying whether or
+not you're correctly not using the tool.
+So you basically have to have like a no, no tool call test set, right?
+Where what's the weather should return no action.
+And then what's that weather in LA should return get weather.
+So we bring it back to this like precision recall.
+There's definitely ways of making that search possible.
+Right.
+And if you have a tool called follow up question, then that'll make it really specific because what you can say is you can give it an
+underspecified query and you know, it should ask, it should call follow up question and not use the tool.
+Yeah, no, like it feels it feels like there's something there maybe like just like depending on what system you're building, right?
+Like if it's a more dialog oriented, it's like a one shot.
+It's like if it's a one shot, it's like, yeah, give me everything that you actually want and then I'll look it for you.
+I think it has like a chance of being maybe better if you like exaggerate the like what you need.
+Right.
+If the one shot.
+Yeah, you can imagine the difference just being for because like given a message history and the next query, that test is still a one shot
+test, but you have that follow up context.
+Right.
+And so you could test a situation where with messages one and two, it should require a follow up question.
+But then you have another test that answers that follow up question and that should use like the get weather tool because you've answered the
+question of like, where do you live?
+What?
+Either way, I still think you can restructure it as ideally as like a precision recall test.
+That's that's pretty straightforward.
+Thanks.
+Let's go with, I don't know if I can pronounce your name, Sedant.
+Yeah, so one of the things that like you're going to be building is a summarization tool.
+And sometimes, so this for context is over like textbook syllabus, like education material mostly.
+Yeah.
+And sometimes like most in most cases, the users want like a summary of a specific file or textbook, but sometimes they want like a
+topic.
+So what is like GD or like, what is like, what do I need to know about like eigenvalues and eigenvectors and things like that.
+So like, my question is kind of in two folds.
+So first one is that like, what kind of like strategies do you have you seen for like, like routing like granularity in like different
+kind of summaries that users want?
+And I guess the second question is that there's been like a lot of like techniques in like summarization.
+In general, I've seen like map reviews, I've seen like, people just use like really long context models like Gemini Flash.
+I've seen people try to do some kind of k-means clustering and then just pick the centroid to do summaries.
+So I was wondering like, if you have advice on like, like query routing or like summary and like overall like general recommendation or
+like kind of state of the art like techniques we have seen in like summary tools, apart from the ones that I've just mentioned.
+Yeah, I would I would almost build towards using long context, because that's only going to get cheaper over time.
+Whereas if we do things like k-means, there's going to be a point where a million context is average, in which case you're just you
+just have a tech debt of managing your this like k-means clustering model.
+Whereas if you if you sort of invest more effort into the longer context models, you're going to be likely better off in the future.
+Right.
+Especially because then like map reviews like works, but the prompting gets really confusing.
+If you lose information too early in the map phase, like if you just like, for example, maybe you summarize instead of saying Jason Lewis
+as the speaker, then the next layer of summarization is you basically lost the name of the speaker.
+So you lose too much information.
+Whereas with long context, you're going to likely preserve it if you can put the prompt, allow the prompt to keep those like name entities, for example.
+So I definitely like focus on using longer context and making sure that we just are able to find the right documents.
+And then the question around should we find regular text chunks or should we find text chunks filtered by some some some like textbook name?
+Right.
+I think those can just be like regular attributes in your in your chunk search system.
+So maybe you have a query field and then you have some optional field that is textbook title.
+And if that's not, if that's filled in, you can do some additional processing in your text to SQL, your look at your database and whatnot.
+And you might have to build a step that just uses text search to match the textbook field to the actual textbook filter.
+Right.
+Because maybe you just say Pearson biology, but if you use like Levinston distance, you can figure out Pearson biology actually maps to like Pearson bio, like third edition.
+PDF or something.
+Because I think the summarization is separate from the retrieval.
+Right.
+That makes sense.
+I guess like one last tangent question to that is that I've seen some people like try to do like summary or like try to do like knowledge graph extraction.
+And then like just kind of like pick a node and then just like maybe see, OK, maybe go like three steps around and like concepts and then do summary over that.
+Like, have you seen like people like have some success with like knowledge graph based approaches or even like extracting like a good knowledge graph from like a document that they're working with?
+Because I know it's relatively new and like kind of skeptical and like kind of implementing that.
+Yeah.
+So, I mean, I don't know if there's any like graph purists here, but I've been working with graphs since like 2016.
+And the issue has always been the fact that once you start building out graphs, half the work is just figuring out what is the ontology of this graph and what do the edges mean and how do I care?
+Like, for example, if you go into medicine, like treat like it's very easy to have like subject object verb pairs because you know it's going to be medications take actions on like gene expressions or medications take action on symptoms and symptoms.
+And then diseases take actions on like organs.
+Like that's like pretty straightforward.
+But then when it comes to modeling out your system, it's actually ends up being a lot of work to even think about modeling these things.
+That's one thing.
+And then this is a more mathematical approach that I'll talk about later.
+Like, but the idea is like if there is a graph, you can turn it into a matrix of like adjacencies.
+And if you factor that adjacency matrix, well, you get back out as embeddings.
+So my general opinion is if you can build a graph, you could have an embedding model.
+All right.
+And then basically anything close to that nodes would have been the same thing as anything close to those embeddings.
+But now the issue is you own that embedding model because that embedding model is trained on like the graph weights rather than whatever open AI has just like magically handed down to you.
+Right.
+And then the idea here is that, well, an embedding model is just a fully connected weighted graph, whereas a graph databases is maybe weighted, but not fully connected.
+These are like all mathematical terms.
+I don't know if like anyone understands what I'm talking about, but I generally believe like those two can be equivalent if you train a model with your own data.
+And it's just going to be way easier because vector search, very parallelizable, very easy, very straightforward.
+Whereas like modeling graphs, you end up just spending way too much time like building out the schema.
+Right.
+Because now you're like, okay, well, shoes have a heel height if it's a women's shoe, but also if it's a men's dress shoe.
+And now you're just like thinking about all that stuff.
+But then you realize, oh, my job here really is to like sell things.
+And if product one is similar to product two, and I filter for complementary department, I can build a carousel and people will check out.
+I'll go make more money.
+And that's kind of, that's how I've been thinking about it for a long time.
+Like I couldn't be wrong in this new wave of things, but yeah, I think a lot of it is just too much time spent on the graph schema.
+I think is a danger.
+Cool.
+Sorry for the rant.
+Ford.
+Yeah, I just had a question back to your original getting optimal retrieval thing.
+And since have you tried anything in terms of trying to predict the next question and then do retrieval on both of those questions, like IE, if it failed, like you create the embedding, like you said at the
+beginning that the user will most likely not be satisfied by this.
+You'll then have the data set of your next questions.
+The user asked until they were satisfied and trying to then synthetically generate that.
+And that wouldn't mess up your UX as much because it would do one retrieval step and then try to pull everything down.
+And then you'd have all of the records that you needed.
+Like, so if you said that you had needed six in total, you could pull ideally, like you pulled five in the first thing and you could optimize off of that.
+Yeah.
+So I kind of see that as just making a compute latency trade off.
+So I haven't done a thing where I completely rewrite the question at the risk of not answering the original question.
+But like one thing we've done is for certain workloads, once we have the question and the following text jumps, the, what I return is basically going to be the reply as a string and then follow up questions as a list of strings.
+And so if you generate those follow up questions, you can effectively just make an API call without the user even knowing and try to answer follow up questions and then have the language model.
+So, okay, here's the past text chunks.
+Here's the questions that the language model could have answered.
+Here's what those answers look like.
+Do we, and then the question is like, do we get a cache hit?
+And then that cache hit metric is kind of a thing we can measure it where it's at.
+We, we propose three new questions.
+We take six seconds to answer each question.
+Then no one really cares.
+This is a bad feature or it's, oh, wow.
+They, they stopped, they stopped like typing in that key input.
+They only click these follow up question buttons.
+Maybe there's something there that we can build, but that's kind of like the engagement metric that I track sometimes in terms of predicting follow up questions.
+I think it's very use case specific, right?
+Cause it really depends on like how well constrained your good data set is.
+Like I can imagine for a personal trainer or a nutritionalist, great.
+If I like ask for a product, I might ask for also the nutritional stuff.
+Right.
+If I mentioned a personal trainer's name, I probably also wouldn't ask about availability.
+Those are the kinds of things you can hard code.
+I would say, just say like, how constrained is the problem?
+I think is a, it's like going to answer that question.
+And as long as you have metrics on engagement that says, okay, we're getting these cash hits.
+Like this is actually being used.
+That should help you motivate some more investment.
+Yeah.
+Cause I was foreseeing that of like, it's a very slippery slope of how much you could end up spending and how many times do you generate the next question of like, until you ended and it could work or it could just be a lot of database calls and tokens.
+You're just burning up for fun.
+Yeah, exactly.
+But you know, sometimes there's reasons for, right?
+Like you can imagine like adverse for our cell, they prefetch a bunch of links.
+And so the website loads faster.
+This makes sense because we've shown that like a hundred milliseconds of latency in an e-commerce website can get you 1% revenue.
+So it's definitely worth it.
+But these LLM calls are, can be pretty expensive to based on how you do your pricing.
+And so especially for like consumer facing products, the question being answered one question faster may not be worth the hundredth of a penny you're spending each time you generate that extra.
+But in that sense, it would be interesting to see like, what could be measured to prove this hypothesis, right?
+Is the goal time spent or is the goal like time to answer?
+Right.
+Like on Amazon, like it's not time spent.
+I think on Amazon on average, the average time from going to amazon.com and checking out is like 40 seconds.
+And if it's less than 10 seconds, it's fraud.
+Yeah.
+Right.
+So I think there's some analytics that is worth doing to figure out what's going on.
+Let me just take a look.
+Alex just asked a question.
+If the edges have different meanings, X, where's Y and Z activates, and I don't see the connections with embeddings with graphs.
+Yeah, I definitely think that's true.
+For example, I'll give a definition that is useful in the context of like e-commerce where we have an embedding model that models what are not things are similar, but similar is like not constrained enough.
+For example, is it like is a is a red long dress similar to a red short dress because they're similar on color or they're dissimilar on length.
+Right.
+And so for another example could be a white shirt and a white shirt that's silk and like shirt that's cotton and white shirt with polyester.
+They might be similar may not be similar, but you can still attach additional business logic in your filtering steps.
+Right.
+Because you might say, okay, I want to build a similar items carousel for things that are unavailable.
+And I want to build a complimentary items where, you know, if it's pants, I want to recommend belts and you can still hard code that logic in the serving layer of your recommendation system.
+Rather than coding that into your into your into your graph.
+Like a really painful example that I ran into a couple of years ago was we were recommending belts with pants, but we would recommend belts with no belt loops.
+So we were recommending belts with pants that had no belt loops.
+And this was like embarrassing the merchandising team, but we just really easily just said, okay, well, now let's add additional logic that says let's add a label called has belt loop.
+And if it does not have belt loop recommend shoes instead of belts.
+Right.
+Versus like going back to this graph database and having to change schemas and modeling this whole like if Bella has belt loop, if pants has belt loop then recommend belts.
+It's just like a safer layer to work with at all times.
+Yeah, but I definitely agree.
+Like if there's really explicit meaning, I think it makes sense.
+But it's often the case that we don't really anticipate to know what the users care about.
+Sid.
+Hey, I had a like a question kind of going on more in routing.
+Specifically, we're at a point where I guess like, and maybe this is just how we've set up a prompt and it could be better, but point of view hit 21 tools are like to calling like flow.
+And I guess I'm hitting a point where, okay, so I have these like specific user intents as different tools, but some of the tools include like ask for clarifying question and respond directly to user.
+Now that respond directly to user is usually like the case when like a user asked a question that's like irrelevant to like anything that's happened so far or any of the like data that they want to interact with.
+It's kind of like, you know, we're doing an educational product.
+They're doing something with their files and suddenly they're like, oh, can you like write this quick form for me and out of nowhere?
+Or like if the user just says hi, like that should be triggered technically.
+So what I've tried is I've like, like in my prompt, I have positive and negative examples of each tool.
+I have like instructions to say like, hey, like if the user says hi, like explicitly do this.
+I still see it come to a point where like sometimes I'll say hi and it'll like generate a summary.
+For example, like, I don't know.
+Yeah.
+It'll still be called the wrong tool.
+So I'm getting, I'm wondering if it's like either at a point where we've had too many tools or we need to start like, or there's just something wrong with the prompting.
+Curious about what your advice is for like scaling tools in that sense.
+Yeah.
+So basically I'll try to describe the problem more quantitatively, which is in order to have a hundred percent recall in your tools, you're suffering from issues of low precision.
+Right.
+It's like, because we're including all 20 tools at all times, our precision is always going to be like 5%.
+Right.
+But we're going to have a hundred percent recall.
+So the first question is, can we make some trade-offs on recall to improve our precision?
+Right.
+And so, so now you're thinking like, okay, can I do some kind of retrieval on the tools to remove some irrelevant examples?
+Right.
+Can I improve precision without hurting people?
+And then when you do this, really, I want you to think about this idea that there are going to be evergreen tools that are always being your prompt.
+And there's likely going to be some dynamic tools that are situational.
+How you decide whether it's evergreen or seasonal, is this going to be up to you?
+But I want you to think about, okay, really what's happening is I have a hundred percent recall, but this is hurting precision and precision is somehow confusing this model.
+So the experiments you're going to run should just be, how can I build this in a way that has really good recall, but still very good precision?
+Makes sense.
+Thanks for the framing.
+I kind of have like a second piece of that, which is like another option has been to sort of combine tools and sort of make parameters a little more complex.
+So like, instead of like, I have a tool for like these very specific scenarios, I sort of create one that subsumes the capabilities and like have some like, enums set to like trigger between the two.
+Yep.
+Kind of curious if you've seen, yeah, I guess it's more of like curious about what you've seen in scale.
+We're obviously going to have to experiment and test it out.
+But curious about how, like where you tend to see these models become like sloppy at like setting up the right parameters.
+Like, yeah.
+Yeah.
+I've done a lot of things where like I basically have some kind of response object.
+That's just like content is string.
+And then I have some kind of types where I just say, okay, type is going to be one of these three options and then have additional logic in the backend that says, okay, if type is re-ask, I render this UI.
+If type is clarified, maybe I render a little question mark outside the message.
+So I definitely think that makes a lot of sense to try to standardize some of these schemas and lean a little bit more on like the enums and literals as fields.
+Rather than having like five functions kind of roughly have the same argument with different names.
+I think that definitely helps a lot.
+That makes sense.
+I guess, sorry to dry on, but I have one last question, which is about like multi-interaction like flows.
+So we have these like set lists of interactions, but sometimes the user might want to try like to like combine tasks sometimes or do something that can be decomposed into a like set of like two tools.
+One.
+And like one option is like, we like disallow that completely so that we don't like have these occasioning working magic moments.
+Another thought I'd had was like, have like in this tool calling, sort of have a parameter that the agent could set, which is like an ask for an additional, like a confirmation of the next step.
+So it's almost like trying to introduce a human in the loop in these multi agent like flows or like, sorry, multi-step flow.
+So it's like, Oh, I want you to summarize this.
+And then with that summary, do like this other flow, the agent will execute that first flow and then say, Hey, do you want me to do the second step?
+And then the user can be like, yes.
+And then it goes to that same like function called like, okay, now I know that this is like, in step.
+Here's if you've seen any sort of like tricks like that kind of work to like make things a little more supportive of multi file, multi flow sort of setup.
+Yeah.
+So what I've seen from like, maybe Vtor from Zapier is here today.
+He is not.
+The issue with that general task is like, once you start amazing people, you start disappointing, you end up disappointing way more people.
+Where it's just really hard to reliably prompt for that behavior.
+Right.
+And so again, I think it would just be like matter of like, okay, we build this future.
+We look at like dissatisfaction.
+Does it go up or down?
+Is the variance very high?
+Those are some things you can look at in the near term.
+But I would mostly think about where can we place prompts to make that behavior a little bit more deterministic?
+Cause I've definitely seen it done, but ultimately I think it's usually safer to have functions be sort of independent of each other.
+And if there are systems where one function needs to execute after another, perhaps merging that into a tool where everything can be run in parallel makes your life a lot simpler.
+Cause it's just going to be a little bit more deterministic.
+Sami.
+Hey, thank you, Jason.
+So one task was about some of the routing from my understanding.
+It's we're mainly living it up to the LLM to decide which tools to call.
+So I was going to ask then what about using like retrieval again to, for, for, for tool selection.
+I've seen a few libraries out there that do that as well.
+I'm calling it sometimes something like semantic routing or things like that.
+So basically, yeah, based on questions that come in, we retrieve something and then that retrieval is linked to a tool.
+And so we do it like that.
+Do you have any thoughts on that?
+Or maybe we talked about that, but I missed it as well.
+Yeah, I think ultimately what we're really addressing here is the fact that if we don't do retrieval on tools, we have a hundred percent recall and roughly low precision.
+And what we're trying to do is make some recall trade-offs in the hopes of having higher precision.
+So we actually choose the right tool.
+Okay.
+So are you saying, so we should, so we do default to using retrieval for tool selection.
+We don't, we don't let the LLM decide.
+Oh, what do you mean?
+Or maybe, maybe my language is not good.
+Yeah, let me, let me, yeah.
+I think I understand the disconnect.
+So one thing you could imagine doing, which is the semantic routing is to get an embedding of the request of the user's query and then look up some tools that are near that in embedding space.
+Yes.
+And that would be an alternative to just having the LLM respond using something like constructor with what it believes.
+It's a, what I interpret the question is being as what's your opinion of not operating on the text and having the LLM say what it needs, but instead.
+Yeah, exactly.
+Embedding space or some part coded keyword space.
+Cause then we could also test that as well.
+Then it becomes also much faster for the tests and everything and then cheaper for the test as well.
+So, yeah.
+Yeah.
+So yeah, I guess there'll be two things here.
+One again, is that if we use the LLM and everything's to prompt, we have a hundred percent recall and low precision.
+If we do retrieval, we run the risk of not finding the right tool.
+So that's one trade-off that we're just going to have to make.
+The second one is once we know what tool we want to use, do we still then need the LLM to fill in the arguments?
+Yeah, probably.
+Yes.
+And so now we basically have a recall precision and latency trade-off that we need to make.
+Right.
+I think the question is just like, we just have to measure all three and just look ourselves and like, am I willing to take a, am I willing to double my latency to improve precision by like two?
+And then the question is like, does the precision impact satisfaction?
+For me, I would just measure those three things.
+Oh wow.
+Like with an LLM, it takes one second, but if I do use retrieval, it actually takes a little bit longer because I have to embed an extra piece and then do retrieval and that's an extra 600 milliseconds.
+But it's worth it because I have 400 tools, right?
+Like maybe with 400 tools, it'll never work.
+And so I have to use retrieval, but that would basically like the metrics, they would be, oh wow.
+Like my precision is one over 400.
+My recall is 100% and my latency is like terrible because the context is so long.
+Whereas if I do retrieval, maybe it's 200 milliseconds for the embedding.
+Maybe it's another like 500 milliseconds for the retrieval.
+We have much better precision.
+So your language model is choosing the tool a little bit more easily.
+So there's a lot of different trade-offs you got to make, but those are the kinds of numbers we're going to be looking at to make those decisions.
+Okay.
+Thank you.
+Were there any other questions?
+I guess we can wrap it up here and then yeah, if you have anything else, just feel free to ask him the ask instructor Slack channel.
+Happy to talk about some of this router stuff.
+It's a very simple topic, but I think it can get very complex.
+Awesome.
+Take care everyone.
+Have a nice day.
+Thank you.
+Cheers.
+Bye bye.

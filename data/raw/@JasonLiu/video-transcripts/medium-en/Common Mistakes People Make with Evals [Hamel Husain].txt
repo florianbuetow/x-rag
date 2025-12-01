@@ -1,0 +1,1057 @@
+This so yeah, just to set expectations.
+This presentation would be pretty lighthearted.
+It's meant to be fun.
+We're going to leave a lot of time at the end for questions,
+but I'm just going to give you an overview of certain things
+to prompt those questions in your mind.
+OK, this question.
+So this was a presentation about common mistakes
+people make with evals.
+And specifically, I want to give you
+a guide to wasting time, money, and resources.
+I learned this from Jason, taught me this technique.
+Evals is a really large kind of subject area.
+It can be dry.
+I don't want to just talk about, OK, best practices of evals,
+how to do them, so on and so forth.
+Let's make it fun.
+And so to make it fun, we can invert.
+And by inversion, we mean, OK, like how can we do evals wrong?
+I think that is a lot more fun.
+Let's get into it.
+I'm Hamill.
+Jason already introduced me.
+You can find my website there, as Jason mentioned.
+I've written a lot about evals.
+And the reason I've written a lot about evals
+is because this is where people tend to fail the most.
+And it's not really about evals strictly.
+Evals is just the how of making AI work properly.
+A lot of times, people, when they're
+building AI applications, they hit a plateau
+because you're only doing, if you're just doing vibe checks,
+people want to know, OK, like how can you go beyond vibe checks?
+And evals is the central way for you
+to put some structured approaches in place that
+allow you to measure your application.
+OK, what is the first step that you can use to really
+to start failing fast?
+And the first thing, kind of mistake,
+is focus on tools, not processes.
+I find that 95% of the folks that I work with,
+when we start working together, they have this mindset.
+And just like Jason, I do a lot of consulting.
+And what does that mean?
+OK, rag problems.
+Instead of trying to measure retrieval metrics and things
+like that, use a vector database.
+You've already been beaten with that specific advice
+throughout this course, so you don't need me to really
+elaborate on that.
+Need to measure progress?
+Use off-the-shelf evals.
+So a lot of people are using off-the-shelf evals.
+We'll get into that in a little bit.
+But using off-the-shelf evals is the wrong choice 99.9%
+of the time.
+Fine tuning without measuring, fine tuning models.
+You don't even have to be using an open model
+just like fine tuning open AI.
+But without evals is a really bad idea.
+Similarly, if you have accuracy issues,
+instead of trying to debug that and trying to figure out
+why do you have performance or accuracy issues
+so the LM is not doing what you want,
+just trying different models.
+Just hopping from one model to the next,
+it just doesn't work.
+You're going to be spinning your wheels.
+Similarly, agents not working, try a new LM framework.
+If agent is not working, instead of using LandGraph,
+try Lama Index.
+Lama Index doesn't work, try something else.
+And then lastly, probably one of the things
+that drives me crazy is evals are a vendor problem.
+A lot of people think, hey, evals, what tools do I use?
+Should I be using Langsmith?
+Should I be using BrainTrust?
+Should I be using Arise?
+What should I be using?
+That's the first question that comes to mind.
+That means you're in trouble.
+Because it's not a vendor problem,
+it's a process that you need to go through.
+The vendor is not the solution.
+When you focus on tools, not processes,
+what ends up happening is you are going to be,
+your life is going to look like this whack-a-mole game.
+And this is my friend Greg.
+And you're really not going to be making progress.
+You're just going to be rotating around different tools
+without really having a robust way to improve things.
+Just to drive this home, this is a real quote
+from a large Fortune 500 company.
+And the CTO said, in my opinion,
+the evals framework should be generic enough
+to apply it to any task.
+People actually believe this.
+And if you believe it, stop it.
+Get help.
+Get help somewhere.
+Get help from Jason.
+Get help from John.
+Doesn't matter.
+Get help from somewhere.
+So another kind of example is,
+if you really want to hurt yourself
+in really light stick of dynamite under your ass,
+you should throw up a dashboard that looks like this.
+Import your favorite LLM eval library
+and use off-the-shelf metrics.
+Calculate healthfulness score, truthfulness score,
+personalization, accuracy, tone, put it on a dashboard.
+Be like, hey, I'm doing evals.
+And then you can tell all your coworkers,
+look how good we're doing.
+You can even track those metrics over time.
+But really, what are you doing good at?
+Nobody knows.
+You just have numbers that don't really mean anything.
+Who the hell knows the difference between 4.2 and 4.7?
+This tone, what the hell does tone mean?
+This is actually a real dashboard.
+It's not a screenshot of the dashboard.
+I asked Claude to recreate the dashboard slightly
+from a real screenshot of a client,
+but this is actually what I saw.
+And yeah, this is one way to waste incredible time and money
+because you're going to chase these metrics.
+They won't really mean anything.
+And there's a lot of eval tools to offer these.
+You can import from eval's import helpfulness.
+And you can apply that on your traces.
+And honestly, it's a waste of time.
+Do not do this.
+Use, do error analysis and find problems
+that you actually have and then measure those.
+Don't measure this generic bullshit.
+So let's go into it further.
+Just to drive home the point more,
+yes, to really maximize the blast radius
+of that dynamite under your ass,
+just let others dictate your metrics.
+Use all of them blindly
+and trust that they align with your goals.
+So, okay, like these are some examples.
+I think this on the left-hand side,
+this is like some eval tool inside OpenAI's dashboard.
+Oh, sorry.
+And they have some metrics here, like sentiment,
+they have factuality, whatever.
+This is a screenshot from another eval tool, brain trust.
+This is one from Galileo.
+It doesn't really matter.
+If you really want to yourself fail as fast as possible,
+just adopt all of these at the same time actually,
+and just like import all the metrics
+and throw it on a dashboard
+because that will cause maximum confusion.
+Okay, so that's like the first step to failure.
+The second step, if you really want to twist it further
+and really just maximize pain
+is like just avoid looking at data.
+And these are some rules of thumb,
+some kind of beliefs that you can adopt
+to really be effective at maximizing this kind of failure.
+So one is just believe that a tool will do it for you.
+Like you can just, you don't need to look at data.
+This is the age of LLMs.
+Why should you be doing any manual work at all whatsoever?
+Just use a tool, just outsource it to a tool
+is not your problem, okay?
+And then also, okay, fine, if you do need to look at data,
+you know what, it's not your problem.
+Just let an engineer do it.
+All this LLM shit is just engineering bullshit anyways.
+Just let an engineer fucking look at your data.
+You don't need to look at it.
+And then also just don't even look at data at all
+because honestly, just trust your gut.
+You don't need to look at anything.
+Your feelings are always right.
+And then ultimately just, and a lot of people do this,
+it's just depend on users to tell you if it's broken.
+So avoid looking at data.
+And just to drive home the point of delegating,
+looking at data engineers, a lot of people do that.
+When we say, okay, look at data,
+it's the person with the domain expertise
+that needs to look at data.
+And it's a critical mistake people make.
+So there's a technique called error analysis
+that you may have heard about in this course,
+or you may have seen indirectly,
+which is really important for you to go through your data
+and look at it and annotate that data
+so that you can discover the failure modes you have
+and to actually measure things that matter
+and not that dashboard full of X, Y, Z metrics.
+Yeah, and we talk about it, I have a little page here.
+This is from a different presentation for executives,
+but if you want to maximize failure, don't do this.
+Do not look at your data, do not label it.
+And a lot of people, if you really want to fail even harder,
+just have an excuse that like, hey, looking at data is hard.
+You need to buy specialized tools to do that.
+Don't use simple, easy to use things.
+So being unsarcastic for a moment,
+you can use things like Excel to start looking at data
+and do this error analysis.
+I'm not going deep into error analysis now,
+we can talk about that in the Q&A,
+this is just more to bring up the point of,
+hey, like error analysis 101 is basically looking
+at your traces and categorizing the errors that you have
+and writing notes about them,
+and then doing some data analysis over those notes
+to highlight what kinds of failures you have.
+This is like a example, this is a screenshot
+from some error analysis that I've done recently
+where, okay, like LLM responses,
+there's a lot of incomplete responses
+where the input had code in it.
+So that might not mean anything to you,
+but this is an example and that drives,
+okay, what kinds of tests you write,
+what kinds of evals you might write, so on and so forth.
+And then finally encourage agent astronauts.
+So instead of actually building anything,
+just keep drawing these diagrams.
+And I see this all the time,
+oh, should we use LandGraph?
+Should we use LamaIndex?
+Like really sweat about if your architecture is right,
+if you're using like enough agents
+and what agent should go where
+and just get really caught up in that.
+And forget about evals,
+just start with the most complex solution.
+And then really the last thing you could do
+is really just throw away everything
+that has been the wisdom of classic machine learning.
+So this is a diagram, you may have seen it before
+if you're familiar with machine learning.
+This is from a Google paper
+about technical debt and machine learning systems.
+Or it's like machine learning systems
+are all very complicated.
+There's a lot of different concerns that you have,
+feature extraction, serving infrastructure,
+process management tools, machine learning code.
+And hey, we don't need any,
+you don't really, you can have the belief like,
+hey, you don't need any data literacy.
+You don't really need any of this knowledge
+because LLMs are just APIs.
+But really, is that really the case?
+And if you look really closely,
+a lot of these things are the same.
+Configuration, there's elements of that
+with talk about managing prompts, data collection,
+you have human in the loop workflows
+when we want to curate datasets.
+This course covered rags,
+so don't need to go into what that is.
+But there's a reason evals is at the center of this
+because you want to verify
+what's coming in and out of the LLM.
+And then finally, on an unsarcastic note,
+you could also just ignore conventional wisdom.
+Hey, that manual inspection of data probably has,
+that is very important and then evals are very important.
+But as you can, yeah, that's the sarcastic talk.
+Hopefully that was lighthearted and fun.
+We're doing a course on evals
+that will take you through in a lot of detail,
+like how to construct evals,
+how to deal with very complicated cases,
+where you may have multi-turn conversations,
+where outputs are ambiguous,
+what to do if you don't have data,
+what to do if you don't have users, all kinds of things.
+We go through that in a lot of detail.
+If that's interesting to you, check it out.
+Otherwise we can have Q&A.
+Awesome, let me open up the slide IO
+and then I think there's only a couple of questions there
+and then we probably just have a conversation more
+about some of the things that you've seen so far
+in your consulting.
+The first question is, for the retriever component,
+what is the suggested approach for evaluating results
+when you have ground truth?
+All right, so this would be in generation, for example.
+Are you able to see the links, by the way?
+Sorry, what was the question about links?
+Are you able to see the questions as well?
+I just love to comment in the chat.
+Oh, I see, let me open it.
+Perfect.
+You're still sharing your screen, by the way.
+Let me stop.
+Okay, let me open the questions.
+For the retriever component, what's the suggested approach
+for evaluating results when you have ground truth?
+So actually you should look at Jason's blog.
+He has a really good blog post.
+I think it's like levels of rag, maybe.
+And in that, let me see if I can find it.
+I can take a look.
+So there's like level four evaluations.
+And that's like a nice, very high level way to think about.
+In that blog post, it's called
+Levels and Complexity of Rag Applications.
+He does like synthetically generate what the Q and A,
+like the Q and A pairs are.
+The same holds true if you already have ground truth,
+if that makes sense.
+And you can use-
+I think here this is also a good case
+of actually using something like an LLM
+to judge these results, right?
+Because we have pretty good reasoning models now
+where given a certain answer,
+if it's slightly rephrased or anything like that,
+do you feel like just judging the similarity
+of a synthetic answer or a ground truth error
+with the LLM output is a pretty good idea?
+Or do you feel like even then we need to start thinking
+about training our own LLM as a judge?
+For example, comparing string answers, for example.
+Yeah, if you're comparing string answers, then no.
+But if you want some more nuanced analysis,
+like you're saying that you want some kind of LLM
+as a judge, that's fine.
+I think that in practice, you need to do an analysis
+that lets you trust your LLM as a judge.
+And what that means is you need to do some human labeling
+that where you measure the agreement of the judge with you.
+Because at the end of the day,
+the reason why most LLM judge fails
+is people don't trust them and they don't understand them.
+So that's, yeah, it's key that you do that.
+And I think that kind of answers John's question as well.
+Yeah, do you think that with these new reasoning models,
+there's more to trust or do you still generally think
+that the case that it still doesn't really live
+up to expectations, especially with the 03 mini, for example?
+So you do have to check it.
+Like there's, I don't care how smart it is.
+Even if it was you, Jason, and manually judging everything,
+I would still check it to trust it.
+And like you might check it less,
+like the stronger the model it is, you may,
+but you still have to do that exercise of,
+okay, does it match the domain expert?
+There's really no escaping that.
+Because at the end of the day, you have to trust the judge.
+There's only one way to do that.
+I see.
+This is a question that I tend to bring up as well,
+which is what if we don't actually care about the values
+of these off the shelf evals,
+but just that as we monitor them over time,
+we want to look at situations when they change radically.
+Imagine a lot of this kind of plummets
+at some random date, at some random time.
+Yeah.
+So what you can do is you can do statistical tests
+and things like that to see,
+and you can set up monitoring on that to see,
+okay, if points are going beyond certain thresholds.
+So that's certainly a valid exercise.
+There's actually some people building tools
+that focus on just that aspect.
+It's certainly valid.
+I would say make sure that your evals
+are not too hypothetical.
+Like that you understand what the value means to you.
+So it shouldn't be like going back to that dashboard
+where it have all these random metrics,
+and you just want to know
+if one of them changes drastically.
+I find that if you don't understand your metric,
+then it's just adding a lot of noise.
+That would just caveat.
+Don't make the exercise too academic.
+It gives a follow up question on the off the shelf evals
+is do you not believe in any general purpose
+eval frameworks, or is it the case that we feel
+like it's too early in the tech cycle
+and we don't really have a strong standard yet?
+So I think on balance,
+general eval frameworks where you just point something at it
+and it just tells you what your problems are
+and if you're doing good or bad,
+generally don't work that well.
+They demo really well in sales meetings,
+but they don't work.
+And that's because domains tend to be fairly specific
+and the problems, they tend not to align with the problems
+that you should actually care about
+and the failures that you are actually having.
+They might surface some problems,
+but it's a slippery slope.
+You don't want to just rely on those
+and think that you've solved your eval problem
+because it tends to be fairly low signal.
+Now, if we start getting close to AGI,
+then maybe you could say like the work that I'm doing
+or Jason is doing to look at data
+and figure out like what you should be measuring
+and how you should do that.
+Okay, that can be done by an AI,
+but at this point, it's not at that.
+Maybe you could pose a general question to an AI
+at some point where it might be able to do that,
+but it's hard to know that without looking at data first
+and coming up with specific metrics.
+And then also like you can measure an infinite set of things.
+So you can come up with the infinite set of metrics.
+And also there's lots of different components
+in AI applications.
+There's tool calls, there's rag, there's agents,
+and you can measure each component
+and you can ground really fast in all of these things.
+If you don't prioritize and have some focus,
+and that's why it's really important to do error analysis
+first to focus yourself on what matters.
+So that's another reason why I just don't think
+general purpose eval frameworks are a good idea.
+Do you have any, the next question is,
+do you have any case studies or examples
+where you have defined some kind of very highly specific
+or highly valuable set of evals
+that you've implemented and worked really well?
+Yeah, exactly.
+I'll have to hear yours first.
+Okay, yeah, I'll just give you some really dumb examples
+just to drive home the fact that it doesn't have
+to be rocket science.
+So for example, if you ever see,
+if you see like UUIDs being emitted into the user
+or in the AI response when it shouldn't be,
+cause it's in the system message or something,
+okay, that might happen.
+Or you might have formatting issues.
+You might have others dumb things
+that you can easily write assertions and tests for
+that you know shouldn't be happening,
+but you only find that because you're looking at your data.
+Another example is I'm working with a leasing,
+an AI apartment leasing assistant
+and its job is to,
+one of his jobs is to help make appointments,
+but it's always getting dates wrong.
+There's like some ambiguity sometimes
+in the way that you might ask for appointment
+about what date you're actually talking about,
+that a human that you might understand,
+but the AI is getting wrong.
+So yeah, you can have some, you can test that.
+You can test, okay, you can have ground truth there
+and you can write tests.
+And there's some examples I've talked about publicly.
+For example, like I've worked on a lot of code things.
+So like a natural language query assistant,
+like there's a product called Honeycomb
+where you can type in natural language query
+and it generates a Honeycomb query.
+So in that case, yeah, I have LM as a judge
+that really bakes in like a lot of failure modes
+that tend to happen that is correlated with a domain expert
+and they trust it.
+So those are some examples of like everything
+from really stupid, right assertion to like LM as a judge.
+Yeah, I'll add one that I talk about in next week's lecture
+just because it's been top of mind, which is we have a,
+I worked on a sales bot where after the call
+we would basically try to reference as many existing articles
+in our marketing content
+to supplement the conversation that we had.
+So maybe during the phone call,
+we talked about this new feature.
+We wanna make sure that in our email,
+we link to that feature or link to a blog post
+that mentions that feature.
+And when we first ran this, what we found was sometimes
+it would either make up a URL entirely
+or the URL would be from our domains.
+Maybe it's like json.com, but then the slug was wrong.
+And our simple eval was effectively running
+a regular expression to find all the URLs,
+verifying that all the URLs came from our website.
+And then we will make a small post request to that URL
+to make sure that page was not a 404.
+This is a very simple arrest.
+Find a regular expression, ping every single URL,
+verify that it's on our domain,
+it's on a white list of domains, or it has a 200 status.
+And just by doing that, we went from a 1% to 3%
+hallucination rate to basically no errors
+in our URL generation.
+This might feel obvious, but even deep research right now,
+if you ask me for tables of URLs,
+sometimes we'll just create example.com slash whatever.
+And so even deep research right now
+will give you URLs that don't point to anything.
+That's a great example.
+You can only become aware of that kind of error
+if you looked at your data
+and you've looked at some examples.
+If you just threw like a general eval framework on it,
+there's no way in hell that would be like,
+tell you about this very specific thing.
+That's why they don't work.
+Yeah, there's been examples like early on in development
+where someone had asked a question about a feature
+and it would just pull this feature
+from any arbitrary provider.
+And so we also have this feature,
+but there's probably some probability
+that it mentioned the feature from a URL from a competitor
+and that would look terrible.
+But these tests are again, are very simple.
+Another very simple eval was for meeting summarization
+where our eval was just the length of the summary
+divided by the length of the transcript.
+And we knew we wanted to be between 40 to 50%.
+We didn't want it to be 10%,
+but we didn't want it to be 90%.
+And again, you don't really need any sophisticated tools
+to build those things out.
+And those are the things that really matter, right?
+It's very-
+If you use sophisticated tools,
+you're gonna torpedo yourself
+because you're just gonna waste time.
+Like you're never gonna get to that answer.
+Exactly.
+So a ton of these simple things
+are pretty straightforward.
+I think the second question is really interesting
+because you've also written extensively around this,
+which is what is the equivalent of a unit test,
+a integration test and an end-to-end test
+for AI applications?
+And how do you focus on each one?
+Okay, I've written about that so much
+that I don't, it's, yeah.
+Let me see if I can figure out a different way to say it.
+You can test an infinite amount of things, okay?
+Like I said, you can test the rag,
+you can test the retrieval separately,
+you can test the function calls are working,
+you can test, you can do an end-to-end,
+you can just test the final output,
+you can do all kinds of shit.
+You can use LM as a judge.
+What do you test?
+That is a question everyone has.
+And the answer to that question
+is doing the error analysis, looking at your data.
+I would almost say evals is not even as important
+as looking at your data.
+And when I say looking at your data,
+it's a structured way of looking at your data.
+And there's different levels,
+or different levels of sophistication
+of looking at your data.
+But just to begin with, it's going through your traces
+and categorizing different errors
+and then doing some data analysis on that to figure out,
+okay, what is like the most pressing problem
+that I should solve?
+And then also in there, you will find,
+okay, these are some things I should measure.
+You can't measure every,
+you shouldn't try to just come up with,
+try to measure everything.
+Now the question of what is the equivalent
+of unit integration end-to-end tests,
+I think that doesn't really matter.
+I think it's apparent,
+like you can measure different components.
+You can measure the entire system as a whole.
+Just does the output work?
+Like the output given to the user, the final result,
+is it what they're looking for?
+But really it should be driven by the error analysis.
+Yeah, and in these examples with the meeting notes,
+it was very much just a case
+that our customers kept saying the feedback
+that the summary was too short
+relative to how long our six hour meeting was.
+And now we'll define one eval to address that.
+And then someone else would say, you know what?
+The links keep breaking.
+Okay, great, now let's add one more eval.
+It's rarely the case, at least in science,
+to create these evals before we actually build out the product.
+I think a lot of computer scientists,
+at least if you think about what the CS homework looks like,
+it's very much let's enumerate all the failure modes
+and then write software that captures these failure modes.
+Whereas I think in practice,
+a lot of the time you will tend to deploy something,
+get some testers, get that feedback,
+and then you capture the evals through that negative feedback.
+This is also a really great question
+because I also have a pretty high conviction answer these days,
+which is what is the least painful way
+to do human data labeling?
+How do you convince enterprises to dedicate
+n percentage of time to verify answers,
+especially when domain experts are needed?
+So it's really important to move all friction
+from doing human labeling.
+And human labeling, let's generalize that term a little bit
+to looking at data, okay?
+So what I mean by that is where your data lives,
+if it's living in some kind of application,
+whatever logging system that you're using,
+you shouldn't have to click 10 times on something
+to read trace.
+Also, a lot of domain specific situations
+call for rendering the trace in a very specific way.
+Let's say you have markdown in your trace.
+Let's say you have widgets
+that you're rendering in your chat bot, whatever.
+A lot of times you need to render that information
+so that you can read it.
+You don't want to read a big blob of stuff
+that's not human readable.
+Also, a lot of times there might be metadata
+that you need access to.
+There might be external systems that you need to,
+or you need side by side to evaluate
+whether a trace is doing,
+whether this, to evaluate an interaction
+being successful or not.
+A lot of times, so for the simple cases,
+it can be really effective to use Excel sometimes.
+It depends, if it's really long multi-turn conversations
+that don't fit in Excel and it's janky,
+then you can't really use it.
+Sometimes you can use these observability eval tools.
+They'll have annotation cues,
+but it's really important that you're able to page
+through them very fast
+without having to click on a bunch of stuff.
+And a lot of times I build my own.
+You can build something in Streamlit, Radio, whatever,
+and it doesn't take that long to build.
+You just have some buttons and a place to put notes,
+but then you can render stuff in the way you want.
+You can render the chat in the way you want.
+You can put metadata on the page.
+You can render markdown.
+You can render the widgets, whatever the hell.
+You can put links on there, the link, whatever you need.
+And that's often worth it.
+It takes away all the pain from annotating.
+And because it's the most important activity
+you can engage in with AI,
+it's really high return on investment.
+I would say you need to think about doing that.
+And we're not really talking about that much time.
+We'd say dedicate, how you convince enterprises
+to dedicate percent of time.
+You don't have to annotate every single trace that occurs.
+You can sample.
+There's ways to sample.
+Jason may have already talked about,
+you can cluster your traces.
+You can explore these different clusters, things like that.
+And it's not about, yeah,
+the way you're convincing enterprises is you can't skip it.
+If you skip looking at data,
+then you might as well just stop.
+It's not going to work, essentially.
+As a consultant, there's been times
+when I've just offered to give the money back.
+If you're hiring me to make your AI better
+and you're not going to label any data,
+then it's not going to get any better.
+So here's the money back.
+Let me know if you're more serious
+about doing this kind of work.
+I'll also add one call out, two call outs, really.
+The first one is, especially in the world
+of having things like Loveable or Bolt or Sonnet and Cursor,
+building one-off data labeling tools
+has become very straightforward,
+especially if you just make your backend
+some kind of SQLite thing.
+I think some of these new AI tools,
+they can just connect to SuperBase
+and now you have a backend in the cloud.
+The second thing also is the fact
+that there are different kinds of tasks
+you can ask someone to do.
+If you were to give me a task that says,
+given this text, summarize something for me,
+that would take the human a lot of effort
+and cognitive load and it would be a very slow task.
+That might take three minutes per label.
+But humans, and just like models,
+are much better at choosing preferences
+or doing binary tasks.
+So not only is it about what tasks do you build,
+but how can you make a task
+is should just be a pass fail, right?
+If you generate me two summaries,
+it's very easy to tell you which summary is the better one.
+Whereas if you give me a single summary,
+now I have to think of, read this whole thing
+and figure what's going on.
+Same thing with reasoning steps.
+It's one thing to ask a human a reason,
+it's another to say, given an LLM reasoning,
+do you agree with it or not?
+And again, it's all about making these tasks
+very binary, where they should just be J to accept,
+K to reject, and you're onto the next label.
+Yeah, I would go any further and say
+highly bias yourself towards binary scoring.
+Don't have one to five scores
+because it's very complicated to align on that.
+And they tend to go off the rails.
+When you're beginning, just you need to simplify
+and use binary kind of judgment.
+Matthew, do you wanna jump on to first question?
+Yeah, I have a question about how to,
+like eval's in the context of experiments.
+If you're making a change to LLM system,
+it seems largely the way a lot of people do it
+is just eyeballing, right?
+As in not really attempting to measure statistical effect
+and just seeing like the number goes up.
+And I was curious, I know the answer is probably,
+it depends, right?
+On what ultimately you're trying to do,
+like what you care about, like the sensitivity
+or like how precisely you care about your results.
+But from your experience,
+like working with a lot of teams on this,
+just curious if there's any,
+if you see like how much of this sort of
+statistical robustness do you see when running eval's?
+Yeah, or interpreting the results of eval's.
+There isn't, to be honest with you, in the wild,
+I haven't seen too much robustness.
+People trying to add error bars on their eval's
+and things like that.
+People struggling with creating the eval's to begin with
+that makes sense.
+And it's quite the journey for people, at least now,
+especially if we don't have like data expertise
+or data science background.
+If you have data science background,
+totally different situation,
+but that's the minority of the situations.
+And yeah, there aren't many people doing it.
+Yeah, like it is worth thinking about,
+especially like if your system is stable
+and you have like good baseline from which to begin with
+and you have some idea of what you're looking for.
+But yeah, that's my observation.
+The closest I've gotten to doing this kind of
+experimentation is just two things,
+like either one, bootstrap sampling with replacement
+to compute some kind of error bars
+when you do these like bar charts,
+or two, thinking about doing these like kind of T tests.
+That said, you know, I think a lot of companies I join,
+they start with only maybe 30 to 40 eval's,
+in which case like nothing's really gonna work.
+A lot of the statistical signals is really gonna come in
+once you have hundreds of eval's to run against.
+And so the first step,
+unless you already have hundreds of eval's,
+is basically just to create synthetic data,
+create more tests, sample from user production traffic,
+and then get to a place where you can use something
+like bootstrapping or T tests to compare results.
+Awesome, thank you, Bill.
+John?
+I wanted to follow on from this conversation,
+but also the previous,
+whenever you have humans labeling stuff,
+help me understand a little bit more concretely,
+where does that data go?
+Like, where do you store it?
+How much of it goes into a business discussion,
+this is what we need to focus on,
+versus concrete unit test or like more formal eval's.
+When do you do the eval's?
+Is it when you're merging a branch,
+or is it just periodic,
+or is there like a time-wise pipeline
+of setting up eval's for companies?
+Yeah, okay, with the labeling, where does it live?
+It could live anywhere.
+You want some kind of database.
+Ideally, that you can put stuff into,
+group them by annotation run or something like that.
+Sometimes it's spreadsheets.
+It depends, I don't try to be too dogmatic about it,
+because the most important thing is people do it.
+And then it ends up,
+it should be used for decision-making.
+So you're like, where does it come up in the business context?
+Okay, we are seeing that XYZ problem is occurring a lot.
+Let's go fix that.
+And then ABC problem is here.
+We don't really know how to fix it,
+but let's go ahead and at least write an eval for that
+right now, to try to at least start measuring it,
+because we don't even know how to fix it.
+Those are the kinds of discussions that happen.
+And then when do you run, so let's say you run eval's.
+So eval's have a cost.
+The spectrum is free to very expensive.
+Free is writing an assertion.
+There's a string comparison.
+Somewhere in the middle is like maybe LLM as a judge,
+which is okay, you're running, you're calling it LLM.
+And then there's whatever, humans,
+like labeling stuff.
+There's not really like a silver bullet answer,
+but for the free stuff, you can think of that as,
+you can run those just as frequently
+as you run your unit tests in your code.
+Whatever you have in PyTest,
+you can put those in PyTest if you want, doesn't matter.
+With the ones that are a little bit more expensive,
+you have to be thoughtful, like how expensive is it?
+And you might want to run it
+a little bit more infrequently depending on what it is.
+There's like slow tests,
+and some of these tests like take time.
+They might take like several minutes to run.
+And so what I have done with my clients is like,
+we have different cadences for different tests
+and different things that will trigger those tests.
+It's not just on every commit,
+it's like on some other kind of event
+that will trigger those tests, if that makes sense.
+Yeah, you just have to figure out the cost benefit
+and slot it in, but there's a spectrum
+that you can think about.
+And your customers, when they're dealing
+with even the unit tests,
+they can still be very non-deterministic.
+Like the unit test in this domain is a weird beast
+compared to what we've always thought of as unit tests.
+What are your customers, how do your customers process
+a unit test that doesn't have a deterministic failure,
+but always this weird stochastic stuff?
+Yeah, so in those cases, we're logging things.
+So sometimes I have some customers that I have
+LLM invocations in their unit tests,
+because they're so cheap.
+Like they're like, ah, it's not a big deal,
+or whatever, who cares?
+And for those cases, those metrics are logged to a database.
+And then they're just looking at really high level,
+is the number actually, is there a noticeable deviation?
+And there's some more analysis that's automatically done.
+It's not just one metric, it's okay,
+these are different product areas and different scenarios,
+and where are the errors in each of those?
+And then we have a side-by-side
+that shows the baseline versus that.
+And we're just looking to see,
+okay, is there a large deviation?
+You could do a statistical analysis on it.
+Like I said, a lot of my clients are not there yet.
+They're just getting to that point
+where we're putting the plumbing in place.
+Ashkan, do you want to go for the last question
+before we wrap up?
+Yeah, my question is following up on the question
+of the quick eval for meeting summary generation,
+that you basically do a split
+and see how much summary you captured.
+Wanted to know if you have any experiences
+on creating evals for content generation,
+something like legal contract that's given a prompt
+or given a query, you generate the contract
+and you want to evaluate if you've captured
+all the nuances or all the articles have been mentioned
+or any similar experience.
+Want to know what would be the approach for that?
+Can you explain what you mean
+by all the articles are mentioned?
+Because in this example, you could have a situation
+where given some request ahead of time,
+what articles should have been mentioned.
+If we have a golden dataset like that,
+then you can think about something like a precision
+and recall for your citations.
+So given this context and this request,
+I know I should have mentioned articles four, nine and 12.
+Is that at least being cited?
+And if it's cited, that's one level of bit.
+Those would be the binary test, right?
+Those are the tests that you can run forever.
+Afterwards, Ogon?
+No, I was gonna, for an example of article,
+let's say we are creating a contract generation
+and it is in regards to a project
+and we have series of older projects or data set.
+And then given the prompt,
+we wanna generate that contract and then check,
+for example, if the termination clause is mentioned
+or it's not.
+So there would be another set of problems, right?
+We could, for example, consider this in a way
+that's much more structured,
+in which case maybe what I'm asking the LLM to do
+is actually return a JSON object first
+and then I'm gonna format that into a legal document.
+And if we do that, then we can verify specific attributes,
+whether they're missing, how long are they?
+That's one level.
+The second level of things that we'd look at
+is basically building a suite of judges
+where really it's just gonna be like a rubric
+where maybe there are just six different checks
+I wanna verify.
+And as long as you make each one binary
+and you verify whether or not
+that these binary classifications
+are aligned with your own preferences,
+you'll effectively get a rubric
+that still is something that's very high quality.
+So one could be,
+I wanna evaluate the structure of the output
+because every contract has to have a termination date
+and so this is something I care about.
+Maybe I have a rubric
+where there's much more subjective things.
+And then lastly, just checking whether or not
+the documents that I think this answer
+or this question should have cited
+are actually being cited.
+And that could be more of like a precision and recall.
+Am I referencing articles that don't need to be mentioned?
+That'd be low recall.
+Did I forget to mention article 17, B1?
+If that's the case and I didn't have good recall.
+It's usually gonna be a suite of these things.
+And really I would go down and say,
+okay, turns out we do have an issue
+with making sure these dates are extracted correctly.
+Let's build an eval for that specifically.
+Oh, I'm noticing articles aren't being created.
+Let's go build a single eval for that.
+But again, it goes backwards from the errors
+into what the eval should be
+rather than just saying we should have a suite of evals.
+I see.
+Do you have any other examples of what this-
+Yeah, that's an important thing to repeat again.
+We should repeat that 10 times.
+Go from the errors you actually have into the eval.
+Do not ever go think about,
+oh, let's think of some evals
+and let's slap it on your data.
+Just don't, never, don't ever do that.
+Yeah, makes sense.
+For example, that I'm working on now
+challenge with is generating response to a RFP.
+And there is generally,
+I've played a system that goes
+and captures all the requirement,
+creates a bunch of question,
+and then uses those question
+to formulate the template of the response.
+But sometimes there are some nuances
+that is hidden between paragraphs
+or something that is very vague language
+that will be missed and is a critical thing.
+And it's something that like only
+because I have the domain expertise,
+I could go read and then figure it out.
+And I want to know what,
+or if you had a similar experience
+from a different domain and-
+Yeah, we've done this kind of work
+in financial due diligence,
+but here what we've mostly done
+is make sure the templating that we do
+is very static across multiple industries.
+And so it's not the case that I extract the questions
+and create a template.
+It's more that I already have an existing template.
+And so there is always a question
+of how long have the co-founders known each other for?
+That's a question that we're gonna apply
+every single situation.
+And because of that,
+we then can just build something where we have the field,
+it's auto-populated by LLM.
+And when a human is reviewing the template,
+they can always press thumbs up or thumbs down
+to figure out that this is good quality or bad quality.
+And now what I do,
+I just go over my template and go,
+what are the areas of my template that's failing the most?
+And what kind of investments do I need to make that better?
+And now usually it becomes a thing where,
+oh, we are not counting the names of the companies correctly
+because in some use cases,
+Calvin Klein for Calvin Klein
+is actually different than Calvin Klein CK, right?
+Okay, now let's go build out some deduplication evals
+to make sure we can solve this problem specifically.
+But there the idea is we templatize things,
+we add buttons to collect feedback,
+and then we review that feedback
+to figure out what we need to improve next.
+Thank you. No problem.
+But also you don't need to be,
+it should be worth mentioning,
+you don't need to be like overzealous about evals.
+Measure things that you want to track.
+A lot of times you'll see an error.
+If you're doing error analysis properly,
+you'll see a lot of things that you should just go fix.
+Oh, this is happening.
+I know exactly how to fix that.
+And then just go fix it.
+You may not need to write an eval for it.
+You have to use some judgment.
+Okay, should I be tracking this or not?
+Yeah, the goal really is to make a better product.
+The goal is not to have some kind of comprehensive
+suite of tests.
+Ashkan, did you have a follow up?
+I just saw your handle was so closed.
+In which case, I think this is a good time to stop.
+You have two minutes left.
+Again, Hamal, thank you for this.
+I'm pretty excited to hear the longer talk.
+When is your talk, by the way?
+Do you know if it's on like the Friday or the Thursday?
+I think it's on Thursday.
+On Thursday, cool.
+I'll make sure we can make that.
+And then, yeah, I'm sure we'll see it on YouTube
+and everything else.
+And I'll share it with the group afterwards.
+Great. All right.
+Thank you so much, Hamal.
+Everyone else, have a nice day.

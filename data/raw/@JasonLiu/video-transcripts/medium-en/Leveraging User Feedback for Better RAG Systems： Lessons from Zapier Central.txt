@@ -1,0 +1,482 @@
+Okay.
+What would you do if you got five times more feedback in an AI product?
+We're going to talk about exactly this with Vitor Zapier Central to tell us
+exactly how they did it and what they did.
+We went from getting around 10 feedback submissions a day to about 40.
+And that was just by this small change alone.
+We finally had that initial chunk of labeled data and we had a much
+clearer picture of where our systems then to sale most frequently.
+Everyone in the T2 is really borrowed to go look at the raw data
+and help with the tree HQ.
+Everyone starts to understand the values of looking at the raw data.
+Hi everyone.
+Nice to meet you.
+And yeah, I want to talk to you today about how we collect and analyze user
+feedback to make Zapier Central better with the help of our friends over at
+Brain Trust.
+And before I start, I wanted to give just a little bit of background
+context on Zapier.
+For those of you that don't know, on Zapier, we do a lot of stuff with AI.
+Our vision is really to make AI do the work for you.
+So you can see a bunch of examples on this slide.
+We have many AI power features in production today, ranging from things
+like the AI Zap Builder, which is a natural language to Workflow's Creator,
+Zapier Copilot, which is a chat interface inside of the editor, which lets you
+both edit a workflow, but also debug runtime and test time issues.
+Custom Actions, which is also a new project where you can give it a link to
+some API docs, then we generate a new integration for Zapier for you if we
+don't support it yet.
+And then there's a bunch more stuff with the list at the bottom.
+Go check out zapier.com slash AI if you're interested.
+We really do a lot of AI stuff.
+It's starting to sound like Tim Cook in an Apple presentation saying AI all the time.
+But today I wanted to talk about Zapier Central, which is the product that I've
+been working on lately.
+And Zapier Central is a very new product.
+It's our take on what if we could try to disrupt Zapier, the platforms from within
+using AI, and it's both a chat with your live data and an AI automation platform
+all at one, that we connect to live data from third party apps and that we keep
+them in sync for you.
+So it's kind of doing rag over files, but those files can be data from your third
+party apps like Notion, HubSpot, Google Sheets, a bunch of other things.
+And we also let you interact and do an act, send data over to all of the 7,000
+plus apps that the Zapier platform supports today.
+And you can also use it as, you can use it as a GPT style one-off chat whenever
+you want for product, which is fine.
+We could also use it instead of recovering workflows using natural language
+and then automate some later work.
+Instead of having to go to like a workflow builder, just describe in natural
+language what you want, you give the bot access to some of your apps, and then
+it would just kind of do its thing.
+So this is kind of like our way to get into the, get a wedge into people that
+that are excited about automation, but they are too scared about complex
+builder type of products.
+So an example here could be you have an assistant with the instructions every
+time a sales meeting is about to start, extract the attendees from the calendar
+event, go do a Google search for each one of them and summarize what you find, and
+then add them to a met with me Google sheet, and then DM me a final summary in
+Slack so I'm prepared for the meeting.
+And then you can keep this running in the background, it's going to do its thing.
+But whenever you want to ask questions about the people you've met with, you can
+also go chat to the bot and you can say, Hey, have I met with this person yet?
+Or how many people from Canada have I talked with so far?
+Stuff like that.
+And so today I wanted to tell you a story of how we used our feedback collection
+pipeline and how we consume all that signal today to help guide our product
+to see these.
+So typically when you build AI products, you want to optimize for getting the
+MVP from your users as fast as possible.
+So you can start collecting feedback and then you want to use that feedback to
+learn fast and iterate, right?
+So very common loop is a bit of prototype with a strong foundational model.
+And then you do some vibes base or perhaps a static list of evals that you
+curated by hand, or you have some synthetic data and then you ship that to
+some users, you start collecting real world feedback and then you use that
+feedback to build more evals and improve your system.
+And then you just kind of rinse and repeat, right?
+Then once the model comes out, all of those evals are also going to be paying
+dividends because now you can swap to the newer model and you run your
+evals to examine what got better, what got worse, and then you can make a
+decision based on that and other factors, costs and latency of swapping the
+models and that's for your product.
+So this is where we were at the beginning of the story.
+We were kind of entering this iteration loop.
+We had a successful MVP launch.
+People were excited about the product and some of the things it promised to do.
+They liked the stake on AI assisted automation, but because we support such a
+wide breadth of use cases, it was really hard to assess what use cases are we
+low accuracy at and from those ones, which ones should we be paying attention to?
+Right?
+Which ones have high trash shape to justify prioritizing?
+And which one of these are like just one loud user complaining that we can kind
+of either reject or ignore these types of use cases for now.
+And we also knew that we needed to vastly increase our eval coverage,
+hundreds of tests per quote unquote capability of our system.
+Also wanted to get end to end coverage of popular use cases that we saw users were
+building for and were kind of like sharing on social media and were excited about.
+So the release of GPT-4.0 also kind of acted as a bit of a catalyst for everything
+I'm going to talk about here, because it really highlighted the need for better
+understanding of the discrete capabilities or product need of support.
+We had like limited evals and those helped guide the decision to move from
+4 Turbo to 4.0 at the time, but we were really blindsided on some use cases
+where accuracy got lower.
+And one example of that is recovering from a tool call with invalid parameters,
+where the model would just kind of get stuck bouncing between the two attempts
+to solve the issue over and over again.
+And then it would just kind of go in a loop, trying the first attempt and back
+second attempt and back first attempt.
+And you wouldn't really realize that it was stuck.
+And that was very surprising for us because everyone else was saying that this
+this got better for them was for all, but it got worse for us.
+So we had some work to do.
+So step one in our journey was really to just like, let's just collect more
+feedback. We more stay, you know, right?
+Because we had such a wide range of use cases to support.
+We really have like a very tight vertical use case or product.
+We really needed our users to tell us what they were trying to build and where
+things didn't go as expected.
+And Zythee has been designed partners with Brain Trust since almost the very
+beginning of our AI adventures.
+And we've been using Brain Trust for pretty much all of our AI product
+offerings, and it's been invaluable for us to accelerate the product flyer.
+We were collecting feedback, turning them into evals and then iterating for
+improvement.
+And for Centro, it wasn't any different when we started using Brain Trust.
+It was too, literally the beginning.
+Thanks for correcting me.
+So the first thing that we did for Centro was we started logging like literally
+every single production run to Brain Trust.
+And this helped us really drill down to specific tool call, completion calls,
+subsystems, latency, token usage costs, everything.
+It was really valuable.
+And we also had our eval pipeline already set up with that curated dataset that
+we had, and Brain Trust makes this pretty easy to get up and running to.
+So then besides that, one of the interesting things that we discovered early
+on, and something that Jason also mentioned previously in the workshop, is
+that you really have to put in the efforts to get users to provide feedback.
+I think people are becoming blind already to these default thumbs up and thumbs
+down buttons that we add to our AI check UIs by default.
+It's a little bit like ad blindness, where we can, we all just kind of ignore
+any ads on a webpage nowadays.
+Feel like it's going the same direction.
+And initially we had that feedback system set up, but we had these boring,
+tiny feedback buttons on the top right.
+And they were like, like these muted color.
+And even though we were getting a lot of usage in our products, the feedback
+submission rates were abysmally low.
+And even when we did get feedback, it was almost always negative because people
+only bothered to submit feedback when they were very angry or something went wrong,
+like runtime error or something.
+But positive feedback is just as important, right?
+Especially when you're building an LLM system, because you need to know
+what's working well in production.
+You want to capture those and make sure you prevent them regressing in the future.
+You also can use them as positive examples for fear shotting, potentially
+like fine tuning later on.
+So really had to figure out a way to encourage more proactive
+feedback, both positive and negatives.
+So now what we do is we're a bit more aggressive about asking for feedback.
+And we try to be more proactive about doing it in the right context.
+So you can see a good example of this on the screenshot.
+As central when you're building a workflow, you'd need to test it at
+least once before turning it on, because that's going to pull in some simple data
+and kind of guide you through the steps one by one.
+It was a stop along the way asking you if you want to provide any feedback
+so we can self correct or, or she want to keep going.
+So now when, when a test run finishes, we can add a normal looking chat
+message at the bottom and asked, did this run do what you expected it to do?
+And we can put bigger thumbs up and thumbs down icons right next to it.
+And when the user clicks on either of those buttons, we also did some work
+to provide some examples of what good feedback looks like, what good or negative
+feedback looks like inside of a preformed X field, and then the user can
+provide us some details on why this was good or bad.
+So this small change had a pretty huge impact by itself.
+We went from getting around 10 feedback submissions a day to about 40.
+And that was just by this small change alone.
+And we also started getting a lot more positive feedback too, which it
+was the more surprising part of it.
+And the graph at the bottom at the dark blue are the positive feedback submissions.
+And we were totally not expecting that to be the case.
+And it was great because we really needed that feedback.
+It was surprising to us how she took since the minor could really
+like increase the amount of feedback.
+Basically like 4X or signal.
+So we're really happy about it.
+And this was the first thing that we tried to really pop this
+up to keep doing more things.
+As an aside, another really key point, I think it's worth mentioning is that the
+wording of the feedback request also matters and initially we were going to ask
+something generic like on that left side, like how do we do, but after talking to
+Jason, he suggested we go with something a bit more specific, which led to much
+better quality feedback, especially on the negative signals, because for this
+pipeline, for this context specifically, we were more interested in whether the
+workflow was doing the right thing.
+It's a complex multi-step agentic blah, blah, pipeline.
+That's topic for today.
+So we worded our feedback request to nudge those kinds of feedback.
+We still cared about other things like is the system slow?
+Of course, but, but we monitor those in different ways.
+Another really useful strategy to compliment explicitly asking for user
+feedback in the right context, being more obnoxious about it is to mind user
+interaction in your app for implicit feedback.
+And there's actually a lot of low hanging tree possibilities here.
+And I think the difficult part is not coming up with ideas, but really just
+like wiring everything up in your app to track and correlate those events.
+So one easy option that I usually recommend people is consider running
+like a nightly job really to just fetch the bunch of runs from your database.
+And then just runs a script locally to mine them for, for implicit feedback.
+It really doesn't have to be anything fancy.
+So using that same example I mentioned in the previous slide, after a user
+tests the workflow, if they turn the workflow on, that's a pretty positive
+signal that it's doing what they want.
+Right?
+So we can treat this as an implicit positive feedback on the other
+end, if a tool call return the validation error, then there's a high
+likelihood that our LLM made a mistake and that we can treat this as an
+implicit negative feedback.
+Another good source of implicit feedback is just looking at the
+follow-up messages a user sends after the LLM responded.
+Here, the user is clearly less letting us know that this can be
+treated as negative feedback.
+They were not very happy with the response.
+The problem with these ones is like, sometimes they tell you that the
+response from the Rack system was wrong, but they don't really give you any
+additional context on why.
+So you're like scrambling a little bit to figure out exactly what was wrong.
+Especially since we don't have access to any of the raw data from the data
+source that our users add, you don't have like a static list of files or
+anything that's part of a Rack system.
+So this makes it really hard, but it's still really valuable implicit feedback.
+It helps us fix a couple of issues in a pipeline already.
+And sometimes the user will send a follow-up message that is also mostly
+rehashing what it asked the previous time to see if the LLM interprets
+that phrasing better.
+And I usually see this with like more tech savvy users, I think, where they
+just see an example on screen.
+It's just kind of reword to try to put the subject first or change the words
+around and see if they're like tickle this, tell them the right way or whatever.
+I actually see a lot of this.
+So this is an interesting one.
+So you can get all sorts of fancy here too, intellect semantic comparison
+between them, stuff like that.
+It's a really fun topic to be in.
+Selfishly, it's a fun topic to work on if you have the time.
+Of course, hallucinations are another really good source of implicit feedback.
+And even though it sounds kind of hard to come up with the heuristics or the
+techniques, I think here's another benefit of spending time every day
+looking at your data, right?
+Like you start kind of building these intuitions about pathological
+hallucination cases that are common in your app.
+And in our case, the one in the screenshot was common enough that we
+could look for that specific phrase.
+You can replace something in square brackets to mine for that implicit
+negative feedback, and that helped us kind of get a sense of how often this
+was happening and if we should worry about it now or not.
+All right.
+So, so now we kind of had all this data and this helped
+decrease our signal by a lot.
+So the next step was really to try to understand that data more deeply.
+And our goal was to identify where we were failing most often and categorize
+those failures into buckets and afterwards cross-reference this with the
+usage data to guide product disease.
+So we wanted to focus on high traffic areas with low accuracy, right?
+Something we talked about in the workshop as well.
+Something was failing often, but had low traffic that we didn't want to spend
+too much time on that right now.
+And we also wanted to take a lot of these examples and turn them into this
+way we could reproduce them locally and we could work on improving them over time
+and kind of go through that iteration loop and also make sure that the
+examples didn't regress in the future either.
+Working with LLMs is kind of like a, you know, whack-a-mole sometimes.
+So we really want those positive examples in your system.
+And as for non-goals, we weren't really interested in an LLM as a judge.
+I plan at least not yet, partly because we wanted to make sure we had enough
+human labeled examples first.
+And partly because I really wanted to encourage the team to help with labeling
+and to kind of get everyone in the groove of the like, look at your data mentality,
+which is something I was finding that the team was looking at at the time.
+So to help us understand the data, the first thing we did was we started
+adding a bunch more metadata.
+So every run gets post-processed for additional metadata, like a list of the
+tools that were used, the number of tools, the context on which that run happened,
+whether it was initiated by a Chrome extension, from a web app or Slack
+integration, and a bunch of other things.
+And this allows labelers to find a subset of feedback if they want to.
+For instance, we have one team internally that's focused on building
+the system that rags live data.
+So that team could shelter by runs that had tool calls to their system and
+then labeling only for those.
+It also allowed us to test some data in the future, right?
+So the number of tools called in a run have any correlation to the success.
+Spoiler alert, it does.
+That's a pretty easy one.
+Some more indoors, some more involved data hypotheses that we can test now.
+And here, BrainTrust also made our lives easier because it allows you to
+filter very easily all of your logs by any of your metadata properties.
+So we're just adding a bunch of stuff in there and we could, we can slice some
+dice of logs by anything that we were interested at the time.
+Hey, are your rag applications falling short despite using the
+latest frameworks and models?
+You're not alone.
+I'm Jason Liu and I've helped a dozen companies improve their AI applications.
+I've developed a systematic approach that delivers results.
+If you want to check it out, join my free six week email course and learn the
+techniques I use in my own consulting practice.
+That way you can stop guessing at what works and measure what matters.
+Just check out improvingrag.com.
+The next thing we did was we also built this internal feedback triaging system
+where all feedback submissions will land on by default.
+And from here you have an optimized view for staff to redo everything about the run,
+label it, includes a representation of the chat history at the time, plus all
+the information that you might need to debug and understand the results.
+This is a paying user, what were the instructions for this run, basically
+a big dump of data and we were started off to the UI to what like information
+architecture, what do we need to present for a person that's trying to redo this
+and understand what went wrong and what went right and label this into one of
+the categories that we care about.
+And it also includes a link to the trace and brain trust.
+And that's where we would go and really needed to dig into the details of each
+LLM call, the latency that costs all of the sub steps, there's a bunch of sub
+LLM systems involved in some of these.
+This really helped us do some more fine grained debugging when we needed to.
+From the triage page, a staff member can label the feedback with a category.
+And that maps back to one of the product capabilities that we're interested in
+tracking, and they can also add some notes with the findings, right?
+So they can help us later when we're creating an eval and the eval search
+for this run, so you can figure out.
+And sometimes it was very involved to try to understand what exactly went
+wrong with some of these.
+I think the most time was spent on trying to understand what went wrong because
+the user didn't provide enough context.
+So we had to really go dig into everything about their setup, then actually
+figuring out what went wrong with the actual LLM calls.
+So it was really valuable to add these triaging notes like for
+the next person looking at these.
+And we also make it really easy to create an eval straight from the UI.
+In this case, this was a very, a pretty complex pipeline.
+So we needed to do a bunch of mocking to simulate the production run.
+This involves a bunch of third-party calls to the user's third-party system.
+So we definitely don't want those to, to show through and they're, they're,
+we're not going to even work anyway.
+So we want to make sure that we make exactly the same run that happened in
+production, but we needed to mock some of those third-party requests.
+And we also use an assertion-based score.
+So we store this eval dataset locally.
+It's a pretty involved like JSON representation for each eval row.
+But for other pipelines of subsystems that we'd have, we usually just have
+a button that adds a new row to a brain trust dataset, or we just do directly
+from the brain trust UI, which is also really easy.
+And now after you add it to a dataset, the eval will like load up that
+dataset every time it would start.
+So all of these, we get picked up automatically the next time we run the eval.
+So it's really handy for like small parts of the subsystem that
+you're just trying to split out.
+So here, for instance, we have this planner subsystem that would help us
+build, plan for, do some data analysis, use some piping code, and we had a
+dataset specifically for this.
+Then we started adding, and it was really easy to just kind of go through the
+production logs and spot runs that we wanted to add to the dataset.
+All right.
+So at this point, the triaging system was set up.
+We were getting a lot of data.
+At some point we had about 500 feedback submissions needing triaging, and I was
+still doing these mostly by myself, or trying to do these mostly by myself.
+So I really needed to find a way to scale it up.
+And that's why we came up with this idea of doing labeling parties.
+This is the fun way to say that when the entire team would meet and we would
+look at the triage queue and label some feedback submissions together.
+And obviously this was slower than me just ripping through it and labeling by
+myself at the beginning, of course, but it really helped build our team members'
+confidence that they can help with labeling on a daily basis.
+And after those few weeks, everyone was feeling more confident to triage also
+daily, a few submissions by themselves.
+So it's really helped the system kind of scale up.
+This also helped encourage a look at your data mentality.
+I felt like I had to now look at your data in at least one slide to kind of
+keep with the style of people at the workshops.
+And this was actually really true because every week we would find valuable
+insights in looking at the queues and the people would, they really started
+understanding the value of staring at the raw data.
+And I think this was for me, perhaps an even better outcome than anything else
+from this whole effort is like everyone in the team understands that you need to
+look at the raw data and not only that, they're also not afraid to go look at
+the raw data because they can now they can, they know how to interpret it
+correctly, they know how all the pieces of the system fall into place.
+We also often end up finding like very interesting examples, just spurred
+tangential private decision discussions.
+So in general, these calls were like really high in our life, even if we
+spent like an entire hour just talking about the same feedback to the label,
+because we will always come out of it really happy that we take that time together.
+So then we were collecting all of that extra data and we had some
+mechanisms in place to understand it.
+So it was really time to put it all together.
+Now is where we can really start profiting and start seeing like the
+flywheel starting to turn a little bit.
+With some human involvement for now, but it's better than nothing.
+We finally had that initial chunk of label data and we had a much clearer
+picture of where our systems then fail most frequently.
+And for instance, we have a tool called AI actions, which takes a natural
+language description of how to invoke an action in a third party app.
+And then we translate that natural language description into the parameters
+that you have to pass to the third party API.
+Some third parties APIs, third party APIs are really confusing.
+I'm looking at you Google API.
+Sometimes we would guess the parameters wrong or even worse, you would make up
+parameters that were missing from the description instead of asking for
+clarification, right?
+So a classic example that we had in the beginning was if you say something
+like send a DM in Slack at the beginning, what AI actions would do, you would just
+send a DM to a random person in your Slack workspace instead of getting back to you
+and say, okay, I can do that, but who do you want to send this DM to?
+And so now we knew that this was the most critical issue that we needed to pay
+attention to right now.
+And besides all this data, we also gathered, you know, which, which apps for
+this subsystem were failing more often.
+So we knew that Google Sheets was the largest offender when it came to this
+category, so we since put a lot of effort into improving the accuracy of
+Google Sheets action, like add a rule to this Google Sheets, update it and stuff.
+So we also started feeding all of this data into our analytics platform,
+Databricks, and we were able to cross reference all of this with our product
+usage, which is pretty awesome because now we can use this to inform some of our
+process, right?
+For instance, when we released our Chrome extension, we started noticing that
+people were using the Chrome extension really heavily, but even though we had
+this feature in the Chrome extension where you can like ask questions about the
+current Chrome tab, very often the LLM would go call fetch as a browser tool and
+fetch the URL that you were in instead of just using the context of the current
+tab that we were already providing the LLM.
+We identified this and we knew that this was an important issue for us to fix.
+So in total, as of today, we went from 23 curated evolves that we had in the
+beginning, best started off as a Google Sheets and ended up in brain trust to
+what we have now, which are 383 evolves and growing, actually had to update this
+slide half an hour ago because they had already changed, but yeah, and also now
+we have, we're way more happy.
+This is going to keep growing.
+And most of these are also based on live runs.
+So this is really great because it allows us to run these whenever we want and
+still way more constant that any change that we're making to our system is not
+causing any big problems to our users.
+There's some other outcomes to that.
+As I said, I think this is one of the parts that I was most happy about.
+Like everyone in the team is really empowered to go look at the raw data
+and help with the tree HQ.
+Everyone starts to understand the values of looking at the raw data.
+And more importantly, I think the discussions that we have as a team, they
+are more focused on improving specific capabilities now.
+Previously, there was a lot of hand waving and kind of generic like, we need
+to make things better, this course, and now these are more targeted.
+So that's really exciting for us.
+As I mentioned earlier, one of the catalysts for this whole effort was
+the release of the GPT-4.0 model.
+And we feel much better equipped to make a decision on switching
+models when we need it now.
+And a recent example is how the latest snapshot of GPT-4.0
+regressed some of our evals.
+So instead of swapping right away, even though it was a cheaper snapshot, we
+had to wait and we decided to spend a few days doing some prompt tuning
+before we roll it out.
+And of course the flywheel is starting to spin.
+We can see activation and retention in the product starting to trend upwards.
+The ratio of positive to negative feedback submissions is looking good.
+And even though we need some of that human help for the labeling now, I
+think one of the next steps we're already thinking of is like, how can
+we do this a little bit more?
+And I think, you know, I'm very excited to apply some of the ideas that I
+learned in the workshop to work and try to build some sort of LLM as a judge,
+at least to kind of draft the initial suggestion of the labeling for some of
+those feedbacks and then have a human just like read it and I'm like, yes,
+okay, not okay.
+I know we go from there.
+Cool.
+That's everything I had.
+Thanks for listening.
+Thanks for watching.
+If you liked that video, make sure to like and subscribe.
+And if you want to learn more, check out improving rag.com.
+We're going to talk about the foundations and not frameworks over six
+emails, you're going to learn how to overcome absence blindness, as well
+as how to fine tune language models, understanding diverse query types,
+improving multimodal rag, and ultimately smart question routing and build
+up UX that collects user feedback.
+Just check out improving rag.com and fill out this quick email address at the bottom.
+Thanks.

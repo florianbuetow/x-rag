@@ -1,0 +1,625 @@
+Thanks for everyone just popping in. I think the goal of the session really was just to
+catch up with a couple of my friends who've been doing a lot of consulting and this is
+the last time we're doing the consulting accelerator. My goal is to sort of focus more on research
+for the summer and so I just wanted to bring my friends together, have a chat and also
+answer some questions. To just introduce everybody, you know, I'm Jason. I think we're all indie
+consultants here. I've been mostly doing a lot of work on open source tooling like instructor.
+I've been doing the RAD course as well as this course and, you know, right now I'm doing
+a couple of consulting engagements with like observability tools and eval tools, sort of
+giving them some insights, particularly leaning on the experience I've had last year, mostly
+focused on helping companies build search systems. Vignesh, do you want to introduce
+yourself and then we can go into Kyle? Sure, so I'll keep it simple. So my name is Vignesh.
+I'm an end-to-end consultant. I help companies ship AI features to production in 30 days.
+That's typically the timeline I focus on. Prior to this, I was an early engineer at
+two different startups that got acquired. Hey, Skyler, large background in both search
+and recommendation at companies like Google and LinkedIn and also using AI to build medical
+devices for mental health solutions. And in my last role, I was VP over engineering and
+data science at a mental health startup. And now I've just been consulting for the
+last, I don't know, how many months are we in? Like six or seven months or so. So yeah,
+I think everyone in this panel sort of a different time scale. So I think I've been doing this
+for maybe like two, two and a half years now. Every time Vignesh and I talk, it's very much
+like, oh, I think you're gonna run into these problems in the next six months. Let's see
+what happens there. And a part of- I'm noticing every time he says it, because I'm like, I,
+you don't know everything actually, Jason, but then every time he says it, right? It's
+a little bit annoying, but it's good. Yeah, it's like, you know, I think before it was
+like, oh, you know, advisory work is really, really fun. You know, it's sort of higher
+value. And then he's like, okay, maybe, I don't know if it's, if that's the right choice,
+maybe I'll do it. Six months later, he's on advisory work. And I'm just like, oh man,
+some of these companies don't really know what they want. This is the next thing you're
+gonna run into. And we had a conversation yesterday. You could run a course and then,
+oh, the course has this downside. Yeah, it's really, really interesting. Yeah, so the goal
+for today's agenda really is to like, you know, do some of these brief introductions,
+which we've already done, go through some of the like breakthrough moments we all had.
+I think the reason I started this course in the beginning was because of these conversations
+I had. Like, it was just people messaging me on Twitter, just asking, like, okay, like,
+how do I get started? And basically my policy is if I answer the same question three times,
+I'll write a blog post. And it's like, wow, I'm answering these like portfolio of questions.
+Okay, let me write like a series. And at some point, I was like, this is very similar to
+what I've been doing with the rag material. Let me go sort of figure out how I can package
+this. And as always, once you, sorry, let's go. Then we'll talk a little bit more about
+the specific things that we sort of, I like to think about, which is the positioning angle,
+the pricing and proposals. Many of us are already pretty technical. And so this is going
+to be less about like, how do you learn machine learning and really just understanding that
+if you are a technical person, the things that sort of I had struggled with prior was
+mostly around the business side of things. Like I could write code, I could understand
+how to build systems. But then when someone says, great, how much do you charge? What
+does that look like? Then it becomes this really like panic of like, oh, what am I worth?
+All that stuff. And then afterwards, we'll talk a little bit more about, you know, I think
+I'm really curious to hear about scholars and Ignatius' future plans. Right? I think everyone
+sort of recognizes that if you do VC Backstart, there's this notion of an exit, right? It's
+consulting a lifestyle business. Are we going to take our learnings and build a SaaS product?
+Are we going to white label services, build an agency, and just have a conversation around
+that? And then afterwards, we'll take the remainder of the time and do Q&A. And yeah,
+we'll send session notes after this. We'll send other resources and materials. And as
+always, you know, just have any questions in Slido and we'll answer them near the end.
+And so the first thing I'm really curious about is why did everyone here start consulting?
+Maybe I can go first just because for me, it was very much the case of I was taking time
+off. And when ChatGPD came out, I wanted to do something around understanding how LLMs
+work. And my background was in recommendation systems. And if I went and got a job in a
+fang company, chances are I wouldn't be able to operate and work on some of these things.
+And so a lot of my initial motivation was just if I consult, I can sort of figure things
+out as other companies are figuring out. I can learn the most. I can work with like five
+or six companies and absorb as much information as possible. And then it kind of snowballed
+into an actual business once I had to figure out my pricing. Skylar, I'm curious because
+I know we only had a conversation about this maybe six months ago.
+Yeah. So when I was ready to leave my last role and find something new, I started interviewing
+around. I wasn't even considering consulting at all. And I interviewed and had offers at
+10 different companies. And I just wasn't feeling 100% sold on any of them. I think
+like largely I left working in the mental health space because I don't really think
+there's viable business models in the space. And so, you know, I think I just didn't find
+anything that captured me enough. And so I declined all the offers and every single
+one of them came back to me and asked if I'd consult for them. And so that just kind of
+like, you know, at the same time, you know, I've known Jason for a while and I saw that
+he had consulting popping off. So that was just like the light bulb moment of like, hey,
+maybe I should try this.
+Nice. I didn't know that was actually the case. We're gonna check on you.
+I feel like there's 10 different answers. I don't know which level of hot take answer
+I should give. I think for me, I kind of got to a place where just working at another
+early stage startup as an engineer wasn't super excited to me again. Being the early
+engineer and having a company actually work out is very difficult. So the options I was
+looking at was being a founder or I was looking at being an investor. And then I didn't know
+what I was going to do other than that. I wasn't very interested in going to like a
+larger company because I just like building things zero to one. And I ended up doing product
+engineering consulting. So building product engineering stuff. I had done a, I ran a growth
+engineering team prior as well. When chat chip T came out, it really worked out because
+then I could take my skill set of shipping things zero to one and connecting it with
+actually using AI in production. My background is a little different because I don't have
+an ML research background at all. I barely, there's a conference that Jason brought up
+to me recently. That's like the number one AI conference or something. I didn't even
+know what it was. So my background is all in shipping things, which is really useful
+as well.
+Yeah. I think that's one call out that, you know, Vignesh you made, which is, you know,
+when I had built Instructor, a lot of the inbound was actually a lot of VCs going like,
+we'll give you $6 million to figure out how to monetize Instructor. And like the thing
+that stuck out to me was like, oh man, if you give me $6 million and I make a million
+dollars, I'm going to feel like a loser. But if I just do the consulting thing and make
+a million dollars, I have a great lifestyle. And you know, just the pressures and the,
+like sort of the shape of the business you run if you bootstrap versus raise money is,
+is very, very interesting. I guess to follow up on this, like at what point did you feel
+like you made your first couple of breakthroughs in consulting? Like when did things start
+feeling very different? For me, like the, the, the nightmare that happened was someone
+just asked me like, how much do you charge? I give them a range between 150 and 170. They
+say 170 immediately. And then it's on the paperwork. And I just go, oh man, I really
+undercharged. And when I started doing more like advisory work, that's one thing I realized,
+oh, if I understand what's at stake in their business, I can price on that.
+Vignesh, you mentioned some, some clients in the past now where you're just sort of
+calculating like how much would the company save and pointing in that? I'm curious to hear your thoughts.
+Yeah. So if you're pricing on value, your two options are, are basically pricing on how much
+money you're going to save. But the problem with saving money is there's an only a one X
+multiple on saving money, which I just realized today at this private equity firm, but you can
+prove that you can make a hundred K a year from building something. You can throw a five X
+multiple on it. So it's always better to make a hundred K than save a hundred K it turns out.
+But that kind of thinking is really important in consulting. I think because you try to find
+the most interesting problems that are out there. What's the most important thing to work on?
+I wasn't doing that at first. I was just doing started 115 hour moved up to like 200 an hour.
+But you do the math on like, all right, I'm getting 200 an hour. I'm doing 40 hours a week.
+I'm grinding. This is the math. Should I just get a job? Why am I doing this? So once you,
+I think for me, the big shift was I got this project that was 25 K and they needed it done in
+over the weekend and I got it done. And then they sold that project for a billion dollars to their
+first client. I'm happy still that it happened, but I just decided I'll never take an hourly job
+again after that. Scott, how about you? This reminds me of a terrible, the recruiter story.
+I mean, it's like, it's worse than that in a way. Yeah. So I guess like there's two breakthroughs
+that come to mind. You know, I think like on the pricing side, I actually don't think I struggle
+as much with that as I think a lot of people do. Like, like my experience working as an executive,
+you already have to like think in those terms. Yeah. And so like, it was very natural, I felt.
+But I think one of the first big hiccups that I ran into, and this is something that I'm still
+kind of working out, it has to do with like my positioning. Like I started out with most of these
+companies wanting me for like more of like a head of AI, kind of fractional sort of setup.
+But I quickly found out that like, without going through the layers of due diligence of an interview
+or me like knowing the person, with a lot of the companies I was reaching, you get into like
+weird kind of politics where it's not easy to sell that kind of service. So if you're in like a small,
+if you're like targeting a small company that's like just trying to get their AI off the ground,
+they have a head of engineering, they probably have a CEO. The head of engineering essentially
+has to admit they don't know something about like how to make this work. And it like weakens their
+political position. So it's like, it's a very touchy thing. And so when you start getting into
+colder sets of audiences, it's something that's like hard to sell on. And so I'm like in the middle
+of like pivoting a lot of like my stuff away from that, just because it's not the entry point.
+The entry point has to be something more like tactical, I think, if you want to scale it.
+So that's kind of like the real first breakthrough that I've had. And I'm still kind of like working
+my way around. Yeah, this reminds me of a situation where a bunch of employees at this company that
+raised like $100 million reached out to me to go talk to their CTO. I have a conversation with the
+CTO and they they agreed that they sort of needed some help. And then when I flew to SF and met with
+them and their head of AI, the head of AI just said, we're fine. And the conversation like me
+hindered for three more weeks. So that's definitely happened in the past. It's almost just understanding
+like the qualified buyer. Yeah, Vanessa's story really reminds me of the recruiter story. I think
+many of you guys have probably heard where I sort of figured out my hourly pricing. And at some point
+I was doing like $700 an hour for job interviews. And by the time I finished the job interviews,
+the company paid me 20 grand to hire five people. But it turns out recruiters take 20% of their pay
+and so the same recruiter that worked with me made $200,000. And then sort of you you run that in a
+limit and you realize even though I was the one charging an insane hourly rate at the time,
+I felt like I was the one taken the most advantage of. And that's the reason of like,
+is understanding oh wow, like if I think in these two kinds of terms,
+you know, it's actually fair for me to be paid more because then I understand then I'm communicating
+what I know is their actual value. So one of the big things that we talk about in the course is
+just like positioning, pricing and proposals. I think I don't even know if you've only just
+had conversations about this, but I'm curious like what were the big lessons that you took away from
+sort of those kinds of conversations around positioning and pricing? I think the way you
+do proposals is very different than the standard that I do. Yeah, so positioning,
+it's hard. I don't know that I'm an expert in positioning because I kind of just do whatever
+comes up that's interesting to me. I will seek things out, but a lot of what I end up with is
+almost like serendipity, just people that I know have introduced me to other people.
+Everyone has problems. And because I don't have other employees, I can take risks and try new
+things that are interesting to me. So I don't try to position myself as like, I'm an expert at
+fine tuning or something like that. It's not really what I'm after. I'm more like, hey, I'm
+really good at shipping things. What can we do with that? On proposals, I don't write the proposal
+until we've basically figured everything out vocally. I found that once you write stuff down,
+you're wasting a lot of time going back and forth. They're going to get into lawyer mode,
+nitpicking things. So basically, I'm like, let's get to an agreement of what we're going to do.
+Let's make sure we understand the problem, everything. And then the proposal itself is
+just like validation of what we're going to do for a legal purpose. So it's a very different way
+of shipping. I also don't go into crazy detail on proposals and stuff. I'm just like, we're going
+to solve the problem. You trust me. I trust you. If it doesn't work, I'll give you the money back.
+That's my simplicity answer. Yeah. I definitely also have a money back guarantee. I think for me,
+it's like 50%. Skylar, you'll give 50% back, you're saying? Yeah. Yeah. Oh, interesting.
+Mostly because I'm helping them run the team. And so if it worked three months in,
+there's some different success criteria there. What about you, Skylar? Because I think we talked
+about this before I ended up building out this material. Yeah. So I felt like I got the raw look
+at a lot of the materials just from our conversations before. But I think, again,
+the pricing thing, I felt like came very naturally to me. I think there was a lot on the positioning
+that was helpful. I think that the biggest block I had in starting consulting is I really don't like
+the act of creating content for the sake of creating content. And I just had it. And then
+also just a lot of the salesy kind of activity of cold outreach. And I think you showed me a lot of
+great strategies of how you can be helping people solve actual problems and then turn that into
+content that helps other people solve the same problems. So I think a lot of the systems that
+you kind of shared and ways to think about that was super helpful in getting me over the line.
+Yeah. Yeah, it's definitely, I think what I've learned now is maybe two years ago, a lot of it
+was a one-on-one free calls to figure out what the problems are and write about those problems
+as they maybe go viral on Hacker News. There's a link that says, hey, you know, the free call,
+you know, let's chat. And I've sort of gone up the hierarchy now where now there's like the lightning
+lessons where I'm now inviting speakers, learning from them, and then writing about the questions
+that are being asked. But a lot of it is the idea that there's a flywheel around the conversations
+and your expertise and demonstrating your expertise, turn that into content, and then
+using that to get more inbound. Because yeah, I also agree. I think
+cold outreach has been pretty tricky. Ignatius, I guess most of your work is coming from referrals
+these days or is it actually coming from content? I think- No, nothing from content. It's all
+referrals. I was posting on LinkedIn for a while. That was useful because then everyone in my LinkedIn
+network was like, okay, Vic is the guy for AI things. So then, but now everyone knows, so there's
+not a lot of point in posting on LinkedIn again. Yeah, I think referrals work great for me.
+Yeah. And like, is there anything that you're doing there on like how you drive those referrals
+or is it very much that, okay, a buddy of mine is running a company, they're running the AI issues.
+I generally know that like Vic on LinkedIn, this guy like does stuff. Let me see if they're available.
+It's interesting. So at first I thought stuff like that would happen. The problem is that a lot of
+VC backed companies like a year or two ago probably were like, we don't know enough about AI. Like we
+should maybe bring someone in, but it's exactly like Scholar said. Like now if you're starting a
+AI startup, right? Your YC company, it's like a red flag almost to hire like someone to help you with
+AI. So I'm almost like talking more to companies that are aware of the fact that they don't know
+how to ship with AI. And a lot of the problems that turns out is that they just don't know how
+to ship product. It's less about like actually knowing how to ship with AI. It's like, we don't
+know how to ship things. And then let's find something that's related to AI to do. So yeah,
+like the types of companies I work with like range vastly. They're very, very different every time.
+So I don't know that I could have like a specific content firewall that would work.
+Maybe I'm wrong. Maybe there is something there.
+Yeah. I mean, I doubt I'll be seeing you do things like, you know,
+boilerplate code to launch products for like chat days.
+That would be nuts.
+Yeah. You know, one thing like I'll just like, I want to just like add to that to
+put up what you're saying. I think that I felt like a similar thing of like, I had a lot of clients
+and I was like, what I was doing for each client was kind of different. I had clients where I was
+doing like data strategy stuff clients. I was like basically a fractional like AI engineer. So like
+all these different kinds of things. And as I started to like sharpen my focus on like the
+message that I want to give, and particularly the audience, I've, you actually get better engagement
+on like every whatever medium you're going to use, whether it's socials, whether it's other things.
+And so it's kind of like, it's like just the general advice of like niching down, like a lot
+helps you get a lot more return on your investment, I think. And so it's like, I think there's like a
+branding exercise that might be helpful to like walk through to figure out like, even though these
+seem very disparate, what's like really the common kernel here? And how do I like message that and
+associate that with my brand effectively? Yeah, I definitely recommend this one
+pager called the one page marketing guide. Right? It's kind of like, what is my message to my
+customer? What platform do they exist on? You know, how will I nurture them over time? How will I
+create referrals for them? How do I deliver value consistently? All that stuff. It was really helpful
+for me because I think after that, I realized that before it was very much like Jason went to the
+LM's and then it becomes, if your product goes viral and you get a lot of usage and churn as a big
+issue in your business, I can help you to figure out how do you build evals, run experimentation
+to make this better. And as your team is, isn't able to figure this out yourself, I'll help you
+build up that team. That's a super long message. And there's like way less risk for that. But
+generally I found that it's been a very, very helpful to coordinate that kind of positioning.
+I'll be here until I help you hire out your team. That makes a lot of sense.
+I guess, you know, for me, as I work on these projects, like as I actually niche down,
+I'm realizing that because I'm saying the same thing over and over again, it was useful to build
+out the course, right? In which way, like I don't get the other 10 companies in 2025 asking me about
+how to improve rag. I can pour them to the words of the course and then I can do my own independent
+research or other work. I'm curious if you guys have thought about this kind of stuff where like,
+does what you do now look like what you want to be doing in six months? Or like,
+is there an exit strategy for what this looks like? Skylar, you can go first.
+Yeah, it's a good question. I mean, I generally take things like very slowly, one step at a time.
+So I don't tend to think too far ahead, but I think like kind of my thoughts right now,
+kind of the engagements I'm enjoying more getting into are helping teams become self-sufficient.
+And in some way that like, kind of like, I'm essentially like helping clients not need me.
+And so there's a, I think there's just kind of this built in churn to it that I think means that
+this is probably not like a viable long-term business, at least the way that I run it.
+At least the way that I run it right now. And so obviously there's going to be changes that need
+to be made. I have some ideas and thoughts and some things I want to do that I'm still validating.
+When looking at sort of like how I engage with most of my clients these days,
+really what I'm doing is, you know, as a start, I'll help them develop like evals
+and then help them run like an evaluation driven development process. But like that helping them
+run that is really about like one, forcing them to look at data, two, showing them like,
+you know, where the model is performing well, where it's not performing well,
+giving them ideas on how to fix it. But then I'm also giving them like a lot of like tips on,
+okay, if you want to fix this, here's some different experiments to run. Here's how you
+might do it in your code base. And also here's links to blogs and other resources. And so I've
+been thinking in my head that there's a structured version of this that's like more productized.
+I think behind the scenes, it's probably still like heavily services based. But I think, you know,
+imagine like every week or something, you get a report that tells you like,
+here's the regressions your model has, here's like the underperforming slices,
+here's some experiments to run. And then you have like interleaved micro learning
+for something that's like, here's a video to explain why in three minutes. But so that's
+kind of like the direction I'm toying with right now. But you know, the market will validate. So
+we'll see. There's almost like you are trying to take your services, your learnings there,
+and then turn it into some kind of like SaaS plus services. And that will be able to drive some form
+of recurring revenue, even if it is like a $30,000 initial contract, and then like $500 a month
+afterwards. Yeah, that makes a lot of sense. What about you, Bignesh? I know you try I know you
+dabbled in advisory, but also know you have some advice going well, like it's it's good. It's
+you might just defining what that is for you. Good question. So I was mostly doing implementation
+work. So I would actually find the problem that needed to get solved, then I would write code to
+solve the problem. And that would then once I was done with that, I would find some other problems
+to solve there. I'd find some other problems solve somewhere else. The problem with that is you could
+I was doing two and a half of those in a month once and I did just about nothing other than
+write code the entire month, which is fun, but it does not scale in the same way.
+I think if you want to scale that the way to scale that is to solve more expensive problems,
+you just have to keep finding more and more expensive problems all the time,
+which unless you have like really unbelievable deal flow can be a tricky thing to maintain.
+So then I looked into okay, maybe I should do advisory, which is like, I don't know,
+let's say it's 10 to 20k a month and just asking questions. And you're helping them
+basically figure out what it is that they should be building, help them architect it, answer all
+their questions, do all of that, but you're not writing the code. They have other people on their
+team that can actually do that. That scales a little bit better because you could do maybe
+five or six of those, maybe seven, I don't know, like you have to pick a number.
+And it's a little bit more like recurring revenue because you're signing three-month
+contracts or something, right? And then they extend and all of that. But I like writing code.
+So now I'm like, I miss writing code. I haven't written code in like a few months now.
+And people are asking me, how's Klein? How's AMP code? I'm like, I don't need to use these
+things anymore. So I have no idea, maybe. So I think like the next step that Jason always brings
+up is you do a course after that, which is you take all the lessons and advisor, you build a
+course around it. Then you can scale that to more people. The truth is I don't know what I'm going
+to do. Like I think every, all of these options have been really good for me. I'm happy with all
+of them. I don't have any employees that I have to like keep anything sustainable or anything. I can
+just try things. So there's a lot of options. Like maybe I end up being a private equity guy and I
+just like take over companies and redo it with AI and sell over something. So who knows?
+Yeah.
+Hamil and I definitely had those conversations maybe like a year ago where it's like,
+if you guys are going to change stuff, why don't we just raise like $20 million, like buy a bunch of-
+Maybe we should do that.
+Oh, shops. Or like, you know, AI PDF processing and just
+handle their customer support. Oh, perfect. I think we nailed it.
+Yeah, I think that makes a lot of sense. It's definitely unclear what the path looks like,
+but I think in the case where folks are building agencies, I don't know if folks have listened to
+the Andy Walters fireside chat, he is mostly solving the problem of hiring. I think he has a
+team of like 10 to 20 people at any given time building implementation projects. And one of his
+goals is sort of having these longer contracts where you are just the implementation shop.
+It's not the case like McKinsey does a six month contract and then the next time they do some work,
+they want to fit into that budget. It's actually the case that these bigger companies will allocate
+budget to the agencies every year, every quarter to have them do work. That's a very different way
+of doing things. This is not really what the indie consultant does, but I'm sure we also have another
+fireside chat with Andy once he probably hits like 10, 20, 30, 40, 40, 40, 40, 40, 40, 40, 40,
+10 million errors or something like that. Cool. With that in mind, let's also jump into some
+questions. I'm going to just talk about the fact that a lot of this material is derived from
+conversations I've had with folks in this course. I think maybe like 10, 20 percent of the folks here
+are previous students. This will be the last time I'm running this live office hours with
+Maven, mostly because I'm at a point now where I kind of know what kind of research topics I want
+to tackle. I'm going to spend the rest of the next two quarters basically doing that research,
+focusing on building up some agents, building on eval agents, and exploring a lot more of the
+implementation side. Just like Vignesh, I think a bit of the courses and the consulting was very
+good to help me understand what the big problems are, but I'm also missing doing a lot of research
+and learning more about RL. I've just been spending the past three days reading RL papers.
+With that said, the next cohort is Monday. It's basically Monday, Wednesdays, and Fridays.
+It's one hour of pre-recorded content every day and then a one-hour office hour session where we
+sort of have these conversations. Then on the Wednesday, we'll also have an additional extra
+hour where I bring in my legal team to mostly answer questions about things like incorporation,
+how do you handle things like IP? A couple folks, for example, are thinking about having white-labeled
+services that turn into SaaS and how you'd protect yourself and make sure that the SaaS
+that you've built is not contaminated in these contracts and just explore those kinds of ideas
+around taxation, incorporation, and whatnot. With that in mind, let's jump into some questions.
+Let me just post the slide one more time. Let's jump into some of these things.
+This is an interesting one. What are your opinions on NDAs and client relationships?
+I don't sign too many NDAs, but Skylar, I'm curious to hear your thoughts. Maybe Skylar,
+just because I think you're also very much at an executive level.
+Yeah, I think NDAs are pretty standard. I have a standard mutual NDA that I sign with clients.
+I think in general, it's a pretty standard business practice. Even if there's a lot of trust,
+probably lawyers on their side are telling them, hey, you should sign an NDA. Honestly,
+it makes sense to do it. I don't sign NDAs to protect my own stuff. I think a lot of people
+like to sign NDAs to protect their own stuff. I would say 99.9% of the time, your stuff isn't
+worth as much as you think it is. Your ability to do that thing is very valuable, but the thing
+itself is often not valuable to copy. I don't think that you really need NDAs, but I also don't
+think you should feel weird about signing them. I'll make one call out, which is that I have a
+lot of conversations about IP. What I've done is because I own the instructor library, a lot of the
+IP around structured outputs and how I think about writing code is baked into the products I build
+into instructor. In my contract, it says, sure, we have shared IP, but I'll be using all these
+pre-existing tools and pre-existing playbooks. The playbooks for improving the RAG is just part of
+the RAG course IP. That allows me to keep a little bit of my information there. Again, generally,
+the IP is not worth much unless you have a lot of brand, a lot of talent, or a lot of actual
+software that you've built prior. Big Nash, I think you're the one writing the most code.
+I'm curious how you feel about this. I try not to sign NDAs until I have to look at customer data
+because then I'll just be signing NDAs all the time and I don't really want to be doing that.
+There's not really much harm to NDAs, I don't think. Non-competes, I don't sign those. I think
+that's really risky just because I don't know how enforceable they are nowadays. I know the FTC was
+trying to get rid of them. I don't know what happened with that. The problem is every SaaS
+company is almost the same thing at some point. Do you really want to sign anything? Probably not.
+I don't sign non-competes. I think background IP is a thing that you can look into.
+Basically, you can keep some of the scaffolding of the tooling that you're using for companies.
+Maybe there's ways where you could keep some of that for future clients and stuff.
+I don't bother with that. I don't do any of that stuff. I know some people do, but I don't do it.
+I think what you can do, however, is if you're building something,
+for let's say you find a problem out there and instead of just saying,
+I'm going to sell this to you for 50 grand, you could say, I'm going to build this for you and
+sell it to you for like 5k a month or something, but I get to keep it and I can sell it to other
+but maybe not people that directly compete with you. There's things that you can do around this,
+but I would say it's more advanced stuff. That's definitely something I'll try to get Luke to cover
+on the legal office hours. Let's go to the next question, which is, what is the biggest
+obstacle you face in a client's organization when deploying AI solutions and how do you navigate this?
+Ignatius, I think again, you're shipping the most code here. I'm curious how that starts with you.
+I know you pair with engineers. You make sure in your contract you allocate,
+you make them allocate headcount for you. I'm talking about that.
+Right. The question is, what's the hardest part about shipping AI to production, essentially?
+What am I noticing? That's such a hard question to answer. I think that one thing that I've noticed
+is that they expect too much to happen. Then they're like, ah, yes, we should be building an
+agent that we no longer need a UI at all. Let's say you're a platform that does data analysis
+for the CFO team or something. Instead of saying, or something like that, maybe instead of saying,
+we'll have a UI that can build something, they're like, oh, we're just going to have an agent that
+solves everything for you now. We don't need anything. That's not a super realistic plan.
+I think they also have expectations around timing, what can actually get done in a certain period.
+I try to scope down a lot. That's one big piece. The second piece is internal skill set.
+There's usually a staff engineer or two that's really strong and can pick things up,
+but the rest of the team, getting them to be able to understand how to use different
+LM tools, how to evaluate these things, all of that, that takes a lot of time.
+Figuring out how to upscale everyone else has been a big problem.
+It makes sense. I think the expectation setting is a big one. I think one of my biggest red flags
+when I am talking to prospects is that they just say, hey, our CEO says we really need AI.
+Can you help us with AI? There's a conference in six months with our company, and we need to
+launch something with AI. That's usually when things really have poor expectations. But,
+Skyler, again, you're more on the executive side. Yeah. I think because I've kind of like,
+and I'm still early in this game, but because I've kind of done a lot of different things,
+it's hard for me to point at one thing that's the biggest problem. I feel like very often the
+problems I run into actually come back to being issues with my positioning and what clients I take.
+So I think, for instance, one issue I've often ran into is I would start working with companies
+who didn't have an AI product launched yet, and I was going to help them get to launch.
+One thing to think about there, though, is if they don't have users, they often don't have the
+urgency to really solve it. So when you're thinking about, do they actually feel the pain?
+That can be problematic. I would say the biggest mistake I've made here, or the biggest challenge
+I've had, there's a lot of people who, like evals is kind of in the space now. So people know the
+word, and they're like, so you'll have this general sense that, yeah, I should do evals.
+But people don't really know what that means broadly, and they don't feel the urgency to do it.
+So I feel like very often I'll have people come to me and they're like, yeah, I need to make sure
+I have evals so I know how my system works. And if you don't qualify those people well,
+you might end up with people who really, they might give you money, but at the same time,
+it's very hard to align with what their expectations are. And even if they're going
+to pay you, at the end of the day, you want to make sure you're making the customer satisfied,
+because that's what's going to help you stimulate referrals, etc. and create that flywheel effect.
+If you have a bunch of lukewarm customers who are just like, this is a checkbox kind of thing,
+it's hard to get that. Yeah, I definitely had that mid-summer last year where it was two or three
+$7,000 contracts, but they're not really asking me questions. They're not really in any pain.
+I'm just going like, hey guys, I'm feeling weird about not providing value. What's going on here?
+That's a situation where you definitely want to avoid in the long term. I guess one thing I'll
+call out, especially because I see a couple of questions around like, who should I work for?
+Smaller companies, bigger companies? What's the most lucrative industry? I think the one thing
+that we'll talk a lot about on the day two on pricing is that you have to sell against some kind
+of pain. You need to understand what is at stake in their business and what does success look like
+and what is the thing that we're actually celebrating? If you ask me about my positioning,
+a lot of it is once you go viral and your AI does not work, now you know how much it's costing you.
+Your ARR went from zero to a hundred thousand a month and you saw it drop to 80 the next month
+and then 60 in the month afterwards. Now you're freaking out. What is that worth?
+You can only ask that question if they are in some kind of pain and you know what's at stake.
+If I asked how would we celebrate a year from now, you would say, oh, Jason,
+help me get my revenue back. It's not Jason charges me a thousand dollars an hour for a
+phone call once a week. That's not the right positioning. If you think about why is a
+startup not paying as much as well because they don't really have that many users,
+they don't really know what the pain is, the pain is feeling confused. Whereas if you work
+with a private equity fund, it's like, hey, if I can make 30 year company 20% more productive,
+that's a hundred thousand dollars a month. So how much are you willing to, what percentage of that
+hundred thousand dollars a month are you willing to invest to making that better? Is the answer
+2%? Is the answer 10%? Well, that depends on how much I believe in the product. I think
+that's why we're talking about like teaching engineers how to use cursor.
+Right. And they're like, how much would this cost? Would this cost like $70 a person? I was like,
+well, how much do you pay your engineers? How many engineers are there? Do you think they're
+going to be 2% more productive or like 50% more productive? Okay. So you have a $20 million
+headcount budget and you want to make it 20% more productive. What does that number look like? And
+then you realize, wow, there's, there's like much more demand and much more capital that they're
+willing to move around if you believe that they can make that more productive. All right. So you're
+using these numbers on what's at stake and that's really a lot of what the conversations we have
+next week will be about. Yeah. Well, one just quick thing to add on that. There's a lot of people
+getting into the consulting space that I see make what I think is a mistake on the pain. There's a
+lot of people you'll see that like, I don't know how to describe it, but it's like they have the
+pain, but they're not symptomatic maybe, IE like they're churning customers, but they aren't
+looking at it or watching it, you know, like, like things like that. And you can spend a lot of time
+trying to convince them of the pain they have or should have. And that's often a mistake because
+like, obviously if they're not looking at it, they're not prioritizing that. And like, you should be
+wary of trying to convince a prospect. They have a problem that you're going to fill.
+I just go in there. I'm like, what's your biggest problem? In any sense, like in any way, like is
+it your CEO sucks? Like, okay, let's like maybe solve that problem. He's like, let's fix that.
+I don't know. Like maybe. What have like, what's like a crazy, like I can tell I can give you some
+crazy answers for like, what's at stake, but I really want to hear maybe like Skylar and Vignesh,
+like when you ask that question of like, what's your biggest problem? Like what's the craziest
+answer you've gotten? Like our engineering team sucks or like, or they're like, oh, our
+investors don't understand what we're doing or oh, we need to like pivot the company like,
+or hey, we're spending half of our, I just talked to a customer. I was like,
+we're spending half the month on like our closing the books every month. Like, can we solve that?
+Like there are crazy problems out there. And like, if you're focused on saying like, oh,
+you should probably be like doing this one thing or what, like trying to convince them.
+I just feel like they have to come to that conclusion on their own.
+Yeah. What do you want to solve? Like, let's just figure out how to solve it. I don't know.
+It's easier. Yeah. Skylar, what's been your craziest response to what the pain is?
+Yeah. So there's one company, I didn't end up taking them as a client because I thought
+things were too dire and I didn't think I would actually be able to help it.
+There was a company.
+It's just hard 1%.
+I mean, so this company, they had basically scaled pretty successfully. And in terms of like how many
+users they were able to acquire, they didn't think through their business model well enough.
+And so their customer acquisition cost was actually like higher than like,
+like the payback period was basically too long to break even. And they weren't watching that closely
+and they realized they had like two months of runway left. And I was like looking at this and
+there was some stuff to do to like patch up churn and stuff, but just like what it would take to
+like get that they needed a new round of funding. And so I was like, you know, I don't know what
+that company is doing now, but I haven't heard from them. So maybe they went under.
+They charged 10% of the next funding round.
+I mean, if they get a funding round.
+Offer to help them raise the fund, you know.
+You know, so here's just like maybe a hot take. I think if you wait to the, if you have like a
+fundamentally not viable business model and you waited until like you have two months left to like
+realize it, like probably you're not a good operator. And so like I didn't have confidence
+they would even be able to like raise another round.
+Yep. I think that makes sense. I've definitely had things similar where it's like, hey, I'm like
+about to close $7 million, but my CTO left the company. I need you to just like come in
+while I'm doing this and just manage the team. So we have a product that we can launch
+after we close. I just need this to look legit until then. And I was like, I don't even know
+how to price that, but that sounds, that sounds terrible. Right. Yeah.
+If you just think to yourself, does this seem fun? I think that just filters a lot of things
+in a good way and not a good way that I'm like, okay, if this is not fun, what's the penalty?
+Am I willing to charge like 75% more? Are they going to be okay with that? But yeah, I do think
+ultimately if you're going to be a consultant, you sort of have to work with companies that have
+money. They already have to have money. And are a little sick. Yeah. And they have to be like,
+we have this real problem. It's worth solving. We can pay you to do it. If they're unable to do that,
+then I think it's very difficult to justify anything. You're not going to be able to sell them.
+But there's a lot of worlds in terms of that idea. I wouldn't suggest this, but I have a
+consultant friend who basically, he works in the P&G space and he basically helps companies get
+acquired. And then he takes 10%. He's a company that slows down, they were growing and then it
+starts slowing down. He's like, instead of throwing it away, let's sell it into some PE firm or merge
+it and I'll take 10% at the end. And he's making a great business off of this. It's a bit of a niche
+thing. Not a lot of people are doing it. He understands the world. So infinite opportunity out
+there. I'll also call out that once you start understanding what's at stake and you start
+writing content about it and maybe this changes your inbound, you can also think about what it
+would mean to provide services that are outside the scope of what you're comfortable doing.
+Most of last year, what I thought I was doing was coaching on how to do experimentation.
+And now so much of it became actually around recruiting and helping them hire people.
+And so then I can say, you know what, tier one of my service is I run your standup on your team,
+but tier two is I really help you figure out how do you build a hiring process and an interview
+pipeline and I will participate in selling and closing the head of AI of the company you've
+drawn and the contract ends once that wraps up. I never ended up doing anything around fundraising
+because I think that's like, the incentives are weird. I feel weird introducing friends to VCs
+that way, but it was very much like me realizing that hiring was a huge, huge angle of what I was
+able to help with people. Because a lot of what I was doing was kind of like teaching them how to
+do experimentation and then replacing myself later. Right. It's interesting because once you
+get into a company, they do hire you for a specific problem upfront, but then once you build trust and
+you show them other things, like for example, I have a client that my job was let's get this
+AI thing shipped in two months or whatever. And then we did it. And then the job became,
+can we get more things shipped with other engineers doing it? That happened. Now my job is like,
+oh, the CTO trusts me, the CEO trusts me, all the engineers trust me. Let's just figure out
+what should we build? What should the roadmap be? How should we train new engineers that come in?
+I had no expectation that that would be my job, but it's become that over time. So I will say
+that if you're trying to position yourself as a consultant, you have to offer something that they
+can't hire someone full time for. If you can, that is never going to work. Certainly not the
+augment version where it's like, we're going to keep you temp until like we can find someone else
+for it. I feel like that it's just really hard to make that work well for a lot of political reasons.
+And you have to build trust internally. You have to be so good at whatever you're offering
+that there isn't like a lot of doubt about it. So you just have to figure out what your question.
+This was a good question, which is, can you share an example where you steered clients away from
+unfeasible, like questionable kinds of projects while preserving the relationship? I kind of want
+to answer this a little bit myself primarily because I think a part of it is when you have
+the courage to charge more, you can give better guarantees, right? If I'm charging like $100 an
+hour and I don't think the company is going the right direction, it's really hard to push back.
+It's really unclear whether or not they know that I want what's best for them. Maybe we're just like
+sort of spinning the wheels. But when companies are charging a lot more, I can say, hey, I
+understand that your actual problem is this, right? And I've offered like refunding them because I
+don't believe in the product and they take that response very seriously. So I'm curious if you
+guys have similar experiences where you're trying to steer a client away from a certain kind of
+augmentation. I mean, I've had that in like, I feel like a kind of micro sense in that I think
+a lot of people that I talk to have an unrealistic idea of like what capabilities of current,
+you know, AI models are. And so they just want it to like do everything and, you know,
+just be like this magic wand kind of experience. And so like often the
+conversation I have with them is just one about risk. Like you as like the founder of your company
+or you as like the decision maker have to decide how much risk you want to take. And the more
+open ended we let this thing be, the more risk there is. And the risk goes up exponentially,
+you know, with how much open ended it is. So I usually suggest like, hey, let's do something
+small, fast, low risk, see that validate that there's even demand for that, that your customers
+even want that before spending the risk tax on the big thing. So that's like a pretty common
+thing. And that really just boils down to like, what is the product experience that the AI is
+living in? You know, make sense. And then we have only maybe six minutes. I can probably run like
+five minutes over. But I guess some of the questions are around like, like, what is the
+advice you would have given yourself, you know, when you started out? So I guess, I guess you're
+still pretty, pretty early, like you're only six months in, but yeah. I mean, I think like my advice
+still would just be, you know, spend, spend some time working, working on your positioning. And I
+think part of your early clientele is probably going to be figuring that out a little bit. And
+over time, it's probably never like static, you know, you're probably going to evolve it over time.
+But spend some like honest time like reflecting on that, like, who is it that you want to help?
+And what are the types of problems they have? What from your experience aligns with that?
+Because you can start to create a pretty compelling, like little package of like,
+okay, here's the types of things I should write about, and where I should write it,
+because that's where my audience is. These are the problems they're facing. And then you also
+have the stories from your background that kind of like reinforce why you are good for those problems.
+And so I think like a little bit of upfront effort on that makes a lot of sense. And that's
+something I neglected to do early on, I think. Big Nash, how about you? Advice to your, you know,
+budding AI career? I think you always learn the most by doing things. So
+if I were to suggest people like take the course, but then actually try to like,
+you know, find a client, like find your first client, make the mistakes,
+you'll write the contract slightly wrong, like whatever it is, maybe you overestimate the work,
+maybe you end up doing it hourly. It's fine. Like you'll learn something from it. And then you'll
+figure something out. I think there's no amount of me, Jason, sitting here saying,
+here's all learnings, like skip all this stuff that's going to really help you.
+I think you just have to do it. And then you'll very quickly realize what you like doing, what
+you don't like doing, who needs the most help, and try to get everyone you know, to know that
+you're doing this, and they'll send you stuff. That's my suggestion. I think that makes sense.
+A lot of it is around just like, how can we get proof? How can we write about these things and
+help us figure out like, who is the reader? Are they the customer I want? And how should I change
+my writing or my distribution or my positioning to get those kinds of customers? And then afterwards,
+as long as you're talking to them and doing things, you can use that to create any kind of
+flywheel, whether that's one referrals, whether that's like posting blog, like writing blog posts
+or anything like that. Yeah, a lot of progress can be made there. Let me see, as I just look
+at over some of these questions, do you think there's any questions folks are not asking that
+they should? Yeah, I'm just looking at some of these questions. Again, getting advice on the
+first client, you know, you just got to reach out, you have to let people know that you're
+actually taking on clients, you know, having some kind of funnel, having some kind of content that
+you can use is very helpful. Otherwise, just letting everyone people everyone know what you're doing.
+Yeah, maybe I'll take a look at these and send up a follow email of any of these questions.
+Oh, no, I was just gonna say, yeah, looking over, I don't see any like significant gaps,
+I feel like I'm seeing things that cover the spectrum. Yeah, cool. I'll do like a quick blurb
+on my end. And then we wrap things up. And we'll follow up with the notes. How do you maintain your
+energy levels to create great work? You just get rewarded for it. You know, like when I wrote like
+one really viral blog post that went on Hacker News, and then the next week, I did like $100,000
+of, you know, client inbound. I was like, Oh, wow, like, if I just do the great work, I actually get
+rewarded for it. Right? I think when you are just an engineer at a company, and you do really great
+work, your compensation is almost like independent of that. And there's actually no incentives,
+outside of like recruiting for us to write a lot and write really detailed work on the stuff that
+you do. But as a consultant, you are incentivized to do good work, right about that, because it
+actually is something you get rewarded for. Right? That was sort of what really motivated me in the
+beginning. It just understanding like, Oh, this is the first time I'm actually rewarded for
+communicating this way. And with that, yeah, I think just as an overview of sort of the things
+that we talked about, a lot of it is around like, you know, how do we build credibility, a lot of
+that just comes from running content and spinning the content flywheel and really thinking about your
+positioning. Right? The idea is like, as you talk to customers, whether they're like the right
+customer or not, you understand what their problems are. And then as you understand what those
+problems are, you can write about it. And if you write something well and clear, then those people
+will come to you and reach out. And if it's not clear, you kind of get this feedback loop of, Oh,
+wow, when I wrote this blog post on how to hire AI engineers, 10 people reached out and had 10
+conversations. Right? Versus you write about evals and maybe 100 people reach out. Okay. I'm
+getting some signal as to what's going on. Then a part of it is going to be figuring out how you
+shift from an hourly rate to any kind of value-based consulting. And it's not going to be the case that
+there is a script that you follow that says, Oh, now I'm willing to pay you a $10,000 an hour or
+$10,000 for some piece of work, but really just changing the questions you ask to realize that
+it's not really about how much you are worth as the engineer, but how big the problem is.
+And a lot of this for me isn't even about how do I get value-based consulting. It's more like,
+once I use these frameworks, I realize that I feel very comfortable asking for $100,000. Right? I
+think that the first time I did a $100,000 contract, it was very much, Oh, what's that
+stake in your business? Oh, you demoed this product to Notion and to Cursor and you lost the deal
+because the AI didn't work. And these were $200,000 deals. And so really what's happening is you're
+losing massive customers because of reliability issues. Right? Well, I can help those reliability
+issues, but how am I going to do that? Maybe I help with the team, I help hire. These are details,
+but I want to price against the pain of losing the next hyperscaler or the scale-up. And that's
+something that happens a lot in thinking about how you price these. Then lastly, a lot of it is just
+going to be around how I write proposals and specifically offering multiple tiers and pricing.
+Again, just communicating to the customer that I know what you really want and here's multiple
+services and products that I can offer you to get you what you really want. Right? If I have a
+relationship with Cursor and Notion, I'm going to start mentioning them. Okay, I'll try to get you
+another demo slot. Right? I will try to make introductions to other customers because now
+I know what you want. It's not just evals, it's something much bigger pictured. And then as a bonus
+day on day two, we'll have the legal office hours. And so, yeah, this will be the last time I'm doing
+it. Afterwards, we'll just be doing some research because that's actually something I miss a lot.
+And with that, you know, Scholar, Vignesh, thank you for coming on. Hopefully this is very helpful
+and we'll follow up with any kind of notes and links afterwards. Thanks, Jason. Thanks, everyone.

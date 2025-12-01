@@ -1,0 +1,912 @@
+This talk is called cursor for staff engineers.
+And for the most part, I think a lot of people have seen that in the
+past couple of weeks, we've really been.
+Been pushed by tech leadership to just like aggressively adopt AI.
+But I think for the most part, at least I, what I see on Twitter or LinkedIn, a
+lot of it has been like fixated on vibe coding and this talk ideally won't be
+about that, it's not going to be about by coding instead, it's going to be about
+tackling the pain points that consume our time as senior engineers and most season
+cover how we can automate a lot of these repetitive tedious tasks that we all dread.
+And I'm really excited to invite Vic to speak on this.
+I met him through the AI consulting course, and I was really surprised to
+learn like how much you were crushing it through the implementation projects,
+just, just using co cursor.
+And so before we start, I just want to ask what it would be the number one
+thing you want people to take away from the course, not from the course, from this talk.
+Yeah, it's great to meet Jason.
+Honestly, I was inspired me to get into some of this along with a good friend of
+my Luke, they were both doing something similar.
+That's how I got into AI consulting specifically.
+I think my takeaway would be that even real engineers that are working on like
+real production products can use cursor.
+I think I see a lot of what's online is one of two things.
+It's either people that are like, Chris is just going to AI tools are just going
+to write down all your code for you.
+You don't need engineers anymore.
+Agents are just going to handle everything, which I think is a bunch of nonsense.
+And then the other side of it is people that are like, I'm perfectly content
+with writing all the code myself.
+I think AI is, I don't want to use it at all.
+They're like scared to use it.
+And what I'm trying to point out is if you can get to a place where you find
+repetitive things or common workflows that you're trying to just automate
+using AI a little bit more, you're still making all the decisions.
+That's the main thing.
+You're a staff engineer for a reason.
+And the reason you're a staff engineer is not because you're really fast at
+typing code or something, it's because you're making good decisions about system
+and training other engineers.
+That's what it's about.
+And I think cursor can help you with that.
+So because someone from is from client is here.
+I don't know if anyone from Windsurf is here, but this is not necessarily like
+cursor focused, I just use cursor a lot.
+But I think most of the talk it's there.
+I'm not even going to show a single prompt for the entire talk, but the
+because you guys all know how to like prompt things.
+I don't think I need to teach you that.
+It's more about, I think the new age developer, the new age staff developer.
+How do they need to think about the engineering process when AI is involved?
+That's really how I think about this.
+So before I start, I have a lot of friends that work in sales.
+And one thing that you do is you just objection handle immediately.
+So I'm just going to go through a list of things that people tell me about why
+they don't want to use cursor.
+And then hopefully that'll clear up some things before I get into the talk.
+So one is I could come in faster because I know the code base, like back to front.
+Cause you've been working somewhere for several years, or you wrote all the code
+yourself and because you know, all of that, trying to give cursor all the context
+is going to make you a lot slower than just like prompting.
+I think even if it's the case that, you know, code base like super well, I would
+argue that actually helps you with cursor because then you can point exactly
+at what you're trying to do, which files to look at, which context to give it.
+That is only going to help you.
+And I think the other thing that people really underestimate is how long it
+takes for them to type code.
+Like I had to, I don't type code as much as I honestly very little nowadays.
+And the reality is it takes a while.
+And it's just actually, once you time yourself, I think you'd realize that
+you're better off explaining in English what you want the code to say tactically
+than typing it yourself.
+So that's one thing I would say.
+Another is it does too much.
+It makes a lot of mistakes.
+I think that largely has to do with what you're trying to get.
+Cursor to do for you.
+I think if you're more clear about here are step by step things I want to
+actually get done instead of just saying, I need you to build this new endpoint
+that it has no idea how to do.
+That's just not going to work very well.
+And mistakes I think is, yeah, it's inevitable that tools are going to make mistakes.
+I think how I look at it is like actually use all the systems that we built over
+the last 30 years in software engineering, use Git, get to a place where your code's
+in a decent state, you can use cursor to try something and if it doesn't work, you
+just reject it or you can try again.
+So I think if it makes mistakes, that's fine.
+My take is a huge mistake I see people do is they'll try a prompt once and then it'll
+fail and then they'll just go back to writing the code.
+And my argument is you should try five times.
+Like you should try five times in the same context window.
+You should open a new context window and try again.
+And the argument is, first of all, it might be faster.
+Second of all, the more you push yourself to do that and you believe in cursor, I know
+it sounds ridiculous, but the more you believe in the system, I think you're going to get
+better at finding prompts and patterns and things it'll be in your brain to do more
+complex things over time.
+So that's very important.
+And the second thing is you can, as a staff engineer, part of your job is to train other
+people.
+And I think the more you can learn how to use AI, you can teach that to the rest of
+the team, which is super valuable and important, especially for like more junior
+engineers.
+I'm still learning what kind of advice to give them nowadays.
+So I think learning these tools is important for that.
+Only works if you're working on a new code base.
+This whole talk is going to talk about things that work on existing code bases and
+production code bases.
+That's all the work I do.
+I usually do two or three implementation clients a month, and I have a few advisory
+clients as well.
+So these are all things like these examples are things I've done in the last month.
+Takes away the joy in writing code.
+I have heard this argument more recently from people at the end.
+We'll have 20 minutes for questions.
+So this is, you can let me know.
+But I think the people that love writing code can still love writing code.
+I just don't think that's what matters when you have a job.
+I think in the industry, the thing that's going to matter more than ever is results.
+And results is often like shipping things that matter to people.
+So if AI can help you do that, I would just reorient yourself around.
+That is what I enjoy doing.
+And in a way it's actually made me love coding me ever even more than I used to,
+honestly, all this stuff.
+Last is people love, you know, them.
+Okay.
+I'm going to go, I use NeoVim for 10 years.
+My good friend Mark is here.
+He was the one that kind of got me into some of the stuff as well.
+But yeah, if you want to use NeoVim, fine, go for it.
+But I think the times are changing.
+I'm just like, I'm convinced that I know the guy like Yacine or whatever on Twitter
+says he has a NeoVim setup that works perfectly.
+I'm unconvinced.
+So anyways, this is as McKinsey as this talk will get.
+I wanted to give you a three-step thing that I actually use.
+This is not something I made up.
+This is how I actually think about using cursor.
+And I'll repeat this within the talk.
+So explore is basically a phase where you want to tell cursor like what context it
+needs to know about the problem you're trying to solve.
+What is the problem you're trying to solve?
+Come up with options with it of what you could do, how you can build it.
+Plan is mostly about let's actually pick an option and figure out step by step how
+we're going to go about doing this, especially for a task that ends up like
+getting pretty big, you want to do that.
+Cause otherwise you're going to end up telling cursor to do way too much at once.
+That's a very important step.
+Third is build.
+Build is oftentimes you, once you plan, Hey, this is the step I want to do.
+You can just tell cursor, let's do one step of it.
+I'll review it.
+And you can think of it almost like you're reviewing a PR from like an intern or
+something, you want to give it a small step.
+And when you review it, maybe you have to make some edits.
+Maybe you have to prompt it a little bit.
+Maybe you have to go into the code and change it yourself.
+Maybe you have to try again, but that is, that's all like
+understandable and acceptable.
+What I'm going to do is instead of just giving you like a high level framework,
+I'm going to give you examples, three examples of things that I actually do
+day to day.
+So these are things that I've done in the last week or two, I think.
+So one is test from development.
+So how do you use cursor to write better tests?
+The reason why I think this matters is one, I don't know very many engineers
+that love writing tests.
+They're very important.
+If you work at a startup, I think it's typically the first thing that gets cut
+is writing tests.
+If you work at a large company, they're very important.
+And I would argue that cursor can help you write better tests.
+So that's really what we're going to cover.
+The way I look at cursor in the explore phase is you need to share context about
+which files you want to actually test.
+So let's say you have an SDK that you want to test.
+What I would do first is I tell cursor, Hey, here's like the folder or here's the
+file that I'm trying to test.
+Here's the entry points.
+Can you look at this file and tell me which other dependencies, other things I
+need to look at to basically figure out what is the right things that we need to
+test, what are the types of tests that we can build?
+And I'll let cursor do this on its own once, but if it doesn't work as well as I
+would expect, I will tell it straight up.
+Here are the files I need you to look at.
+Here's similar tests I want you to build against.
+And then you can talk with the agent.
+You can literally be like, Hey, I think we should build these types of tests.
+Like what are other edge cases I should consider?
+It's super useful because I almost treat talking to LLMs now, well, like having a
+team of staff engineers and all understand your code base like reasonably well, and
+our domain experts and like things that you don't know about, that's largely how I
+use LLMs now when I'm coding.
+So that's like the first step.
+You just want to come up with ideas.
+You want to think about what are the types of things I want to test.
+The second thing, this is very important is you want to actually create a plan.
+And the, I'll show you an example of what the plan looks like.
+I'll, I have some screenshots of what the plan looks like, but the way I look at it
+is if you tell cursor, okay, cool.
+You figured out what we should test, how we want to test it.
+All good.
+Just go ahead and do everything.
+The agent, I have yet to see that work properly.
+And I know there are companies out there that are trying to like solve this problem.
+I think like Devin is trying to do something.
+My understanding is they're doing something similar to this except in an automated way.
+But yeah, I literally like, there's a question, but I don't use like an
+MCP for this or anything, but I'm literally just creating a markdown file myself.
+I tell it, Hey, create a step-by-step plan for this and save it to a markdown file.
+And I put like checklists on it basically so that it knows when it goes back and
+looks at it, how far it is, what steps it needs to do still, all of that.
+And the good thing about this is let's say like you, I don't know, you open a new
+context window, you can just give it the markdown file and it'll generally be able
+to figure out like how far it is.
+If you like restart your computer, whatever the reason is.
+So here's like an example of this.
+This is not the exact problem I was working on for a company recently, but let's
+say you need to build like a schema validator and the schema validator is for products.
+Products have different attributes on them and all the attributes are stored in a
+database table where it's essentially like the org ID, the attribute name, and
+then the type of the attribute is all saved in one place and you need to take all of
+those and create basically like a Zod object or like a Pydantic object that you
+can use to validate the schema.
+This is super relevant for, especially in the LLM world where if you use something
+like Constructor, you need to pass in these types to get structured output back.
+And honestly, I think it's very important to get good testing from these types of
+things, otherwise it's just going to break your app.
+So what I'll do is I'll say, Hey, I already have this file.
+I already have this product utils file that generates these schemas for me.
+Can you come up with a plan for me?
+Let's come up with a plan and I'll talk back and forth.
+Once I've talked back and forth and I'm like generally on the same page with it,
+I'll tell it, okay, come up with a plan.
+And this is kind of like step one, right?
+Step one is just setting up the mocks for it that mocks all the database utils.
+It puts in the dependencies it needs.
+It creates the file.
+So that's kind of like step one.
+And once it's done, you'll see like little check marks on all of it.
+Then this is like the second step where it says, Hey, we need to actually
+create those helper functions.
+We need to create the mocks.
+We need to do this.
+And it'll start doing that based on the actual type system.
+This is why TypeScript is so good for the cursor world.
+TypeScript, good linting, all of these things.
+It just helps it know how to build things properly.
+And this is an example of a step that's not completed yet.
+We need to actually write tests for each of these different schema
+creations, like Booleans, numbers, date times, and we'll need to test
+all these different edge cases.
+And I'm not telling you that an engineer can't like actually go do this on their
+own, what I'm saying is that there's no reason for you to write all of this
+on like by yourself anymore.
+I just don't think that there's like a good justification for it.
+Think about the amount of time it might take to write this.
+The amount of time it might take for you to write all these tests yourself.
+At best, you can maybe leverage yourself by delegating it to someone else, but
+I'm not like a huge fan of that.
+I think like in the world we're in, we're going to have to all figure out how to be
+more productive like individually.
+So that's how I think about it.
+When you apply the steps one by one, that way you can make little
+adjustments if anything's not working.
+You can make little changes.
+And the biggest thing is you got to commit all this to Git.
+If you just try to go through all the steps at once and then it doesn't work,
+cursor checkpoint stuff is just not good.
+And it's just not set up for this type of thing.
+I'm a very big fan of Git.
+I love Git.
+And I think it's no different.
+You should just continue using that.
+I would just update the plan file as you go.
+Yeah.
+Really believe in Git is my number one feedback on all this.
+So the takeaways here, the tests actually get written.
+Like honestly, if you were going to start with like tests, sometimes just don't
+happen, even if you get interrupted, you'd have to go back and lose all the context.
+You don't have to rebuild all that context.
+It lives in the plan doc.
+And then the other thing is this is great if you want to write tests before
+you write the code, I think that's the thing that we've lost in industry
+because it's so annoying to do it.
+But if you create all the interfaces, you describe what you actually want to build
+first and you create all the tests for it, that's even better.
+I think that's great.
+But an alternative is let's say you have a area of your code base that has no
+testing, I think this is another way to explore, okay, how do I figure
+out what this code is doing?
+I think writing tests is a really great way.
+Okay.
+So another example is load testing.
+So as a staff engineer, one thing that you need to be able to do is really
+understand the system that you're actually working with.
+We need to be able to understand what are the constraints I have, what are
+the performance characteristics of it?
+What is it that we're trying to optimize for?
+And honestly, I think this is also work that's really hard to justify sometimes
+like to, to management and stuff like that, but it's really important and
+very hard to delegate.
+What I found is that cursor helps me actually do this type of work very quickly.
+I can time box it basically and say, all right, I have 15 minutes.
+I want to understand this code base a little bit more and
+present an insight to the team.
+So the way I look at it, this is another problem we were working on recently.
+So VLM is like an inference engine.
+So if you're deploying a model on your own VPC, instead of using OpenAI or
+something, you basically need to use something like VLM to actually run inference.
+So in our case, because we were running this, we didn't have a great understanding
+yet because we were new to it of what are the performance characteristics?
+How many requests should we be handling at once?
+Um, what is like a reasonable cutoff before we need to scale up or scale down
+so that the users are like not getting performance degradation?
+What is like the tokens per second?
+All of these things that we want to understand.
+The reality is these types of load testing scripts are different for every system.
+For anything that you want to test.
+I've seen companies try to make like utils and stuff for this to share some of it over
+time so that it can be reusable.
+I've never seen it work.
+It ends up with scripts that are manual every single time.
+So that's fine because now you can use cursor to rip these out way faster.
+So one thing I would do is you don't really need to plan that much for this because it's
+largely a throwaway script or it's just something that maybe lives in the repo and
+you're not going to be editing that much.
+It's not something that's going to production necessarily to working with a production
+system, it's not going to production.
+So I wouldn't use the giant markdown planning file for this.
+I don't think you need that, but I think you can still use cursor, come up with things
+that you might want to test about the system.
+I think that's what cursor can be useful for is treat it like another staff engineer on
+your team that you're just like pair programming with or thinking through ideas with.
+I think it can be really useful for something like that.
+And the actual process for building is stuff that you know how to write code for anyways.
+It's really just, okay, we need to set up multiple threads for the system.
+And this is an example that we went through.
+These are like seven examples of things that we added to the system over time.
+You need the initial setup for the script.
+Here's the endpoints.
+You add this to the context.
+You say, I want to call this endpoint with this many threads at one time.
+You set that up.
+Then you say, all right, I want to maybe call this with a configurable number of
+threads at a given time to see how the performance is.
+Once you actually figure that out, you need to start collecting timing data.
+So you need to know, okay, what's the tokens per second on each of the threads?
+You need to like start tracking that somewhere.
+Maybe you want to see at any given time as it's completing, you want to see
+that live in the CLI, maybe you want to measure, okay, I have 10 requests.
+Does that, does the tokens per second of the whole system increase while each
+thread decreases, these are things that generally you would want to know about
+the system, but that you're limited by the actual time you have to write the code.
+And explaining it to someone else might not be like super worth it.
+So the way I think about it now is you're no longer limited by writing the code.
+You're limited by the ideas you have that you want to test.
+And secondly, it'll actually get done because I don't think you need to go
+into your standup meetings anymore and be like, Hey, I'm going to spend a day
+or two back and forth, I'm going to be, I'm going to be setting up a load testing script.
+You don't have to prove that to all the VPs and stuff anymore.
+You just spend 15 minutes doing this.
+See if you get anywhere with it.
+And if you get somewhere, maybe then you can go back to them and say, Hey,
+this is, this was super valuable.
+Maybe we should be doing this more often, whatever it is.
+That kind of experimentation, I think is super valuable.
+And the other thing is as a staff engineer, you really do need to know the context on the system.
+You need to know how your system works.
+I think this is true with the director and manager level too, but the talk isn't really for them.
+As a staff engineer, you own the system ultimately.
+So if you're not doing this, who is going to be?
+That's my take on it.
+Another kind of so far, I've given you an example of something that needs to integrate
+directly into a system unit testing.
+A second example is working on top of an existing system.
+So load testing, building a script on top of it.
+This one is more of like a workflow.
+Everyone's getting PR comments.
+So you have PR reviews, you have comments being given to you.
+I think most people hate getting comments like, Oh, the change the padding to five
+pixels or, Hey, can you like move this file here or rename this or whatever?
+All those little details.
+I've never liked dealing with that stuff.
+I just always hate it.
+But I think most of it is relatively trivial for some kind of co-pilot to handle nowadays.
+So my process, and you're going to think I'm crazy, but I'll explain why I do this.
+I literally go into GitHub, I screenshot every single PR comment as an image,
+with, and I make sure that the file name and all that is in the screenshot.
+Then I drag and drop all of those.
+And no, you can't do GitHub PR view comments because it doesn't have
+the line numbers and stuff.
+Trust me.
+So I then put all of that into a single cursor context and I say, Hey, I need you
+to go ahead and just list out what I gave you so far and I like verify that the OCR
+and all that are good.
+Doesn't the GitHub, or I'll answer your questions after.
+So the PR comments, then I ask it to group all the related changes.
+And I say, just once you've grouped everything, make a planning file and I
+put all the file name, the line number, and just the comment itself.
+I don't, I don't do any, I don't do anything of figure out how to fix this yet.
+This is all about just storing the context in a single place.
+And the last thing is I say, Hey, go read the planning file and read each one by one.
+And the agent at this point will be able to say, all right, this is this
+line number in this file.
+It'll look up that file for context.
+It'll find all the relevant other files that it might need.
+And it'll like generate that.
+And all the small little details are so easily fixed nowadays, like trivial to fix.
+And I just get commit those.
+And then I just update the planning doc that it's like not a big deal.
+But the second thing is that larger changes, you might just need to do some
+prompting work on your own, or you might have to go in and edit yourself.
+But honestly, if you're saving like 70% of your time, for me, it
+feels like way more than that.
+I did see a point that it's good to propose a solution.
+I think that's great.
+But like, at this point, I'm like, you should propose.
+I think he's just, if this was like automated somehow, I think that's totally fine too.
+But I'm like not convinced that we're that close to being able to do it.
+I have heard of other people doing things like, Jason actually, apparently has a way
+to do the Git commands in cursor itself so that it'll create stacked PRs for
+you based on all the PR comments.
+I am not convinced that giving Git access to a cursor agent is a good idea.
+As maybe you saw when it deleted all of his code one day.
+So I'm not there yet, but maybe we're getting there.
+Yeah.
+The takeaway is really you want to focus on the stuff that actually matters.
+Everyone's going to get annoyed about knit comments and little things, but if
+you don't have to think about them anymore, then it's not an issue.
+Now, maybe some of the comments has a better way to do all this with the API and MCP.
+If you do, you can tell me, trust me, I'm always willing to learn things, but I
+have yet to figure out how to do it.
+So I literally just screenshot things.
+I'm not going to, I'm not going to get bogged down by MCPs if I don't need to.
+That is a list.
+Those are three things that I've done with cursor.
+I'm just trying to give you examples of how you can start thinking
+about using this day to day.
+But here's like a giant other set of things that I've used
+cursor for over the last two or three.
+Really cursor and LLMs generally.
+Cursor really I've only been using for a little over a year.
+But this is the only reason I can do what I do as an independent consultant.
+There's just no way I could continue doing implementation clients and work with
+my, as many key people that I'm working with and especially going into new code
+bases every single month, and I have to learn them very quickly.
+And what I'm showing you is what I do.
+I have no reason to, I have all incentive to only be honest with you.
+I'm trying to be like the most honest person talking about using
+cursor on the internet.
+So that's my take.
+Jason, do you want to cover it from here a little bit?
+Yeah.
+So what we're probably going to do is I just, I left a link in the chat.
+We can probably leave some comments and we can upvote them, stuff like that.
+And then one thing I just wanted to call out too, I only saw this recently, but on
+March 27th, this article came up.
+That kind of blew my mind where Airbnb used AI to finish 18 months code
+migration in just six weeks.
+And again, it's basically exactly what you did with propose, make a plan, run
+tests, take the errors, reiterate, reiterate, and yeah, it was mind blowing
+to see how things are done, but yeah, if you have any questions, leave them in the
+Slido.
+And another thing that someone had asked was, do you have any demos?
+I know it's probably hard to share production code just because it's, you
+have, I know you have five different pops.
+But what would the demo be?
+Like I would share like, this is what I was wondering, like I share prompts.
+Like I share, like these are prompts I did, or because ultimately I think I'd
+have to live stream myself, like writing code.
+I think maybe what I could do is ask Jason, well, what's a PR that needs to be
+written in instructor, and then just sit there and live stream me doing it for an
+hour or something.
+A lot of the organization has been documentation these days and like
+reorganizing a lot of the examples to be more like educational.
+That has been a huge, huge lift for me.
+I said, here's all the concept documentation.
+Here's the API.
+I wanted to propose me a plan of how to organize content in a way that is
+educational and then do it that way.
+That has been super helpful.
+There's something there, honestly.
+It's interesting once I work in applied AI, right?
+So I understand how cursor works, like high level.
+I feel like I, once you understand what it's doing a little bit, it helps a lot.
+Once you realize that a lot of what the agent is actually doing is once it creates
+code, right, it's verifying that it works or not.
+And largely it's relying on like the type system and the limiter.
+And it's just like going back, like redoing it over and over again.
+And I think they figured out that people were when cursor phrase first came out.
+I would generate code and then I would run it and it would crowd on the error.
+And I would hit the debug button.
+It would go back and do it, change code.
+I do that over and over again until the code ran.
+And I think that was like the initial vibe coding attempt.
+And they've gotten a little bit smarter about it, but that's what
+it's doing for the most part.
+But yeah, demos, I think that's something we need to figure out.
+Like how can I, really I was avoiding demos because I was like saying,
+this is a group of staff engineers.
+These are people that have code bases and complex code bases that they know better
+than me, and I'd rather give them like a framework of how I think about this
+and examples and be like, here's one random code base that I've worked with.
+That's not even the real code base because it's under NDA.
+Basically that was black and white.
+Yeah.
+Maybe what we can do is like next time we'll just do a lighting lesson that is
+just pure lab coding or something like that.
+I think that would be pretty useful.
+We'll just send an email afterward just cause yeah, then we can probably do
+something that's a lot more, let's make some contributions to a, to another
+repo or make a new like meet app or something.
+We can just set aside some time for that, but it does look like there's a ton of
+people who want an exit demo.
+And mostly what I've seen on Maven in the past has been like, how should a PM
+learn to use lovable or use cursor?
+I think I'm curious to see how you do these.
+Cause I know you're probably a stronger developer than I am.
+I actually use cursor a lot for doing data analysis and research rather than
+spin up an entire app from scratch.
+But I think we have enough questions and upvotes, so do you want to
+jump into some questions?
+Are you asking me?
+Let's do it.
+Yeah.
+Do you have any suggestions for cursor rules or how we can dynamically
+generate some of these things?
+What kind of rules do you find yourself making?
+I don't use any rules.
+This is a hot take.
+I don't think cursor rules matter that much.
+I think what matters is knowing your code base and providing good context and
+giving it tactical things to work on.
+I think all this stuff around like, oh, we needed to know all of the design
+patterns that we have in the company.
+And I wanted to make sure that it formats lines this way.
+Or I know people are trying to do this stuff, but I only found it to
+drag me down.
+So I, and I work on so many different code bases that I'm not going to go in
+and make a bunch of course rules for each one.
+I'd rather just rely on the LLM getting better.
+So yeah, I don't really use cursor rules.
+MCPs, I think I have used some.
+I've used some, but honestly, even that call me a boomer, but I will
+straight up just go to a doc site.
+Literally copy the entire docs page, paste it into context and be like,
+yo, here's the, here's all the API docs for, I can't believe I'm saying instructor
+again, I use instructor literally all the time, so it's like a real,
+that's how we met.
+This is the context setting.
+I think instructors is the only AI tooling that actually matters to me.
+I think I don't use a ton of other stuff.
+So I just, good example for me, but I had to do something with Twilio recently.
+Right.
+So I literally just copied Twilio, like all the docs for a certain page.
+And I just said, here's, here you go.
+Can you, can you do something with this?
+It tends to work pretty well for me.
+I did it with the slide B.
+Okay.
+So this entire presentation, I wrote it in slide B, which is like a markdown slide
+generator, and it was because I just thought, okay, I'd rather for lack of
+better word, like via prompt my way through writing the slides.
+Maybe you should show slide B a little bit because I say that only because I
+feel like I have to make so many presentations and slides that have been
+really valuable, but maybe we can do this at the end.
+Maybe I can share my screen with the, hold on.
+Let me stop sharing and I'll share it.
+Once I get the cursor back on with the thing on, oh, there's way more
+people on here than I thought.
+Yeah.
+Might take a second to load.
+Sorry guys.
+Yeah.
+I'll do a follow up question, which is I work with a code base and spend a lot of
+time maintaining code and fixing bugs and less time writing new code.
+How do you think of using AI in this case?
+What was the question?
+Sorry.
+How much time do you spend using AI to do like code maintenance and like bug
+fixes versus like writing net new code?
+I think for me, I'm most of my code is maintenance.
+Really?
+Almost none of mine is I mostly we're going to new products and new features.
+Oh, I don't really, I do have to touch a lot of legacy code.
+Yeah.
+So I have to understand code very quickly.
+So it's important.
+By the way, do you mind zooming in on your cursor so people can see a little bit better?
+Oh yeah.
+Sorry guys.
+I have time to do that.
+So this is basically like the entire presentation.
+You can make like divs and using markdown.
+I made all of the diagrams like this with, yeah.
+So all the code examples are in here as well.
+It's pretty nuts what you can do.
+Honestly, this is a good example.
+So let's see if I can show the prompts.
+So is it in here?
+Oh my God.
+All the prompts are gone.
+See, this is the thing with cursor sometimes.
+All the prompts are gone.
+I'm not sure if I can show the prompts.
+Okay.
+Anyways.
+I think this is a really important question actually.
+Can you share your practice on how you use, like on board on a new code base?
+It's a good question.
+So typically the way my like applied AI stuff works is we'll figure out some problem that
+we want to deliver in a month.
+It's usually scope to a month.
+So I'll go to the company.
+I'll say, what is the problem we're trying to solve?
+And a lot of times I'll be like, I don't know.
+I don't know.
+I don't know.
+I don't know.
+I don't know.
+I don't know.
+I don't know.
+I don't know.
+And a lot of times I'll spend time.
+What is the actual problem that we're trying to solve?
+What is the systems that we need to integrate with?
+And then typically the, it's like a SWAT team basically, where I'll make a
+shared Slack channel.
+It's just me, the CTO, two staff engineers, and the like the most senior
+SRE at the company basically.
+And that's all the people that are allowed to be in the channel.
+And I'll just talk to them about like how the system works.
+I'll ask them questions.
+Then I'll do an exploration with cursor.
+I'll just say, here's the director I'm looking at.
+Can you like look at the directory tree structure, basically explain
+what's going on in here, tell me what relevant files I should read basically.
+And I'll start even being like, these are things I'm thinking about building.
+What files should I look at?
+And I'll do that for like several hours.
+Sometimes it works pretty well for me, but I'm still definitely relying on
+other people at the company and know the code bases.
+I'm not claiming that I can just go into a code base that I have no context on
+and just use cursor to figure it out.
+I don't think that's very realistic and that's not actually a
+necessary expectation is my take.
+Make sure to post another link one more time.
+There's been a lot of new questions, but I just want to make sure.
+Are you open to sharing the slides on GitHub at some point?
+Oh, these?
+Sure.
+Cool.
+I think I would love to answer this question just cause it's really close to
+me, which is any advice on doing machine learning and data science workflows?
+A lot of for me, it has been like replacing a lot of the boiler
+code of experimentation, right?
+There's no reason you shouldn't be having like really nice plots.
+Right.
+It's look at the CSV file, write the map plot lib code.
+Yeah.
+Make it really good.
+And have a legend or color code things include the, include the dot size
+is another variable.
+It'll go do that.
+Great.
+Propose new hyper parameters.
+Like I trained one model, but actually I want you to set up the hyper
+problem, right?
+Parameterization optimization.
+Those are small things where it's code.
+I wouldn't want to do.
+Maybe I write the code in a for loop and then now there's too many things.
+Great.
+Use multi-threading go and it will really help a lot of the processing, but a lot
+of it, at least for the day science machine learning is just the fact that
+you really have no excuse not to have really good data visualizations at this
+point in Python, I would have a map pod lib thing, but now if it's really
+important, like I had a client of mine that we realized we could do some kind
+of like revenue calculation, it's historically, I would have shown them a
+plot, but instead it just said, make a small react app that is this like pricing
+calculator, and now we have just like a data visualization tool and it took, it
+would have taken me the same time to make this like react app and it would have me
+use pandas and make a lot of data visualizations and that has been like
+probably the highest impact thing I've been able to do with the cursor, at
+least on the data science side, which is just more communication, more data
+visualizations.
+Yeah, you mentioned you don't use that many MCPs.
+Are there any tools you wish that did exist for something like cursor?
+I know the client.
+Oh yeah, it'd be great to have this GitHub comments thing.
+If anyone from GitHub is here, let me know.
+I want to get that fixed.
+Oh yeah, like MCP that just pulls the file line number and the comment.
+It should be a trivial fix from them.
+I don't think it's like a big, I just have, I don't know anyone there.
+I think one thing actually a company, is anyone from relay here?
+I'm working with them.
+But they're looking at basically connecting Figma into cursor, like a
+little bit better.
+I've been reading about it over the last few days to see if you think like V
+zero and like lovable are on one side of the spectrum and then you have like
+manually coding basically on the other side of the spectrum, I think, and
+cursor is somewhere here.
+I think you want something in between V zero and cursor where you can give it a
+design and say, Hey, here's our design system, here's our components.
+And I need you to just generate an initial setup for the UI for this and
+react, and I think that would be super useful.
+Honestly, I just think, I don't know if we're there yet.
+I don't know if the tools are there yet.
+I feel like we will get there over the next couple of years, maybe less, but
+that's the thing I'm very interested in.
+I am also very interested in better tooling around MCPs for proxy.
+I think they're like not great for security.
+So I like, it's very difficult for me to advocate for you using them for like
+production.
+Oh, you know what?
+There is an MCP client that inspects network logs.
+Oh yeah.
+Really?
+Interesting.
+Yes.
+I think that has been useful or there's an MCP that can get the Chrome console.
+Okay.
+Yeah.
+So you can like do like dev tools like inside your single instance.
+I know Windsurf, for example, has a browser tool that opens a browser in
+Windsurf and then you can select divs and then put them back into the prompt.
+Like I would love that for a slide B thing.
+I think a particularly useful trivial one is like the Postgres one that exists
+where you just connect it to Postgres and say, Hey, can you give me an example
+of something in a database that like fits this filter?
+That's like super useful for building things, right?
+You, that's something that you're going to have to go open.
+Oh my God.
+Every time I have to open the Postgres terminal, log in,
+it's a query the first thing, copy it.
+I'm in Tmux, so like the copying doesn't work.
+And then I paste it back.
+It's just such a pain.
+Honestly.
+Oh, this is a good question.
+I want to ask Ashley.
+Yeah.
+When do you choose not to use cursor?
+Basically never at this point.
+I had to write code manually at one of my projects recently.
+I had to be like, okay, cursors not working three times.
+I have to type it now.
+And I, even at this point, if I have to do even like a rename a variable in one
+place, I'll still use cursor for it.
+I just think staying in the flow state, my text cursor is never in the code area anymore.
+It's always only navigating on the left or it's in the right side,
+like instruction window thing.
+And maybe I'm like on the extreme crazy end of this, but I just would rather believe
+that the elements are only going to get better.
+The tools are only going to get better.
+So there's almost no situation where I say I can't break down the problem
+enough to use cursor to do it.
+It like never happens to me anymore.
+And I hope it doesn't sound like I'm exaggerating or something.
+It's just really what's going on.
+Just interesting.
+We have 12 minutes left.
+If anyone has any questions, maybe you can use the zoom raise hand and then
+you just pitch in anything else.
+I want to make sure.
+Oh wow.
+A lot of comments.
+I didn't read all these.
+Sorry.
+Yeah.
+There's some like browser tool comments here, but
+yeah, if anyone wants to say something live, feel free to just
+unmute or raise your hand.
+Dexter.
+Hey, thanks for that.
+Really cool to hear.
+I was wondering if you ever run into having to deal with credentials and dot
+N files and keeping them out because cursor has this whole thing of an ignore
+dot cursor ignore, and you can keep your, you can keep files out of the context,
+but it's non-deterministic.
+So you don't actually have any guarantee that it will stay out of going to the
+inference, so that's definitely happened to me.
+Oh yeah.
+It's happened to me as well.
+So I have a way of dealing with it, but it's I was just wondering,
+I mean, what's your way of dealing with it?
+I, you can put it in like the parent directory and then reference it.
+Like upper level, but it's a pain.
+You just want it to be there.
+Yeah.
+I'll make one comment, which is, I think this is something that needs to happen
+within the IDE warp, warp dev, for example, which is like the AI terminal,
+it knows not to read dot files.
+So I think, I think in the future, it'll just be solved by cursor.
+Like otherwise we can just prompt it in or have a rule, but it feels very silly.
+I'm sure someone has a better suggestion than I do here, but I really don't know.
+Yeah.
+Yeah.
+So good.
+Yeah, I was just going to have a lot of really good smart people on this call.
+All this stuff has been moving so fast.
+I was just curious if there are things like I've seen task master that I think is an
+example of an NPM repo that works fairly well for managing tasks and keeping things on
+task.
+In my mind, I feel like I think they expressed it concisely as I'm just relying on the
+LLMs to get better.
+I see that something like task master might be really useful, but I am hesitant to
+invest in those kinds of tools or MCP servers just because I feel like it might be a
+temporary fix for a problem.
+But I know we have some folks are actually working in the space on these tools.
+Does anybody either have experience with task master or see the trajectory for those
+tools?
+And is it worth investing in bringing those in as part of our workflows?
+Just generally speaking, I guess would be my question.
+Nick, did you want to say something?
+Nick, did you want to say something?
+Yeah, I think, yeah, I'm like, we're working a lot like context management is a
+challenge.
+It's like an ongoing problem for a lot of these coding agents.
+I think there's like a number of ways of solving it.
+I think largely it's the way that like what I found works the best for when we're
+developing Klein is narrative integrity.
+So like every task that happens in cursor or inclined, it's basically a story.
+Might be a very boring story of a lonely code agent helping you write code, but
+everything makes sense in the story.
+It's coherent.
+So you have a system prompt.
+That's a setting for the story.
+Then you have the task, which is like the challenge to be overcome.
+And then you have the protagonist, which is like the agent helping the user
+overcome this problem.
+And as long as the story kind of makes sense, LLMs are really good at predicting
+the next token.
+So they'll be able to continue the story, which means like getting you closer to
+that resolution, but you start running into problems when the story gets
+convoluted and it starts getting overloaded, like this context overload.
+So how do you manage that?
+One is having good hygiene around your tasks, which is creating a new task,
+doing task handoffs, things like that.
+Unfortunately, that's still something you have to do.
+We're working out ways of automating that potentially in the future, having some
+kind of orchestration, multi-agent potentially.
+But right now, the best thing you can do is just handoff tasks when, when like
+some kind of discrete workflow is finished.
+You want to hand off your progress over to a new task, summarize everything that
+you've done so far with like specific file names and what there is left to do.
+But yeah, that's actually one of my questions.
+Have you guys, Binesh or Jason, have you guys been playing around with context
+management?
+How do you guys handle that?
+I can go for it.
+Just so I try to, I modify very large files because I actually do a lot of my
+writing with cursor.
+Like what I'll, what I really just do is once I, for example, write a bunch of
+stuff, I'll say, read all of these, create a style guide and then create a style
+guide MD file, right?
+Okay.
+Everything that you've learned about the feedback I've given you on color coding
+parts of these slides, add a like slides guide MD file.
+Okay.
+Then I have a conversation where I'm iterating on like the speaker notes and
+the tone.
+Great.
+Now write like a speaker style guide, and then I'll start manually referencing
+them across the pages.
+So that's one thing.
+The second thing is with the to-do lists.
+I basically would tell it to base propose a sequence of PRs and then each PR,
+what are the requirements?
+I had to tell it to like work on each PR, make the pull requests and continue.
+What I'll notice is if the to-do lists are too long, it'll still hallucinate.
+Right?
+So if I say here's a to-do list where I need you to review 35 pages of
+documentation and make sure each one has the same structure, cause it wasn't
+before by like file 15, it's like creating new to-do lists for files that don't
+exist.
+And so at least for the to-do lists, I guess, keeping them small is also very
+helpful.
+And I would rather have five to-do list files, one for each PR then while one
+file that contains six PRs where each PR has seven tasks.
+Or something like that.
+So that's like some of the stuff that I've really figured out on my end.
+I think my take is you can treat it like you're, I almost treat it like this is
+something I'd be doing anyways.
+This is maybe a hot take, but I think a lot of engineers really like tunnel
+vision.
+There's engineers that just love getting into a dark room and sitting there for
+30, 40 hours straight and getting a problem, not being asked to anything
+about it the entire time.
+They don't want to have to explain anything during that period of time.
+And they're just like, hope and pray that we will come out at the end with what we
+want.
+And I think that is a way to code, but it totally does not work when you want to
+use AI assisted tooling, cause you have to very clearly tell you like what you
+want it to do.
+It, to me, like a lot of people don't have a ton of experience with
+pair of programming, even like pair of programming.
+You need to be able to explain to a person sitting next to you, what's
+going on in your brain.
+And a lot of people, it's very difficult to do that, to identify these are the
+tasks I want to do.
+This is the context I want to give.
+This is a skill to build honestly, for people.
+I learned a lot of this in college.
+I had a couple of great professors that taught me these things and I still use it
+now, but it's called the design recipe back then in college.
+But I think that affects it.
+So to me, I'm like, we need to get better at that and get better at that manually
+before we start trusting tools to general task force and handoff and all this stuff.
+I'm like, why don't you figure out how to create what tasks are and then see if
+it's going on the right track before you try delegating it more.
+That's my take on the thing, honestly.

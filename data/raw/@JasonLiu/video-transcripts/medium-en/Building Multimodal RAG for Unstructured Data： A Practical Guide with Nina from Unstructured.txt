@@ -1,0 +1,156 @@
+So how do you do RAG on multimodal data? In today's episode of Systematically Improving RAG
+Applications, Nina from Unstructured is going to talk about the implementation details of
+multimodal RAG systems for unstructured data. We're going to focus on a specific use case
+in educational technology. We're going to cover the challenges of incorporating various data
+sources and types beyond pure text and provide insights into more practical solutions.
+We currently support 24 different file types and we have more in flight. You just drop in a PDF
+and then they generate a slideshow with images or tables. I actually wish I had something like
+this when I was moving my slide. I'd like to explain to you guys when you're improving that.
+I'm going to be talking about multimodal RAG on unstructured data, focusing on a key study in
+EdTech, a company named Arena. And I'm a staff developer relations at Unstructured. I've worked
+previously at several other startups in NLP and NLU and before that in Venture Capital in a machine
+learning and transcript file. Today I'm going to go over challenges in adding data types and
+forceless beyond pure text. The data distributions that we see in practicing some considerations
+will be about eliminating RAG beyond pure text and then I'll spend most of the time on the case
+bedding, Elena getting into the recipe of how you extract images and tables and other non-text
+elements using Unstructured. I can talk a little bit about the challenges in adding both data types
+and forceless. I'll start with data types. So we currently support 24 different file types and we
+have more in flight. That includes a lot of different plain text file types, a lot of different
+images, data types, the empty screenshot, and then a lot of different document types, Tdx, PowerPoint.
+And one of the challenges are that when you need a data loader for each file type as well as their
+metadata, it depends on how you want to handle your metadata. I've heard of some folks just taking it
+from the document itself, but we also have other metadata that we gather from within the document
+that varies by document type. Then you'll have some challenges in standardizing that output
+between these different formats like what's a page in some kind of document that has notations,
+what are you going to display or chunk within a pediac or a powerpoint, which are all pretty
+different documents. You'll have to think about how they are a genius, pre-processing type arm
+and model training. So if you have predominantly one type of file, but you want to include other
+one, you'll have to worry about operating for that predominant model and then also potentially
+keeping different models all up to date. And then you'll have to think about encoding and alignment
+for the images and tables and other non-text elements in there. And then of course, if you
+have a system that you've already built for text, you will have to think about increases in latency
+when you're cutting images and how you want to manage those. So these are just some of the
+considerations that we've come across. One big challenge is the heterogeneity of document
+layouts. Really there's infinite ways that we could arrange titles and content on various documents.
+And so making sure that you're trained well for that, take your model well. And in addition to
+that, there's also the challenge of reading order, whether they're going across and then down or down
+and then across for some of these different document layouts that I mentioned. And then there
+are specifically our challenges for adding images. So there's an example of a pipeline we use for
+processing a PDF in our platform, which is currently in beta. We have our high-res model,
+extract this one because we have images and text and tables in here. Otherwise we have a fast
+pipeline if the PDF for example only had text for a few. You don't want to use a more powerful model
+than you need to to keep computational costs down. And so then this is separated into this
+text section, this photo, and then this table. And so we have different processing pipelines.
+We have OCR for the text. In the platform we have a multinodal LLM to generate a summary of this
+image, which will also be outputted into text. In addition in our metadata, we will have the
+base64 encoding of the image as well. And then the table, we have a separate table processing
+model for. So then image will have the table and we have that in text and HTML format in the
+metadata. Specifically for adding images, you have to think about different models, different
+approaches, and all the different things that you want to capture about that image. And then in
+addition, if you want to support a lot of different sources, there are also different challenges there.
+So I could teach you that a bit as well. We have 28 that we support anything from extra DB to GitHub
+to Notion. There's a lot of different places where you might have all different kinds of files.
+You can include images that are other attachments and things. And challenges in adding sources as
+well are for the extraction. So you'll have the acts of configuration for each one. We want to
+make sure that this indication is secure. And then you have to think a lot about handling the API.
+Today you've got to manage that one in addition to yours. So the errors, the timeout, we often
+have to build in delays so that we don't hit API overuse errors. And then also mapping that
+metadata. And so you really want to make sure that you have the data governance and you're compliant
+with any security concerns around that data and those transmission. So when you put it all together,
+when you start thinking about having a bulky model with a lot of different sources and a lot of
+different file height, there's a lot of different steps to the process. So I'm really focusing on
+the left side of this image. You have to think about keeping connectors up to date, adapting
+pipelines to novel data types as you may want to add those. Managing comps and uptimes for any
+third party dependencies that you're using for more complex data or functions. The reading order.
+And then you'll have to consider if you're a corporate re-embedding sources and data types
+as well. So then that really gets into orchestration beyond just the simple data loaders. I've talked
+about a lot of different data types and sources, and I guess Dan thought it would be interesting
+for the class to know what we actually see in practice. And in practice, it's a lot of PDFs.
+People are processing PDF in our system more than most other file types. So it seems like there's
+really a lot of enterprise data stored in these PDFs and they are more challenging to process
+than they have requirements for OCR and imaging table extraction in all different layouts. And
+then we'll talk about some considerations for evaluation before diving into the case study.
+So you'll want to think about interpreting and integrating this non-textual data. Like how do
+you want it to go up? Is it when you're talking about something where there's a relevant image
+or table, that's when you want it to be pulled kind of seamlessly? In your evaluation, you'll
+have to think about defining information across data types. So across the type of images. I'll
+do a little sidebar here. By training in this morning, came through my neuroscience training,
+and there I remember learning one day that you could have an academic publication that you're
+reading and the finding is like, this part of the brain is more active during this activity.
+And then you go look at the figures and they show the exact opposite. And this is not an uncommon
+occurrence, and I'm sure it occurs in other types of documents, but you have to look at how that
+information is synthesized because really the text and the images, they could be saying totally
+opposite things, but they're pretty challenging level of evaluation. And then you'll also want
+to keep in mind the latency of your system once you've added multimodal elements as well,
+because that could change the user experience from a text-based RAG system. So you might need
+new metrics or human evaluation to cover just some of these different elements you might run into.
+And now we're going to dive into our case study with Elena. So Elena is an EdTech company. They
+have an AI slides and lesson generator. And so you just drop in a PDF and then they generate a
+slideshow with images or tables. I wrote a blog post on messages linked below, but on the right
+here is an example of some of the slides that you might get as you drop in a PDF or encoder.
+You can see here that they have equations and images next to the relevant text, and they do
+this pretty much instantaneously. So it's really cool. I actually had something like this when I
+was making my slide. I didn't know anyone has journal clubs. You could just pop in an archive
+paper and get slides using this tool. And I'll show their little, hopefully this comes across,
+I'll show their TikTok demo. Well, you click add attachment up with your textbook and then the
+images all show up there. It's really quick. Actually, I saw them do a live demo when we were
+reporting, but we were talking about the case study together. And yeah, it would be, I think,
+challenging for me to do a live demo of their product, but it's really impressive how quickly
+it went. Hey, are your rag applications falling short despite using the latest frameworks and
+models? You're not alone. I'm Jason Liu and I've helped a dozen companies improve their AI
+applications. I've developed a systematic approach that delivers results. If you want to check out
+join my free six week email course and learn the techniques I use in my own consulting practice.
+That way you can stop guessing at what works and measure what matters. Just check out improvingrag.com
+For Dan, the multimodal impact was that things visual images are really essential for teachers
+and they increase information retention up to 60%. Fabier, the co-founder of Elaina that we spoke to
+for the case study, he was blown away by the ability to extract or jitter and table to add
+these visual roles. And then for him, the organizational impact of using our API for this
+rather than building it himself or that they could focus on scaling what they were building
+rather than having to worry about scaling up and down with the serverless API. So now I'm going to
+go into the recipe of how they did this. So firstly, use our API to partition the PDFs and other
+documents into their constituent elements. And then they extracted this data, including diagrams
+and tables, which they then processed by an LLM chain they have developed that's proprietary.
+And then the extracted data was summarized and stored in a vector database, making it accessible
+for generating new presentations. Their code is closed source, so I'm just pointing books to
+the different steps of code that make this possible. I'll go into a little bit more of how
+we operate that makes that possible before jumping into the code. So one, we're animating
+by element. So we are classifying different parts of the image. So it's kind of like all just being
+raw, OCR'd out like on the left. We are showing where there's, we're categorizing whether the
+title, subheading, page number, footnote, images table, and all these different elements. And we're
+also grabbing a ton of metadata. It really seems like everyone has needs for different kinds of
+metadata. Some people really like having page number there. Some people like having the layout
+there, the coordinates where that appears. And then some people really like the basics with
+forward coding of tables and images for bacon friend code, which referred to that text specifically.
+So for example, for Elena, they could have a text section that is next to an image and then make sure
+to fold that image based on the metadata. So this combination ends up being really powerful
+for multimodal RAP. So now we're going to go into documentation. So for the first step in our recipe,
+the partitioning. So for our API, that everyone should have a trial core. Everyone, I guess everyone
+get two weeks, but for this course, we have added extra time. We know the course is pretty long,
+we might need time after to try various tools. And then in the quick start, you would just
+hit install, unstructured ingest, get your API key. And we recommend using the ingest library. So
+it's just a whole pipeline here where you set up and turn it just all local to local, which is
+the list and you can add partition argument like having the PDFs, but concurrent to be faster,
+or things like that other elements of the configuration. And by default, we'll always
+have the image elements captured. And then to extract image block types, we have just a little
+bit of code you would use after running the processing in our documentation here. So you're
+going to load that JSON file that you created in a previous partitioning step. And then if an element
+in the metadata, the space 64 and code representation, then you just decode that image
+data. And then you could just open and show that image. So just a very few quick steps that you
+could then tie into other parts of the pipeline that are, for example, maybe towering you wedded
+to call this image. And similarly for tables, we also have just like a very short snippet where if
+you have that table in this text as HTML format, you with this example right here, you can just
+save that HTML to a local file and then just open in a browser dot table displayed, basically
+displayed exactly as it would have been in the image, except that you could also now interact
+with the different values and different columns. And then their last step was to put everything in
+a vector database so that they could make presentations from there. And so here I'll just
+quickly point to the different destination connectors that we have. So Astra, Deep, I think
+Ansher's another one, Databricks, MongoDB, FindCore, WeaveE, and GrowthDor. I actually don't even know
+all of the destination connectors yet, but there's a combination of kind of vector databases and
+other places where you can put the event and work from there. That's my little intro to
+LofiModel RAG. Feel free to follow me on LinkedIn or Twitter for a new output.
+Thanks for watching. If you liked that video, make sure to like and subscribe. And if you want to
+learn more, check out ImprovingRAG.com. We're going to talk about the foundations and not frameworks.
+Over six emails, you're going to learn how to overcome absence blindness, as well as how to
+fine tune language models, understanding diverse query types, improving multimodal RAG, and
+ultimately smart question routing and build a UX that collects user feedback. Just check out
+ImprovingRAG.com and fill out this quick email address at the bottom. Thanks.

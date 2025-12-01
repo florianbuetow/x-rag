@@ -1,0 +1,554 @@
+How can generative AI improve classical lexical search?
+Today's episode of Systematically Improving Rag Applications, I'm really
+excited to invite my friend Doug Turnbull.
+He was a search engineer at companies like Shopify and at Reddit and overall
+has done incredible things in the space.
+One of the things we'll talk about today is how he improved search relevance.
+Shopify by 10%.
+Sorry.
+Excuse me.
+Revenue by 10%.
+Anyways, stay tuned.
+Cool.
+Yeah.
+You can find me at softwaredoug.com.
+I worked at Shopify where I was able to help with the team that increased
+revenue GMB by 10% through search.
+And then Reddit, we've launched some of the most, some of the historically
+best performing A-B tests in the history of Reddit search using Learning to Rank.
+And there's much of stuff I've done.
+There's a new book, AI Powered Search coming out and Elastic Search Learning
+to Rank is something I worked on.
+So lots of cool stuff out there.
+I really enjoy working in this space.
+I do it because it's fun.
+I do it because I like to learn.
+Don't do it because I have all the answers.
+So I really appreciate feedback and I really appreciate people asking good questions.
+I wrote a blog article you might've seen recently about how juniors are so important
+because they ask insightful questions.
+They don't come with a lot of baggage.
+And yeah, I really appreciate those kinds of questions and learning for people who
+have less experience than me in the field.
+You might most, it seems like increasingly, especially in this world of sort of like
+dev evangelists, we've got, you may have presumably in your rack course, you talk
+about BM-25 and of course there's some new thing that some maybe add, especially in
+more academic conference where you have vector search, transformer, ranker, two tower,
+crossing curve or whatever that works better against some BM-25.
+And this is a pretty typical pattern, redefined search for all time.
+And I'm actually going to take a different tack, which is we have these LLMs.
+Can we use them to make the improve?
+And there was a lot of value in doing that.
+The other thing that we often have and when we run experiments is a beautiful
+experimental data sets.
+This is just Ms.
+Marco passage ranking data set and everything is nicely chumped.
+Everything is pretty clean.
+And of course the real world of the data sets that I work with are not at all like
+that and they're very messy.
+And, you know, it's kind of a meme that a lot of things we do with data, data
+engineering or machine learning is just cleaning data right.
+And LLMs of course offer a great opportunity for that.
+And this is, you're going to see, I'm going to use this data set called one,
+which is Wayfair annotated something data set, but it's a search furniture data
+set from Wayfair that they nicely provide and they have a set of labels.
+So great is what I say for label zero to two, two is most relevant, but you can
+see here, some results maybe aren't coming back or PM might ask, and maybe
+it's because we have a lexical search over a product description.
+It doesn't even matter if we, maybe we even do a vector search and just the
+fact that these are missing is a problem.
+Pretty basic stuff.
+And when we actually go and debug our data, we find these kinds of problems.
+Or sometimes we get stuff back and the data is just wrong, right?
+The product description, notice how the name is kids desk, but the product
+description is office chair and that's creating pretty misleading results.
+If we search for kids desk and there's a direct match on that with a lexical
+search system, that's going to create problems, right?
+I mean, it's even going to create problems, any kind of search system.
+So, and these are marked as irrelevant and you look at the name and you
+think they should be relevant, but then you, maybe you see a picture and you
+actually see the description, they're not actually relevant.
+A lot of people go down this rabbit hole, maybe where they have, they see the
+cool, exciting paper or your way of building search, but they don't actually
+take the time to look at their data and see what is actually wrong and really
+you could just get a lot started and I'll start to talk a little bit about
+methodology for those just by starting by labeling data, figuring out why
+boring old BM-25 baselines don't work and fixing data problems and LLMs can
+help with that.
+LLMs could be a big boon for that, right?
+LLMs can generate product titles and product descriptions that are more useful.
+You can even use things like clip to generate these things from images too,
+which are sometimes very much more consistently available on product
+catalogs.
+There are many ways of labeling things, hand labels, engagement based,
+LLM based labels even, and you can, it's really like one thing I encourage people
+to do is just to get started looking and seeing a very small data set, what's
+going on.
+So before we even get into, you know, what cool prompts I use in that kind of
+stuff, I think it's important to talk about the carthagology of all this stuff.
+So one thing I think is really important and a theme that I will talk about a lot
+in this talk and all my talks is doing some prototyping before bedding the farm.
+And by prototyping, I don't even need thousands of queries.
+I literally need started with 10 queries.
+So here I've got like 10 queries that I've taken just for early exploration.
+And if I can't make these 10 queries improved, I'm going to say it's probably
+not worth moving forward.
+Or if I figure out a way to make maybe a couple of them approved, maybe there's a
+way of targeting the improvement.
+But really if I can't, if it's like neutral for 10 queries, it might not be
+worth moving forward.
+So you guys have probably talked about a DCG, and this is just your normal metric,
+a ranking metric telling us whether or not we're moving good step towards the top
+or not.
+And you, there's a very limited DCG that I really like to use, especially when
+prototyping because it's like filters out things that are unlabeled.
+So a big problem when people look at DCG stats is we get results back all the time
+for bar corpus that don't have labels.
+So there's a couple of things you could do with this.
+And one of the most important things that you should do when you're systematically
+improving at any ranking system is really, really understand what you're
+measuring and every variant of DCG and DCG.
+I think there's as many variants of these as companies I've worked for or done
+something for.
+They're like all over the place.
+And I try to be really specific about what I'm measuring.
+If you go to some academic people, they'll say this is actually what DCG should be,
+which is we filter out the irrelevant or the unlabeled results, keep irrelevant
+results.
+So we sort of are measuring ranking, but only within the universe of the labeled
+results set.
+And this, you should be skeptical of anything, right?
+This is just one way of measuring.
+But what this is really answering the question, what this is really measuring
+is within the universe of label results, are we at least good enough to move
+relevant results above irrelevant results?
+Now, what is totally about questions is if relevant result is one and irrelevant
+result is one and relevant result is a hundred and then there's an irrelevant
+result and rank thousand.
+Is that really a fair comparison?
+You can get really fancy with these metrics, but for the most part, this has
+typically been pretty good for the kind of prototyping work that I like to look
+at.
+And then if we have 12 or so queries, we could take those labeled docs.
+Maybe we fix up a title or the document and we have enriched docs and we can run
+a little experiment.
+We can get rank results back and we can then ask a question like, did we improve
+this?
+And we're looking literally at like 10, 12 queries or whatever.
+We just want to see like, okay, where are the big problems?
+Where are the big gaps in why something like the M25 doesn't work?
+Like I talked about before, why are, why is this one thing I haven't talked about
+is one thing you, we would want to do when we're comparing this is compare this
+to the ideal ranking based on our labels.
+What is keeping us from approaching the ideal?
+And you'd be surprised more often than not, how much simple in the past, we
+would have like maybe hired a team of labelers to fix or team of annotators.
+How much simple work there can be to improving the M25 baseline without having
+to like completely re-infinite your entire search system.
+So one thing I'll mention, by the way, is I'm coming at this from, I know this is
+a rag course, I'm coming at this from just some context setting.
+I'm coming at this from the, from the complete opposite perspective.
+I'm coming at this from, I have a search application that I want to make smarter
+with, with generative AI, which is quite a different use case than the opposite,
+which is I want to insert search into a chat application.
+So I'm looking for ways of like improving these sort of short queries that you
+might not see in like an LLM or a chat bot.
+I'm doing more of the opposite where it's very much, I get these
+short queries in my decars.
+How can I look at my query history to find gaps so that I can make obvious
+improvements and a lot of times in those systems, we have a mature existing
+search system and doing something like adding, we probably have a mature
+elastic search, solar, whatever open search, completely changing our search
+infrastructure or even adding something is a fair amount of work and may not
+necessarily be, they are may not be worth it.
+And sometimes people are in different positions.
+Sometimes people want to go for the like big hail Mary of adding a new system.
+Other times people just want to, want to tune up and sort of like look for
+tactical purpose or both.
+Both are perfectly valid.
+Yeah.
+And if we get to a point where we feel like these queries, we're actually
+making progress with these queries, we've solved a problem, maybe a bunch of them
+are neutral, but we have a classic problem where a subset are approved maybe by
+adding product descriptions with LLMs.
+Then we can maybe now we work with 24 queries and we just keep scaling up and
+scaling up, maybe we multiply by two each time.
+And one reason for doing that is it's expensive to go through this LLM, right?
+And we don't necessarily want to start doing this with 10,000 queries with
+every document in our corpus.
+We need to be going to our PMs.
+We need to be going to our teams with promising approaches.
+I would argue even before we're really like doing a lot of like explicit planning
+of how we're going to build an AV test or even how we're going to build a large
+full scale offline test with thousands of queries.
+So it really is valuable to have kind of a, I would say like Kaggle-able or
+Google collab-able.
+Like if you can run it within the amount of RAM that a free collab instance gives
+you, I feel like that's a good signal of like, of a healthy prototyping cycle.
+Yeah.
+So let's talk about fixing the problem.
+This is just a snippet of NDCG code.
+And, but I will say you can find notebooks.
+There's also a appendix slide in this with the notebooks.
+When I going through the stuff, when you actually look at the data and I say there
+actual problems to solve.
+One thing I noticed is that the title, we already saw this, the titles are wrong.
+Well, we know the description, their descriptions still seem to be accurate.
+So as a simple example, we could just say create a very short three to
+four word title for product descriptions.
+Prefix your response with title colon is just a, and we're only using descriptions.
+And I give some examples from the data of good or bad titles just to give it some
+good few shot example ranking.
+And I'm not even using when I do this and you can go through the notebook, not
+even using actually, I realized I got the email the other day and I wasn't paying
+attention that GPT three dot five is going away.
+So I got a right dough and change surf GPT four micro or whatever.
+I'm not using fancy LLM.
+I'm just using like GPT three to five.
+And I feel like if I can't get a little bit of signal on the cheapest possible
+LLM, it may not be worth forgetting that extra like 10% or whatever out of the
+next LLM.
+So just a simple prompt, simple examples, and then I can sort of get these.
+So notice these fixed titles.
+They start to get reasonably fixed titles and I can go through this and I can sort
+of like iterate on this data by itself, iterate on the crowns, get a sense for,
+am I generating titles that are reasonably reflective of my data?
+What's nice about this is these titles now are all going to be consistent.
+They're all going to be something that a, any similarity system could match within
+the constraints of that similarity system.
+We're not going to have to deal with these like inconsistent times.
+And when I do that generally see, I see almost universally positive or neutral
+results and you can see a TCG test went up to from, I think the baseline was part
+three one.
+Now let's like four, three cents.
+And you can see this desk for kids obviously had that problem.
+And so that just kind of points at it's sort of like standing in for a class of
+query.
+That's not, not actually working that hard or not actually working that well
+because of inconsistent product titles.
+There may be other things that would have similar problems.
+We have this one minor degradation that it might be worth digging into to see
+what happened there, but other ones sort of improved a little bit too.
+So generally things are positive.
+This might be a good point where you say like, okay, well let me scale up to like
+another 10 or whatever crew to see if this pattern continues.
+If there's other queries like desperate kids, let's just keep iterating on this.
+I will.
+The other thing I'll say is one thing I also looked at that also had a similar
+result was not just searching.
+I'm not actually showing the code I'm doing in collab to search.
+I'm using a library I create called search array, which is a BM 25 search index
+in pandas.
+That's just useful for prototyping, but I actually searched the combination of
+the actual title and the title that I generated.
+So both actually provide pretty good same.
+Hey, are your rag applications falling short, despite using the latest
+frameworks and models, you're not alone.
+I'm Jason Liu and I've helped a dozen companies improve their AI applications.
+I've developed a systematic approach that delivers results.
+If you want to check it out, join my free six week email course and learn the
+techniques I use in my own consulting practice.
+That way you can stop guessing at what works and measure what matters.
+Just check out improving rag.com.
+So what ends up happening is it used to be the case that we would have these
+problems and we would hire a big team to clean label for Stata.
+And obviously one of the big problems, LLMs is we could get a team or we could
+get an LLM to do this work for you.
+It used to be I would create instructions for a team and they were of labelers and
+I'd hire the fab a dozen people going through my data and try to clean it up.
+And the PM or some content domain person would be in charge of doing this.
+Today.
+Now I feel like that domain expertise is much more sort of writing a prompt to
+people, of course, you're writing a prompt to an actual LLM.
+And, and one thing that I don't have in here is there is a, the feedback
+loop is really what's up.
+So if I do this one on the left and I send it over to a team and I look at the
+data, you know, weeks later, and it's not right, you may just give up on this
+entire effort altogether.
+I teach a lot of effort on the right.
+I get the data back instantly and I could be like, Oh, these titles are weird.
+They have nothing to do with how people search, blah, blah, blah.
+And it's sort of like, it's tightening the feedback loop tremendously.
+I didn't do this part.
+If you want to go through my notebooks, I leave it as you.
+If you want to create a prompt to fill in empty descriptions, and it's interesting
+to think about what ways would be good to do this because some of these, what's
+this assume for the sake of argument that the ones without descriptions have
+good titles, how do we generate a good description?
+Descriptions are actually more proposed than the title.
+Would we need extra data?
+Would we need something like an image to help us out here?
+What ways would there be to fill in descriptions?
+And that's, I leave that to you to think about.
+That's really what GAR is about.
+We have GAR coming in, cleaning and tagging content.
+We have GAR interpreting queries, maybe GAR to post process search results.
+And importantly, instead of a PM on domain X for our strongly in the loop in how
+we're cleaning up data, we're looking at how the data is being, you know, working
+with our search index and we'll try to use LLMs to find ways to interpret things,
+improve things and that kind of thing.
+But there's an, that's sort of like the obvious take, right?
+Of course we can clean up data.
+You guys are probably maybe in your RAG course, you've talked about things like
+two tower models, or you maybe you've seen two tower models in the embedding system,
+but there are a lot of lexical similarities that sort of reflect how
+embeddings work that we used before as a sort of like lexical analog to embedding
+system, but to motivate that a little bit, I want to mention there's this big
+problem in search that I'm sure, which is the vocabulary mismatch rule.
+So you have this like formal light fixture, and then you have this
+like a least chandelier, like nothing on the left is matching or, and
+that's a vocab mismatch.
+And of course we could go and make a vector search system for that.
+Totally, totally possible.
+The other thing we could do is, and this is like the first thing that I hear
+people think about all the time is to think about, I want you to take this
+data, these queries, and maybe here are some light matches between queries and
+products, I want you to generate synonyms.
+And specifically I say like, you're an e-commerce products SEO, all that
+a lot and just sort of like generate synonyms on these categories and try not
+to generate synonyms beyond these.
+And ideally might have something like traditional to elegant formal light
+fixtures, a state chandelier, these kinds of things.
+And I've talked to teams all the time about this and this just turns out not to
+work that well, and I'll talk about why in a little bit, but it's, it's, we're
+more or less blindly applying synonyms and it get pretty consistent results.
+Interestingly, this query that we know has a big problem kind of works okay.
+It improves a little bit, but we have a lot of degradations.
+So it's pretty men, right?
+And we look at the actual synonyms being generated, unless we put a lot of work
+into this, which I'll talk about how do we might do that in a little bit, we see
+things like some pretty dumb synonyms like upholstered bed, furniture is a
+synonym for bed.
+Well, I guess it's sort of is, but it's so broad.
+Youngster for check for kids.
+I mean, who searches for youngster?
+This is kind of smart.
+Actually.
+It's like, Kari is actually modern and contemporary.
+Like it knows what that product line is.
+Two piece set or hair.
+Like that's actually kind of interesting.
+So there are like interesting things in here, but there are also kind of dumb
+things and part of the problem is synonym is a pretty messy concept in language.
+Like when we think about how it's hurt, how language is related, like synonym
+just means related term.
+It doesn't mean it's more specific.
+It doesn't mean it's less specific.
+It doesn't mean it's a broad category that includes this.
+It doesn't mean that it's just an alternate label that shares 99% like USA
+versus United States of America.
+That's just what we would say is an alternate label.
+Those are exactly the same thing, just spelled differently.
+Right.
+When you really talk about synonyms, you really have to be specific of what you
+mean in a lexical context and how people use these, this terminology of search is,
+is very different how people search.
+They're not even aware that they think in terms of broad categories and then
+narrowing it down and all that stuff.
+And what random synonyms just tend to do is if you think about the query
+document similarity space, we're sort of like taking each thing.
+Some of these are queries, some of these are documents, and we're just sort of
+like jiggling it and moving in some direction.
+And then the missionality here is really high.
+So if we like push something just a little bit in one direction, push it in
+another direction, it's really going to mess up this sort of similarity that
+we're hoping to create.
+It's not actually born by like query document relationships.
+What we really want to do is try to jiggle these a little bit closer so that
+things that are relevant are staying together and things that are irrelevant
+kind of move farther apart.
+And if you've worked with a two tower embedding model, it's a very similar kind
+of concept.
+We have a set of attributes or features and we move some clips or some further
+apart.
+So sort of an unspoken hero to this day of search systems are actually taxonomies
+and managed vocabularies.
+And Google actually has a product taxonomy.
+This is just a snippet of it that breaks down taxonomy nodes and to see, think
+about as a folder structure, we have a top level category, a category into that
+category under long.
+And a big trick that has often people have often done for the longest time with
+search to make a semantic search system is they'll map a query to a taxonomy node
+and they'll do kind of a similar taxonomic similarity reiki as like almost
+like the outer most ranking.
+So the most similar thing that you would maybe expect if you're searching and you
+use, if you, let's say you typed a query, this isn't the exact query you typed,
+but you typed a query that maybe it was toddler, bed or something, and it mapped
+to this or toddler bed accessories in a map to this node.
+The first thing that you might expect in search results are basically types of bed
+accessories and those are hyponyms.
+Those are more specific concepts.
+Those get narrower in the taxonomy.
+The next thing you might expect is parents.
+So more general things, slightly more general.
+So baby and toddler furniture.
+So we maybe don't have this stuff, but maybe we can show you some toddler
+furniture, who knows, maybe it was slightly mislabeled, maybe it's relatively
+close to what you want.
+It's your head.
+And then finally, we might show siblings.
+So other things in these categories.
+So siblings to this category.
+And this sort of taxonomical ranking is really foundational thing that you
+see in a lot of search systems.
+And it's funny because it's one of those things that's not, it's been around for
+a long time, there's not a ton of like, it's not exciting or sexy.
+And so there's not a ton of content out there that talks about this, but it makes
+a fantastic way of doing, of doing, building a kind of almost two tower
+system of labeling queries and documents in a similarity space that is shared
+between query and document in a way that when we, we can issue a search for this
+and get back products in this, if we label our products with taxonomical labels,
+get back things in this taxonomical similarity, right?
+This is extremely powerful and it's has the advantage of being in this
+interpretable lexical space where if there's a problem, someone can actually
+go and manually change a taxonomical node or how something in the query
+lookup database or whatever.
+So I inspired by this, I created an LLM prompt, give you a product description,
+give me the Google product taxonomy, it likely falls in and I gave it a subset
+of taxonomy, this taxonomy and I gave it some examples.
+So I actually listed a subset of taxonomy.
+This is tricky.
+This, the one thing I'll say to this is because the taxonomy is relatively large.
+If you don't tell about the taxonomy, it is prone to hallucinating a taxonomy.
+So you have to be pretty careful with that, but you can, there's enough
+context to give it, at least I guess I would give GPT-3 enough of that
+for richer taxonomy and I gave it a bunch of examples of like cases where
+there's, you know, edge cases, different weird things, this might look like it's
+this, but it's actually that kind of thing.
+So really important stuff.
+And as you encounter problems, of course you could tweak your examples.
+And this is extremely powerful because one thing that is a good, I think, a
+powerful attribute of lexical similarity systems is if you can iterate on both
+of these towers independently in such a way that it makes the combination work
+really well, so as a, as like that PM that's in the loop, so to speak, or a
+data scientist with their PM hat on, you can see that there's problems.
+You could tweak that label and you can say, oh, or you could find problems.
+You can add examples that correct those.
+You can find ways of approving these things and you can measure like how
+good is my, given a hand labeled set, how good is my query to taxonomy label?
+How good is my product to taxonomy label?
+So these things are entirely possible with LLMs.
+I think it would be cool even to think about could we fine tune LLMs that are
+just focused on this kind of taxonomical label like sort of like much more
+efficiently and that's also, and maybe even like finding ways of shrinking them
+so that they could be done more efficiently just for this use case.
+And as a hack, this is just a long-term search hack is using, you can use
+BM25 for taxonomical similarity.
+And really what happens is if you issue a search that is this as a query.
+So let's say we have our query maps to this, this as a query, it's basically
+furniture or slightly it's child or the next child, this actually plays really
+well with the 25 scores if products are labeled the same way, because if you
+think about it, this is the most common thing, this is the lowest value in the
+BM25 scoring function, because it's a low idea for hop a technique frequency.
+And as you get more specific, it will value those more specific matches even more.
+There's other factors too, like if you're an exact match, you have 25
+tends to prefer those because you're matching a hundred percent of the terms.
+If there are additional children and stuff, it might, it's like siblings and
+whatnot, it's not going to prefer those as much.
+And I went to a talk that's probably 10 years old that talked about using
+taxonomical similarity probably in Solver back in the day.
+But these, these techniques are nothing ever dies in search.
+A lot of these things are time immemorial techniques that work really well.
+And we do this, we also get a nice bounded similarity, get a slight
+drop due to some kind of misc here.
+The other thing that's interesting is when we had this query here might
+actually map to more than one, there's like outdoor furniture and there's
+rocking chairs and that actually points to, if you think about this, you could,
+of course, a couple of the ways we do this, we've started mapping things to
+more than one taxonomical node, totally doable, but it also points at the fact
+that, you know, sometimes it's, if you have a library and finding things in a
+library using the Dewey decimal system is extremely powerful when you have an
+LLM library and that's categorizing things, but often the real world is
+messier than that.
+So this isn't replacing something like vector search where this kind of thing
+crosses across different categories.
+So something like vector search is still possible, but there's also like a ton
+of ground to be gained just from doing more traditional semantic search kinds
+of things with LLMs.
+If we add the clean titles, we'd get even more of a boost.
+It's a little, it's a little additive on top of both, maybe, or maybe not
+stats-a, we'd probably have to start adding more queries.
+But the main takeaway is two tower kinds of approaches where we think about this
+query, query similarity, product-to-product similarity, and then also how they
+relate to each other can be extremely powerful and a lexical approach too.
+We can have LLMs in the loop helping us.
+And there are so many ways, like I talked to taxonomy as one of them, but you can
+imagine, and there are many other ways of doing thinking about different kinds of
+similarity that we might want to add that are a bit more maybe explicit lexical
+kinds of things like numerical attributes, like how close something is to the size
+the user requested, attributes about the user's explicit preferences versus the
+categorization of the content, different kinds of, you know, obviously taxonomic
+classifications beyond item type, color, et cetera.
+Like one of the things I did many, many, many, many years ago with a fashion
+search was literally just going before LLMs or then brawling the web for how
+people talk about colors and like building my own taxonomy, that was extremely
+powerful.
+You can do things like how people are correcting searches and find there's a
+similarity there, how people like refine their searches historically.
+All of these things can be really powerful things that I can have LLMs in the loop
+to increase the, how well a search system works in practice.
+So that's my brain down.
+Just talk about some conclusions.
+I sort of went at this before.
+There's not a replacement for vector search.
+I think one of the most important things about search is that every, any, if you
+think about it in terms of machine learning, the most valuable machine
+learning features are orthogonal, like independent, more independent of other,
+of the existing features.
+And to do something like that, like things that are going to be more independent or
+orthogonal are probably going to come from a completely different paradigm of
+thinking.
+So if you're coming into AI and you get into vector search, well, things that are
+lexical, like did the title directly match this term or is there a taxonomy
+similarity is, is a more novel feature than a, maybe a different kind of a
+bedding representation and vice versa.
+Like, so if you're coming at this for me, I have an existing lexical system.
+Obviously vector search is going to provide things that cut across lexical
+categories in ways that are unique and powerful.
+I've also had situations where I've built an embedding using, there's like sparse
+embeddings using taxonomies themselves, or these kinds of using sort of like
+higher level categories, flat categories to build embeddings.
+And so these things aren't necessarily mutually exclusive.
+Like you can have embeddings built from sparse categories and these things more
+and more, they're sort of like the hate dialectic of two opposing things that
+come together.
+Another thing, this happens all the time.
+People start these massive initiatives that are going to take years, but they
+don't, they don't have the muscle to look at 10 queries and figure out
+debug, what's wrong with them.
+Like that's huge.
+IR research is not your data set.
+Like it's often, if you go to your BEIR, which is the, you know, looking for new
+ways of tech similarity across many, many data sets, in some ways what's there.
+Yeah, it's like a good foundation, but you really care about things for like
+in-domain fixes for your domain, not cross-domain foundational things.
+That's more of the realm of research and academia.
+If you're a practitioner, you're mostly like, what is going to help me with this
+data set tomorrow so I could ship an A-B test to show results to my boss.
+Yeah, like many teams just don't have that prototype muscle.
+And I really think like starting with those small sets of queries, playing with
+data, finding the gaps is more important than starting a big initiative.
+Like let's use LLMs to generate synonyms for queries against our flexible system.
+Really want to ground what improvements you're making in the data because the
+similarity space of changes you can make to queries and documents is so massive
+that if you just pick something that sounds like it's really cool, more likely
+than not, it's just by the probability of how similarities work and all
+dimensions you can walk, you probably will walk things in the wrong dimensions.
+So really have, I really believe in grounding things of the data
+that you actually see.
+Yeah, LLMs augment old school search hacks and keep PMs in the loop, which
+sort of like old school traditional search management.
+This is the slide my son made that I have, I'm obligated to put in every,
+everything to do.
+It has something to do with search for Amelia Earhart and you can throw
+fruit at me, rotten fruit at me.
+Thanks for watching.
+If you liked that video, make sure to like and subscribe.
+And if you want to learn more, check out improvingrag.com.
+We're going to talk about the foundations and not frameworks.
+Over six emails, you're going to learn how to overcome absence blindness, as
+well as how to fine tune language models, understanding diverse query types,
+improving multimodal rag, and ultimately smart question routing and build up
+UX that collects user feedback.
+Just check out improvingrag.com and fill out this quick email address at the bottom.
+Thanks.

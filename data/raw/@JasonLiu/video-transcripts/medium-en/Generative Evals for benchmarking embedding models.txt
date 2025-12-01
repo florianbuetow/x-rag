@@ -1,0 +1,859 @@
+Hi, everyone.
+Thank you so much for showing up.
+I'm Kelly.
+I work on research.chroma.
+We're an open source vector database company building retrieval for AI.
+And a while ago, we published some work on generative benchmarking, which is essentially
+a way to build custom eval sets from your own data.
+And yeah, I guess I'll just get right into it then.
+So I'm sure a lot of people coming into this are at least familiar with what evals are
+and why they're important.
+You need evals if you want to systematically debug your AI systems.
+And for retrieval specifically, it might look something like this, where you have this task
+where you're given a corpus of documents, you have a set of queries, and you also have
+query document pairs.
+So you would take an embedding model, you would embed that corpus of documents, and
+then for each query, you'd embed that, retrieve the top k documents.
+If you retrieve a matching document and a top k results, then that means you have a
+success.
+So that's how you get metrics such as recall, OK.
+And a very popular benchmark for this in retrieval is MTEP.
+It's also referred to as the Massive Text Embedding benchmark, but you've probably seen this come
+up a lot.
+If you see the release of any new embedding model, it's probably in the first few lines
+of the release.
+For example, this was Gemini's recent embedding model release, where they talk about how they
+achieve top rank on MTEP multilingual.
+And this was Suarajuna's release.
+They said they outperformed OpenAI and Coherent on MTEP.
+So MTEP is very popular and is widely used because it gives people a very easy and convenient
+way to compare embedding performance through a unified metric.
+But when you think about evaluations, you really have to think about what kind of data
+you're working with and really think about what you're actually measuring as well and
+whether that's actually useful.
+So when you think about those questions, there are some limitations that come up with MTEP.
+The first one being that the data itself is pretty generic.
+So for example, one of the data sets is a Wikipedia data set.
+So you might have a question document pairing like this.
+And the entire data set itself is pretty general.
+And even if you're working with domain specific MTEP data sets, like there is legal domain
+data sets, it might contain a corpus of legal documents.
+But it still doesn't get as specific as the kind of data that you're probably working
+with in your retrieval application.
+The second point is that the data is artificially clean.
+By this, we mean that the query document pairs are very polished.
+So you have this question here and the matching document is essentially like a perfect response
+to that question.
+But in the real world, you're often going to have queries where the user queries are
+a lot more ambiguous and it's not going to fully match the document.
+The questions are also likely to come up as more of like statements rather than complete
+questions like this.
+And lastly, there's also a risk of data contamination.
+So because a lot of these data sets, they're all like public data sets, there's a pretty
+good chance that the embedding models you're evaluating have seen this data before.
+So it becomes pretty hard to differentiate whether you're testing for true retrieval
+or if the models just memorize that benchmark before.
+So I guess to summarize all of this about MTEP, if you have really good performance
+on a public benchmark for a given embedding model, that doesn't necessarily guarantee
+that you'll also get that good performance for your specific production pipeline.
+So that's why we started working on generative benchmarking.
+As I mentioned before, it's a way to generate a custom eval set, which basically consists
+of a set of queries.
+And because we generated queries from those documents, we end up with query document matches
+all generated from your data.
+So it addresses the limitations that I talked about previously, because this eval set is
+generated from your data, it's as specific as you can get.
+The queries themselves are also more realistic, we generate them in a way that they're maybe
+like more ambiguous to reflect real user queries that you might see in production.
+And lastly, if you're working with your own private data, you also know that the data
+hasn't been seen by these embedding models before.
+So you know you're actually testing for retrieval and not memorization.
+So generative benchmarking is pretty useful if you're building a retrieval application,
+because it can help you select the best embedding model to use for your data.
+And it can also help you iterate on components of your retrieval pipeline as well.
+For example, you can experiment with adding a re-ranking step, you can experiment with
+chunk rewriting as well.
+Because you can generate a custom eval, every time you make this kind of change, you can
+your quantified metrics change as your retrieval system changes, which is very useful because
+it's not something you can currently do with MTub.
+MTub is literally just a static benchmark, the score doesn't change for a given embedding
+model.
+But if you have a generative benchmark, you're able to see how your performance changes as
+you change your retrieval system.
+So I'll go through this entire process of generative benchmarking through a case study
+on waste and biases.
+We partnered with them for this technical report, specifically using their technical
+support bot.
+So the bot would basically work in this kind of fashion where you have a user query, like
+how can I view my previous runs?
+And the bot would retrieve the relevant chunks of documentation.
+And then using those relevant chunks, it would generate a response.
+So it's just basic rug.
+And for this case study, we used our document corpus, which contained around 13,000 chunks
+and around 2000 real user queries from production.
+And we use those real user queries because you kind of use them as a proxy for how representative
+our generated queries are.
+So I'll get more into how we did that analysis later on.
+But we got some pretty interesting insights from this.
+The first one was that the original embedding model that they used actually performed worse
+out of the four that we tested.
+We also saw a contradiction with the MTEP model rankings.
+So kind of showing that you really need to evaluate on your own data and not just generalize
+from these MTEP scores.
+And lastly, we identified a pretty good portion of document chunks that were judged as irrelevant.
+And I'll get more into what that means later on.
+But yeah, the overall generative benchmarking process can be broken down into these two
+steps.
+First, you have chunk filtering.
+So this process basically filters for chunks that are good to generate queries from, filters
+for topics that users will actually ask about.
+And then from that subset of filter chunks, we're going to generate our queries to end
+up with an evil set of queries.
+So the first step is chunk filtering.
+And yeah, as I just mentioned, the purpose of this is to identify the document chunks
+that users would realistically query.
+This was an example of a document that was filtered out for reason biases.
+It's about the startup raising $3 million.
+It's pretty unlikely that a user using their support bot would ask about this.
+They probably want to get help with debugging or just ask about their technical documentation.
+They're probably not going to ask about anything related to startup news.
+So we would want to filter out these kinds of documents so that we generate queries from
+topics that are actually relevant to the user so we can get more of a representative evil
+set.
+We do this chunk filtering using an LLM judge.
+But more specifically, we use an aligned LLM judge, which basically means that we have
+a set of human label data, and then we iterate on our LLM judge to make it more aligned to
+that.
+And we do this using a framework called evalgen, where we basically have a set of LLM judge
+criteria like the ones to the right here.
+And then we also have a small subset of human label data.
+So these are like document chunks that were labeled as like good or bad document chunks
+by humans.
+And so we run our LLM judge, see how it compares to our human labeled data, and then we keep
+iterating on each prompt, maybe switch out a few criteria and see how our alignment score
+changes.
+So once we got a pretty good alignment score, we use that to filter out the rest of our
+document chunks.
+So we initially went from our set of around 13,000 document chunks to around 8,500.
+And so now that we have our filtered out document chunks, we move on to query generation.
+And we're going to do this by using user provided context and example queries.
+So the LLM prompt might look something like this, where you give it the context of the
+kind of retrieval application you're building.
+You give it the document chunk.
+And then you also give it some example queries as well.
+And these are pretty important components because providing the context basically helps
+to get the LLM to focus on the kinds of topics that users would ask about and example queries
+help with the style of query to generate.
+And so if you were to naively generate a query, which basically means that you would generate
+a query by literally just giving it the document chunk and telling it to generate a query without
+giving it any context or example queries, it might generate something like this, asking
+what is the purpose of artifact versioning in Ways and Biases?
+Whereas if you give it the context that this is a technical support bot and talk about
+what Ways and Biases does and give it some example queries, you might get a query that's
+more realistic, like artifact versioning not working.
+So these, I guess, user provided components are pretty critical for generating realistic
+queries that are maybe more like ambiguous and reflect practical scenarios.
+So now that we have our EVO set of queries, we also have our query document pairs.
+Our query document pairs are basically formed by the document that we generated the query
+from.
+So now we're going to run our retrieval task.
+And we do this by first choosing an embedding model we want to evaluate.
+We use this to embed each document chunk, store it into a vector database.
+And then for each query that we generated, we would embed that query and retrieve the
+top K document chunks.
+And if the matching document chunk was in our top K results, that would count as a success.
+So that's how we get retrieval metrics, like Recall K, NDCG, et cetera.
+And so we can run this retrieval task for various embedding models.
+So in our case, we tested it with four different embedding models.
+And we also tested it with the ground truth production queries as well.
+So with the production queries, like the 2000 that we got before, we labeled them manually.
+So we found a matching document in the document corpus.
+So that formed our query document pairs.
+And then we ran the same retrieval task with our production ground truth queries to kind
+of use as a proxy for how representative our EVO set is.
+And these are the results that we got.
+So you can look at the blue bar, which is our ground truth production queries.
+And the red represents our generated queries.
+And these are the Recall at 10 scores.
+And we performed this across four different embedding models.
+We used two OpenAI models and one genome model, one voice model.
+But you can see here that the ranking of our embedding models is consistent, regardless
+of whether you look at the ground truth queries or the generated queries.
+And you can also see that the scores themselves are also pretty similar, especially when you
+compare it to the naively generated queries here too.
+So the naively generated queries are the queries that we generated, doing no document filtering.
+And when we were generating the query, we didn't give it any context or example queries.
+So the most basic query generation you can do.
+And you can see here that our naive generation method gave us scores that were significantly
+higher compared to our ground truth production queries.
+And this is because when you naively generate a query, you're more likely to generate a
+query that is very specific to the document chunk, also in the form of a complete question,
+which is not very realistic, but it also makes the retrieval task a lot easier, which is why
+you get these higher scores.
+But when you're evaluating different models, you don't necessarily want to aim for higher
+scores. You want scores that are more realistic.
+So what we're aiming for here are metrics that are more aligned to our ground truth scores.
+And another interesting finding here was that our generated benchmark resulted in different
+embedding model rankings when we compared it to MTub.
+So these are various embedding models on MTub English tasks.
+You can see here that Gina's model outperformed OpenAI's large model.
+But if you look back at these results here, you can see that OpenAI's large model performed
+better than Gina.
+So the rankings are flipped in this case.
+So this just goes to show that you really need to test on your own data and you can't
+always generalize from these MTub scores.
+Like if Gina did well on MTub English, that doesn't necessarily mean that it's also going
+to do well on your technical documentation.
+It also doesn't mean that OpenAI's large is always going to outperform Gina.
+There are definitely cases where Gina would do better than OpenAI at large.
+You just have to see on your own data and experiment.
+So these are some of the insights we got from this case study.
+The original embedding model that they use was text embedding 3 small, which performed
+worse out of the four models that we tested.
+We also saw the contradiction with the MTub model rankings that I just discussed.
+Through our LLM judge chunk filtering step, we were able to identify some irrelevant document
+chunks in the corpus.
+So in your retrieval application specifically, there are a few useful applications of generative
+benchmarking.
+Even if you don't have production data yet, you can use generative benchmarking.
+If you only have a document corpus to work with, you can use that to select the best
+embedding model for your data and engage how well your current retrieval system is performing.
+Identify these potentially irrelevant chunks.
+You probably want to take a look at it manually just to make sure that it's aligned with your
+judgment as well.
+And I went through this before as well, but you can use generative benchmarking to iterate
+on specific components of your retrieval pipeline.
+But I think it becomes even more powerful once you actually have production traffic
+to work with.
+So if you have queries from production, you can use that for things like query alignment,
+which is this first point here.
+So let's say that you have a set of production queries and you have your eval set of queries.
+You can cluster your production queries maybe by topic, and you can kind of see the distribution
+of topics that your users are asking about.
+And then you can use that distribution and align your eval set to that so that it matches
+the distribution of topics that your users are actively asking.
+That would just make your eval set even more representative.
+You can also use this to identify knowledge gaps in your document corpus as well.
+If you have these incoming queries, you can see what kind of queries might be out of distribution
+with your eval set.
+And that can be an indication that maybe that kind of topic isn't covered in your document
+corpus.
+So yeah, these are all pretty useful applications of generative benchmarking, which you're not
+really able to get out of just public static benchmarks right now.
+And there's some final notes here.
+I think the main takeaway from this entire talk is that if you have good performance
+on public benchmarks like MTEP, that doesn't necessarily guarantee that same performance
+for your specific use case.
+And generative benchmarking is a pretty good solution to that.
+And when we talk about generative benchmarking, that also doesn't mean that this entire process
+is 100% automated.
+You do need some human in the loop if you really want a good eval.
+For example, you would want to align your LLM judge.
+You want to add in user-provided context and example queries to steer your LLM query generation.
+So you really just need to take a look at your data and make sure that this entire process
+is aligned to how you might judge the data that you're working with.
+And if you want to read into some more details, we have our full technical report available
+at research.tricroma.com.
+You can also try this out for yourself.
+You can literally just run these two lines in your terminal and try out generative benchmarking
+on your own data.
+And yeah, last point here is that Chroma Cloud is now live.
+You can go sign up, try out Chroma Cloud at this link here.
+I think that pretty much concludes it for my talk.
+I'm happy to answer any questions now, but thank you everyone for taking the time to
+join today.
+Thank you as well.
+I heard that there were some new research reports coming out.
+Are you able to foreshadow or hint at any of the new material?
+One thing we're working with right now is we're looking into long context versus retrieval.
+I feel like that's been a pretty big debate for a long time.
+And when you think about long context, you probably think of benchmarks like Needle in
+the Haystack.
+That's a very popular test that you'll probably see in a lot of LLM mono releases.
+But Needle in the Haystack is a very easy task for LLMs, and it doesn't necessarily
+cover the practical use cases of long context.
+Just for some more background here, Needle in the Haystack is a very easy task where
+given a large corpus of tasks, and the LLM just has to pick one tiny portion of that
+LLM context.
+We don't really have any indication of how it's processing the entire LLM context.
+So we're just doing some more robust testing on various long context tasks of varying levels
+of difficulty, seeing which ones actually align with more practical use cases, and looking
+into how retrieval can help you overcome those challenges as well.
+But it's been something that we've been thinking about for a long time, because I think a lot
+of people are kind of misled by when people talk about long context, people just think
+like, oh, models just do really good.
+I can throw everything into the context.
+It's going to do well.
+But no, that's really not the case.
+You really need to do some more robust testing.
+And we're hoping to show people that.
+Lovely.
+Yeah, I'm really excited for some of this kind of stuff.
+I feel like I've been making fun of people saying RAG is dead.
+And they now get it.
+So I got to step back my statements and explain why.
+Cool.
+Let's jump into some question answer.
+Let me know if you want me to take over any of the questions, too.
+I think a lot of the stuff is actually covered in some of the stuff that I'm teaching.
+I will say one call out for those who are sort of participating in the cohort.
+Chroma is giving like $1,000 of API credits.
+So I think you're going to email sometime at the end of the week or today or end of
+the week on how to get access to that.
+So that should be pretty interesting.
+I think the first question people have is, how do you pick your future examples for
+career generation?
+So I have sort of my thoughts.
+I'm curious how you guys did it in your analysis.
+Yeah, in our case, we got to work with production data from Ways and Biases.
+So we had actual user queries.
+So we would just randomly select around like five or six from those and then use that
+as part of the LLM context.
+But if you don't have any production queries, it's also pretty easy to just manually
+write them yourself.
+It doesn't really take a lot around like five to like seven example queries is good.
+If you're building maybe like a rag like shop bot, you can probably predict like what
+kind of questions your users are going to ask.
+You know, they're not going to be like complete questions, most likely like statements or
+like people are trying to like debug something if you're building like, I don't
+a technical support bot like Ways and Biases.
+So it's pretty easy to like, I guess, like kind of predict.
+But once you start getting production data and you have like a few example queries to
+work with, then you can start to use those.
+But regardless, like I think it's pretty easy to like get like a small set of like queries
+to put into the context.
+Yeah.
+What are your thoughts on this?
+Yeah.
+So generally, a lot of the work that I've been doing has been working with companies
+that have like a vertically integrated AI.
+And so we just harass our subject matter experts.
+Okay, what do you actually care about?
+Like, what are the things that really are important to you?
+Like if you're looking at legal questions, like what kind of search are you doing?
+And we'll kind of have a set of those questions.
+And the other thing that we do is we'll actually just pass LLMs through all the text chunks
+that we have and we'll do some kind of role playing exercise that says, hey, you are a
+paralegal working a case, you've been shown this document, journeyed a couple of questions
+that would have retrieved this document.
+And then we go back and we harass our lawyers, we harass our subject matter experts and say,
+is this realistic?
+Is this something you actually care about?
+And kind of do that process.
+Yeah, yeah.
+I think I've seen that approach a lot too, like kind of asking like an alum to like play
+this role.
+Like if you were this kind of person, like what kind of queries would you ask?
+But I think, yeah, like you mentioned, it's really important that you actually have people
+manually review it as well.
+Like don't just give it to an LLM and trust that the example queries are good.
+Like, you know, get an expert out the data and, you know, make sure they're actually
+reflective of what your users will ask.
+Yeah.
+The latest thing, which I've been testing recently, is actually doing deep research
+first.
+So you do the same exercise, but you do deep research and say, OK, I'm going to build a
+search system for lawyers that have to deal with their own claims.
+Go do deep research.
+Prepare me the document.
+And then that's like half of my prompt.
+Surprisingly good.
+Right.
+Really?
+I haven't tried that, but that could be interesting to experiment.
+Because we did this for like restaurants and people were like, oh, you know, we might ask
+about things like availability and like whether or not there's parking and how you do reservations
+and can you do like catering?
+It's like, oh yeah, those are questions people ask, but we only supported like search over
+the menu.
+But a chatbot should be able to answer this kind of stuff.
+And now I'm going to go to web crawlers and make sure we do have the information about
+like parking or like do you like, you know, all this kind of stuff.
+It's been a really fun task.
+Yeah, that's interesting.
+The inventory that we have.
+Yeah.
+I guess a follow up to this is once you have these queries, you know, can you talk a little
+bit more about the KPIs or metrics you use to evaluate retrieval here?
+I think I saw ndcg, but I'm curious to hear more.
+Yeah.
+Oh, oops.
+Yeah, the main metrics we use were, like you said, ndcg and recall.
+We just use these like quantified metrics that you can immediately get from the retrieval
+task.
+There are other kinds of metrics that you can get if you use an LLM judge.
+You can judge for like faithfulness and things like that.
+But yeah, for this task, we just looked at recall ndcg.
+Just very basic metrics that you can use.
+We didn't use an LLM judge.
+It's because for our research, this was kind of enough to show that our generated queries
+were relevant.
+But I imagine if you're applying this to your own retrieval application, you can also add
+in those more qualitative judgments as well if you want to test whether it's factually
+correct.
+Yeah, probably makes sense.
+I also find that when you're doing these large evaluations, I think in this example you had
+8,000 chunks.
+We've seen situations where you're doing testing over 10 million documents.
+Doing the retrieval takes like 50 milliseconds per test, but if you do an LLM, it's like
+one second per test.
+And then you wake up and say, hey, who ran the evals?
+We just spent $5,000 on LLM as a judge.
+Yeah, it can get very expensive.
+So I think just having these metrics like recall are honestly pretty good.
+They can be sufficient if you're just starting out and if you're working with a lot of data
+as well.
+Yeah.
+Oh, this is a curious question.
+Anything that you would caution others about when building out evals and observability
+for any of these tools?
+Have you or any of your customers felt any traps when building RAG applications?
+I think it's really easy for a lot of people to use automated evals and they don't really
+take a look at their data.
+For example, if you are thinking about this chunk filtering step where you use an LLM
+judge to filter out certain documents, I think a common approach that people might do is
+they just give it a prompt and trust that it would work.
+But it's really important that you iterate in small steps and you actually look at the
+So we initially worked with just a small set of 300 document chunks.
+We manually labeled each one and then we will keep iterating on it, I think, four times
+or something until we got it to be pretty aligned and then we extended it to the rest
+of our corpus.
+So I think my recommendation would be to start small, don't scale way too quickly and automate
+everything.
+There's a lot of manual work that is required in the beginning if you want to do good evals.
+Yeah, you can't delegate all the thinking to these LLMs.
+I would agree in the sense that a lot of it is just a reluctance to actually look at the
+examples.
+There are so many situations where we just run these evals like, great, this factuality
+V1 score is 78, is that good or bad?
+We don't really know.
+And then you actually look at the example and it's like, oh, it just seems that the
+longer the answer is, the higher the score is.
+Is that actually what we want?
+That's one thing.
+Yeah.
+I'll say the second thing too, which aligns really well with what you talked about in
+terms of the LLM evals, which is I think too many people lean on these LLM evals, which
+kind of give you this feeling of control because you're kind of always twiddling with the generation
+prompt.
+Like maybe if I change the prompt, the answer score will be better.
+But really, if you find out that your recall is very low, you just can't find the document
+because of some phrasing in the text.
+If your search is bad, everything else downstream with that is really bad.
+But I think people feel very empowered to twiddle with the prompt versus actually figure
+out how to make search better, actually think about the embeddings or thinking about what
+is good precision or having evals there.
+Yeah, exactly.
+You can't really get very far if you're only looking at the prompt.
+And I feel like a lot of that is honestly just based off of vibes too, what kind of
+output are you getting?
+There's really no systematic way to do this if you're not working these incremental steps.
+Yeah, yeah, yeah.
+I think too many people are like, okay, given an open textbook, can we get the answers?
+Actually, do you even know what page the answer is on?
+Yeah.
+Checking that you found page seven is much easier than figuring out whether the answer
+you wrote based on reading this book is straightforward.
+Let's go some other interesting questions here.
+Oh, what was your experience with the contextual chunk rewriting?
+I know you guys maybe did an article beforehand, but I'm curious, how did that actually improve
+search?
+We didn't include it in this specific technical report, but yeah, we have done some experimentation
+with it before.
+I guess for some more context, contextual rewriting is where you rewrite all of your
+document chunks so that it's situated in the context of your document.
+It was originally some work done by Anthropic, but basically you would do this for each document
+chunk.
+You would pass that and the entire document into an LLM and tell it to generate a summary
+for it, contextualizing it.
+Then you append that context to the beginning of the chunk.
+This is pretty useful because maybe if you're working with some financial document or something
+and you have a lot of tables, maybe a chunk you have is just a table with a lot of numbers.
+There's no context into where that came from or what any of those numbers mean.
+If you retrieve that, then that's really not going to be useful to you at all.
+Context is really important.
+We've done some work before experimenting with this.
+It does help a lot, but I think a downside of that is that it's also very, very expensive.
+You're running an LLM and giving it the entire document for every single document chunk.
+If you have tens of thousands of document chunks, it's probably not realistic to do.
+When we were actually looking at our data, we realized some of the chunks don't really
+need contextual rewriting, whereas some do.
+It's probably not necessary to rewrite every single chunk.
+I think maybe this filtering step could be pretty useful for that.
+Instead of just classifying a chunk as good or bad, maybe you can just have ... In this
+process you can classify it as, oh, it needs context or it's just really poor quality,
+you can't use it at all, or it's just good.
+If you end up just with a subset of document chunks that you contextualize, I think that's
+a more cheaper and efficient way to do it.
+I haven't tested it out fully, so I'm not totally sure what the metrics will look like
+on that.
+But, yeah, contextual rewriting is useful, but also very expensive.
+I would be more intentional about how you use it.
+Well, this is the benefit of having an actual eval harness, because I think the real conversation
+here isn't, should we use retrieval or should we use contextual retrieval?
+It is, okay, well, if we use contextual retrieval, our metrics go up 2%.
+Is that worth it?
+Probably not.
+But if you did contextual retrieval and it went up 20%, then the question is, okay, well,
+is spending 20 cents per document worth the 20% improvement in retrieval?
+That is a quantified decision that you can make.
+And you're basically saying, am I willing to pay more for better results?
+And that's a decision versus should I ... Exactly.
+I think, yeah, like you said, it really depends on your use case.
+Like I mentioned before, if you're working with financial documents or cases where you're
+very likely to have document chunks that require context, then yeah, it's probably useful.
+But you might also have other cases where you don't necessarily need all of that.
+Maybe you're working with 100K document chunks and all of them have sufficient context.
+It's probably not necessary, so you really just have to test it out and, like you said,
+make a decision from there.
+Yeah, you'll be surprised.
+I mean, I worked with a bunch of companies that did a transcript processing and they
+were using semantic search.
+And I was like, you know, I said the words.
+I said the words and I heard what they said.
+I don't even need semantic search.
+What if we just did that?
+And it was like 1% less accurate, but 10 times faster.
+And I was like, well, I might be willing to pay for that because if I want to find meeting
+notes, I want that to be as fast as possible.
+Yeah.
+Once you have those evals.
+But exactly.
+I think some of these questions are very much the same.
+I'm curious if anyone has any questions that they want to ask, feel free to use the hand
+raise and I can call you out as I scan the list of questions here.
+One question I like to ask the speakers is, is there a question you wish we asked you?
+Oh, that's a good question.
+I think something that comes up a lot, I think I briefly touched on this was, like, you know,
+if you have generative benchmarks and it's just completely automated, I just run a full
+notebook, I just press that one button and everything's done for me.
+The answer is no.
+I think manually looking at our data and, oh, I think there's a question.
+Yeah, human involvement is very critical if you want really good evals.
+I think it applies to basically any case where you're working with AIS well.
+I think it's very rare that your system is going to work well with absolutely no human
+in the loop.
+So that's very important.
+Even if you have generative benchmarks, you still need some human in the loop to make
+that process really, really good.
+Makes sense.
+Oh, man, I think I'm going to butcher this name.
+Srivirang?
+I don't know if I said that wrong, but yeah, shoot.
+So thank you.
+Great presentation.
+I just wanted to know how you would be processing metadata into this whole pipeline.
+Documents, a whole lot, you know, enterprises have a whole bunch of metadata that go along
+with a lot of us.
+So how would you process that context coming in?
+That's a really good question.
+I think maybe metadata could be useful when you're performing the retrieval task.
+In this case, when we're evaluating whether we have successful recall, it's just based
+on the query document pair.
+It's either you succeeded or you didn't.
+But I imagine if you have metadata, let's say you have a query and retrieve a category
+of documents that have a certain metadata tag.
+Maybe that can count as a partial retrieval success.
+So maybe it wasn't completely 100% much, but it's still partially relevant and maybe you
+can count that as a 0.5 score or something like that.
+I think it can also be useful for when you're doing chunk filtering as well.
+Maybe there are a few cases, for example, when we're working with Ways and Busses here,
+maybe it would have been helpful if there were metadata tags indicating the source that
+these document chunks came from.
+I think that can be a really good pre-filtering step before you apply to LLM Judge.
+So if all this data was just scripted from the website, maybe there was a case where
+we have a metadata tag that says, oh, this is from our news section.
+We'd want to filter those out because that's not really relevant to our users.
+So I think for filtering and evaluation could be pretty useful.
+But Jason, if you have any thoughts on that, feel free to add.
+I think it would also depend on the types of metadata filters that exist.
+For example, if you have really simple ones like, show me all the news articles from last
+week, we can individually test our ability to select date ranges.
+We had this issue at Exa, funny enough, we'll talk about this today, where I think we were
+using 3.5 and the way it would search for today made the start time and the end date
+the same. And so we would search no results.
+OK, like today actually kind of needs to be a little bit more future seeking.
+If it's calendars, it needs to be something else.
+Let me go add parts of the prompt to test that.
+If we had, for example, filters, we wouldn't need to search through retrieval.
+But maybe if I searched for research papers on AI and archive, I need the I need to test
+whether or not the archive domain name exists in the allow list of domain names in that
+search filter. And so there is going to be times where we can verify the retrieval and
+there are times where we can verify the structured extraction task.
+Does the search query result in some assertions on the metadata?
+Is the date range correct?
+Is the search index filter correct?
+Is the whitelist domain names correct?
+Those basically feel like classification tasks that have like zero one pass fail criteria
+that we could use to improve our ability to do this search search resolution.
+Thank you.
+No problem. Jan?
+Yeah, hello. I was wondering for the contextualized chunking, if it would work, that if you
+would just summarize the document where the chunk comes from once and then add that summary
+to each chunk and then embed it, that would avoid having to put the whole text with each chunk.
+I think the danger there is that now we've just replaced one problem with another, which is
+how good is my summary?
+Does my summary include all references to named entities?
+Does my summary obfuscate any numbers?
+Those become just, I guess, a separate set of problems.
+So yes, we could do that, but now we have to evaluate whether or not our summary is
+actually good at hydrating the existing chunk.
+So we've just replaced one problem with another.
+I think also if you have the same summary for every single document chunk, that might
+make the retrieval task a bit more difficult as well, because then your chunks become a
+lot more similar and it's harder to disambiguate if you have very similar chunks.
+I think if you want cheaper LLM calls, maybe one solution to that could be to just get
+the surrounding text of the chunk.
+So maybe you don't have to feed in the entire document into the LLM.
+Maybe you just get a thousand or a few hundred tokens surrounding whatever chunk you want
+to embed and then summarize from that.
+I think I've tried that before as well and I think that's been pretty effective.
+You get similar results from passing in the entire document, because usually it just
+requires that local context, not the entire document.
+So I think if you want a cheaper method, that could be a way.
+But I think, as Jason mentioned, summaries might bring about additional problems.
+Obviously, it depends on your use case, but I think good to be aware of that.
+Yeah, and perhaps this is the first thing to try.
+And if that doesn't work based on your evals, then you can go to a more expensive way of
+summarizing.
+That's the takeaway.
+Yeah, because I guess for both methods, you know what the price is and you know what the
+scores are. So you've got to ask ourselves, is the extra dollar worth the 2% drop, etc.?
+George?
+Yeah, so I know this is mainly focused on embedding in vector database, but maybe either
+you speak more to potentially like the trend to going back to more of a search model of
+which, you know, vector database is just one facet of the entire search picture and
+potentially how would evals change with regards to that, you know, rather than just
+embedding vector.
+Yeah, I would almost say there is no difference.
+You know, things like precision, recall, NDCG, these are things that we took from the
+information retrieval literature.
+And so actually, it's been used to evaluate lexical search for a very, very long time
+beforehand. And so really, I think the work to be done is actually just making sure that
+when we do these kinds of tests, that we are verifying whether or not there are
+significant gains to doing hybrid search or doing just lexical search.
+Right.
+Like in the example I talked about before with transcripts, it turns out if you're
+searching over transcripts, because the searcher like remembers the words that was
+heard and said, and there's never like semantic ambiguity, lexical search does
+really, really well.
+Right.
+Because I never need to understand whether or not I said the word forest, but I
+searched the word tree.
+Like that happens in semantic world.
+But, you know, chances are if I said something to you during a call, I remember
+what I said, so lexical search does better.
+That's a discovery we've made because we did this test versus like a assumption that
+I had over the data.
+And then the question is now we can ask, great, well, semantic search adds about 500
+milliseconds of latency.
+Is it worth doing hybrid for that additional 500 milliseconds?
+And maybe we say, OK, for 500 milliseconds, we get a 2% improvement.
+Is it worth it?
+Your call. Right.
+Or it could be, you know, for lexical search, it's so much faster, but it's
+actually the same performance.
+Now we can make other decisions.
+Yeah, I think like Jason said, I think a lot of like the same principles and just
+like search applied to semantic search, like that's where like semantic search
+principles came from.
+So, yeah, I don't think like like your framework for like thinking about like evals
+for like semantic search versus search like changes that much.
+And you can definitely like experiment with like, you know, like hybrid search and see
+how that like improves performance.
+But yeah, you really just have to like experiment with your own data and like see.
+How that changes.
+So, yeah.
+Yeah.
+Clark.
+Yeah.
+Two basic, basic related questions.
+One was what sort of type of parameters are you sweeping over and how long would you
+spend doing that?
+And two, what sort of either prompt changes or, you know, like, I guess, just look at
+your data, finish, do you check various combinations there and how long do you
+spend on that?
+I know you said like mess with your judge prompt people twiddle.
+So I was just like curious on your, like all the things you checked and how long
+you spent checking.
+Yes.
+So the first question was like, oh, like what are the parameters we changed?
+The second question is how long do we spend doing that?
+Yeah.
+Okay.
+Yeah, I think I can go step by step.
+So for chunk filtering, we basically use this framework called eBeltgen where you
+iterate on like a set of LLM judge criteria.
+So these are like the kind of like criteria that we would change.
+Like we had like relevance, like completeness intent.
+I think we had like a few others, like clarity, like user intent as well.
+But yeah, basically you would like use these criteria and you would compare like
+your LLM judgements with your like human labeled data.
+And then you can get like an alignment score from there.
+I think initially you got a score of around like 47% or like something around
+that range, which is pretty low.
+And then from that, maybe we can like change like individual criteria because we had
+alignment scores for like each criteria as well.
+So if like clarity was like 40% alignment, we probably want to take that out or like
+modify that prompt.
+So yeah, you can like change or like either like change the criteria or like take it
+out or like add a new one.
+So that's what we're changing.
+We did a few iterations of this.
+I think we did around like four or five iterations, but we did it across like a small
+subset of data.
+So we were only working with like 300 labeled document chunks.
+So it was like very quick iteration.
+We weren't doing it over like our entire document corpus.
+So I think like that probably took like less than a day for me to do.
+And the LLM calls weren't like super expensive either because you're working with
+like such a small subset of data.
+So yeah, and then we also experimented a bit with like query generation as well, like
+adding in like context and example queries.
+And yeah, during our process, we would like experiment with like naive query generation
+as well. Like what if we like don't include the context?
+What if we don't include the example queries?
+And we obviously saw that like performance doesn't really like reflect what you would
+see in production.
+This didn't really take like that much iteration to do.
+But again, just working with like a very like small like subset of data so you can do
+like very quick iteration on that.
+Hope that answers your question, but let me know if I can clarify anything.
+Yeah, I mean, it sounds like this whole project I've done in two days of doing with
+the prompt.
+Yeah, yeah.
+I would also say, you know, most of how much time you spend on it really depends on
+like what kind of existing infrastructure exists.
+Right. For example, if you have large corpuses that need to be embedded really
+quickly, it really depends on like, well, do you have your own embedding models and
+your own GPUs or do you have to like, you know, harass the open AI like embedding
+endpoint? I think that's one thing where like investments in that really just
+allows you to run more experiments.
+And then the other thing I would call out and from a resource perspective, I mostly
+try to time box how much research we're going to do and then figure out how many
+experiments we can run.
+And usually what's going to happen is as you iterate on your prompts and on your
+models, the marginal improvement in performance will slowly decrease.
+And you can generally just like visualize that over time.
+And, you know, it's going to be a thing where I think Kelly mentioned, like the
+first experiment went from like forty seven to sixty, then it goes to seventy,
+then eighty, then ninety, then ninety one and ninety one point two.
+And you're like, OK, well, I want to stop here.
+It's been four days.
+And then the real question is, are you investing in your experimental
+infrastructure to do that really quickly?
+Like I've joined companies where they're embedding models is like.
+Like sequential call to open a eye and I was like, well, this is why it's taking
+you six days to do these experiments.
+Like what's going on?
+And then their LLM calls are like also synchronous and there's no caching.
+And so something fails and they got to run it over again.
+It's like, this is why it takes you two days to run one experiment.
+That's a lot of sort of what I got at least from a team level, how we think about it.
+One of the things I really get a benefit from is I just get to use modal a bunch.
+And so like if I want to run experiments on Wikipedia, it takes me like 10 minutes
+to reinvent all of Wikipedia with any arbitrary model that I want.
+And that makes me feel really good about sweeping over a very large set of hyperparameters
+because I can just pay money to solve that problem.
+Those are the kind of things I really think about, but it is oftentimes more
+time boxing, like your engineer and then figuring out how to make the most out of
+the experiments.
+Yeah.
+You need like a high level conversation around that.
+Cause yeah, I got like, you can always get a little bit better if you just spend way
+more time and way more money.
+And most of it is actually around setting up the conditions for when you give up the
+research rather than when you're done.
+And what's probably going to happen is at some point the retrieval is not going to
+be the limiting factor.
+And then you will have RLM, you know, like a
+
+Like a
+point that retrieval is not going to be the limiting factor.
+And then you will have earned the right to start thinking about editing the prompt
+generation prompt.
+Actually, like I recall as 99 percent, I know the damn answer is in one of these
+75 chunks I put in, but the language model is still not answering the question.
+Now I really have the right to experiment with how I answer the question and how I
+think about citations and whatnot.
+But, you know, I work with a bunch of companies where they're like filling with a
+generation prompt and temperature for like three weeks.
+And then we do these evals, you're like, your recall is 40 percent, man.
+You can't answer half these questions.
+Why are you trying to like change temperature?
+This is the wrong variable to experiment with.
+Those times that's happened like three or four times.
+And yeah, it's kind of silly.
+That's that tends to be what it ends up looking like in real life.
+George, let's do one more question and then I think we'll.
+I'm dying.
+One more question.
+Yeah, yeah.
+So it sounds like almost this is just one part of the larger eval equation, right?
+Because because you're you're it's almost like unit testing, if you will, versus
+integration testing.
+And at some point you do move on to integrated eval in terms of the entire pipeline.
+You know, from query to response, like how good is the answer, even though your recall
+might be 99 percent, but as you said, your answer is still at 30 percent.
+What's wrong?
+And then secondly, I'm kind of curious, have you guys experimented with DSPy at all in
+terms of, you know, doing either performing some of the, you know, the
+eval metric and some of the prompt engineering or in DSPy case, the lack of prompt
+engineering because they treat that as part of eval as well.
+Yeah, yeah.
+Yeah, I'll address like both points.
+I think the first one about this being kind of like a unit test, like within your
+entire pipeline, I think that's a really good way to think about it.
+I think like as Jason mentioned, like if you have like this full like rock pipeline,
+but you're like only looking at the generation part, you can't really pinpoint
+the whole pipeline.
+So you mess with things like temperature, but like maybe the real problem is like in
+retrieval, and this is like how you attest for that individual step.
+And so you can like really pinpoint like, okay, it's like my retrieval failing is my
+generation failing, and then you can kind of work more like systematically from there.
+So yeah, it's just like one part of like the entire like eval process.
+And regarding DSPy, we didn't experiment with that in our research, but we did
+experiment with it in our research.
+And regarding DSPy, we didn't experiment with that in our research, but I think that
+could be really interesting to work with.
+I guess for more context, like DSPy is kind of a way to like programmatically like
+optimize like LLM prompts instead of just like, you know, manually like writing it
+out like each time.
+I haven't worked with it too much myself, but yeah, I think that could also be
+pretty interesting.
+And yeah, if like anyone like applies it to this.
+So I'll say on the DSPy side before you jump off, which is it's really good if you
+have all the answers, then you can actually optimize something.
+But that ends up requiring more work because what I've actually said is actually I
+have a label for every pair that I've created and most people that I work with
+don't have those labels.
+And so, you know, I think I think with mostly the optimization stuff, I was like,
+yeah, if you give me a CSV file of all the answers, the chunks and the right answers
+and whether or not they're good, I can do something in 20 minutes.
+But it turns out 90 percent of the work was produced in that CSV file.
+And then by that point, you may as well just like own your generation code as well.
+And so the work to get to a point where you got to use DSPy is usually way, way
+greater. And then incrementally, in terms of like owning your execution, like your
+orchestration and your execution.
+It like the prompt end up being quite simple.
+And when something needs to change, they're changed and oftentimes they're changed in
+ways that don't have scores attached to them.
+Right. Like we don't actually have good answer, bad answer labels.
+It's actually a bunch of really nuanced things like how are you using citations and,
+you know, is the answer like sufficient length and are we being ambiguous with like
+referencing things in the context?
+Those things DSPy can't do.
+And it's really just about understanding your customer preferences.
+With that said, I think we can end it like four minutes early because I need to get
+some water and then we're going to jump off to the next lecture that is happening today,
+which is doing semantic search over the Web with Exa.
+Bing is shutting off their search API.
+A lot of companies are need this kind of stuff.
+And I think Exa is in a really good position to share more about how they do like
+Internet scale search.
+And with that, you know, Kelly, thank you so much.
+I actually learned quite a bit from this talk and I'm excited to see you guys in San
+Francisco. Awesome.
+Thank you so much for having me.
+Awesome. Take care.
+Thanks, everyone.

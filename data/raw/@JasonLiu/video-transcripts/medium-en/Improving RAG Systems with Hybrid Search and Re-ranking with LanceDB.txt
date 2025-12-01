@@ -1,0 +1,150 @@
+If you're building a RAC application, you should be using hybrid search and re-rankers.
+In today's episode of Systematically Improving RAC Applications, we're going to talk about the
+importance of continuously improving RAC applications and the surprising effectiveness of BM-25 as a
+baseline for many, many search tasks. What's surprising is that in a lot of tasks and
+datasets, BM-25 actually is a better or higher baseline than vector search. Going from demo to
+production doesn't mean you make one big leap to perfection. It's about continuously improving
+your application with LAND-CB. You can find it in our documentation and how to actually use the
+hybrid search in practice. What you're essentially doing is, hey, everyone, we're going to talk about
+a particular topic on improving your RAC systems called hybrid search. This is sort of split into
+three different components, multiple recallers, hybrid search techniques, and then re-ranking.
+We'll dive into it and then we'll see some practical results that we've seen ourselves.
+If you have problems seeing the slides, let me know. I'm going to assume the screen share is
+working. Hey, everyone. My name is Chang-Shih. I'm the CEO and co-founder of LAND-CB. Thank you for
+being LAND-CB users and would love to hear your feedback either on the open source or if you've
+signed up for the private preview for LAND-CB Cloud. If we can make it better for you somehow,
+or if there are pain points that you wish you didn't have to fight, please let me know. On
+Twitter, this is my handle. Follow me. I'm mostly tweeting about vector search, AI, machine learning,
+and working with data. These days, I spend about equal time tweeting and coding, although I think
+this was a few months ago, so I probably spend more time tweeting now than working on GitHub.
+I've been working in the data tool space for about two decades making tools for data scientists and
+machine learning engineers. I was one of the original co-authors of Pandas. I spent a bunch
+of time in big data and then recommender systems. My last job at TubiTV, a streaming company,
+was what gave me the original idea to start LAND-CB to make it easier to work with multi-bottled data
+for machine learning and AI. I'm using this as an umbrella term to include everything from
+embeddings and text to images, videos, and beyond. This year, we talked to a lot of folks putting
+RAG and semantic search AI native applications into production. I think even though we've made
+a lot of progress since last year, I think there's still a pretty significant demo to production gap
+in RAG. I think this is why I'm really excited to be here, because I think the goal of this course
+is to basically address this gap in a very pragmatic and practical way. What are people
+fighting with? Quality of the retrieval. It's pretty easy to just throw up simple vector search
+and throw up a demo. You get maybe 50-60% accuracy. How do you get to that 90% accuracy or beyond
+where that's good enough for production? Then one thing we're seeing is going from demo to production
+doesn't mean you make one big leap to perfection. It's about continuously improving your application,
+which also means things that you guys have probably covered or will cover around evals
+and different components of the system that you can tune. The way I think about this as a self-
+improvement loop is a composable system for the different parts of a RAG application, from
+chunking to the retrieval to the storage to the embedding space itself. All of these things
+should have well-working components that work well with each other. Then you have user feedback
+and a feedback loop where you can use that to fine tune off your processes. That feedback loop,
+obviously coupled with evals and fine-tuning processes, is what gets you this self-improvement.
+For this short talk, we're only going to focus on a small part of that system,
+which is around hybrid search and re-ranking to improve the quality of retrieval. One of the
+things when I talk to folks who are asking me for advice on how to build RAG applications,
+especially vector search, is I tell them maybe don't start with vector search and actually start
+with full-tech search or BM25. Maybe as a CEO of a vector database company, maybe I shouldn't be
+saying that, but in terms of making high-quality AI applications with the least amount of effort,
+this is a great baseline to start. BM25 has been around for a long time and it's really high
+quality. If you see as much results as we do, what's surprising is that in a lot of tasks and
+datasets, BM25 actually is a better or higher baseline than vector search. For example, in the
+screenshot, you'll see that FTS here on the bottom actually outperforms vector search here
+on the hit rate metric. You'll never really know for sure which is going to be better in the outset,
+but BM25 is so easy to get started that I always recommend that as a first baseline.
+I'm not going to bother explaining how vector search works. I'm kind of assuming you guys already
+went over that in the course. Happy to provide more detail if folks are still interested,
+but I will kind of go through a little bit on what BM25 and full-tech search does just as a
+refresher. I want to use this as a way to help you guys build intuition on why BM25 works well and
+how it can be complementary to vector search. BM25 stands for best match. If I remember correctly,
+BM means it was the 25th generation of this particular algorithm. BM25 was released I think
+in 1994, 1995. It's been around for a long time. Despite recent claims, it has not been beaten
+and for full-tech search, and it is still the king for text-based search. The scoring formula
+for a particular query in a particular document is split into two sort of, this is a simplified
+picture, but split into two terms. One is the IDF term, which is the inverted document frequency,
+and the other one is the term frequency. The second term in this score formula is about the
+frequency of occurrences of your query, and the first IDF term is about how, it ends up being
+about how rare your term is across all of the documents. And so here, rarity matters, and
+I'm not going to go deep into the formula, but the thing that's worth highlighting here is that
+if you have terms that are rare across your corpus, that actually boosts the score. And so
+if you're searching for like an exact match or a syntactic match across your corpus, this is
+probably kind of the intuition that you can think about as to why sometimes BM25 will actually work
+better. And it's not strictly, you know, one will not strictly dominate the other across all queries
+and all documents, and this is great because then this gives us an opportunity to actually
+put these two together. Yeah, the number of iterations definitely will increase. I think
+most recent attempt was an algorithm called BM42, which I'm not sure if they've iterated on it that
+many times, but it was more of a HHK is guided to the galaxy reference. Hey, are your rag applications
+falling short despite using the latest frameworks and models? You're not alone. I'm Jason Liu, and
+I've helped a dozen companies improve their AI applications. I've developed a systematic approach
+that delivers results. If you want to check it out, join my free six week email course and learn the
+techniques I use in my own consulting practice. That way you can stop guessing at what works
+and measure what matters. Just check out improvingrag.com.
+So one thing with, you know, I talk a lot about BM25, you know, full text search works really well.
+Well, do we even need vector search? So one is the BM25 does not capture semantic meaning. So the
+sort of a grossly simplified way to think about it is, you know, if you search for the term person,
+you'll get person, persons, any document that has the word person from full text search. But
+what you won't get is, you know, words that are semantically similar, like customer or maybe user
+or maybe early adopter. Right. And these are the things that we can rely on vector search to return
+semantic meaning. Vector search also tends to have more predictable latency. So vectors,
+embedding vectors are dense vectors and more or less the latency of every query for the same
+parameters is going to be the same. Whereas for BM25, because it's sparse and depending on the
+number of terms that are in the sparse vectors, that latency can actually vary a little bit more.
+And of course, as I mentioned, vector search and BM25 are complementary. They don't actually,
+they're not necessarily mutually exclusive. And that sort of brings us to the next question,
+which is, okay, if we do both BM25 in vector search, right, we're going to get multiple
+results sets. And if we only want the top 10 or the top three to feed into generation,
+how do we actually combine those results? And how do we think about the ordering of those things?
+And this is where a hybrid search comes in. The way I think about hybrid search is kind of two,
+there's two ways to combine these results. One is rank fusion or reciprocal rank fusion. And the
+other one is model-based approach around using re-ranking models. I'm not sure if this is already
+covered in the course. If this is, please just interrupt me if this is already old hat, but
+essentially this is the formula for reciprocal rank fusion and essentially it weights. So this
+is the sum of the ranks across all of your recallers. So here we're going to be talking
+about two, but if you look at the literature out there, there's actually even more retrieval
+techniques with, you know, graph-based graph databases, other filtering techniques, and things
+that are much more niche to particular use cases. And so if you have multiple recall results,
+whether that's multiple retrieval techniques or embedding models, doesn't matter. You take the
+local rank of your, of each result and you, you add them up and then you take this,
+this inverted term here. K is sort of a magic constant that in practice, I think the most
+common setting is 60, but it can differ depending on your application. Right. And then the,
+the R here is the particular recaller. The way to think about this is one, we don't want to use the
+raw like distance scores or the similarity scores that comes out of each recaller, because those
+results, those scores aren't comparable to each other. And so you can't really be aggregating them
+together, comparing them with each other. Instead we'll use the ranks. And then two, the way to
+aggregate these ranks by using this formula is so that you, when multiple recallers rank the same
+results higher than the total rank will also be higher for that particular document. Right. For
+this kind of a re-ranking method, it is pretty fast. There's no additional model. The formula is
+very easy to compute. The win, the winning aspects here for reciprocal rank fusion is just really
+simple and it's really fast to do. Right. So if you want better or more accurate results, you may
+want to end up using a model. Model based re-rankers will use, typically use the retrieved text rather
+than the scores from each, from each recaller. So these re-ranker models, it's actually a pretty,
+pretty trodden technique from recommender system land. And these models tend to be a little bit more
+expensive. So you're, what you're doing is you're running the ranking process on this,
+this expensive model on a much smaller set of documents. Typically, like if you're getting the
+top 10 from, you know, two or three recallers, right. You're re-ranking 30 documents out of
+maybe 10 million or 50 million or something like that. And what we see people do is there's two
+flavors. One, you can use open source models from Hugging Face, CrossEncoder, Colbert, as BGE,
+dedicated BGE re-ranker models. You can prompt chat GPT or GPT into becoming a re-ranker as well,
+which is kind of, which is kind of interesting. And then there are dedicated third-party APIs.
+So Cohair is probably the original one that had a re-ranker API and that works very well.
+Gina AI also released a new one and then it was quickly followed by Cohair's new re-ranker model.
+We've done some experiments so we can, this is sort of an unpublished
+blog post that we're almost ready to hit release on. But essentially what we did was look at two
+data sets, SQUAD, which is the Stanford 2NA data set and the Lamu2Review data set. Essentially
+looking at vector search, full-tech search, and then hybrid search and each option with different
+re-rankers. So if you look at, for the SQUAD one, if you look at just pure vector search,
+we're getting somewhere around like 80, 81.3 for hit rate. And then the best here option is at the
+bottom here with a hybrid search using both of them and then re-ranked using Cohair. And that
+one is you get a good 10 points, 11 points in hit rate improvement, which is pretty substantial.
+We'll be publishing these results pretty soon and you'll be able to take a look at the full
+results here. Part of this is we have a, a, you created a weights and biases project with all of
+the different results. I think we'll be, I'm not sure if this is shared here, but it's probably
+something that you can kind of follow along. And then all of the code you can find in LantzDB slash
+ragged, ragged repository with different evaluators and you can run it real quick is how do you
+actually use re hybrid search and re-ranking. So this is a pretty easy code snippet. So one is
+you specify hybrid as the query type here, and then you add a re-ranker API call and you can use
+Cohair or other things. Thanks for watching. If you liked that video, make sure to like and subscribe.
+And if you want to learn more, check out improvingrag.com. We're going to talk about
+the foundations and not frameworks. Over six emails, you're going to learn how to overcome
+absence blindness, as well as how to fine tune language models, understanding diverse query types,
+improving multimodal rag, and ultimately smart question routing and build up UX that collects
+user feedback. Just check out improvingrag.com and fill out this quick email address at the bottom.
+Thanks.

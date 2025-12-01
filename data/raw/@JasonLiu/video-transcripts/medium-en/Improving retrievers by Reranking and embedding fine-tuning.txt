@@ -1,0 +1,803 @@
+When I talk to a lot of different companies I consult with, I think when people find that
+the retrieval systems are not catching the nuance of their dataset, it usually comes
+down to asking ourselves, are we able to fine tune embedding models or fine tune re-rankers?
+And what is the expected effort and what is the expected return on that investment?
+In a lot of cases we do see 10 to 20% improvements in recall.
+And so today I'm really excited to invite Ayush and Emma Engineer at LanceDB to show
+us some of the results he's been working on.
+And I saw a lot of different experiments and tables on cross encoders and Colbert and I'm
+really excited for him to share in the next couple of minutes how he thinks about mapping
+out the space of re-rankers, when to fine tune and when to combine all these results
+to get the performance you need.
+And as always if you check in the Zoom chat, we have a Slido link there you can ask your
+questions and we'll be able to upvote questions that are popular and then we'll do questions
+at the very end.
+And yeah, with that, Ayush, take it away.
+Awesome, awesome, thank you.
+So yeah, we'll cover re-ranking, fine tuning, re-rankers and then there's a small section
+about fine tuning embedding models as well.
+So a little bit about me, I'm Emma Engineer at LanceDB.
+I previously was at Ertledicts where I co-authored Ertledicts YOLO framework and before that I
+was doing ML add weights and biases.
+So the topics that we'll cover today are re-rankers, what are they, why you should use them, and
+then training or using off-the-shelf re-rankers and fine tuning them and when you should do
+that, what are trade-offs involved.
+And then we'll talk about embedding models as well.
+So jumping right into re-rankers, I just want to give you a quick overview of where re-ranking
+fits in.
+So I'm not going to talk about RAG too much, but I'll just say that based on the definition
+of RAG, which is there's multiple ways to look at it, the way that I like to look at
+it, RAG is essentially a system where you're guard-realing LLMs by providing necessary
+sufficient context that can answer a query in order to prevent them from hallucinating.
+And with this definition, it is very clear that the quality of RAG pipeline will be only
+as good as the quality of retrieval because that's what provides the context.
+So then the job comes down.
+If you want to improve a RAG, you need to just improve your retrieval.
+Again, there's a wide variety of things that you can do to improve a retrieval, which involves
+re-ranking, tuning re-rankers, embedding models, using different embedding models, tuning them
+or training them from scratch, or using advanced retrieval techniques, combining search techniques
+like full-text search, hybrid search, things like that.
+But I think in every project, you should probably start with the low-hanging fruits to get a
+sense of where you're going.
+And re-ranker is something like that, which is why I really like it.
+Re-ranker is a low-hanging fruit because it does not disrupt your pipeline.
+You don't need to re-ingest the entire data again into your embedding pipeline or RAG pipeline
+because especially if you are someone who deals with millions of entries, because you
+can just simply plug and play with re-ranking.
+So it fits in after retrieval and before the context is provided to LLM.
+What is a re-ranker?
+So in general, when you retrieve something from a record database or any kind of database
+to provide the context to LLM, you get certain documents.
+Now, the embedding model gets these documents, and we're assuming throughout this talk that
+we're using semantic search for retrieving documents.
+Obviously, there are other RAGs or RAG systems out there that don't use semantic search,
+but our talk is limited to this.
+So once you've got this document, you can do better by rearranging them such that the
+document with most relevance with the query ranks at the top.
+And this is what re-ranker does.
+I want to talk about a few architectures briefly, and then we can move into the training
+part and then benchmarks, because this is really important as to why re-ranking is so
+powerful.
+By encoders are, you can think of all embedding models as by encoders.
+They simply take two or more documents and they get the embeddings or calculate the embeddings
+independently.
+So there's no interaction between documents.
+Cross encoder, on the other hand, it takes document and query pair, and then it calculates
+cross attention and basically processes both of them together, and they can attend to each
+other throughout the pipeline.
+So they're able to get the similarity much better than independent embedding.
+So this is why these models for encoders are so powerful.
+The other architectures that I'll come to, but this is the general context.
+Now, the question arises, why not just use this for retrieval directly because it's so
+powerful?
+The answer is it's also very compute intensive.
+It's not a real time operation across thousands or millions of documents, because you're comparing
+the query with each and every single document.
+So this cannot be done at the same time.
+It's not a real time operation.
+So this is why reranking is powerful.
+Okay.
+How do you train a reranker then if you have to?
+This is a very simple pipeline for training a reranker.
+And this is also, I mean, whenever we were talking about sentence translation, we were
+talking about the
+sentence transformers.
+This is why I really like sentence transformers right now, because they come with right defaults.
+You can do all of these things in there.
+So the way to train a reranker is you start with a data set, and the data set is query
+context pairs, which is similar to an embedding model.
+You can use it in different ways, but here we are using it for reranking.
+So in this benchmark, the data set that I'm using is Google's QA data set.
+And it has 3 million query context pairs.
+I get 2 million out of them.
+And I will use 5,000 for evaluation purposes.
+And the format is pretty simple.
+Because you want to train a rancor model, you provide an anchor, which is the query,
+and a bunch of positive and negative examples, or simply one positive and many negative examples,
+so that you can train a powerful rancor model.
+The best trick, or the recommended trick to use here is to mine really hard negatives,
+so that your model understands the nuances.
+Hard negatives are those wrong answers that are very close to the query in an embedding
+space, that are similar to query.
+So these are hard negatives.
+So to mine hard negatives, generally you use an independent embedding model, which is not
+in the part of the RAD pipeline.
+So this is the general way to use it.
+And then you use whatever loss functions you like, and all of the re-rancor losses as well.
+This is the general setup.
+And yeah, that's pretty much it.
+The second architecture that I want to talk about is Coldware architecture.
+Training them, both of them, is the same.
+The training processes are the same.
+But this is something new that became really popular in the last two years, and rightly
+so.
+So you might, from the previous two slides, you'll remember that cross-encoder is really
+powerful, but super slow, because it has to attend to both query and docs during the retrieval
+time.
+Coldware architecture is a late interaction model, which does this same thing in stages.
+So it independently calculates the document embeddings offline, and you can store that
+as in a vector database or something.
+And in the query time, it just compares the token level embeddings with the query.
+So it still attends to the token level features, but it does that in two stages.
+So the part that can be calculated offline is already saved in a vector database or whatever
+architecture you prefer.
+And then in the query time, we just have to perform this maximum operation on token level
+to find the best similarity score.
+I'm obviously super simplifying this.
+There's a lot more going on here, but this is the basic bird's eye view of what's happening
+in a coldware architecture.
+But again, other than this, in loss function, everything else remains the same for training
+both of these models.
+So once you run this training step, let's see some of the benchmark results.
+So simply, I'm using LansDB here.
+Obviously, I'm from LansDB, so I'm using LansDB.
+Regardless of what vector database you use, the basic takeaways of this slides and this
+talk is not going to change.
+With LansDB, we've had, because I've used a lot of re-rankers, so I've already built
+integrations with a bunch of re-rankers.
+So you can simply just import them and pass in the model.
+That's it.
+OK, so experiment setup.
+As I already said, we're using question and answer data set.
+And we will use 2 million rows for training and for testing.
+Because this does not become yet another toy example, I wanted to make it a little bit
+challenging.
+So I'm using 100,000 rows that are not seen by the training data set.
+And from that, we try to retrieve 2,000 samples and check the hit rate.
+So obviously, 100,000 is not too big, but it's also not a toy example.
+The models used for training re-rankers, the base models, right?
+So we're not going to use dedicated re-rankers just yet.
+We will train some from scratch and then also compare them with off-the-shelf re-rankers.
+So yeah, Mini-LM, which again is very small, easy to train, easy to test out, and then
+easy to judge if re-ranking does something.
+And then modern BERT.
+Modern BERT is a modern version of BERT with a bunch of improvements on it, trained by
+answer.ai folks with, I think, collaboration with lighton folks.
+And it only has 150 million parameters, but it sort of performs much better than even
+billion parameter models or something like that.
+OK, so these are the ones that we'll use for training re-rankers from scratch.
+We'll attach re-ranking or cross-encoder or coldware heads on top of these base models,
+base encoders, and then train them to perform as re-rankers.
+Right now, they are not re-ranker models as a base model.
+So a bunch of control experiments.
+You don't have to remember all of this.
+I'll give a brief summary of these later on.
+Just to run this experiment, I used two baselines at top 10 and top 5 hit rate.
+So at top 10, on this dataset, we get 60, and top 5, we get 48.
+And then base model performance and re-ranking, as you can see, just outputs gibberish because,
+again, remember, these are just random weights at this point because we've attached new re-ranking
+heads.
+So this just proves that, OK, by default, they are not good re-rankers at this point.
+Again, you don't have to remember this, but just to...
+These are the summary of results that we get from training these models from scratch.
+The naming convention is the re-ranker base architecture used, and then...
+Sorry, re-ranker architecture used, the re-ranker heads, which is cross-encoder or coldware
+or whatever, the base architecture used, and the negatives, the number of negatives we
+mined.
+So you might have seen some slides ago that you have to mine hard negatives, how many
+negatives we mined at the time.
+So the results to note here is that Vector Search sort of improves at top 5.
+We got 48, and it goes up to 60, which is like 12% increase, or 61, actually.
+And then Full-Tech Search also improves a lot.
+From I think 36, it was the lowest, or 37, and then it goes up to 51.
+Hybrid Search, I mean, this is altogether another talk because there's a lot to say
+about hybrid search and advanced retrieval techniques.
+At LensDB, by hybrid search, it means combining Full-Tech Search and Vector Search results,
+and then re-ranking them to get top key.
+That's our definition.
+Obviously, hybrid search in general means combining multiple search sources into one.
+The same thing happens at top 10.
+We see a lot of improvement from 60 to we get 66, 67, and same thing across Full-Tech
+Search and hybrid search, and across architectures.
+Go-Aware architectures, cross-encoder architectures, and others.
+So some of the key findings here is that Vector Search results improved at 12%, top 5, and
+then 6% top K.
+And FTS also saw some improvements, which some models going up to 20% because we go
+from 38 to 57 or something like that.
+Then architecture comparison, right?
+What do you actually take away from this is that Modern Bird, in this particular experiment,
+saw the strongest performance.
+And this is also expected, right?
+Because Modern Bird has 150 million parameters, and the other model that we used was just
+a toy model, 6 million parameters.
+So it wasn't much of a competition.
+But again, the takeaway here is that even a small model, going back, can improve the
+base performance because all of them have also improved upon the base performance.
+So even slight re-ranking with a toy model gives you some improvement.
+So I like to see this as a signal.
+So for example, if you're not sure what to do with your data, whether you should use
+a re-ranker, whether you should tune a re-ranker, or whatever, maybe try a smaller toy model.
+Well, you can just train or tune it in 30 minutes, an hour, and you get some signal
+as to, hey, this works.
+Let's do this process with a much better dedicated model.
+So that's what I think about.
+And yeah, so this is just re-ranking performance.
+And in summary, it ends up improving the results a lot.
+But can we improve it further?
+I want to allow you to train them from scratch.
+These are not re-ranker architectures that we use off the shelf.
+So the next thing is, can we also just use existing re-rankers and fine tune them?
+And if so, what the results are?
+So these are the baseline performance of dedicated re-ranker models.
+And the re-ranker model that we are going to use here are Answer AI, Cold Bear version.
+So Answer AI created another model for re-ranking as well, similar to Modern Bird.
+They do a bunch of other retrieval research.
+It's called Cold Bear Small.
+And by default, that gets us 59 from the baseline of 48.
+So it already improves the off the shelf model,
+it improved it 10%, and then 68% on top of 10.
+So I fine tuned those models as well with the same script, the same settings.
+And I ended up improving this as well by a couple of percentage.
+I think 3% here and 2% here.
+So again, fine tuning is much simpler, and it still ends up improving the performance.
+So the takeaway here is that when I talk about if you should train a re-ranker from scratch
+or fine tune it, it comes down to these two things to consider.
+If there are no re-rankers available for the base model of your choice,
+you have to train it.
+There's no other choice.
+Let's say you want to use some fancy architecture of base model,
+like base encoder, as a re-ranker.
+You really like it for some reason, you think that's great for your pipeline,
+and there is no base model available, just train.
+The other way to think about it is that if your data set over time
+has become specialized enough, we might call it drifted from the original data
+that the model was trained on, you have to tune the model to then align the distribution.
+And things to be careful about when training the models.
+These are things that have to be careful about absolutely,
+because sometimes you end up using a lot of computer resources
+as well as time for training these models.
+The general rule to remember is fine tuning converges much faster.
+Obviously, all of the weights are not random.
+They already have some context.
+So training them, the losses will converge much faster.
+And catastrophic forgetting, if you fine tune for a long time on a low quality data set,
+whatever the model performance is, it starts to degrade from its baseline.
+So you have to be careful about that as well.
+These are two things to consider when you're thinking of re-ranking.
+Now, obviously, the results that we just saw,
+you can end up improving performance by,
+I mean, hit rate performance by 10 to 20%, depending on the algorithm you're using.
+There are some trade-offs involved. There's no free lunch theorem states.
+So what are the trade-offs?
+Obviously, because we are adding a step after retrieval
+and before the retrieve documents are sent to LLNs, there will be some latency.
+So I have a latency comparison graph here.
+And the latency here is calculated on L4 GPU,
+which is pretty much like a T4 GPU with larger memory.
+Why I'm using this GPU is because it's the cheapest
+and most easily accessible across all core apps.
+Obviously, if you're using a powerful setup,
+you're going to use much more modern GPU, much faster GPUs.
+But this setup is more reproducible for everyone.
+So another thing that I want to call out here is that someone might notice that Nory Ranker,
+which is like the fastest, is pretty much slower than cross-encoder train on Mini-LM.
+It's just numerical instability.
+Mini-LM is so small that it does not really add any significant latency to the GPU
+when running on GPU.
+So it should be equal to the baseline case,
+but it just so happens that sometimes you do model loading and all of that.
+You get this.
+I've left it here because this is a practical case.
+Sometimes this happens.
+And so if you average it across thousands of runs, this will just be the same.
+So you get baseline here.
+And then Cold Bear, which is modern bird architecture,
+it sort of adds 30 millisecond latency.
+Cold Bear on Mini-LM is pretty much the same because, again, this model is so small,
+and we're running on GPU, it does not add any latency.
+But you get the idea.
+It adds a few tens of milliseconds to the latency.
+And the bottom chart, it shows this sort of an ablation study for larger limits.
+Because re-ranking is only powerful if you over-fetch some documents.
+If you only need five, maybe fetch 20 and then re-rank them.
+And then re-rank them.
+So this sort of gives you an idea that the slowdown factor is,
+even if it's by two or by three, these are the numbers in milliseconds.
+So slowdown factor, depending on your use case, I think for general use case,
+it's not too much.
+But if you're in that edge use case where the latency is very critical,
+then it is significant depending on the use case that you are working with.
+This is the main trade-off.
+I was curious about how the performance trade-off is on CPU.
+So I did this on CPU as well.
+CPU, obviously, the latency is much larger.
+All the penalty is much larger.
+So, again, here, the baseline we see is 53, depending on the system that we test.
+And it adds up to 3 to 4x, depending on the architecture that you use.
+So, by the way, the best performing model, which is a dedicated re-ranker by Ansel or AI,
+it does not really add a lot of latency, as you can see.
+The one that we experimented with was using really large encoder, 150 million parameters.
+It adds most latency, up to five times.
+But Coldware, which is the best performing re-ranker that we have, you can see 68.
+It does not really add too much, considering it's a CPU.
+Anyway, so rather than asking the question, who should use re-rankers?
+Re-rankers are sort of such a low-hanging fruit.
+I think everyone should, by default, think of at least trying them out.
+So I don't ask this.
+I probably should say you should ask who should not use re-rankers.
+So, first, that I already discussed, if latency is keeping it low is really critical,
+like even 10 millisecond latency added to your pipeline is critical for you,
+you should probably not think about using re-rankers.
+You should skip to other ways of improving your retrieval system.
+And then, in other cases, where a few hundred millisecond does not mean much,
+I think that's the general case, right?
+Even network latency, like network round-trip from any service takes more than that.
+So I think it's fine for most cases.
+So you should definitely think of exploiting re-rankers.
+Okay, so this, I think, is re-rankers.
+I think we have...
+Okay, yeah, I'll be very quick from now.
+I had from this section.
+Let's talk about fine-tuning embedding models.
+So as you've already seen, re-ranker fits in after results are fetched.
+Where does embedding model fit in?
+It's like in your retriever, when you ingest data,
+you're ingesting data, metadata, and some embedding representing that data, right?
+And you create all sorts of vector indices on top of that.
+So, I mean, to give you a bit of context,
+what embedding model does is it learns representation of a specific type of data.
+If it's a text-only embedding model, it basically learns
+how to represent text in a given embedding space.
+And with the goal that data points similar to each other
+lie very close to each other in that embedding space, right?
+That's the basic idea of what an embedding model is.
+And to train that, we use the same pipeline again.
+Just the loss function will differ.
+We are going to use multiple negative loss and then triplet evaluator here.
+That's what I did.
+The links to all of the code and all of the experiments with weights and biases,
+charts, is all open source.
+This will be provided in the detailed blog.
+But yeah, the idea is pretty much the same setup, same dataset.
+Okay.
+Find training results.
+And by the way, I have used MiniLM here for everything.
+So it's very small, very easy to train.
+Baseline, again, 48, as you've already seen, it does not change.
+And then with different...
+It's an abolition on Epochs, basically.
+So we get up to 58.
+So we are improving by 10% by just fine-tuning.
+So it is also pretty useful, just like re-ranking.
+Same thing with top 10.
+It improves by almost 10%.
+Another question is, should you always fine-tune an embedding model that you're using?
+If not, then how to decide or how to make an educated guess?
+Because in this domain, I should sort of give you a disclaimer that when you're talking about,
+should you train or tune, there is no right answer.
+There are only educated guesses based on data.
+And based on my experiments that I've done, some mentioned here, some not,
+this is what I think you should do.
+I find this as the ideal scenario for fine-tuning.
+So the training data that you see in green is the data on which a base model is trained.
+So let's say you pick up a BERT model and then you try to fine-tune it.
+So this green part represents the data on which this was trained by
+whatever organization you're fetching the model from.
+And the fine-tuning part, which is the red part, is what you're going to fine-tune on.
+Now, if your data set that you're going to fine-tune on is pretty much a subset
+of the original training data, you're not going to improve the results.
+You might pretty much end up overfitting the model on a specific subset,
+which leads to catastrophic forgetting and which leads to bad performance worse than baseline.
+The ideal scenario is something on the right.
+You have a domain-specific data that sort of has drifted apart in terms of its distribution
+from the original training data.
+So your model, your data set or your use case now has enough new context to be learned by the
+embedding model.
+And then you should fine-tune it and you'll see much better results provided.
+And as you can see in this diagram, I also have a larger size for the red.
+So which means that your data set that you're going to fine-tune on has to be sufficiently
+large.
+You cannot fine-tune for 10 epochs on 10 examples and train a good model.
+That's not going to happen.
+Again, all of this is, yeah, it's a hand-wavy sort of a napkin math situation where I say,
+okay, your data set has to have a new distribution and it should have at least a few tens of
+thousands of query context pairs.
+But you get the idea.
+So the left diagram pretty much represents the squad data set.
+So there's a data set called Stanford Question Answering.
+It has 90,000 rows.
+But it's so common that it's not specialized.
+It's not specialized in terms of the questions it asks.
+So for example, specialized, I mean, legal data or medical data, things like that.
+By general case, I mean anything that GPT models are trained on or Cloud or GPD is trained
+on, right?
+So the left sort of represents that.
+Most standard embedding model data sets already have squad as their subset.
+If you're going to find you non-squad, it's going to be overfitting very soon.
+Or if you still continue to do it, it will sort of start to degrade in terms of performance.
+The previous data set that we used was sort of the Question Answering data set with 3 million
+rows was again a general data set.
+It was not a medical data set.
+It's not a legal data set.
+But it was so large that it sort of fits somewhere in between the two.
+Right?
+So we saw some performance.
+Towards the end, it started to overfit.
+By that, I mean the best performing model was not the model at 10 epochs.
+It was somewhere around 7 or 8 epochs.
+So that's the basic idea.
+This is why I spent a lot of time on this slide.
+But yeah, just to get that idea across.
+So to prove this hypothesis, let's train on squad data set and see if this sort of holds.
+So you see, when we train for 10 epochs, it starts to overfit very soon.
+And you can see only three of the fine-tuned models on this data set perform better than
+the baseline at top five.
+Right?
+So this is the result that you'll get.
+Another important thing that generally to tackle the problem of less data or bad data
+people try to employ is called data augmentation and synthetic data generation.
+Right?
+Again, this is a very important topic because
+the concept of augmentation and synthetic data generation is sort of...
+I have personally seen that a lot of times these are being used interchangeably,
+which is not right.
+Because what really happens is if you...
+Data augmentation is not a solution to bad data set.
+It's a solution to generalize an already good...
+Already a good data set with more examples so that it does not overfit very soon.
+And so that's the reason why you augment data.
+And then synthetic data generation is creating more examples out of a good...
+Already a good data set.
+The problem with synthetic data generation is why I don't recommend you should do that off the bat
+is that first, you might not even know your free data set is great to begin with.
+It runs on experimentation.
+Second is that synthetic data generation happens through LLMs and it has been found.
+I don't have the exact research paper or the docs, but it has been found that
+creating synthetic query context pairs out of existing data set, LLMs can hallucinate
+even the good ones like GPT-4 or something can hallucinate up to 70% of the time.
+So you are creating rubbish data and adding them to your data set.
+So you don't know that.
+In fact, there are some open source tools, maybe well funded as well, I'm not sure,
+that pretty much measure the quality of synthetic data generation.
+And I think I read some blog there that they get up to 70% of hallucinations in this setting.
+And I'm not included in any results here, but I tried this with SQUAD and after synthetic
+data generation, even at one epoch, I could not get anything better than baseline.
+It was always worse than baseline.
+So be very careful with this as well.
+Anyway, so fine tuning and we've seen re-ranking and fine tuning both.
+Should we combine them?
+Obviously, yes.
+So here's what I'm doing.
+So baseline was we started with 48 and 60, top 5 and top 10 respectively.
+The best embedding tune model is it goes up to 62 and 69.
+And then we combine them with the best re-ranking model.
+It goes up to 64 and 71 respectively.
+So there's a bit more performance to be squeezed so you can combine both of them.
+And then here at this point, you can decide, okay, there are tradeoffs involved with re-ranker.
+The tradeoff is what?
+Some latency is added, right?
+So if I don't want that, let me eliminate that.
+With using different embedding models, the tradeoff involved is very disruptive to your pipeline.
+If you're someone who already has hundreds of millions or billions of entry points in your
+in your database already, you have to re-ingest everything.
+So it's not cheap.
+It's not fast.
+But if that's the direction you want to go because the latency is really, really critical,
+you can do that as well.
+Now, there are things to be said about this that, okay, you can prevent that from happening by
+using some Matriosh and embeddings or tricks like that.
+But again, that's beyond what we're discussing here today.
+So yeah, I think that is pretty much the content that I have for this.
+So yeah, that's it.
+Any questions I'd love to answer.
+Awesome.
+Let's jump into a couple of questions and then we can have another conversation about some of the
+training stuff as well.
+First question from Damian is, is there any value in using a re-ranker if your workflow
+already uses an LLM to review the outputs anyways?
+I don't know if I understand the question completely, but
+let me know if you have any thoughts.
+Yeah, I think I understand that.
+So the LLM, all the LLMs can be used as a re-ranker as well.
+Because a job of a re-ranker is to get the query and a few documents and then rank the
+documents based on their relevance with the query.
+So an LLM can also do that job.
+You can just prompt an LLM saying, okay, here are the docs, here's the query, how would you
+rank them and then get the rank?
+In fact, I implemented something in Lans TV, which is in beta because LLMs don't always
+output the right thing.
+So yes, you can do that, but it's the slowest possible way to re-rank a document.
+It takes anywhere from a few seconds to if you're using very powerful LLM, depending on
+API instability and things like that, it can take up to three or four seconds.
+So yeah, yes, you can do that.
+It's just probably not recommended.
+If you're using an API, by the way, this talk totally dealt with open source re-rankers.
+If you're willing to use an API, if you want to use it, I would personally recommend go
+for a dedicated API for a re-ranker like Cohere does.
+Cohere has a great re-ranking model.
+I mean, when I add Cohere to all of these benchmarks, you will see that it blows away
+all of them, but it was not open source.
+You cannot fine tune them.
+You cannot do much other things on top of them.
+So I did not add it.
+But there's a section in the detailed study that will be provided to you about that.
+But yes, you can use LLMs as a re-ranker, but I don't think you should for various reasons.
+Another question, which is pretty good, is can you please explain how to prep and detect
+hard negatives?
+So hard negatives right now, the way this is being done in this pipeline, in the code,
+is that you take the corpus and you use an independent embedding model, not the model
+that you're using for your rack pipeline.
+You can also use that, but it's recommended to not pollute your pipeline.
+You already know the labels.
+You already know the right answer to the context.
+So you then find the wrong answers, the negatives that are closest to your query by the embedding
+model.
+So it seems like it's the right answer, but it's not.
+And you want to train the model on that.
+But that's the simplest strategy, because it challenges the model to learn the right
+thing and not just learn the similarity.
+So that's how it's done right now.
+But there are other strategies as well, other algorithms as well, implemented in sentence
+transformers.
+But I have not dug deeper than that, because I did not need to at this point.
+That makes sense.
+I guess I'll also call out one fact is if you actually build a product, for example,
+there are other ways of finding negatives.
+One of the ways I worked with, we had a pretty robust citation UI.
+And one of the tools we could do is if we cite something and then the user deletes the
+citation and asks us to region an answer, that is a very strong negative signal.
+It's like not only was it in the context, the LLM cited it and it was irrelevant.
+Yeah.
+And a lot of what we've been doing now is actually basically going like first we'll
+do our recall evaluation at top 10, top 20, and then use an LLM to just propose a couple
+of negatives to verify whether or not we're good at detecting negatives.
+Those have all been pretty good.
+Yeah, another question around the negatives is can you give a real world example of some
+of those fine tuning and the context around it?
+Maybe you can go first and I could follow up with that if you want.
+Um, sorry, I did not quite understand the question.
+Can you like...
+I think just real world examples of fine tuning and re-ranking models.
+Ah, okay.
+Give me a context.
+I'll suggest legal, healthcare, all that.
+Yeah, exactly.
+So I think any point in time where you have sufficient data and it's not generalized.
+So when you're thinking of like, I don't know, I'm not going to name companies,
+but there's a lot of large companies that are making a lot of noise in the legal sector.
+So what really ends up happening is that, you know, when you start to ask specific questions,
+even today, if you try it with any of the best LLMs out there that are trained to answer
+questions, I think they start to hallucinate when you start getting into rabbit holes.
+That's only because the general training data set on the internet does not contain all that
+information or a lot of that information is proprietary.
+You might not have the proprietary information of some drug manufacturer or, you know,
+things like that.
+So at that point, you have to fine tune an embedding model or even LLM if you're building
+right on top of it.
+And that's what generally people also end up doing.
+But yeah, that's, that's, that would be my two cents.
+Like if you're in a specific domain, fine tune embedding models.
+Yeah, sure.
+Go ahead.
+Go ahead, Jason.
+Yeah, I mean, I think another part of that too is like, if you understand what kind of
+queries people are asking specifically, then you start thinking about doing something like
+data generation because you know what the specific use case is.
+Like, you know, it's one thing to just have like arbitrary pairs.
+But if you know that the questions are going to be around, you know, timings, as like,
+okay, do we understand that words in a query do not necessarily embed to the text in a
+text chunk when you sort of close that gap?
+That's when fine tuning is also very valuable.
+Other examples I've seen are where, you know, project names are just like, you know,
+like within like a within like three years of your tickets, like, okay, well, they have
+other meaning that isn't encapsulated in embeddings.
+And turns out, you know, you have a team in Japan and all the projects are Pokemon names.
+How do you make sure that's like learning the model?
+But I've definitely seen that happen in practice.
+I also want to call out, like, you know, I think people are taught having a discussion on like,
+what's the best model, right?
+And it's never going to be the case that the model that is the best is the one that has the
+best performance.
+It's always about this budget that you're trying to figure out.
+What is the maintenance cost?
+What is the, you know, inference complexity?
+What is the latency?
+And then what is the performance?
+And then you have to kind of consider them as a portfolio of budget that you have to
+manage rather than just going well.
+Yeah, you know, I would love to use 03 as a ranker, but it takes two for Pre-API.
+And it is much better.
+But it really depends on your use case.
+I think this might be mostly addressing the fine tuning, but have you experimented with these
+like linear adapters for these Inveni models?
+No, I've not.
+You said this one year ago.
+Yeah.
+Yeah.
+Yeah, I think.
+Yeah, but what I think is like there has to be a lot of, I've not yet started to work on this,
+but there has to be some follow up to this because this is just two ways of many things
+that you could do with a retriever.
+I think there's a bunch of other things like, you know, what vector indices you use.
+This is probably just HNSW or default, whatever Lansdb uses.
+Or like when you're thinking of hybrid search, does that hybrid search mean one vector column,
+one vertex search column, or two different features and then, you know, things like that.
+So I think the next direction that I'm thinking of, and I think I've seen some good results,
+is multi-feature, multi-index search, which is quite interesting at this point for me.
+And I might do something on that, but yeah, right now I've not experimented with linear adapters.
+Yeah, I would love to introduce you to Daniel from Superlink.
+He does a lot of like encoder stacking.
+And so you can do queries like, you know, affordable hotels that are under this price and-
+Right, low cost.
+And like half of that is embeddings and half of that is filters.
+So you see some really interesting results there.
+This was an interesting one.
+What method do you prefer, refer to by fine-tuning?
+There's other methods and fine-tuning algorithms that are less prone to catastrophic forgetting.
+I think this is not a problem of LLMs.
+It's a problem of training models in general.
+Like you see this in computer vision as well.
+It's just that, you know, the model, I guess catastrophic forgetting
+is a term given like in the LLM era, but it's just that beyond overfitting,
+if you continue to train, model does worse.
+It's a general phenomenon, I think.
+So I don't think you can really solve this.
+It's just, I think it's just natural that models will start to
+forget or perform worse on the baseline if you keep on training with that data set.
+So there's a bunch of ways to avoid that and by using great defaults,
+decent learning, great schedulers, and not using crazy box like for fine-tuning,
+you know, five to 10 epochs is fine.
+If you're training for a hundred, you're probably just pre-training, things like that.
+The general rules of thumbs are good to follow.
+I think I've only ever seen catastrophic forgetting
+in action is when I knew the data set was bad and I continued to train anyway.
+Right.
+Other than that, I have not seen it happen accidentally.
+Yeah.
+Almost like a personal request.
+I would love to see ablations on data volume.
+I think, you know, I would love to see what does the performance look like for five epochs
+at 10,000, 20,000, 50,000.
+I think a lot of people don't really have good intuitions.
+At least I don't have any good intuitions now on
+how much data do I need versus a quality data.
+Right.
+I think there's an example where I think people who've done my say, oh,
+if you have incredibly high, high quality examples, you might only need a hundred.
+Something two and a really, really like smart LLM.
+But in many models, it's also very different.
+Like, do you find that larger parameter models need less data?
+Do they need more data?
+I feel like 10 years ago, I had an opinion on that, but now.
+Yeah.
+I think, yeah, I don't have an opinion on that.
+But the thing that I do have opinion on is
+if you have a really high quality data set with only a few examples,
+generating, like augmenting it by synthetic data set generation,
+it will end up generating much better data set.
+So I would say if you have a thousand pair of really high quality data set
+versus 10,000 pair of lean and just a bad data set that has a, you know,
+conflicting query context, things like that.
+I think with that thousand, we can, like, after some operations,
+turn it into a better data set than that 10,000 data set.
+So yeah, I think that I have an opinion on.
+I think right now, again, I also don't have an opinion on the size
+in terms of embedding models.
+In CB, yeah, there is an opinion to be had that you need a lot more
+data, but I think right now I'm not seeing that.
+Yeah.
+Oh, one question popping on the bottom, which I think is really important to address,
+which is when using bankers, how do you decide the filtering threshold?
+Filtering threshold, meaning like the fetch factor?
+Yeah, no, yeah, I think in this case, he's talking about the filtering based on the score,
+which I tend not to do in practice.
+Right.
+I still am not sure if I get the question.
+So when you when you re-rank a document in a query, the re-ranker produces a score.
+Maybe it's a point two or maybe it's like, I think how you decide on what that filter should be.
+Oh, okay.
+Whether or not you should do that in general.
+Yeah, I mean, the score that you're getting is
+pretty much a similarity score that the model thinks that you rank and model things.
+So it pretty much becomes like the distance score that you get when you're
+retrieving using an embedding model.
+Right.
+So at that point, that becomes irrelevant because you've already retrieved.
+So I then treat the re-ranker score as the actual score.
+And I don't really filter on top of that beyond that point.
+So when the re-ranker says that's the best document, I then stop thinking about it.
+And I say, okay, that's the best document.
+Generally, I also call it the fact that different models tend to have different
+distributions and what that score looks like.
+And so I've worked with companies where they set like
+0.5 because they believe that 0.5 is this measure of relevance.
+And then when they switch embedding models, turns out the average
+cost-sum similarity of 8 of 3 is 0.7.
+And all of a sudden they have to talk with the context.
+Okay.
+Yeah.
+And that's the thing about the ranking.
+Yeah.
+More number itself.
+Yeah.
+In that sense, generally, in these experiments, because I used the Lansley integration,
+so that integration, what that does is it basically normalizes those scores.
+Right.
+So the model can pretty much output between 0 to 1, or it can do non-normalized scores,
+but there's a normalization step.
+So it pretty much becomes in the same domain as the distance,
+same range as the distance from them.
+So it's really easy to interchangeably use the distance of the vector search
+algorithm and all the re-ranker interchangeably.
+Yeah.
+Okay.
+That makes sense.
+There's a follow-up question, which is how do you reliably generate citations?
+There's going to be a lot of different techniques.
+I've probably just mentioned this in a blog post rather than just sort of
+distracting all the different ways you can hack XML.
+But a lot of it is, you know, if you include the chunk ID
+as XML, as you represent the chunks, then you can ask the LLM to reference the chunks.
+Right.
+Yeah.
+If you want to do more than that, you can not only reference the chunks,
+but maybe the first couple of words and the last couple of words within the
+span and generate citations there.
+But a lot of it will be around experimenting with the XML representation of the spans.
+If you look at Anthropic or if you look at Coheres LLM APIs,
+what they're really doing behind the scenes is this sort of
+XML citation chunk ID 7 behavior or URL, you know, 123 behavior.
+Um, this is a question I'm curious about for you, which is what is the best way for
+non-researchers to keep up with the latest developments in AI right now?
+Do you have any like closes you read?
+Yeah, I, because I don't happen to like, I happen to work in this.
+So I think I keep up to date by default because someone sends me some links here and there.
+But I do have an opinion on how non-technical folks can keep up
+because I have a lot of non-technical friends who work in design and, you know, other things.
+So I think what I recommend is that you should start to use AI as soon as possible in your
+workflow. And once you do that, you pretty much become, I should not say technical,
+but you pretty much become a semi-technical person because even being like, okay,
+this is an opinion, like ML engineering 10 years ago was different, right?
+A lot of ML things don't apply to LLMs. If you are really good at training ML models,
+stat models, and then, you know, NLP models does not make you automatically great at,
+you know, training LLMs or embedding models, things like that.
+So you first should become a user. So I think like when someone drops something,
+like, you know, and then drop it drops a new model, run deep research, use all of that.
+So if you know that, you know, for example, like for deep research, let's say you prefer open AI
+or Gemini and Anthropic, you pretty much know that, you know, you have to use open AI's deep
+research API if you're building an application on top of it rather than Gemini. So I think being a
+user is the first step. Beyond that, you just keep up automatically at least, you know, 80% of the
+things that technical folks know, or you might know that. It's just an opinion. I'm not sure how
+correct or wrong that is. So yeah. Makes sense. That makes sense.
+You mentioned that Simon Wilson's blog is very good. It is very good. We'll make sure to add
+that back in the the follow up notes before that. I'll ask one more question, then maybe I'll ask
+you a question as well. But the question is, can someone explain the business benefit of all this?
+Or is it just an academic exercise? I would love to comment on this if you don't mind.
+Sure. Which is the La Ni'Tal companies that are very large is if you're not finding your embedding
+models of your re-rankers, you're probably closer to like Blockbuster than Netflix.
+At some point, these changes in the performance of these models are going to correlate with some
+kind of business outcome. Be the re-ranker is actually for product recommendations.
+And the higher the re-ranker scores, the less returns you're processing or the more volume
+of content you're selling. Same with Netflix. They have embedding models for users and content
+and making sure that if this little carousel on Netflix shows me five videos,
+I better click on something with top five. Here, top 10 means I have to scroll and now there's
+some issues. So as long as you're building products for humans, then these re-rankers matter a lot
+and make a lot of sense. If you're building for AI, it's going to be different because you can
+provide AI 10,000 links and you can visit all of them and not be tired. But when building for
+a human, even the 10th link is very far away on Google relative to the first link. And this is
+one re-ranking really, really matters. Cool. I mean, the question I ask everyone at the end is,
+is there a question you feel like we have not asked? And is there a question you think we should
+be thinking more about when it comes to this kind of stuff? Yeah, that's a good question, actually.
+I think at this point, all of this makes a lot of sense that, okay, we know the text modality
+quite well at this point. Like, even if we don't, then at least a lot more work has been done on
+this than, say, multimodal, which is a default way that humans interact with technology. So
+I think the next thing that we, or the next sort of domain that retrieval or search people should
+focus on is multimodality, because I have done very limited work on that recently. And I found that,
+like, for example, like when I talk to you about multimodal retrieval or embeddings,
+you think of CLIP. That's the way to go about it. There's so much been done on CLIP. There's
+CGLIP and there's so many other encoders on top of that. So there's probably 20 architectures
+based on top of CLIP. And you could use any of them to build your baseline. But the thing is,
+if you run some benchmarks, you'll realize that the original CLIP and the one that is being used
+by default in other places, they've come a long way from there, but not a lot of work and content
+has been written on top of it. I think multimodality is going to be the next sort of
+wave. And so we should think of building more benchmarks that deal with multimodal data
+retrieval and better baselines and better guides for choosing the right multimodal models.
+That is a good question would be like, what is the baseline multimodal drag? The answer to which I
+don't know. So yeah, that's the question I probably should. Yeah. Yeah. I find that Coheres models
+now can do a lot more rag over like, size of PDFs, but it's actually unclear whether they can be
+used for like, scenes and movies or audio clips or like podcasts. Yeah. So it's just the
+piece of table. So this is definitely something we're thinking about and I'm excited to see some
+more work from the LAMP TV team about multimodal work. Is there anything else you wanted to say
+before we end the session? This was fun. I mean, if I do some more research in the office, happy to
+come back and give another talk. Of course. Thank you so much. Take care, everybody. We'll see you
+all afterwards. Bye.

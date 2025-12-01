@@ -1,0 +1,880 @@
+Generally, I think many people have realized that multi-agent systems have been really
+powerful for a lot of these read-only research workflows.
+And today I'm really excited to bring in Walden, the co-founder and CPO of Cognition, to talk
+about why we don't do that for multi-agents in the coding context.
+Today he'll talk a little bit about how the frameworks we're thinking about are pretty
+premature and his two core design principles around traces and avoiding multiple components.
+And then we'll talk a little bit more about how single agents scale out and how they can
+even use read-only subagents to get a little bit more context.
+As always, any questions you have will be posted in the Slido.
+You can go there and upload them.
+And with that, Walden, take it away.
+Yeah, thank you, Jason, for having me.
+And I'm really excited to be talking with everyone here about kind of like this thing
+that we've been thinking about a lot, whether we want it or not when building Devon, which
+is just like, how should we think about what kinds of patterns in agent building are robust
+and what kinds of patterns are robust?
+So a lot of this is going to be covering the ideas I go over in a blog post we made a few
+weeks ago.
+It was called Don't Build Multi-Agents.
+I think that if there weren't the goal of like, you know, making the title something
+that people would be excited to click on, I think maybe like a more appropriate or just
+like general, like high level title would be something around the idea of context engineering.
+And the reason I say this is because a lot of the reason why we suggest to not build
+multi-agents is ultimately coming down to how you think about context and the difficulties
+of moving context around multi-agents.
+I think another blog post, literally the day after, came out from Anthropic about how they
+build multi-agents.
+And this is just something I really want to touch on because the funny thing is if you
+go through and read the blog post we made out, put out and read the blog post that Anthropic
+put out, a lot of the ideas in the blog post are actually very similar.
+We both talk about the importance of moving context, where you have to be very careful
+in constructing your systems and prompts in order to get things right, even though
+the final titles seem like they're contradictory.
+So in this case, you know, I want to, I'm going to spend most of the context of this
+conversation talking about the theory of context engineering and less about this ultimate conclusion
+of like whether you should build multi-agents or not, because it does start to depend on
+the context of what you're doing.
+But at least in the coding context and what we do building dev and cognition, a lot of
+the multi-agent systems we've played with can be quite fragile, we've ultimately moved
+away from, but in other domains it might be interesting.
+Just to give some quick filler on what context engineering is and why you should be thinking
+I think there's kind of this like mimetic terminology of like prompt engineering going
+around, right around like when ChatGFD came out.
+And on one hand, it was fun because it was this idea that, hey, like, you know, you could
+talk about like, you know, you tell your agent or you tell your, there weren't agents at
+the time, you tell your chatbot, hey, pretend you're like a 99 percentile, you know, writer
+or 99 percentile coder.
+And there are all these tricks, like saying you would tip the agent and how that would
+like, you know, improve its probability of doing things well.
+And I think we've moved away from that world.
+Largely models today are generally very good and very smart.
+And you know, the labs have already done all the work of like making sure you don't have
+to type out all of this unnecessary stuff about pretending and role playing, like how
+smart or intelligent you are.
+And now the only thing that is really standing between how intelligent these systems are
+and how much useful work they can do for you is how much context do they have?
+How much do they know about what you're trying to get them to do?
+How much do they remember about what they have done for you already, et cetera, et cetera?
+And this is really the number one priority if you're building agents is thinking about
+how do you get the context of what it has to do or what it has done to the agent at
+every point in time as it's making decisions?
+So I like to make this analogy about the early web and the arrival of React.
+React is just like so widespread today and in large part because of LLMs.
+But React is not how the web was first developed.
+And in some ways, it's almost like unintuitive when you're first learning how to use React.
+But the big difference that React made was that it kind of builds into itself all of
+the core principles and ideas of web development that are needed to make a website feel good,
+in particular, the ability of a website to be very dynamic and reactive, the ability
+to make sure a state is maintained and consistent through these hooks and patterns.
+And that was like you could do that with HTML and JavaScript and CSS.
+React didn't make website building, it didn't unlock things that weren't possible before.
+It just codified it so that it was really easy to continue to make sites that follow
+these great patterns.
+And so there are a lot of people who actually try to make LLM frameworks today.
+And I almost feel like it's too early for that, specifically because we are in this
+age of basically the equivalent of HTML, JavaScript and CSS for building agents and building
+LLM systems.
+We're still learning a lot of the important principles and ideas are going to be.
+And eventually, we'll probably get to the point where we have great frameworks where
+you can kind of skip all this hard learning and just get straight to building systems
+that are perfectly optimized and use all the right patterns.
+So this is, I think, why it's important to be thinking about and putting words to the
+concepts and ideas that people who are building agents just end up finding ourselves relearning
+over and over again.
+And yeah, the context engineering and context passing is kind of one of these key things
+that I'll be talking about today.
+I'm just going to.
+I want to walk through and motivate context engineering and these ideas about context
+passing with just a kind of exercise of like, imagine we're building an agent and we want
+this agent to kind of like be powerful and do some multi-agent stuff.
+So I kind of put a diagram here of how you might build your first attempt at a multi-agent
+system.
+So let's say you have a task.
+Maybe you'll give it to one agent or one LLM to take this task and split it into multiple
+parts.
+So it will take your one task and it will decide, OK, it seems like there's these two
+subtasks.
+It will give these two subtasks then to other agents.
+So that way, these two subagents can do their work in parallel.
+And let's say these two subagents, their final results are then taken, given back to one
+final agent to combine the results.
+And this pipeline is going to be the agent that we're looking at.
+So let's run through example.
+Imagine we give the task of building a simple clone of Flappy Bird.
+Well, you might have one subtask be, OK, let's build the background with the green pipes
+and hitboxes.
+And one agent will go do that.
+Another agent, you'll kind of make sure you have the bird asset and that can move up and
+down.
+Well, what will happen is if you're not careful, you might end up getting one agent
+interpreting a background between pipes and hitboxes to be something close to Mario,
+because Mario has green pipes that has a moving background.
+And then you just told it to build a bird that can move up and down.
+There wasn't really much context on what this bird should look like or what else it is.
+And you might actually get a bird from a completely different game.
+And then now you're giving your final agent two completely separate assets that aren't
+really coherent with each other and don't actually have the mechanics that you want
+either.
+So this is not great.
+And it might feel a bit extreme.
+And I'm purposely kind of exaggerating how bad it can get here because it is a simple
+example.
+In reality, this will kind of work for Flappy Bird, if I had to guess.
+But the context you should remember is that Flappy Bird is just a very simple example
+of a task.
+If you take this system and are running it in production on even thousands, certainly
+this becomes an issue when you're getting to tens of thousands of tasks, and these tasks
+are relatively complicated, you're going to find lots of places where miscommunications
+like this are just going to get introduced in your system, especially when the user is
+talking with the system back and forth many times, when these subagents are getting more
+or more nuanced tasks and you forget to pass some details through, those are all the kind
+of areas where the system can break down.
+So this Flappy Bird miscommunication here is just kind of illustrative, but it is something
+that really happens when you take any of these systems and try to run them at scale.
+So the way I propose you have to try to get around this is, in our case, these subagents,
+they were only understanding what they were told by the main agent, and you're playing
+this game of telephone, where you're telling the main agent, hey, can you just take what
+you were told and then break down a version of that to be told to the subagents?
+What you really want is to minimize this game of telephone.
+So how can we let the subagents directly see what the main agent saw so that they have
+the exact same, if not better, context than the main agent?
+More so than that, one other caveat as you're building real systems is the context isn't
+just the user message that came in and the task that it's been given, but it is also
+the context of everything that you have done as the agent.
+If you, as the main agent, have looked at code files, if you, as the main agent, asked
+questions and got answers to those questions, that context, those full agent traces should
+also be given as context.
+So not just user message, but also the full traces, and all of this context is ideally
+things that you should be passing around to the agents, to the LLM calls in your system.
+So here's a version of what this might look like.
+In this case, I'm using these kind of colored squares to represent context.
+So basically, the original green agent, the original agent we had for breaking down the
+task, it can see its own context about the conversation it's had with the user and anything
+it's done to decide how to break down the code.
+Subagent 1 and Subagent 2, they actually see the same exact green context, so the same
+exact set of messages and actions that the original agent took when they are working.
+And they, of course, also see the context of their own work.
+So Subagent 1 will kind of see the context of all of Subagent 1's work.
+Subagent 2 will see all the context of Subagent 2's work.
+And then, importantly, the final agent, and this can also be sometimes tricky, is something
+that is capable of seeing everything that happened with the original agent and conversation,
+everything that Subagent 1 and Subagent 2 did, and then it also has the context of what
+it is doing to combine all of their work together.
+So the passing of the green context in particular here is what we're going to do to kind of
+avoid that problem of Subagent 1 and Subagent 2 not understanding the original task.
+So let's take this for a spin and see how this does in the Flappy Bird task.
+So you give the Flappy Bird task, you still have the things to do on the left and right.
+It's better, it's better for sure.
+The thing is, Subagent 1 and Subagent 2 aren't communicating with each other.
+They don't have each other's context.
+So what you might get is you might get a nice set of green hit pipes and hit boxes, and you
+might get a bird that can move up or down.
+But there's lots of different ways in which, oops, there's lots of different ways in which
+the thing that Subagent 1 does and the thing that Subagent 2 does, there might be different
+styles for each other.
+That's what I'm choosing to illustrate here is the bird is a different artistic style
+from the pipes.
+At the code level, they might be using different APIs from each other.
+They might re-implement some same code.
+They might be incompatible in other ways.
+So having these two subagents that can't talk to each other, it's like having a team of
+engineers where you can't let them message each other.
+They're going to end up stepping on each other's toes if you're not careful.
+And so again, you might result in a conflict or you might just end up with a poor result.
+So if we really reflect on what's happening here, basically, it is the true that Subagent
+1 and Subagent 2 understood what the original task was.
+They understood the mission.
+The thing is, Subagent 1 and Subagent 2, they started doing things and those doing things
+are basically committal.
+And when Subagent 1 is committing to certain types of work and certain types of decisions,
+Subagent 2 is also committing to other decisions.
+These commitments and decisions conflict with each other.
+So with any agentic system, lots of actions can basically carry these implicit decisions
+being made.
+It might feel like, oh, I'm just following orders, but there's a lot of implicit decisions
+from the styling to the way you choose to build your variables.
+And anytime these decisions are made, you almost always have to actually make sure this
+decision is shared with everyone else, or else you might just get these conflicting
+decisions and you can get really bad results from that.
+So if we think about the principles we've built up so far, the first one of let's just
+make sure we always share context and share the full agent traces of context.
+And principle two now of, hey, let's make sure that decisions are something tracked
+very carefully and make sure we don't step on each other's toes.
+What is a system we can build that is relatively reliable?
+So the most simple answer is just do like a linear simple agent where, you know, you
+can still have your agent that breaks down the task, but let's not run Subagent 1 and
+Subagent 2 in parallel.
+Let's just give the task to Subagent 1.
+It'll do the first part of the task.
+It'll have the context of everything that happened before.
+You go to Subagent 2.
+It does its part of the task.
+It has the context of everything that happened before.
+And then finally, you have the final agent that's combining their results.
+And that final agent has the context of everything that has happened before.
+So the nice benefit of this thing is there are not multiple decision-makers
+at any given point in time.
+Subagent 2 is already living with the decisions of Subagent 1, and it has the
+context of what Subagent 1 does.
+So it knows what Subagent 1 has decided on.
+It can work off of those changes without stepping on Subagent 1's toes.
+And then the final agent again sees everything that happened.
+And so it can combine the results in a nice way.
+Now this is possibly the very first thing you would build as an agent builder.
+It's just like a simple while loop of a system that just does things and maybe
+have some task breakdown at the beginning.
+And yeah, it works.
+It really quickly runs into limits though.
+And this is kind of where you are really trying to add value as a context
+engineer is what are the limits of these systems?
+And so the simple system we just looked at, LLMs have context windows.
+And even before you hit their context windows, they kind of start making bad
+decisions the more context you feed into them.
+So you probably will have some implicit limit you want on how many tokens you
+want to have and give to your model before you want to start condensing
+what information it has.
+And so with a simple agent, if you're just collecting everything that this
+agent has been doing and especially for these longer tasks, you'll quickly run
+to context overflow issues, especially as you go down the line towards the end
+of your task.
+And so that's not very good.
+We said context passing is important.
+How do you get around this?
+There's a lot of different ways to do this.
+This is probably where you kind of have to be creative as an agent builder.
+The thing I will be talking about today is at least an idea we explored and was
+what we did very early on at Cognition was think about, okay, if we're passing
+context through, can we be intelligent about what context we choose to pass
+from one agent to the next?
+And so we built this system that we basically think about as the context
+compressor.
+And every single time we have some context from a previous part of the system,
+we'd pass it through this context compressor, and then we'd have a shorter
+version that we can give to the next agent.
+And the idea is because these systems are getting, or these contexts are getting
+shorter as we're passing it on, you don't run into this context overflow issue
+as easily.
+Now, this system also has its limits because eventually even these short
+pieces of context will overflow and you'll have the same problem again, but
+you can get a lot further.
+I will say this context compression LLM, it is like this one simple thing you
+add to the system, but it ends up adding a lot of complexity and is very hard to
+get right.
+You have to think very hard about what are the things specific to your domain,
+in our case coding, that is actually important to carry from each step to the
+next.
+Because if you don't think really hard about this, you're going to run to the
+same problem we had at the very beginning, which is important details,
+important decisions, kind of just getting lost as the agent works.
+In our case, actually one thing we did is we actually trained a model to get
+really good at taking pieces from earlier pieces of the conversation and moving
+that into the next part of the system.
+We have other advanced parts of this thing today.
+I would say that you have to think very carefully about are you willing to put
+in the work to squeeze out this extra juice from your system.
+In our case, it makes sense because our entire goal is to make sure that we can
+take on harder and harder engineering tasks.
+And for us, the investment into this system makes sense.
+But we are also very careful of not having too many things like this, because
+again, it adds complexity.
+It is something you have to be very careful of and it takes real engineering
+effort to get right.
+A lot of trial and error and you have to build out a lot of evals and a really
+good system to test these kinds of things.
+We talked at a high level about context engineering.
+I want to just give some really quick real world examples about agents people
+have built and how they think about context engineering.
+So one is this idea of a read-only sub agent.
+Open code, this is literally a tweet from yesterday, so it was
+really relevant for this talk.
+But also, Claude code does this.
+The idea here is that, okay, if conflicting decisions is a lot of the
+root cause of where issues come from, what if you don't have your
+agents make any decisions?
+All they do is just try to read and find stuff for you.
+And then they'll just aggregate that into one final thing.
+So Claude code does this.
+I think in Claude's multi-agent blog post, they talk about a system that can
+research a lot of websites at one time.
+The task tool is the sub agent tool.
+And if you look at the tasks that the sub agent is doing for open code, one is
+listing the project files, one is just looking at some packages, one is just
+looking for some imports, these are all reading tasks.
+Reading tasks are really not as bad, but also in particular, the designers of
+these systems, these agent builders are very careful to constrain their sub
+agents to only doing read-only tasks.
+I think if you read the Claude Sysprompt, if you read open code Sysprompt,
+you'll probably find stuff that's like, you should only use sub agents for
+things that involve reading code.
+Because as soon as you have it writing code, oh man, now you have stuff
+happening in the background and it's hidden and you don't know what's happening.
+You also see that the author here is talking about saving context window.
+And so in this case, read-only sub agents, the idea of having a system that
+isn't going to be making decisions that only has one final result to share with
+you, maybe that final result is actually the only thing that's relevant from what
+the agent has done.
+Again, there are cases where this breaks down, but it is at least a heuristic that
+is kind of well thought through and they understand the trade off they're making,
+which is you're a saving context window for the trade off of, you know, maybe
+taking on like, you know, 1% more risk in the sub agent, giving you some
+incorrect information for what it's worth.
+We've also seen sub agents, even read-only sub agents go wrong before.
+One simple example is you have two read-only sub agents, you tell them to
+look for different things.
+They come back to you with answers, but these answers actually conflict with each
+other on, you know, on how they claim the underlying system works.
+I mean, what do you do now?
+Because now you don't have the context of either of these sub agents.
+You don't have one thing that's deciding who is right and who's wrong.
+And you can run into some of these problems again.
+So you got to be careful.
+Another one I'll quickly go through.
+This is a funny thing.
+And so it exists in many systems today, including cursor and windsurf.
+And it's this idea of an edit apply model, the rough history of this.
+And by the way, edit apply models, I think is just like a really interesting
+kind of like look into how you can really squeeze out juice of a system when you
+own the underlying inference for your LLMs.
+But that core idea of edit apply model is that at one point models were really
+bad at outputting diffs.
+So they're really bad at editing code.
+But they're really good at spitting out basically chunks of markdown explained
+to a human what code should be changed.
+So we would have this thing where you take a really smart coding model.
+It would output the instructions that is usually for a human to read about, oh,
+like, you know, change these parts of the code or like leave some comments about
+like, oh, delete this code here.
+And you take your edit apply model and this LLMs entire job is to take the
+human readable instructions from this agent, take the original code, and then
+just spit out the new final version of the code.
+This edit apply model is built to be very fast system.
+So you can, you can go from the original code to the final code very quickly, but
+it's just not a very smart agent.
+So the smart coding agent has to give very, very clear instructions to the
+edit apply model about what to change.
+And here is exactly where you can start having some breakdown in your, your
+system's accuracy because you're doing this context passing the apply model here.
+The thing it lacks isn't necessarily context.
+It lacks the intelligence of the smart coding model.
+So the instruction passing here is basically the entirety, you know, is like
+the main bottleneck in the system of how accurate will the final edit be.
+And I think, you know, when you see complaints online about, Hey, sometimes
+in these code editors, the edit will be like wrong and oral mess something up.
+It is often because of this, that the smart coding agent left out some
+important detail or wasn't specific enough about something and banned the
+edit apply model, you know, did something wrong.
+Um, this is kind of an example of like fragility in one of these systems.
+Um, and yeah, so quickly just get back to like the original point in
+question from the beginning.
+So multi-agents as they've generally been explored, I think in just like
+the general popular tech culture is this idea of just like almost having like
+an entire company where every single role in person is replaced by an agent and
+having them collaborate with each other.
+That world is, I think a world that like, we're not really ready for yet.
+Um, I think if your multi-agents are very constrained, like maybe for these
+read only use cases, they're passable.
+You just have to be careful.
+You can't avoid the problem of doing context engineering and
+dropping their blog posts.
+I think talks a great length about how they prompt their sub agents or prompt
+their agent to only use a sub agent in very specific ways, or else you can get
+things that go very wrong.
+Um, and I also just generally think that if you're abiding by like kind of
+principles of good context engineering, your system as a whole, even if it has
+like sub parts and tasks, it kind of should feel to the user, like a single
+agent, because the user has to feel like they're talking with one continuous
+decision maker, one continuous, like consciousness almost, um, even if there's
+like a lot of underlying things happening under the hood.
+So when we build Devon, we always try to build it such that it feels like one
+entity that you're talking to.
+Um, and then the other thing I think is that we'll eventually get to the point
+where, you know, you have multiple LM agents and they're working with each
+other on a team, like coworkers, but actually requires being very intelligent
+to be good at collaborating with other people.
+Like when, when, when I'm working with another engineer on my team, if I am
+mentally modeling at the same time, what they know, what they don't understand
+and what I have to tell them.
+So unless the, these LLMs basically get really good themselves and get really
+intelligent themselves, that is going to be the bottleneck to getting at these
+multi-agent systems work.
+But once you get good single agent systems, once you get a single agent that
+is good with interacting with a user and make that smarter and more collaborative,
+then we'll probably unlock this, the agent to agent multi-agent world, um,
+naturally, but the single agent world is kind of like really where I think this,
+this space should be focusing, getting, getting to progress.
+And then, you know, we'll, we'll, we'll get those multi-agents that were promised.
+So, yep, that's, uh, I think that's my time and that's the general, just my talk.
+Again, thanks for having me.
+And I'm, I'm very happy to kind of like go into questions about this or just,
+you know, generally questions about cognition.
+We, uh, I think there's a bunch of really interesting questions here.
+So let's just, uh, jump in real quick.
+Um, yeah, I mean, one of the things you talked about was just sort of how much
+more intelligent you have to be to collaborate as software developers.
+Um, do you have a sense of like, what are these specific skills that
+these agents are lacking?
+Is it like the ability to interrupt?
+Is it making pull requests and reviewing PRs?
+Um, I'm curious, like, where do you think this, uh, this lack of intelligence
+and collaboration is coming from right now?
+Yeah, there's a lot of things here.
+And this is probably some of the things we were thinking about most as we are
+going to the realm of like human and agent collaboration.
+So one thing I'll say is that for most people, human in the loop means like
+you're, there's a system and you can like press stop or you can press go at
+any point in time, you can interrupt it.
+Um, it's really nice.
+It gives you a lot of control as a developer.
+Um, what do you think about collaboration?
+Where like you're working with an entity that can run for long periods of time.
+You don't want to take the human out of the loop.
+The human has to be the ultimate decision maker and will
+approve anything that is done.
+But the agent almost has to be more intelligent about how it interacts with you.
+So one thing that systems are not great at today, and one thing that we work on
+a lot is this problem of escalation, right?
+One kind of system recognize when it reaches its own limits of the
+decisions it is allowed to make.
+Um, okay.
+Like, you know, you're working a task.
+Turns out there's some really niche problem here that you didn't expect at
+the start when you talked with a human.
+Um, and it requires actually a pretty difficult architectural decision.
+How do you know?
+Like, Hey, you should either way, you should notify the human that like, Hey,
+there's something weird that's happening here.
+You know, that the changes are not going to look like what we originally expected,
+but maybe it actually has to be the human's decision.
+So escalating decisions, um, and, and being good at noticing when something is
+out of your, out of your depths is something these agents aren't good at yet,
+but it's going to be a very important part of getting this right.
+Is it very, also very closely related to confidence, like how confident is
+an agent in its own, in its own decisions?
+Um, and so in Devon, one thing we do is when you collaborating with your agent,
+or when you collaborate, when you're collaborating with Devon, Devon will give
+you the, how confident it is in its plan.
+And that way you as a human can say like, Oh, okay.
+Devon is like 99% confident that this is going to work.
+You can roughly be hands off.
+You can just come back to your PR later.
+If Devon's only like 60% confident, like, okay, let me, let me see
+like what it wrote down for you.
+And then there's also this problem that comes with that of not being verbose.
+I think people hate how like, you know, I'll also just send you
+like a wall of texts and markdown.
+Um, a smart engineer will like manage to hone in on the key problems and the key
+things you have to think about with like minimal words.
+Um, one sentence, two sentences of words.
+And that's what we try to also do with Devon is like, can we just
+minimize the amount of words we need to like get the human on
+the same page as the agent?
+And, and are these systems mostly prompted now or, you know, you mentioned,
+you know, training your own models for things like context compression.
+Um, yeah, like, has it been the case that these newer models are just intelligent
+enough to do this or have you had to sort of like use Devon as a harness to
+sort of collect this feedback data?
+Yeah, I think that's absolutely the right question.
+And it, it gets into territory why I can't fully talk about the exact
+details of everything that we do, but I will say that like in many of these
+cases, it isn't within like the capabilities of the main agent.
+And so you do have to kind of like find either like, you know, prompt really,
+really hard to do things like case shot, um, you know, at times fine tuning
+to get the capabilities that you want.
+Um, and sometimes there was like ideas, which like, you just have to put on the
+boilerplate or put in the boilerplate and then you can just, you know,
+on the, on the, uh, on the back burner until, you know, some system does come
+along that's intelligent enough.
+That makes sense.
+Do you guys just have like a set of eval that are like failing today?
+And every time a new model comes up, you just rerun it and then decide
+whether it's worth pursuing.
+We have lots of evalves here.
+Yeah.
+It is like one of the key things you also realize that eventually as you
+scale an org, like you can't just like do everything through travel knowledge
+and remembering like, you know, what was breaking, what isn't working.
+You kind of need evalves.
+So, so people will have a, like a concrete way to know like, Hey, is
+something better than it was before?
+Yeah.
+I saw some videos a while ago about like, why I see companies like, Oh, we
+are scoring a hundred percent on your evals.
+And like, that's like the success metric.
+It's like, no, no, no, you, you want eval that are failing.
+So, you know, new models come out.
+Uh, you're going in the right direction.
+Um, I mean, given that, I guess now it's probably just the case that like this
+context compression, like that is just something that is happening at every
+single like agent pass, or is it now very much like some of the other systems?
+I think when I see like AMP and cloud code, it just says, if I'm running out
+of context, I will like compress my context.
+Um,
+yeah.
+So AMP and cloud code, I think the, the, the model they follow is something like
+when you reach some part of the limit, you know, yet you do some compression.
+Um, and I think that that's very reasonable as well.
+Um, in many cases, again, you have to be very careful about how you prompt
+the system to pass and what information is to keep and what information you
+shouldn't keep, I think that's mainly probably like the biggest area of
+difference in any of these systems is just like how they were deciding what
+agent they are, what context they're surfacing to the agent at any point in time.
+Yeah.
+You definitely have to sort of know what the goal of these systems are.
+You know, I think in the coding context, it's very clear of like, okay,
+know what files have been changed.
+I mean, where are the tests?
+How do you run the tests?
+Um, but I think in a lot of other contexts, it's been hard for people
+to sort of reason about these kinds of tools.
+Um, I guess one question I also have here, it's like, where do you think all
+this like multi-agent stuff and this context passing, where does that fit in
+with like the bitter lesson, like in my mind, and I'm very biased here, I feel
+like in the future, it will just be one agent, right?
+Or do you think there's actually mechanical benefits that we can't
+realize with multi-agents, you know?
+Yeah.
+Um, I kind of think I agree with you.
+And it's related to what I was saying on this last slide, which is like a
+well-engineered system and agent, even if it's very complex and has lots of
+moving parts, should feel like a single agent.
+I think a lot of movies, like, you know, the AGI that they build, like you
+can talk to it like a person, um, even though there's probably a lot of
+stuff going on in there, um, how it fits in with the bitter lesson.
+I think that's like a very interesting question.
+I think another benefit of the single agent systems is you can, I think,
+generally be like smarter about how you scale them and it's like kind of like,
+you know, it's a simpler system for you to work with and go through.
+And this goes back to the idea of like, you know, you really are making a trade
+off anytime you introduce complexity to eke out accuracy, um, and you better
+make sure that complexity isn't like reducing your reliability of the system.
+Yeah.
+I think there's another question that people tend to ask me in particular.
+Okay.
+Like, should I do this technique or that technique?
+It's always going to be more about the budget, right?
+It's like, if this more complex feature gets you 1% improvement, it might
+actually not be worth it based off the latency or the cost or anything like that.
+Um, and I'm sure you just have a bunch of evals there to make
+a lot of, make sense of it all.
+Um, yeah.
+And I guess in these contexts, I guess a single agent is also
+probably easier to train, right?
+Or has it been the case that like multi-agents, like, I don't know
+if there's been any big difference in the way we have to train these things
+or think about few shotting.
+Yeah.
+Um, I think some single agents are not only easier to train.
+I mean, it's also just generally where most of like the research work goes.
+I think because multi-agents as well, for all the reasons I mentioned, or is
+it just kind of somewhat unreliable.
+And when you're a researcher, you kind of want to make sure like the only
+reason you're like evals and scores are low is because you got to keep training.
+You got to add more data, not because you like, you know, your agents played
+some game of telephone that that wasn't working correctly.
+Although that's going to be something that, uh, again, all these ideas about
+agents getting better communication and passing context is going to be something
+that, you know, we'll, we'll have to become part of the training data and
+some of these agents will get better at.
+That makes sense.
+Yeah.
+One thing I also noticed, um, was when I've been using like coding tools, I
+generally have like a very weak form of a plan.
+It's just like, you read some documents, make a plan file, then try to do it.
+Uh, recently I've been watching some like pretty intense, uh, like coders and
+they'll spend like 30 minutes, 40 minutes building out this like massive plan MD
+file, like what has been the work on like planning in general, right?
+You can imagine maybe there's a world where I had a final API layer and I have
+two agents that work on the back end and the front end and we, we just guarantee
+that like, this is the standard API that exists there.
+Um, do you think there are specific kinds of work that multi-agents could be useful
+for, but maybe not in the generic case, but.
+Yeah.
+So planning is something that, um, we do.
+And it, the context of planning a version came up for us is actually a form of
+context management because, uh, again, it's, it's about avoiding this game of
+telephone where you, you have like constantly recompress and the information
+that you're sending to your agent.
+It's about committing to what you're doing upfront and then letting the
+agent kind of follow that structure.
+And so, um, planning, it's also this nice read only space where you
+can get to do your, your own thing.
+So at the very start of any task, when you give it to Devon, Devon is going to
+spend time reading a lot of code and generating a plan, um, often doing a
+mix of lots of systems.
+And maybe that is like play that probably the one place where we do think about
+some of these like sub agents or multi-agents, if you will, although we
+don't really think about it that way because again, Devon is built to kind of
+feel like the single thing.
+Um, I think planning is going to be a super powerful thing.
+I think that going the full plan MD route is, is like one of the ways you can put
+in more effort and get better results in the end, although I also think that these
+things will become parts of the systems themselves.
+And that's where we're trying to kind of go with Devon is like, Hey, you can, you
+can be shown the plan, you can click this button to like view the full plan that
+agent's working on, but the agent will work on this internally for its own sake.
+Um, you know, whether or not like you, you tell it to you or not.
+Yeah, that makes sense.
+I've had, I've had plans now where it's like phases, like one to three, each
+phase has like the files you're allowed to update the test, you have to run
+before they pass and then like the poor PRs you have to make here.
+Um, I mean, one, one question I see getting up voted is around the
+frameworks and tools and patterns.
+So you talked about how we're still pretty early.
+We're like JavaScript, HTML, CSS.
+Um, are there any patterns you feel bullish on?
+Right.
+I know some folks talk about like state machines and graphs, you know, I don't, I
+don't know personally if that's sort of the angle I want to pursue, but like, do
+you feel like there's an early J query that exists for building up these systems?
+Yeah.
+You know, we actually have our own framework that we build ourselves and
+maintain ourselves internally here at cognition, um, lots of parts of it that
+we throw out over time, lots of parts of that that we keep, I'd say my
+favorite things about our thing.
+One is a framework that is naturally cash aware.
+Um, long, even before API is introduced caching, um, you actually could get
+caching effects if you worked directly with the labs and were kind of careful
+about how you send your prompts.
+Um, and so that was a lot of like things we, we had to do and figure out early on
+it here at cognition to get our agents to work is like, how can we get caching
+even before caching cash pricing was a part of the API?
+And so our system has been built with caching kind of like being a very core
+condition.
+So even as you scale out and do the, these subagents and things like that,
+having a system that still manages to like, oftenly cash work from before, I
+think is going to be important thing, just like practically for developer.
+Um, I think another part of it is just how integrated is your, is your agent
+building code with your eval system?
+Yep.
+Um, and so I think we should put out a blog post about this sometime in it
+because we take this kind of interesting approach where, um, we kind of like
+segment functionalities of our system into modules and these modules are tagged
+in such a way that, um, not only are things that go through those modules,
+things that are like, we can track and feed into eval systems.
+When we change code inside of these modules, we can then also like back run
+them against evals from before.
+Um, and, and this is just super helpful for developers of being able to like
+think about your evaling your code in conjunction with your prompts.
+Um, and, and that way, like you, you can completely re-architect some parts of
+these and still trust your, your evals from before.
+Yeah, that makes sense.
+In the, in the search space, I've definitely seen examples where like the search
+system they're using to evaluate the code is actually not the one they're running
+in production.
+And then this drift over time, it comes like a bunch of massive tech debt.
+I know some companies use their own proprietary, like prompting templating
+tools and, uh, you know, because they were trying to be too smart with a prompt
+optimization when caching came out, uh, they weren't able to benefit from that
+because they were doing like dynamic truncation of all these aspects.
+But yeah, I think being cash aware is something people have not been
+thinking about too much.
+Um, I mean, given that, doesn't it also feel like if I do spend up a sub agent,
+I'm almost better off just copying the entire history because that at least is
+cash where if I try to summarize it, uh, that that breaks, but maybe this is a,
+this is a poor assumption.
+Yeah, exactly.
+I mean, the context passing is like super important for not, not just for all the
+intelligence reasons we talked about, but also for caching.
+Yeah.
+So like, you know, actually like don't lose that much, um, cost-wise if you just
+like keep the sub agents context around the main thing, I think it's probably
+like the token limit that is, is what you often run into.
+That makes sense.
+Um, I think a bunch of folks are here are really curious about this confidence
+metric, like I'm pretty familiar with it.
+It's just like every time you, every time I tagged Evan on a, on a
+podcast, there's like the red, yellow, green circle.
+Um, how is that like, can you talk a little bit more about how that has been
+designed or how do you get feedback for something like that?
+Yeah.
+Um, we, we basically, we want it to be something that the user can actually trust.
+So you might see that it actually rarely outputs like a very strong green.
+Um, and we kind of like purposely bias it to like be very, um,
+concerned about what it's missing.
+And so there are lots of specific things.
+We make sure the agent tries to take into consideration when giving
+you a confidence score, including what code have you not seen.
+Actually, this is probably like the biggest gap.
+I talked about this earlier already in terms of like the idea of like escalating
+to user, but if you think about how these systems are trained, um, before we
+started doing RL on agents, um, they're trained as chat bots and the chat bots
+metric is like, you know, next token production, can you predict the answer
+that the user wants or what the correct answer is?
+You don't get points for saying, I don't know.
+Right.
+Cause it's cause you, yeah.
+You output the right answer.
+You output the wrong answer.
+When you get right, when you get it right, you get points.
+Um, it makes me think a little bit about how, um, some math competitions, um,
+what they'll actually do is they'll give you points for just like leaving no answer.
+And the way it's set up is that you actually, if you have no idea what the
+answer is and you have some like random expected value of like guessing the
+right answer, your expected value is higher if you just say like no answer.
+Um, and I think that's kind of like where we want to make our agents go is.
+It is a lot more helpful for the agent to say, I don't know, or I'm only this,
+this percent confident rather than just saying like, oh, okay, let's think, you
+know, here, here's what my first guess would, would be for the answer.
+Um, and, and the, we also integrate this with our planning so that if it's
+also really unconfident, um, it'll just stop and it'll just make sure I can't
+proceed until I actually get these answers from the user.
+That makes sense.
+That makes sense.
+Um, I know we probably only have like 12 minutes.
+I'm going to ask a very selfish question, which is I now find myself
+mostly just like tagging coding agents on GitHub and reviewing PRs.
+I'm curious, like, have you guys thought of a little bit more about what their
+review process looks like and how it can be different in, in maybe a year or two
+years from now when I think, you know, I would, I would be surprised at like 80%
+of the code I write is a, yeah, I generated.
+Yeah.
+I think there's actually a lot of room for classical frameworks here.
+Um, I am amazed all the time how much agents are able to just basically build
+on top of systems that we've built for humans.
+Like, I mean, there's kind of this joke that like, okay, like, you know,
+agents are just about like, you know, you fork VS code, you fork play, right?
+You fork the language servers and you just kind of just like take all these
+classical tools that, that people have been built before and you, you know,
+give them to your coding agent and it's able to be massively successful.
+Um, what, but there are areas where the classical tools haven't
+filled all the gaps you need.
+I think one thing is basically in code review.
+Um, and, um, if you use for cell, for cell has this really nice feature where,
+um, you can get like preview links of a site you deploy.
+And that is great for us because it means that, okay, I tagged Devin on Slack.
+I go away, I do my thing.
+And first of all, I always told Devin to send me a screenshot of the
+visual changes it makes.
+So I don't have to even leave Slack.
+I will immediately see a screenshot of like, okay, is this even something
+reasonable that I want to review?
+And if it is that I just go to GitHub, I see the preview link that
+Verso created, I just click that and I'll just like play around with the site directly.
+It is like, can you really like minimize the amount of work you have to do to
+know whether or not the changes are correct or not.
+And I think that for cell preview pattern is something that should probably also
+exist for backends for like more complicated systems as well.
+Um, but the infrastructure to build those things out, is this something people
+have heavily invested in yet?
+I think maybe we will have to invest more into that.
+That makes sense.
+That makes sense.
+Yeah.
+In previous companies I've worked with, we would always just do like a, you
+know, half a percent shatter traffic to this new endpoint to see if it works.
+Maybe, maybe Devin will just be able to look at those logs and say, okay, these
+are the error messages, let me fix those and continue there.
+Um, I guess now that we only have like 10 minutes left, I'm curious, like, what
+do you think is something folks aren't really asking when it comes to, uh,
+designing these systems?
+Yeah, that's a great question.
+I think that if I had to guess, like how builders are thinking about building
+their agents from the start, um, one thing that people often maybe ask too
+much is about like tool use and, um, the set of tools you, you, you give the agent.
+I, I, I personally like to just like give our agent the most universal tools possible
+and, um, make sure there's very easy to use.
+So the shell command, like the bash tool, for example, is so powerful.
+It's like literally means like anything you can do on a computer, like your agent
+can do now because it has this command.
+Now there's some means that you can actually kind of get around the need for
+things like MCP integrations for a lot of things like, like, like, like, like
+a lot of things because it means that an MCP integration can be reduced to a shell
+command and an API key, right?
+Um, you can actually a lot of times I see people build CLI tools that are
+actually sometimes more powerful than MCP.
+That's exactly what I do.
+Yeah.
+The thing is CLI tool can actually do for you is it can like, um, every
+time you interact with it, it can like kind of reprompt the agent if you
+want to be creative in that way.
+So, um, I found someone who like, he, he was, um, he was using Devon to work on
+like this massive test suite, like thousands of tests and the, the process
+he created actually was he created a CLI tool that when Devon runs it, it'll not,
+it'll run the test.
+It'll surface only the first failing test for Devon to focus on.
+And it'll also manage the get state for Devon so that if Devon like kind of like
+is working on a test, but then messes up something really badly and like earlier
+tests are failing now, it'll say like, okay, here's like the history of your
+things and which things were working and now you've made it worse.
+Do you want to roll back and things like that?
+And, um, in this case, the CLI tool is like, it is doing much more than like
+what, what any like MCP integration could do because it's actually
+interactive with the agent.
+It's almost like reprompting it.
+It's, it's to the point where it's almost a part of like the agent
+tech system itself.
+It's very interesting.
+Yeah.
+I've, I've built some, uh, CLI tools to do data analysis.
+I've been trying to get all these different coding tools to try to
+basically do data analysis, come with hypotheses and, and, you know, uh, run
+new tests.
+I recently saw someone use, uh, get bisect to figure out when things have
+been breaking and it kind of blows my mind that, uh, agents can do these
+kinds of things.
+Um, I mean, I would love to sort of also give you the floor a little bit.
+I'm curious, like, what are the new things in Devon that you're really excited
+about and what are the things you want people to try out?
+Yeah.
+I think the, you know, at least related to recent news, the thing that I'm
+like thinking a lot about now is like, where are these like really great
+synergies between, um, your local development environment and your, your
+remote agents that you can use.
+And I personally think that when you look at kind of like, you know, the,
+the range of like people in their AI adoption from like the, like people
+just getting started to like the really powerful, like, you know, power users
+of AI, one thing that just constantly comes up is just like actually reading
+code, reading code, understanding code, planning how, how you want to make
+changes.
+Um, cause when you're an individual developer, you're, you're actually
+oftentimes you're working in math or code based searching code that isn't yours.
+You're trying to understand it.
+And when you're trying to work on larger tasks, like you said, like a lot of
+things you can actually kind of just tag Devon on today and it'll go up and do
+for you, but there is a cap to that.
+And like, if you want to expand to larger tasks, you have to actually invest time
+almost in like creating a plan or creating a PRD.
+Um, and this process actually, I think can be become easier and easier.
+Um, it is actually maybe something where like AI has a unique advantage in helping
+you because the AI, um, even though it can like only edit code serially, it
+can, it can read codes like so much faster than any of us can.
+Um, and so I'm very excited about things we're going to be doing and just making
+that process and experience be a lot easier.
+That makes sense.
+That makes sense.
+Um, yeah.
+In the last couple of minutes, I'm just curious, like, you know, where can we
+find you?
+I'll make sure to share some more links on both Devon and your Twitter and
+anything like that.
+But, uh, yes, feel free to send off a last message as I find all your information.
+Yeah.
+Um, I'll also drop my email in the chat in case people want to email and ask
+questions.
+Um, but yeah, I'm most on Twitter and you can, you can DM me.
+Um, you know, obviously I try to make this, this talk as kind of like high
+level and, and, and focus on, on the engineering of Devon as possible.
+We, we spent a lot of time kind of making our agents, you know, really good.
+I think there's going to be continued lessons we have here.
+And so I think it's almost the responsibility of like the entire space
+to just make sure that we're always thinking about like, what is it going to
+be the next concept we have to develop and building these agents?
+And I just imagine like, you know, five years from now, um, there's going to be
+like, you know, entry level courses in college about like, you know, the, the,
+the, the concepts that we need.
+Um, and, and that's going to be a fun world where like everyone understands
+these concepts, but yeah, we're, we're, we're doing a lot of work towards that.
+Um, obviously in the audience, if there are people who are interested in using
+the tools that we're building, or so we're like working alongside us, you know,
+would also love for you guys to reach out and try, try this stuff out.
+Awesome.
+Well, thank you so much for being here.
+I feel like, you know, even just thinking about this, like the escalation and
+this like pumped aware, uh, pump, catching aware frameworks that I've realized that,
+uh, you know, very few people, very few practitioners have been motivated to
+share up what they've learned.
+So I'm really excited to have you here and teach us everything.
+Awesome.
+Well, thank you so much.
+Take care of everyone.

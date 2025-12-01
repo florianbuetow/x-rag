@@ -1,0 +1,709 @@
+So, you know, I think a lot of the work that I've been doing in terms of being a consultant
+has been around helping these very like verticalized industries do things like rag over their internal
+data.
+And it's always a case of, you know, people start asking questions like how do you chunk
+data?
+What kind of OCR tools do you use?
+How do you make sure that everything is correctly cited?
+Do we do bounding boxes and all this kind of stuff?
+And so I was really excited to bring it because, you know, Reducto, I think, has been working
+with some of the most interesting evals.
+I've seen sort of your Twitter and you're just sharing examples of just, you know, not
+only just like multi-page PDF parsing, multi-page tables, but also just very obscure handwriting
+and very obscure formats for how the data are presented.
+And so I wanted to invite you to talk a little bit more about how you guys think about your
+ingestion pipelines and also, you know, leave a lot of time for questions because I think
+a lot of the folks have a lot of questions on what does this actually mean in production?
+Right.
+I think it's really easy to hit an API and get text back out or get Markdown back out.
+I think we're good to go.
+But the long tail of issues, I think, is where you guys have a lot of insight.
+So I'm really excited to have you come on and share what you know.
+And then before we jump in, Marion just posted a link in the chat.
+So if you want to ask any questions, leave it there.
+We can upvote questions and then we'll do Q&A after the presentation.
+And with that, take it away.
+Cool.
+Yeah.
+Thanks for having me, Jason.
+And thanks, everyone, for joining from all over.
+By way of quick intro, I'm Adit.
+I'm the CEO of Reducto.
+Like Jason said, we have been really going deep on this problem of ingestion for a few
+years now.
+It's not what we started with.
+So as a company, we originally were building long term memory for language models well
+before that was something that people cared about.
+Part of that was a rag pipeline.
+And what Reducto is today was born out of issues that we saw.
+And what I think a lot of ML teams today see as a blocker for them to get really great
+outputs out of models.
+So I wanted to spend today primarily just talking through individual questions for things
+that are interesting for you.
+To start, I'm planning to go through a quick overview of Reducto, who we are, what we do,
+and then kind of outline how we view ingestion.
+For us, that's a few different things.
+We think through things like how to get the ideal parsing, getting the long tail of cases
+correct.
+Like Jason mentioned, if you look at my Twitter, you'll see a bunch of cases of PDFs that even
+I as a human really struggle to read.
+There's also secondary problems beyond parsing, though.
+There are questions of how you should represent your data for language models.
+There are questions about how to optimize ingestion for rags specifically.
+And then from there, we'll talk through anything that you're curious about over the course of
+this talk.
+So let's just start with the first thing, which is who we are.
+So today, we're actually lucky to work with what I consider to be a lot of the best teams
+in AI.
+That includes a lot of the non-AI specific companies that are building AI products.
+So companies like Fanta and Guideline, Notion, Airtable are customers of ours.
+But it also includes a lot of the newer AI application companies, companies like Harvey,
+Legora, Rogo, and so on, all the way through to really large enterprises.
+So one of the five biggest tech companies in the world uses Reducto, one of the five
+biggest hedge funds.
+Folks in healthcare, public sector, legal, insurance, and so on.
+This is where accuracy really, really matters and building AI products that are production
+ready is really, really difficult.
+So we focus on those more sensitive cases.
+And as a result of working with those teams, we've gotten a chance to not just see how
+they view ingestion, but how they view their overall pipeline and try to adjust our pipeline
+to be something that works for their cases.
+The first thing that we started with was just this idea that accurate parsing is really
+critical.
+And this isn't as simple as just parsing something with a vision language model.
+I'll talk a bit about this later, where I think vision language models are an exceptional
+way to address some problems in document processing, but they also fail in ways that are really
+surprising.
+And so in some cases, if you're just trying to directly pass a document in, you run into
+cases that aren't even issues with the model itself.
+This was a real case from an insurance document, where passing in this table led to a lot of
+new GPT-4 series models answering from the wrong road.
+They just misread the table.
+And the 3.5 series of cloud models just hallucinating regions of the content.
+And again, that's not a model problem.
+Models today, especially reasoning models, are incredible with reasoning on good data.
+What really ends up causing accuracy drifts is the long tail of cases where some pieces
+of scanned contents, things with more complex things like checkboxes, run into really granular
+issues where sometimes vision encoders don't encode that data correctly.
+Small pieces of information are lost, dense tables aren't extracted the way that you'd
+expect, and so on.
+And it should go without saying, like I was just saying, that when you do provide great
+inputs, you are able to get great outputs from those documents.
+So these same exact models that I shared earlier, when you pass in the structured representation
+that we focus on, are able to reason through and answer the same exact question, phrase
+exactly the same way correctly.
+And so then the question becomes, how do you get to that level of great inputs?
+Well, in our experience, the majority of the cases that people run into issues with, and
+there are exceptions to this, tend to be things along the lines of hard tables.
+It tends to be things like interpreting the layout correctly, so knowing the indentation
+in a list item hierarchy, making sure that you're associating blocks together, and so
+on.
+It's also really minor things.
+For example, if you have form regions, it's important to not just get the text out, but
+also to pair the key and value pairs together, knowing that if it says Jason Liu, that that
+maps to the name, or if it has an address, that those are placed together.
+And the last thing is reading order itself.
+This is something that, especially in legal domains, you see a lot of issues with, where
+if you have things like multi-column layouts, that's something where you need to make sure
+that you're reading the first column and the next column.
+Another really common thing that we run into is slide decks can be represented, honestly,
+any which way.
+On some level, you can almost think of PDFs as a whiteboard for humans to represent data
+with.
+Yeah, Nathan, I agree.
+Reading order is something that humans struggle with, especially in the hedge fund type cases.
+We see a lot of situations where some analysts will try to be creative with how they represent
+data.
+It's this visual hodgepodge of information, and it takes you seconds to understand, like,
+okay, I should read this title first, and then go to the left side, and then read to
+the right, and so on.
+It shouldn't be surprising that that's something that you end up needing to structure effectively
+for the language model as well.
+I'll focus a bit more on table extraction.
+All of these are problems that we've gotten very, very deep on, so we can talk through
+in more detail for anything you're curious about.
+Table extraction, I think, is something that is a very universal problem for folks, especially
+in industries that have sensitive data.
+Table extraction to us is really, ultimately, a table is any sort of association of two
+dimensions of data, so a row and column structure that, in some cases, could be a clean grid
+line, like something along the lines of what you'd see in a spreadsheet, but in many cases
+will be a bit more freeform.
+So, if you're structured to it, maybe there are some lines, like you're seeing on the
+right, to separate some of the headers, but ultimately it becomes this problem of how
+do you cluster that information effectively.
+In some cases, it's not going to be clean numbers in an ordered row.
+It will be sentences that need to be put together, and so we look at it not just as text extraction,
+but that row and column association and things like merge cell detection.
+And this is the type of thing where I think people struggle to evaluate effectively.
+For us, a lot of the end states of getting to great inputs does come from knowing what
+you're going to pass in and where you're failing.
+And it's very easy today to get some complex tables working correctly, but the hard thing
+is the types of failure modes that we see are really hard to catch in production.
+So this is a real world case where there are soil sample results from a lab test, and we
+started to see models like foraminene, this is from a vendor specifically focused on documents,
+where as a result of outputting, the model actually starts reasoning on the information
+as it's going.
+So what you're seeing on the left is the full table, but what you're seeing on the right,
+you start to see information about samples that weren't even there.
+The model starts outputting information for a lot more rows, it starts creating values
+for things like benzene levels that weren't tested for.
+And because the table structure itself looks similar, it's a type of thing that in production
+would be really hard to catch.
+We see similar sorts of loss cases where this is from a vendor that has a BLM specific,
+that last picture was a 4.0 mini.
+This is a vendor that's using a fine-tuned version of Gemini.
+And in this case, we start to see cases where it's not that it's hallucinating information,
+this information is correct, but the model kind of gives up halfway.
+And it will sometimes drop rows, it will sometimes drop columns, but again, because the table
+structure itself is accurate, this isn't a case where you would know, okay, we missed
+individual details.
+You would just assume that the data is correct.
+Since this provider, I believe, is using Claude as their backbone, I'm actually not too sure
+about that, it might be Quinn.
+But you run into cases here where, structurally, if you looked at a first pass, all of this
+looks correct.
+But if you zoom in on individual values, you start to see that the items themselves are
+hallucinated.
+So everything that you see in a red box is information that was made up, even though
+there is supposed to be a value there.
+And everything that you see in a blue box is information that was in the original documents,
+but wasn't in the output.
+What we do see as a really effective place to use VLMs isn't things that actually traditional
+OCR has always been horrible at.
+We see cases where handwriting is something that OCR just was never good at, but out of
+the box, almost all state of the art VLMs are exceptional at it.
+Same thing applies to things like chart extraction.
+When we were first starting Reducto, we tried to approach chart extraction with this almost
+traditional CV-based approach, where we would look at the axis labels, we'd measure the
+actual pixel values relative to the axis labels to make a prediction for each value in the
+bar chart.
+But that doesn't work, because in a majority of cases, charts can be represented in such
+a different and varied set of ways that VLMs are way, way better.
+When we look at ingestion, we try to pair the two.
+In cases where it's clean, structured information that traditional CV does a good job on, we
+actually do rely a lot on traditional CV models.
+That has some benefits as well in terms of giving us bounding boxes, really clean confidence
+scores and so on.
+But when we see things like figures, in some cases, we will actually just crop that image
+region and let our customers pass that image downstream to their model of choice.
+Because in those cases, that visual information is actually the best thing for the model to
+reason on.
+In some cases, we will use VLMs as a complement, so in the case of the slides that I mentioned
+and so on.
+The thing overall that we've kind of landed on is the best way that we've found to use
+VLMs is almost this human in the loop-like layer.
+If you're dealing with really sensitive data, every little mistake really matters.
+Like you could have a period versus a comma, or like a zero versus an O.
+Those sorts of tiny details you can imagine if you're a bank are something that could
+have millions of dollars of downstream impact.
+And so what we see it as is we'll make a first pass prediction.
+We have a BLM that's specifically fine-tuned for just grading those outputs.
+So we're looking for mistakes that we made the first time and a second BLM that's taking
+that reasoning trace and making corrections to those outputs.
+And if you look at cases like, we post really extreme cases, this isn't meant to be production
+data.
+That's, for example, when the JFK docs came out, we did a side by side with pretty much
+every language model.
+And this sort of multi-pass approach just way, way outperforms the original approach.
+And the nice thing is if you have that initial pipeline, you can also start to triage what
+is a more complex case versus a more simple case.
+So if you have simple pages that just have text, you probably don't need a larger vision
+model to run.
+And there are models that can run on CPU to do that initial extraction pass.
+But in the more complex cases, in cases where you have a lot of visual elements, where your
+reading order is hard and so on, that's the type of case where you'd want to bring in
+a BLM and there is something more intensive about it.
+The second thing that I wanted to talk through is the process of evaluating ingestion.
+And I'll talk about this in a very tight scope of tables again, but I really think that evaluation
+is probably the most important thing that your team should be spending a lot of time
+on.
+It's not a vendor of evaluation tools.
+I know that there are a lot of good folks doing a lot of work in this space.
+But I ultimately think that evaluations are something that is so context dependent.
+You should be testing it on your own data.
+The main thing that I will say is the biggest mistake that I see teams make is trying to
+do evaluations as sort of this like back of the napkin, like rough test where they have
+one or two hard documents.
+They just see if that works and they go ahead and roll forward to production with it.
+And I think part of the issue here is that you can almost see your end-to-end pipeline
+as being composed of individual blocks.
+So there are mistakes you could be making at the retrieval step, there are mistakes
+you could be making at inference time, there are mistakes you could be making at ingestion.
+But if you don't catch the broader set of mistakes that you're going to make at ingestion,
+those are going to be magnified downstream at your retrieval step or your inference step.
+And it's really hard to isolate the two unless you're measuring each individual step thoroughly.
+So we started doing some work to just open source content for people to be able to use.
+RD table bench was the first thing that we did here.
+So this was one of the first open benchmarks for document parsing.
+We had a third party team come in and hand label a thousand diverse cases.
+But also more importantly than the individual data points, they actually went through and
+helped us create a scoring framework that is generalizable.
+So generally speaking, we have scores available for the initial thousand data points.
+But the more important thing is that you can use this sort of framework with any tables
+that you're dealing with.
+You would just have to label those data points yourself.
+And that helps you both evaluate text and structure.
+We're about to do a similar thing with helping people evaluate things like forms, parsing,
+and so on.
+We recommend that people come up with at least 100 to 200 hard cases for their distribution
+and from their use that.
+The thing that we do think is interesting is we still haven't seen cases that truly
+outperform both traditional CV and BLMs.
+It's a really hard problem.
+And so today we still find that tools like Azure Doc Intelligence, putting aside Reducto,
+are performing better.
+But I do think that that will change over time as more startups come into play and as
+teams approach this with sort of a hybrid approach to the problem.
+From evaluations, I do think there's also an interesting thing to consider in the way
+that you represent data.
+And I really think that the ideal output structure does depend on the data that you're processing.
+Because if you have a table like this, if you try to encode this in Markdown, you're
+going to end up with something really, really cumbersome.
+And this is, again, a real world example that people expect to be able to parse.
+This document has a lot of merge cells.
+It has some empty cells.
+And trying to encode that into a Markdown structure that doesn't have clear, clean merge
+cells is going to lead to less dense information for the model to reason on.
+So what we see it as is for simple structures, Markdown is great because it encodes that
+information simply.
+For more complex structures, HTML, especially HTML paired with an image alongside it, can
+be really helpful.
+And for large tables, I think there's a trade-off there in terms of token efficiency versus
+encoding those details.
+In our pipeline, we actually just do it directly based on the number of merge cells.
+So for anything with three or more merge cells, we use HTML as a structure.
+For anything with fewer, we will use Markdown for the token efficiency.
+On that same topic of representing data, I think chunking is an interesting problem that
+we've seen a lot of different approaches.
+I also think that chunking is something that the narrative is changing on quickly.
+So candidly, especially as models have gotten longer and longer context windows, it's less
+of the focus that we see in Rack products today.
+It does matter because ultimately, if you're doing retrieval across a large corpus of data,
+you need to be able to effectively pull snippets of those documents as opposed to trying to
+make everything work off of one full document at a time.
+The biggest things that I would say that are generalizable for everyone is that you should
+of course never split individual blocks of information.
+So trying to preserve the structure of keeping individual paragraphs together, individual
+tables, and so on.
+I also think that everybody can benefit from considering not just the text information
+or semantic information, but information like the section info and position and embedding
+similarity.
+Information is a surprisingly high value signal for chunking because humans inherently, when
+we create documents, encode things like grouping similar text together.
+And so you'll find that even without looking at semantic information, if you only looked
+at relative position of pieces of information, you actually get a really close proxy for
+semantic information inherently.
+It's a lot easier to pull out, especially if you're dealing with data points at scale.
+And the last thing is you should dynamically adjust the chunk size.
+I think it's really hard to get a good pipeline, even if you're not splitting individual blocks,
+that is entirely dependent on very fixed chunk sizes.
+I do think some uniformity in chunk sizes is helpful in terms of retrieval pipelines
+and measuring retrieval pipelines, but it's not something that should be seen as fixed.
+A lot of the teams that we work with today tend to do both image inputs and also text-based
+inputs.
+So I do think that the way that they've approached chunking has changed over time as well.
+There are benefits to each, and we can talk through how we look at both.
+And the last thing before we jump into questions here is the pipeline of optimizing the data
+for RAG.
+And the only thing that I really want to emphasize here is that ultimately embedding models and
+LLMs have different limitations, and your ingestion pipeline should account for that.
+So earlier I was talking about how LLMs are really good at reasoning on that dense HTML
+structure.
+They're able to understand the structure that you're providing for the inherent table.
+But in the real world, your users are probably not going to take a financial table and enumerate
+the specific values that you're looking for.
+So you can imagine if I had a table that contains revenue over time, your end user is probably
+going to say something like, how did revenue change over time?
+You're probably not going to phrase the question as, in fiscal year 14, how did the number
+change from 210 to something else?
+And if you're doing a really naive sort of cosine similarity based approach, that becomes
+really hard to match the end table to the user's prompt, simply because so much of this
+table is just HTML tags and numbers, and that's not what you're looking for.
+So what we try to do is create embedding optimized representations for each chunk.
+In the case of tables, that might include things like creating a natural language summary
+that describes the type of content available in the table.
+And with smaller language models today, that's actually really cheap to do, and you can do
+that at scale.
+And that, we found, really improves retrieval performance.
+On those veins, it's also really important to add context about the sections.
+This is along the lines of what Anthropic released in their paper for contextual retrieval,
+and thinking through things like modified representations that perform better for your
+embeddings and context that helps tie the document data to the actual user prompts.
+I know Jason has a really good blog about measuring the performance and production.
+I would recommend looking at the ways in which users are engaging with your platform, measuring
+the cases where you're failing to retrieve the right thing for them, and working backward
+in terms to what should you change at ingestion to make that work.
+So to wrap up here, as a quick summary, I know I kind of sped through this.
+One, as a baseline, I think accurate parsing is really critical.
+You should try to use the best tools that are available for you.
+To be clear, I'm very much a VLM maximalist.
+I'm confident that over time VLMs will get better and better and better at parsing.
+But if you're trying to get production-ready products today, the best way to do that is
+to use a combination of both traditional CV for the things that traditional CVs get
+at and also VLMs and document metadata.
+All of them have individual benefits, and you should think through the trade-offs and
+benefits of each.
+You should evaluate that to make sure that the end state that you end up at is the best
+that you can possibly get to.
+The second thing is in terms of representing data for language models, make sure that you're
+considering your distribution of data to better understand the right way to structure that
+data and how to chunk.
+The last thing is in terms of optimizing the ingestion for RAG.
+Just be mindful of the fact that embedding models and language models have different
+limitations.
+I know that especially with things like a gem tick RAG, this will become less of an
+issue over time.
+In today's paradigm, I think it's worth thinking through.
+All that being said, I'm happy to turn over and talk through questions from here.
+This is really great.
+I feel like the last slide that you had was something I had inherently understood but
+didn't really communicate well to most people I work with.
+Just this idea that maybe we should just be stuffing HTML rather than markdown.
+That was a pretty good insight on this end.
+I think the first question is a question you've probably heard many, many times, which is,
+hey, I saw this blog post about Gemini.
+I saw this blog post about docking.
+I think even in chat there's a long conversation about it right now.
+I'd love to just hear your thoughts.
+I think the agenda is going to be around production use cases, but we want a little bit more.
+We are very big fans of Gemini, to be clear.
+For the agentic OCR framework, Gemini out of the box was the most promising model that
+we saw for that human loop correction.
+I know the exact blogs that folks are referring to for the Gemini solves document parsing.
+What I'll say is at the end of the day, almost everybody that ends up onboarding to Reducto
+does some form of side by side with Gemini.
+I think it is an incredibly promising model, but it's not quite there for the long tail
+of cases that we discussed.
+The similar patterns that we saw, one of the cases that I shared was with Gemini 2.0.
+If you're dealing with a simpler case, like if you're building a regular chat with PDF
+There's room for error tolerance that is acceptable.
+For a lot of people, I actually just say you're probably fine just sending this directly to
+the vision language model.
+A lot of the folks that can't rely on just that are folks in those sensitive industries,
+and for them, that last mile really matters.
+I think Gemini is a fantastic tool to have in your toolkit.
+I wouldn't see it as a one-stop shop.
+Makes sense.
+Makes sense.
+I think one of the questions is really interesting, which is I know that you guys had very early
+on started thinking about things like training your own models and putting a lot of efforts
+in just getting higher quality data.
+I think I saw some folks on your team just like label like a thousand PDFs in the beginning
+of what is actually going on.
+What would you say are the big lessons you've learned from that experience?
+Yeah.
+This applies more broadly on how you should run your ML team.
+I think that there's something incredibly valuable about labeling data because you run
+into cases as a human where you start being unsure of how things should be labeled.
+If you don't know how to label your data, the model that's trying to predict your labels
+is going to struggle too.
+This applies if you're fine tuning a VLM.
+It applies if you're trying to train your own models, all of that.
+We have a very thorough process.
+We have a full team of data labelers because it's just so critical to what we do.
+What we don't do is train foundation models from scratch.
+I think that would be ridiculous.
+We do train our own traditional CV models because it provides the sort of backbone for
+our specific use case.
+We have a framework internally for fine tuning VLMs.
+Especially because base models are getting better so quickly, we want it to be agnostic
+to any given model.
+We love Gemini today, but we've also seen promising results from QAN and other models.
+Every single time a new model comes out, we quickly evaluate its base performance and
+then go through this process for fine tuning it for individual tests.
+On that topic, I think one of the bigger questions was, are there any open source VLMs that you
+would recommend or just recommend spending more time exploring?
+Yeah, I think on the open source front, QAN is the one that we've seen be best for this
+sort of problem.
+Nothing else has quite come close in our experience for fully open source open weight models.
+I think the other question was around using VLMs for document treeball.
+I think Copali is an example of that.
+The Coheer embed for models now, if you just, you can embed the entire page and do a treeball
+that way.
+I'm curious if any of the people you've worked with sort of have tried those models and what
+they've learned.
+Yeah, they often do.
+I think if you're dealing with highly, highly visual layouts that are kind of discrete units,
+that kind of approach makes a lot of sense.
+If you're dealing with slide decks, each slide ultimately is made to be like one unit of
+information almost.
+And so looking at that as one visual layout, trying to retrieve that in and of itself is
+great.
+It performs very well.
+Most documents are not quite that clean.
+You'll have tables that spill over into other pages and so on.
+And that's the kind of case where we've seen issues with just a pure multimodal retrieval
+pipeline.
+Many of our customers do both.
+So they have some data sources where it makes sense to do multimodal retrieval, some data
+sources where the text-based input is better.
+Makes sense.
+This one is around PyTandem and data validation.
+Do you do things like data validation for some of these OCR tasks?
+I can imagine simple examples is verifying that on a receipt, the total is equal to the
+sum of all of its parts.
+But I think that's a very trivial example.
+I'm curious to learn more.
+Yeah.
+So we've started building that out, less so for the OCR side and more so because we also
+do things like structured extraction.
+We do things like document editing for our customers and all that.
+We tend to do this not just as purely like a sum total, like checksum type of thing.
+In the more sensitive use cases, it really matters to have very clear confidence scores
+for what we're doing.
+So both on the parsing side and the structured extraction side, we try to just expose those
+knobs to the end customer.
+We may not be the provider for doing the route this to human in the loop, but our customers
+build those sorts of pipelines on top of the confidence scores.
+And then I guess to add on this idea of confidence, the next question is, what are your thoughts
+on data extraction, in particular dealing with citations and reasoning about that data?
+What are the main challenges you've seen?
+Yeah, we've seen citations for models continue to be a really hard issue.
+I know some model providers are doing a better job here than others.
+Like Anthropic is very good at citing sources.
+This is also a case where I think traditional CV ends up being really helpful because you
+just have clear bounding boxes for where you're pulling all the information.
+And we've also found that fine tuning is not like a clear solution for every problem.
+It doesn't make the model more intelligent, but we have found that fine tuning is a great
+way to improve performance for things like citations.
+So when we do structured extraction, for example, we'll also tie it back to the original bounding
+box.
+That's partially because we have a model fine tuned for that, but it's also partially a
+set of heuristics and things like similarity search to make sure that the model's prediction
+is actually fair and reasonable.
+I think we had someone in one of our office hours sort of talk about this a little bit,
+but I didn't have a good answer, which is when it comes to fine tuning for things like
+extraction, how much data did you feel like you needed to create before it started performing
+better?
+Is it sort of thousands of examples, tens of thousands, or is it like 15 examples in
+a specific data?
+Yifei would be a better person to talk to about that.
+The biggest thing that we run into is VLM seems to do a good job in terms of post-fine
+tuning performance off of not that many examples, hundreds to maybe a thousand.
+But we found that even really minor issues in the labels that you're providing for that
+fine tuning really end up being amplified by the end of it.
+So you need genuinely perfect inputs, which is a hard problem in and of itself.
+I think I've heard very similar things from some of the DeepMind folks where they would
+rather have 30 perfect examples than a thousand examples they've gotten from PRON.
+On our data labeling side, we end up putting a lot of time not just into the initial data
+labels, but catching mistakes that people made the first time.
+That makes sense.
+Quality over quantity, I think.
+These models are too smart now.
+You can't just average out the errors.
+This one's also pretty funny.
+So you mentioned things like using HTML and Markdown.
+Do you ever do things and represent things in terms of JSON or other structured formats?
+We do.
+Yeah.
+Some of our customers want JSON, so we just have that exposed as one option as well.
+Internally, we represent everything as JSON for these tables from there to be able to
+map it into HTML or Markdown if they want it.
+I see.
+In terms of citations, you just might have XML that just maps to chunk ID 7, and then
+you just have something like citation chunk ID 7 type of...
+Yeah.
+That's roughly correct.
+There's a little more to it than that, but that's directionally how we start off.
+That makes sense.
+I feel like the hardest part has been figuring out how to do this span-level citation work,
+but I think that's very different for every use case.
+Let's look at some other...
+Is there anything that you feel like you haven't...
+We haven't asked you yet?
+Ooh.
+Great question.
+It's hard for me to say on a general note.
+Honestly, a lot of the problems that we run into thematically are similar across customers,
+but end up being very specific to their use cases.
+So yeah, if folks have questions in the context of what they're building, I'm happy to give
+my two cents on what we've seen.
+Yeah, I guess one question that I would be curious about is how do you set expectations
+on processing graphs?
+Because I've had some customers where they want to parse out tables out of graphs, but
+then it's like the axis is not very specific, and it's like, do we detect horizontal lines?
+I feel like that world, I've just really just said, we can't really do this unless there's
+a number over every bar chart.
+We're never going to be able to extract that table out for you, but I'm sure you've seen
+some crazy things.
+We have.
+I think bar charts and line charts are semi-reasonable.
+You can approximate the data with a...
+I highly recommend grounding the graph request.
+Take a state-of-the-art model, give it the image, but also give it context about spatially
+where the graphs are.
+I will say that saying that you do chart extraction is its own rabbit hole, because you'll run
+into some consultant somewhere who will make a pie chart, and it's blown out because they
+wanted to emphasize how big that section is or something like that.
+And those long tail cases are really, really hard to capture.
+It's basically just an image.
+It's not even about the data at that point.
+Yeah, I recently saw this McKinsey chart that was livestock, and then the cows were like
+cow gifts, and one third of the cow was...
+It was some crazy charts there.
+This is a pretty general question.
+Maybe let me know if it doesn't make sense.
+But one of them was, any takeaways from working in the healthcare industry?
+That's pretty broad, but maybe something resonates.
+So one, I think the multi-pass approach, the biggest reason why we built that sort of agent
+to go through our framework, more so than any other vertical, was healthcare, because
+the accuracy requirements are really hard and because handwriting and just visual art
+in healthcare are horrible.
+We'll see a lot of cases that are facts that have SKUs and are just really hard to read.
+I haven't seen anything that in one pass does an exceptional job in healthcare.
+The other thing that I'll say is really, really hard in healthcare is the representations
+of checkboxes.
+We didn't talk about that today, but checkboxes are one of the things that I see vision language
+models out of the box struggle with the most.
+Even models like Gemini will know that there's a checkbox there, but they'll sort of arbitrarily
+decide whether or not the checkbox is filled or not.
+Those are complete bipolar meanings.
+You can't say, was the patient vaccinated?
+Yes or no.
+So, I think that's a really good point.
+I think that's a really good point.
+I think that's a really good point.
+I think that's a really good point.
+I think that's a really good point.
+I think that's a really good point.
+I think that's a really good point.
+I think that's a really good point.
+I think that's a really good point.
+I think that's a really good point.
+I think that's a really good point.
+I think that's a really good point.
+I think that's a really good point.
+That makes sense.
+It's kind of funny.
+On one end we're talking about AGI timelines, and on the other end it's like the checkbox is the hardest thing that BLM's can't handle.
+The things that don't work I think are shocking things that don't work.
+I'm incredibly bullish obviously because of the really, really hard things that we see just work.
+Things that I wouldn't have ever thought could work out of the box.
+But then you run into all these really small things that seemingly just are impossible to solve, at least for now.
+I would love to get a couple more near the end.
+But the question about discount codes.
+So I will call out that anyone who is in the course I believe will get some credits towards reducto.
+But I'm curious, what does your startup program look like?
+Or generally what does that look like?
+Yeah.
+So we generally try to be flexible.
+I think for us we want to be in a position where reducto is not cost prohibitive for startups.
+So if you're in a situation where it looks like the right tool for you, like you try our sandbox and it's solving issues that you need access to, send me a note and we can work out something custom.
+Perfect.
+We'll send a follow up in the wrap up email.
+I saw a question in chat. Inverted ingestion question.
+Do you have any thoughts on how to best structure and store new documents, reports and artifacts so that they can be pleasing to read for humans but also useful for AI?
+Maybe the answer is marked down, but I'm curious to hear your thoughts.
+Yeah.
+I mean in our like playground experience, we're about to replace it tomorrow with a better version.
+But even if you look at that, you'll see that the right hand side is actually quite reasonable for you to parse as a human.
+It is just a rendered markdown slash HTML.
+We'll do things like if there's an image, crop out that image bounding box and also show it for the user.
+That roughly makes it similar to reading the source documents and also the language model can take both the image input and the text input.
+A question just came up for me, which let me know how you want to answer this.
+But has Reducto spent any time thinking about Excel formats?
+Oh, those are pretty heinous, but I'm really curious.
+I don't know, maybe it's like a preview of the roadmap, but I have a lot of folks who, you know, under the assumptions of a single worksheet with a single page is perfectly rectangular.
+You know, that's like 80% of the use case.
+And then the last 20% is some insanity.
+I'd love to learn more about how you guys are thinking about that space and if you're going to tackle it in the future.
+I actually think this is one of the more under discussed things.
+We already do support Excel and there's a lot that we do, but we're about to release a V2 that's just way, way better.
+The hard things that you run into Excel, it's a separate problem from PDFs, is just within a given spreadsheet, you could have one massive clump of data to the points where it can easily exceed the context window of even really large window of models.
+Like we, one of the three biggest trading firms in the world uses reducto and they sent us this thing that was I think hundreds of thousands of rows of data and they just wanted it to work.
+And you can't do that. So we'll do things like for a given large set of data.
+How do you chunk it effectively and for us that means interpreting the header content and breaking that into smaller tables with header content persisted so like you have two rows that are header information.
+So we're going to do those two rows, the next 50 rows, those two rows repeated and the next 50 years and so on.
+It's not perfect but it's the closest proxy.
+We started doing stuff with the reasoning models that do a sliding window across those sets of information to know when natural big breakpoints are to.
+Second thing that's really hard is outside of one really large set of information, especially could have clusters of information that have obviously separate clusters.
+And so if you have a set of tables and in some cases they'll put one column in between or two columns that you can't use heuristics to solve for that.
+So we've done a really thorough literature review on this.
+That got us to our first pass we effectively landed on looking at heterogeneity of like information density in different regions to figure out where we can sort of separate things out a separate pieces of information.
+So that's a really deep rabbit hole to go into.
+And now we're doing this like hybrid of both the data density but also visual information. So we are training a vision model specifically for spreadsheet clustering.
+And we've just found that that works better.
+I see so individual model, what you're saying is you almost like convert the spreadsheet to PDF in some weird way then the apply vision models or is it converted to PDF.
+I see like large cases.
+Without revealing too much.
+We create a new representation of the spreadsheet that can be passed in as an input for vision model.
+I see I see. Maybe it looks more like off the go than a PDF parser.
+It is very different from our PDF parsing pipeline like yeah completely different models for.
+Okay, that's kind of awesome.
+Now I'm curious like, I wonder how like confidence could get involved in next parsing like large tables on Excel.
+You should check it out next time you're at the Reducto office will give you a walkthrough.
+Okay, that's awesome that actually gets me comically excited because there's so many businesses that like need Excel and right now there's just really no good recommendation except say like, just reject the work and do it happens there.
+Yeah, I guess another question just because you guys probably deal with us so much like any other lessons on retrieving tables. So in the past we thought about, you know, do we embed the table.
+Do we do full text search on the table when possible, or maybe run some reason the tables and embed those.
+What else have you really sort of picked up from the past couple years.
+So, summaries I think have at least so far been the most effective way to do it. Yeah, one thing that I will add for summaries is not just summarizing the data.
+One, we try to summarize the type of information available because what matters is not in reading values it's about capturing the like conceptual contents there to associating table captions with the summaries can be really important so when we ask for a summary from
+a language model, we aren't only giving the table input we are also mapping, whatever citation or caption. I'm associated with that table because it's really important information about what it's supposed to capture.
+Past that, I mean, this is a case where we do have an option for example to return a image of the table but at least across our customers I haven't seen that work effectively like multimodal tables.
+And I definitely have not seen it work effectively to try to embed the table directly as well for the reasons that we discussed.
+Yeah, I think that makes sense. What we've seen work well is basically having like as much of the table as possible. You do like summary statistics and like you know if there's categorical variables you enumerate the categories.
+Yep, you include like the three paragraphs above and below the table and you say like please you know give me something that is retrievable. Yeah, and then your experimentation is just iterating on that summary prompt until you have good recall but yeah, that makes a lot of sense.
+Yeah, that makes a lot of sense. I think the biggest lesson that I'm taking away is just that the representation should be even more dense for the LLM and using like XML and all that stuff.
+That's a pretty good call out. Let me see if there's anything else, any other topics that you think would be interesting or things we haven't asked yet.
+I guess maybe this is a good time to ask you like what were the surprising edge cases that sort of hits other industries.
+Yeah, a lot of them, I think, sound really small like we just found that outputs would be so, so tied to even minor things like a one or two degree skewed.
+So, even vision language models are less resilient to those things than we would have originally anticipated, because in some cases you give a fully rotated page and the model just figures it out.
+It seems like they should just be able to do it in all cases.
+So the pre-processing for your ingestion pipeline ends up being a non-trivial thing and making that work effectively.
+Reading order is something that required way more time than I would have thought.
+Yeah.
+It wasn't even on the, it wasn't like the top three things that we thought would be hard to solve for, but surprisingly has just been this really deep rabbit hole.
+Especially like the two column or multi-column layouts I think is fairly easy to do at this point.
+But those slides and things with like vertical text and all of that ends up being really hard.
+We'll have people submitting like handwritten notes from a mom and pop grocery store or something like that, and they'll just put pieces of information throughout that page.
+And those sorts of things are hard to dedude. And then other things that are probably not as surprising is things like watermarks can throw off information.
+LLM refusals are like a separate problem, but they'll just reject it.
+Yeah. It's like a label of a fire extinguisher that's like, hi, I can't return this. It's like unsafe. I've seen those in the 2-3-4 models.
+That's also another, I think, argument for having that initial traditional CV pipeline.
+There are just things that the LLM will output that it's good to have a fallback for it, even if it's not 100% perfect.
+That makes sense. Yeah, I've definitely seen a lot of silly refusals where I can imagine the medical space like Gemini will just refuse to read out a prescription or something.
+Yeah. And you have to go with that. Oh man, I just had one more thing I completely forgot.
+Right. Let me see if there's anything else that is interesting here.
+I guess you brought up a little bit about like agentic rag. Could you sort of describe how you define that and maybe what are the differences between this versus a traditional use case?
+Yeah. I mean, the way that I've seen it implemented for our customers is usually some sort of reasoning associated with what to pass into the end inference.
+To different people, that means slightly different things. Like it could mean giving an initial set of chunks and having a model choose what is most relevant for a given question.
+I think the types of use cases where that makes sense really vary because in some cases what you're really looking for is like one full documents worth of data.
+And I think you can get there without needing the sort of agentic flow in the middle.
+And if you're in that sort of situation, is it worth adding that extra layer of latency and steps? Maybe or maybe not.
+The cases where it is really helpful is when a given answer needs to be composed of information from a lot of different sources.
+We've just found that it's helpful to be able to say like, okay, this individual snippet and this individual snippet is really important for answering this question.
+So it depends on the end user, but I do think it's like a more promising version than the naive, like cosine similarity based approach that we saw in v0 frag.
+Makes sense. I'll ask the last question just because again, I think I've actually given you guys some flack a long time ago for doing like read order in like multilingual magazines.
+How does read order change in the multilingual setting? Right. Like, yeah, in my understanding is the VLM is sort of wrapping unwrapping these tokens, you know, left to right, top to bottom.
+But then there's like, you know, books of like Japanese magazines are not only right to left, but then top to bottom.
+Right. And then, you know, the English words are voted 90 degrees and then some of the read order is left right. Some reader is all that.
+How have you seen these English models handle that? Because in my mind, it almost feels like an impossible task. Yeah.
+They read upside down and backwards. You had some fun cases here, I remember.
+Yeah, so this is actually one of the things that we're working on as like an extension of the agentic OCR framework. Instead of OCR corrections, it's like layout corrections effectively.
+We've tried language models out of the box and it doesn't work effectively there. Unsurprisingly, you can't get to like a heuristics based approach for something like this.
+And so we've just tried making initial predictions based on the layout, but letting a language model have full page context to restructure the order of information as needed. That's what we're trying to do.
+Okay. That makes sense. That makes sense. Yeah. I was just looking at this book of poetry a while ago and it was the poem is right left top bottom, but the footnotes are left right.
+And then the chapter headers were like in English on the side of the page.
+There are some horrible cases out there. Yeah.
+I guess the last question I'll also ask, which is, you know, in a lot of different use cases, for example, we've had these situations with like drilling logs, whereas multi page but then there's some data inside that should be structured and put into a database.
+Right. Do you guys think about this kind of these use cases where we're kind of an al use like the Palantir terminology of like extracting ontologies out of this data and using elsewhere.
+You think that's the responsibility of these, the customer that you're, you're servicing or is it something that's going to be more supported by by something like Reducto.
+Yeah, so this is one of those things that I think anytime you build a developer tool, people make it do things that maybe you didn't even expect them to.
+So when we started, we had productive parsing and productive structured extraction.
+And we thought the structured extraction would be just people using it for things like fields extraction.
+But we did a lot of work to make that flexible and resilient and in the process we found that people started using it for things that they weren't really meant to like people started creating knowledge graphs off of the structured extraction.
+They started creating like entity mappings or like in legal tech they would say instead of extracting fields they would say like extract the clause hierarchies from this and they would map that data back into the parts outputs.
+So we ended up building this whole flow for like pipelining like taking data from parse and to extract and doing multi sub processes. That's what we see customers and that sort of like drilling manual use case do that will do an initial parse but they'll also either tag their chunks with
+information from that like structured extraction or they'll create a structured representation of the actual document itself.
+I think that makes sense. Yeah, a lot of recommendations I've been making like now have been, you know, the, the, the PDF data is the input. You can map them into a series of data structures.
+And then when you give the LLM agent is sort of a portfolio of tools to hit these separate data structures, rather than trying to do everything on like the PDF chunk side.
+That makes a lot of sense. Yeah. Yes. How much have you seen that sort of play out in the industries that you've worked with because these cases are very much like consumer like chatbots rather than like hedge funds and whatnot.
+We see it a lot more with more of the like AI native companies that I was mentioning.
+Like companies like Legora and Rogo. This is probably not surprising given that they are AI products out there for do a lot more of the second order work for their customers.
+The more traditional enterprises haven't, I think, quite gotten there. Like they're interested in exploring those directions.
+But I think it just takes time for something like this to propagate there.
+That makes sense. I see. So the enterprise of might just have like a rag search tool, but the AI native companies are much more familiar with doing all this kind of knowledge restructuring.
+Great. I think that's all the time we have. This was super valuable. I feel like I definitely learned a lot and I'm excited to see some of this Excel work come to fruition.
+I'm sure many companies are going to be following over to try to get access to those models.
+Yeah, I'm excited for it. It should be out in the next few weeks. Thank you all for your time. If you ever need to ask me any questions, my email is just adidavorducto.ai.
+Yep, we'll send a follow up email for all the information, including some study notes. Awesome. Thanks, Jason. Take care, man.
