@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: indexer-config
+  namespace: rag-system
+data:
+  KAFKA_BOOTSTRAP: "xrag-kafka:9092"
+  KAFKA_TOPIC: "document-changes"
+  KAFKA_GROUP_ID: "indexer-group"
+  KAFKA_AUTO_OFFSET_RESET: "earliest"
+  MINIO_ENDPOINT: "xrag-minio:9000"
+  MINIO_BUCKET: "documents"
+  MINIO_SECURE: "false"
+  WEAVIATE_URL: "http://xrag-weaviate:8080"
+  WEAVIATE_CLASS: "DocumentChunk"
+  EMBEDDING_SERVICE_ADDR: "embedding-service:50051"
+  EMBEDDING_MODEL: "text-embedding-3-small"
+  CHUNK_SIZE: "500"
+  CHUNK_OVERLAP: "50"
+  BATCH_SIZE: "10"
+  HEALTH_PORT: "8080"
+  LOG_LEVEL: "INFO"

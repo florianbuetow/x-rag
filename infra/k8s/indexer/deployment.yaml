@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: indexer
+  namespace: rag-system
+  labels:
+    app: indexer
+    component: indexer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: indexer
+  template:
+    metadata:
+      labels:
+        app: indexer
+        component: indexer
+    spec:
+      containers:
+        - name: indexer
+          image: localhost:5000/indexer:latest
+          imagePullPolicy: Always
+          ports:
+            - name: health
+              containerPort: 8080
+              protocol: TCP
+            - name: metrics
+              containerPort: 8081
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: indexer-config
+            - secretRef:
+                name: indexer-secret
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: health
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: health
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "2Gi"
+      restartPolicy: Always
