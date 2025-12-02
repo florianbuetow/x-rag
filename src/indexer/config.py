@@ -64,6 +64,16 @@ class IndexerConfig(BaseSettings):
         description="Weaviate class name",
     )
 
+    # Redis configuration (for distributed locking)
+    redis_url: str = Field(
+        default="redis://xrag-redis:6379/0",
+        description="Redis URL for distributed locking",
+    )
+    redis_lock_timeout: int = Field(
+        default=300,
+        description="Redis lock timeout in seconds",
+    )
+
     # Embedding Service configuration
     embedding_service_addr: str = Field(
         default="embedding-service:50051",
