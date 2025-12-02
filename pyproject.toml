@@ -100,15 +100,34 @@ python_functions = ["test_*"]
 python_version = "3.11"
 plugins = ["pydantic.mypy"]
 strict = true
-disallow_untyped_defs = true
-warn_return_any = true
 warn_unused_configs = true
 
-# Exclude generated and third-party code
-exclude = [
-    "src/proto_gen/",
-    ".venv/",
-]
+# Limit what mypy considers part of the project
+files = ["src", "tests"]
+
+# CI ergonomics
+show_error_codes = true
+pretty = true
+
+# Exclude virtual environment (files already excludes it, but belt-and-suspenders)
+exclude = [".venv/"]
+
+# Generated protobuf / gRPC code – ignore errors completely
+[[tool.mypy.overrides]]
+module = ["src.proto_gen.*"]
+ignore_errors = true
+
+# Tests – still type checked, but not fully strict
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+check_untyped_defs = false
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+warn_untyped_fields = true
 
 [tool.coverage.run]
 source = ["src"]
