@@ -22,7 +22,7 @@ class MetricsRegistry:
         metrics.request_duration.labels(method="search").observe(0.5)
     """
 
-    def __init__(self, service_name: str, registry: CollectorRegistry = REGISTRY):
+    def __init__(self, service_name: str, registry: CollectorRegistry = REGISTRY) -> None:
         """Initialize metrics registry.
 
         Args:
@@ -82,9 +82,7 @@ class MetricsRegistry:
         self._custom_metrics[name] = counter
         return counter
 
-    def add_histogram(
-        self, name: str, description: str, labels: list[str] = None
-    ) -> Histogram:
+    def add_histogram(self, name: str, description: str, labels: list[str] = None) -> Histogram:
         """Add a custom histogram metric.
 
         Args:
@@ -116,7 +114,7 @@ class MetricsRegistry:
         self._custom_metrics[name] = gauge
         return gauge
 
-    def get_custom(self, name: str) -> Any:
+    def get_custom(self, name: str) -> Counter | Histogram | Gauge | None:
         """Get a custom metric by name.
 
         Args:
@@ -128,7 +126,7 @@ class MetricsRegistry:
         return self._custom_metrics.get(name)
 
 
-def track_time(metrics: MetricsRegistry, method_name: str):
+def track_time(metrics: MetricsRegistry, method_name: str) -> Callable:
     """Decorator to track function execution time.
 
     Args:
@@ -143,7 +141,7 @@ def track_time(metrics: MetricsRegistry, method_name: str):
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        async def async_wrapper(*args, **kwargs):
+        async def async_wrapper(*args: object, **kwargs: object) -> object:
             start = time.time()
             metrics.active_requests.labels(method=method_name).inc()
             try:
@@ -152,9 +150,7 @@ def track_time(metrics: MetricsRegistry, method_name: str):
                 return result
             except Exception as e:
                 metrics.request_counter.labels(method=method_name, status="error").inc()
-                metrics.error_counter.labels(
-                    method=method_name, error_type=type(e).__name__
-                ).inc()
+                metrics.error_counter.labels(method=method_name, error_type=type(e).__name__).inc()
                 raise
             finally:
                 duration = time.time() - start
@@ -162,7 +158,7 @@ def track_time(metrics: MetricsRegistry, method_name: str):
                 metrics.active_requests.labels(method=method_name).dec()
 
         @wraps(func)
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args: object, **kwargs: object) -> object:
             start = time.time()
             metrics.active_requests.labels(method=method_name).inc()
             try:
@@ -171,9 +167,7 @@ def track_time(metrics: MetricsRegistry, method_name: str):
                 return result
             except Exception as e:
                 metrics.request_counter.labels(method=method_name, status="error").inc()
-                metrics.error_counter.labels(
-                    method=method_name, error_type=type(e).__name__
-                ).inc()
+                metrics.error_counter.labels(method=method_name, error_type=type(e).__name__).inc()
                 raise
             finally:
                 duration = time.time() - start
@@ -191,7 +185,7 @@ def track_time(metrics: MetricsRegistry, method_name: str):
     return decorator
 
 
-def track_counter(metrics: MetricsRegistry, method_name: str, counter_name: str = "requests"):
+def track_counter(metrics: MetricsRegistry, method_name: str, counter_name: str = "requests") -> Callable:
     """Decorator to track function calls with a counter.
 
     Args:
@@ -209,7 +203,7 @@ def track_counter(metrics: MetricsRegistry, method_name: str, counter_name: str 
         counter = metrics.get_custom(counter_name) or metrics.request_counter
 
         @wraps(func)
-        async def async_wrapper(*args, **kwargs):
+        async def async_wrapper(*args: object, **kwargs: object) -> object:
             try:
                 result = await func(*args, **kwargs)
                 counter.labels(method=method_name, status="success").inc()
@@ -219,7 +213,7 @@ def track_counter(metrics: MetricsRegistry, method_name: str, counter_name: str 
                 raise
 
         @wraps(func)
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args: object, **kwargs: object) -> object:
             try:
                 result = func(*args, **kwargs)
                 counter.labels(method=method_name, status="success").inc()

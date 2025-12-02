@@ -3,6 +3,7 @@
 from typing import Literal, Optional
 
 from pydantic import Field, field_validator
+from pydantic_core import ValidationInfo
 
 from src.common.config import ServiceConfig
 
@@ -28,7 +29,7 @@ class EmbeddingServiceConfig(ServiceConfig):
 
     @field_validator("openai_api_key")
     @classmethod
-    def validate_openai_api_key(cls, v: Optional[str], info) -> Optional[str]:
+    def validate_openai_api_key(cls, v: Optional[str], info: ValidationInfo) -> Optional[str]:
         """Validate OpenAI API key if using openai generator."""
         generator = info.data.get("embedding_generator", "hash_based")
         if generator == "openai":

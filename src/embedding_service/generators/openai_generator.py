@@ -1,7 +1,6 @@
 """OpenAI embedding generator implementation."""
 
 import logging
-from typing import Any
 
 from openai import APIError, AsyncOpenAI, RateLimitError
 
@@ -25,7 +24,7 @@ class OpenAIEmbeddingGenerator(EmbeddingGenerator):
         "text-embedding-ada-002": 1536,
     }
 
-    def __init__(self, api_key: str, max_retries: int = 3, timeout: int = 30):
+    def __init__(self, api_key: str, max_retries: int = 3, timeout: int = 30) -> None:
         """Initialize OpenAI generator.
 
         Args:
@@ -41,7 +40,7 @@ class OpenAIEmbeddingGenerator(EmbeddingGenerator):
         self.max_retries = max_retries
         logger.info("OpenAIEmbeddingGenerator initialized")
 
-    async def embed(self, text: str, model: str, **options: Any) -> list[float]:
+    async def embed(self, text: str, model: str, **options: object) -> list[float]:
         """Generate embedding for a single text.
 
         Args:
@@ -77,9 +76,7 @@ class OpenAIEmbeddingGenerator(EmbeddingGenerator):
             logger.error(f"Unexpected error in embed: {e}")
             raise ServiceUnavailableError(f"Embedding generation failed: {e}") from e
 
-    async def embed_batch(
-        self, texts: list[str], model: str, **options: Any
-    ) -> list[list[float]]:
+    async def embed_batch(self, texts: list[str], model: str, **options: object) -> list[list[float]]:
         """Generate embeddings for multiple texts (batched for efficiency).
 
         OpenAI API supports batch embedding which is more efficient than
@@ -135,8 +132,5 @@ class OpenAIEmbeddingGenerator(EmbeddingGenerator):
             ValueError: If model is not supported
         """
         if model not in self.MODEL_DIMENSIONS:
-            raise ValueError(
-                f"Unknown model '{model}'. Supported models: "
-                f"{', '.join(self.MODEL_DIMENSIONS.keys())}"
-            )
+            raise ValueError(f"Unknown model '{model}'. Supported models: {', '.join(self.MODEL_DIMENSIONS.keys())}")
         return self.MODEL_DIMENSIONS[model]

@@ -24,7 +24,7 @@ class DocumentEventConsumer:
         topic: str,
         group_id: str,
         auto_offset_reset: str = "earliest",
-    ):
+    ) -> None:
         """Initialize the consumer.
 
         Args:
@@ -42,10 +42,7 @@ class DocumentEventConsumer:
 
     async def start(self) -> None:
         """Start the Kafka consumer."""
-        logger.info(
-            f"Starting Kafka consumer: {self.bootstrap_servers}, "
-            f"topic={self.topic}, group={self.group_id}"
-        )
+        logger.info(f"Starting Kafka consumer: {self.bootstrap_servers}, topic={self.topic}, group={self.group_id}")
 
         self.consumer = AIOKafkaConsumer(
             self.topic,
@@ -88,16 +85,10 @@ class DocumentEventConsumer:
 
         try:
             async for message in self.consumer:
-                logger.debug(
-                    f"Received message: partition={message.partition}, "
-                    f"offset={message.offset}"
-                )
+                logger.debug(f"Received message: partition={message.partition}, offset={message.offset}")
 
                 event = message.value
-                logger.info(
-                    f"Event: type={event.get('event_type')}, "
-                    f"doc_id={event.get('document_id')}"
-                )
+                logger.info(f"Event: type={event.get('event_type')}, doc_id={event.get('document_id')}")
 
                 yield event
 

@@ -18,7 +18,7 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
     Implements the EmbeddingService gRPC interface defined in embedding.proto.
     """
 
-    def __init__(self, generator: EmbeddingGenerator, default_model: str = "text-embedding-3-small"):
+    def __init__(self, generator: EmbeddingGenerator, default_model: str = "text-embedding-3-small") -> None:
         """Initialize servicer.
 
         Args:

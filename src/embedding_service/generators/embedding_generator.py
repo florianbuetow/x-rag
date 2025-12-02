@@ -11,7 +11,7 @@ class EmbeddingGenerator(ABC):
     """
 
     @abstractmethod
-    async def embed(self, text: str, model: str, **options) -> list[float]:
+    async def embed(self, text: str, model: str, **options: object) -> list[float]:
         """Generate embedding for a single text.
 
         Args:
@@ -25,7 +25,7 @@ class EmbeddingGenerator(ABC):
         pass
 
     @abstractmethod
-    async def embed_batch(self, texts: list[str], model: str, **options) -> list[list[float]]:
+    async def embed_batch(self, texts: list[str], model: str, **options: object) -> list[list[float]]:
         """Generate embeddings for multiple texts (batched for efficiency).
 
         Args:

@@ -110,9 +110,7 @@ class TestEndToEndIngestion:
         for attempt in range(max_wait // poll_interval):
             # Query for chunks with this document ID
             result = collection.query.fetch_objects(
-                filters=weaviate.classes.query.Filter.by_property("doc_id").equal(
-                    document_id
-                ),
+                filters=weaviate.classes.query.Filter.by_property("doc_id").equal(document_id),
                 limit=100,
             )
 
@@ -135,20 +133,14 @@ class TestEndToEndIngestion:
                     else:
                         vector_len = len(vector) if vector else 0
 
-                    print(
-                        f"  Chunk {i}: {len(obj.properties['content'])} chars, "
-                        f"{vector_len} dimensions"
-                    )
+                    print(f"  Chunk {i}: {len(obj.properties['content'])} chars, {vector_len} dimensions")
 
                 break
 
             print(f"  Waiting for indexer... (attempt {attempt + 1}/{max_wait // poll_interval})")
             time.sleep(poll_interval)
 
-        assert chunks_found, (
-            f"Document {document_id} was not indexed within {max_wait} seconds. "
-            "Check indexer logs for errors."
-        )
+        assert chunks_found, f"Document {document_id} was not indexed within {max_wait} seconds. Check indexer logs for errors."
 
     def test_duplicate_detection(
         self,
@@ -157,9 +149,6 @@ class TestEndToEndIngestion:
         weaviate_client,
     ):
         """Test that duplicate documents are not re-indexed."""
-        # Use a fixed document ID for this test
-        test_doc_id = f"duplicate-test-{uuid.uuid4().hex[:8]}"
-
         document_data = {
             "text": "This is a test document for duplicate detection.",
             "metadata": {

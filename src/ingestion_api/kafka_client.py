@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class KafkaClient:
     """Thin wrapper around Kafka producer with lifecycle management."""
 
-    def __init__(self, bootstrap_servers: str, acks: str | int = 1):
+    def __init__(self, bootstrap_servers: str, acks: str | int = 1) -> None:
         """Initialize Kafka client (not started yet).
 
         Args:

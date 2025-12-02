@@ -6,7 +6,8 @@ import logging
 import threading
 import uuid
 from contextlib import contextmanager
-from typing import Any, Dict, List
+from types import TracebackType
+from typing import Any, Dict, Generator, List
 
 import redis
 import weaviate
@@ -28,7 +29,7 @@ class DocumentChunk:
         chunk_index: int,
         namespace: str,
         metadata: Dict[str, Any],
-    ):
+    ) -> None:
         """Initialize a document chunk.
 
         Args:
@@ -56,7 +57,7 @@ class DocumentProcessor:
     4. Store chunks and embeddings in Weaviate
     """
 
-    def __init__(self, config: IndexerConfig):
+    def __init__(self, config: IndexerConfig) -> None:
         """Initialize the document processor.
 
         Args:
@@ -84,18 +85,21 @@ class DocumentProcessor:
         )
 
         # Initialize Embedding Service client
-        self.embedding_client = EmbeddingServiceClient(
-            address=config.embedding_service_addr
-        )
+        self.embedding_client = EmbeddingServiceClient(address=config.embedding_service_addr)
         self.embedding_client.connect()
 
         logger.info("✓ Document processor initialized")
 
-    def __enter__(self):
+    def __enter__(self) -> "DocumentProcessor":
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Context manager exit."""
         self.close()
 
@@ -138,7 +142,7 @@ class DocumentProcessor:
             logger.info(f"✓ Connected to Weaviate at {host}:{port}")
 
     @contextmanager
-    def document_lock(self, document_id: str):
+    def document_lock(self, document_id: str) -> Generator[None, None, None]:
         """Acquire distributed lock for document processing.
 
         Uses Redis to ensure only one indexer replica processes a document at a time.
@@ -161,9 +165,7 @@ class DocumentProcessor:
 
         acquired = lock.acquire(blocking=True)
         if not acquired:
-            raise TimeoutError(
-                f"Could not acquire lock for document {document_id} within 10 seconds"
-            )
+            raise TimeoutError(f"Could not acquire lock for document {document_id} within 10 seconds")
 
         try:
             logger.debug(f"Acquired lock for document {document_id}")
@@ -237,14 +239,11 @@ class DocumentProcessor:
 
         chunks = []
         for i in range(0, len(words), chunk_word_count):
-            chunk_words = words[i:i + chunk_word_count]
+            chunk_words = words[i : i + chunk_word_count]
             chunk = " ".join(chunk_words)
             chunks.append(chunk)
 
-        logger.info(
-            f"Created {len(chunks)} chunks from {len(words)} words "
-            f"({chunk_word_count} words per chunk)"
-        )
+        logger.info(f"Created {len(chunks)} chunks from {len(words)} words ({chunk_word_count} words per chunk)")
         return chunks
 
     def create_chunks(self, document: Dict[str, Any]) -> List[DocumentChunk]:
@@ -294,10 +293,7 @@ class DocumentProcessor:
 
         for i in range(0, len(texts), batch_size):
             batch = texts[i : i + batch_size]
-            logger.info(
-                f"Generating embeddings for batch {i//batch_size + 1} "
-                f"({len(batch)} chunks)"
-            )
+            logger.info(f"Generating embeddings for batch {i // batch_size + 1} ({len(batch)} chunks)")
 
             embeddings = self.embedding_client.embed_batch(
                 texts=batch,
@@ -308,9 +304,7 @@ class DocumentProcessor:
         logger.info(f"✓ Generated {len(all_embeddings)} embeddings")
         return all_embeddings
 
-    def store_chunks(
-        self, chunks: List[DocumentChunk], embeddings: List[List[float]]
-    ) -> None:
+    def store_chunks(self, chunks: List[DocumentChunk], embeddings: List[List[float]]) -> None:
         """Store chunks and embeddings in Weaviate.
 
         Args:
@@ -327,7 +321,7 @@ class DocumentProcessor:
 
         # Prepare objects for batch insertion
         objects = []
-        for chunk, embedding in zip(chunks, embeddings):
+        for chunk, embedding in zip(chunks, embeddings, strict=True):
             obj = {
                 "content": chunk.content,
                 "doc_id": chunk.doc_id,
@@ -362,10 +356,7 @@ class DocumentProcessor:
         minio_bucket = event.get("minio_bucket")
         minio_key = event.get("minio_key")
 
-        logger.info(
-            f"Processing event: type={event_type}, doc_id={document_id}, "
-            f"namespace={namespace}"
-        )
+        logger.info(f"Processing event: type={event_type}, doc_id={document_id}, namespace={namespace}")
 
         if event_type != "document.ingested":
             logger.warning(f"Unknown event type: {event_type}")
@@ -380,37 +371,24 @@ class DocumentProcessor:
 
                 # Query for existing chunks with this doc_id (async)
                 existing = await asyncio.to_thread(
-                    collection.query.fetch_objects,
-                    filters=weaviate.classes.query.Filter.by_property("doc_id").equal(document_id),
-                    limit=1
+                    collection.query.fetch_objects, filters=weaviate.classes.query.Filter.by_property("doc_id").equal(document_id), limit=1
                 )
 
                 if len(existing.objects) > 0:
-                    logger.info(
-                        f"Document {document_id} already indexed "
-                        f"({len(existing.objects)} chunks found), skipping..."
-                    )
+                    logger.info(f"Document {document_id} already indexed ({len(existing.objects)} chunks found), skipping...")
                     return
 
                 # 1. Load document from MinIO (async)
-                document = await asyncio.to_thread(
-                    self.load_document, minio_bucket, minio_key
-                )
+                document = await asyncio.to_thread(self.load_document, minio_bucket, minio_key)
 
                 # 2. Create chunks (async - CPU-bound operation)
-                chunks = await asyncio.to_thread(
-                    self.create_chunks, document
-                )
+                chunks = await asyncio.to_thread(self.create_chunks, document)
 
                 # 3. Generate embeddings (async - gRPC I/O)
-                embeddings = await asyncio.to_thread(
-                    self.embed_chunks, chunks
-                )
+                embeddings = await asyncio.to_thread(self.embed_chunks, chunks)
 
                 # 4. Store in Weaviate (async)
-                await asyncio.to_thread(
-                    self.store_chunks, chunks, embeddings
-                )
+                await asyncio.to_thread(self.store_chunks, chunks, embeddings)
 
                 logger.info(f"✓ Successfully processed document {document_id}")
 

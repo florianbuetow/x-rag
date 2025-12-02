@@ -16,7 +16,7 @@ class ConfigurationError(XRagError):
 class ServiceUnavailableError(XRagError):
     """Raised when a required service is unavailable."""
 
-    def __init__(self, service_name: str, details: str = ""):
+    def __init__(self, service_name: str, details: str = "") -> None:
         self.service_name = service_name
         self.details = details
         message = f"Service '{service_name}' is unavailable"
@@ -28,7 +28,7 @@ class ServiceUnavailableError(XRagError):
 class DocumentNotFoundError(XRagError):
     """Raised when a document is not found."""
 
-    def __init__(self, doc_id: str, namespace: str = "default"):
+    def __init__(self, doc_id: str, namespace: str = "default") -> None:
         self.doc_id = doc_id
         self.namespace = namespace
         super().__init__(f"Document '{doc_id}' not found in namespace '{namespace}'")

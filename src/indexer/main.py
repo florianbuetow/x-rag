@@ -10,6 +10,7 @@ import signal
 import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
+from types import FrameType
 
 from prometheus_client import Counter, Histogram, start_http_server
 
@@ -46,7 +47,7 @@ CHUNKS_CREATED = Counter(
 class HealthCheckHandler(BaseHTTPRequestHandler):
     """HTTP handler for health checks."""
 
-    def do_GET(self):
+    def do_GET(self) -> None:
         """Handle GET requests."""
         if self.path == "/health/live":
             self.send_response(200)
@@ -91,7 +92,7 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
             logger.error(f"Readiness check failed: {e}")
             return False
 
-    def log_message(self, format, *args):
+    def log_message(self, format: str, *args: object) -> None:
         """Suppress default logging."""
         pass
 
@@ -99,7 +100,7 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
 class IndexerService:
     """Indexer service orchestrator."""
 
-    def __init__(self, config: IndexerConfig):
+    def __init__(self, config: IndexerConfig) -> None:
         """Initialize the indexer service.
 
         Args:
@@ -119,7 +120,7 @@ class IndexerService:
         self.health_server = HTTPServer(("0.0.0.0", self.config.health_port), HealthCheckHandler)
         self.health_server.consumer = self.consumer
 
-        def serve():
+        def serve() -> None:
             logger.info(f"Health check server listening on port {self.config.health_port}")
             self.health_server.serve_forever()
 
@@ -198,7 +199,7 @@ class IndexerService:
 
         logger.info("✓ Shutdown complete")
 
-    def signal_handler(self, signum: int, frame) -> None:
+    def signal_handler(self, signum: int, frame: FrameType | None) -> None:
         """Handle shutdown signals.
 
         Args:

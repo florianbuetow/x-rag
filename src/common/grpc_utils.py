@@ -3,7 +3,8 @@
 import logging
 from concurrent import futures
 from contextlib import contextmanager
-from typing import Any, Type
+from types import TracebackType
+from typing import Any, Generator, Type
 
 import grpc
 from grpc_reflection.v1alpha import reflection
@@ -25,7 +26,7 @@ class GrpcClient:
         stub_class: Type[Any],
         timeout: int = 30,
         max_retries: int = 3,
-    ):
+    ) -> None:
         """Initialize gRPC client.
 
         Args:
@@ -41,7 +42,7 @@ class GrpcClient:
         self.channel = None
         self.stub = None
 
-    def __enter__(self):
+    def __enter__(self) -> "GrpcClient":
         """Open connection."""
         self.channel = grpc.insecure_channel(
             self.address,
@@ -58,14 +59,19 @@ class GrpcClient:
         logger.info(f"Connected to gRPC server at {self.address}")
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Close connection."""
         if self.channel:
             self.channel.close()
             logger.info(f"Disconnected from gRPC server at {self.address}")
 
     @contextmanager
-    def call_with_retry(self, method_name: str):
+    def call_with_retry(self, method_name: str) -> Generator[Any, None, None]:
         """Execute gRPC call with retry logic.
 
         Usage:
@@ -78,15 +84,9 @@ class GrpcClient:
                 break
             except grpc.RpcError as e:
                 if attempt == self.max_retries - 1:
-                    logger.error(
-                        f"gRPC call failed after {self.max_retries} attempts: "
-                        f"{e.code()}: {e.details()}"
-                    )
+                    logger.error(f"gRPC call failed after {self.max_retries} attempts: {e.code()}: {e.details()}")
                     raise
-                logger.warning(
-                    f"gRPC call failed (attempt {attempt + 1}/{self.max_retries}): "
-                    f"{e.code()}: {e.details()}"
-                )
+                logger.warning(f"gRPC call failed (attempt {attempt + 1}/{self.max_retries}): {e.code()}: {e.details()}")
 
 
 def create_grpc_server(
