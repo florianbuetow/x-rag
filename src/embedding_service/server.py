@@ -1,15 +1,13 @@
 """gRPC server implementation for Embedding Service."""
 
-import asyncio
 import logging
-from typing import Any
 
 import grpc
 
-from src.proto_gen import embedding_pb2, embedding_pb2_grpc, common_pb2
 from src.common.health import HealthChecker
 from src.core.errors import ServiceUnavailableError
 from src.embedding_service.generators.embedding_generator import EmbeddingGenerator
+from src.proto_gen import common_pb2, embedding_pb2, embedding_pb2_grpc
 
 logger = logging.getLogger(__name__)
 

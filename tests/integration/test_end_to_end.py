@@ -7,10 +7,8 @@ Tests the complete flow:
 4. Verify chunks are stored in Weaviate
 """
 
-import json
 import time
 import uuid
-from typing import Any, Dict
 
 import httpx
 import pytest

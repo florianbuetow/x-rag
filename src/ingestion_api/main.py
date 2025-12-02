@@ -11,7 +11,7 @@ from uuid import uuid4
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import Counter, Histogram, start_http_server
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from src.common.health import HealthChecker
 from src.ingestion_api.config import IngestionAPIConfig
@@ -32,15 +32,12 @@ logger = logging.getLogger(__name__)
 class DocumentMetadata(BaseModel):
     """Document metadata (flexible schema)."""
 
+    model_config = ConfigDict(extra="forbid")  # Reject unexpected fields
+
     title: str = Field(..., min_length=1, max_length=512)
     source_file: str | None = None
     type: str = "text"
     transcription_method: str | None = None
-
-    class Config:
-        """Pydantic config."""
-
-        extra = "allow"  # Allow additional fields
 
 
 class IngestRequest(BaseModel):

@@ -24,8 +24,8 @@ for port in "${REQUIRED_PORTS[@]}"; do
     if lsof -iTCP:$port -sTCP:LISTEN -P -n >/dev/null 2>&1; then
         PROCESS=$(lsof -iTCP:$port -sTCP:LISTEN -P -n 2>/dev/null | tail -n 1 | awk '{print $1}' || echo "unknown")
 
-        # Check if it's Docker using the port
-        if [[ "$PROCESS" == "com.docke" ]] || [[ "$PROCESS" == "docker-pr" ]]; then
+        # Check if it's Docker using the port (pattern matching for various Docker processes)
+        if [[ "$PROCESS" == *"docker"* ]] || [[ "$PROCESS" == "com.docke"* ]]; then
             # Check if it's our cluster
             if $CLUSTER_RUNNING; then
                 # Port is being used by Docker, and our cluster is running

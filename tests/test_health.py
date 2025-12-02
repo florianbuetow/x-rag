@@ -1,6 +1,7 @@
 """Tests for health checking infrastructure."""
 
 import pytest
+
 from src.common.health import HealthChecker
 
 

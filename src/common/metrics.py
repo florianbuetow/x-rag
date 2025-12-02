@@ -5,9 +5,9 @@ Provides utilities for instrumenting services with Prometheus metrics.
 
 import time
 from functools import wraps
-from typing import Callable, Any
+from typing import Any, Callable
 
-from prometheus_client import Counter, Histogram, Gauge, Summary, CollectorRegistry, REGISTRY
+from prometheus_client import REGISTRY, CollectorRegistry, Counter, Gauge, Histogram
 
 
 class MetricsRegistry:

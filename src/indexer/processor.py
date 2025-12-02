@@ -5,9 +5,8 @@ import logging
 import uuid
 from typing import Any, Dict, List
 
-from minio import Minio
 import weaviate
-from weaviate.classes.config import Property, DataType
+from minio import Minio
 
 from src.indexer.config import IndexerConfig
 from src.indexer.grpc_clients import EmbeddingServiceClient
@@ -139,13 +138,15 @@ class DocumentProcessor:
         try:
             logger.info(f"Loading document: {bucket}/{key}")
             response = self.minio_client.get_object(bucket, key)
-            data = response.read()
-            response.close()
-            response.release_conn()
-
-            document = json.loads(data.decode("utf-8"))
-            logger.info(f"✓ Loaded document: {document.get('id')}")
-            return document
+            try:
+                data = response.read()
+                document = json.loads(data.decode("utf-8"))
+                logger.info(f"✓ Loaded document: {document.get('id')}")
+                return document
+            finally:
+                # Always clean up connection
+                response.close()
+                response.release_conn()
 
         except Exception as e:
             logger.error(f"Failed to load document {bucket}/{key}: {e}")
@@ -176,7 +177,7 @@ class DocumentProcessor:
         chunks = []
         for i in range(0, len(words), chunk_word_count):
             chunk_words = words[i:i + chunk_word_count]
-            chunk = ' '.join(chunk_words)
+            chunk = " ".join(chunk_words)
             chunks.append(chunk)
 
         logger.info(

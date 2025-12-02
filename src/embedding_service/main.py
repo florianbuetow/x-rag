@@ -12,11 +12,10 @@ import sys
 import grpc
 from prometheus_client import start_http_server
 
-from src.proto_gen import embedding_pb2_grpc
-from src.common.grpc_utils import create_grpc_server
 from src.embedding_service.config import EmbeddingServiceConfig
-from src.embedding_service.server import EmbeddingServicer
 from src.embedding_service.generators.factory import EmbeddingGeneratorFactory
+from src.embedding_service.server import EmbeddingServicer
+from src.proto_gen import embedding_pb2_grpc
 
 # Configure logging
 logging.basicConfig(
@@ -80,6 +79,7 @@ class EmbeddingServiceRunner:
         # Enable reflection for debugging with grpcurl
         if self.config.enable_reflection:
             from grpc_reflection.v1alpha import reflection
+
             from src.proto_gen import embedding_pb2
 
             service_names = (

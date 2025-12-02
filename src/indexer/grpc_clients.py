@@ -4,6 +4,7 @@ import logging
 from typing import List
 
 import grpc
+
 from src.proto_gen import embedding_pb2, embedding_pb2_grpc
 
 logger = logging.getLogger(__name__)

@@ -6,14 +6,13 @@ and converting to gRPC HealthCheckResponse format.
 
 import asyncio
 import logging
-from typing import Any, Callable, Awaitable
+from typing import Any, Awaitable, Callable
 
 import grpc
-from redis import Redis
 import httpx
+from redis import Redis
 
 from src.proto_gen.common_pb2 import HealthCheckResponse
-from src.core.errors import ServiceUnavailableError
 
 logger = logging.getLogger(__name__)
 

@@ -152,6 +152,10 @@ class IndexerService:
             auto_offset_reset=self.config.kafka_auto_offset_reset,
         )
 
+        # Update health server with consumer reference
+        if self.health_server:
+            self.health_server.consumer = self.consumer
+
         # Initialize processor
         self.processor = DocumentProcessor(self.config)
 

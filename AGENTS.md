@@ -92,23 +92,117 @@ System Resources:
 
 ## Implementation Status
 
-### ✅ Completed
+### ✅ Completed (7/13 phases = 54%)
 - Phase 0: .gitignore
 - Phase 1: Foundation (Makefile, scripts, pyproject.toml, .env.example, directory structure)
 - Phase 2: Infrastructure Implementation (Kind cluster, K8s manifests)
 - Phase 3: gRPC Protocol Definitions
 - Phase 4: Common Modules (health checks, config, domain models)
 - Phase 5: Embedding Service (gRPC server, OpenAI backend, Dockerfile, K8s manifests)
+- Phase 6: Ingestion API (FastAPI + Kafka + MinIO)
+- Phase 7: Indexer (Kafka consumer + document processing)
 
 ### 📋 Pending
-- Phase 6: Ingestion API
-- Phase 7: Indexer
 - Phase 8: Search Service
 - Phase 9: Search UI
 - Phase 10: Haystack Pipelines
-- Phase 11: Testing
+- Phase 11: Testing (unit/integration tests exist, need Search tests)
 - Phase 12: Documentation
 - Phase 13: Validation
+
+## Recent Fixes (Phase 7 Validation - December 2025)
+
+### Testing Summary
+**All Tests Passing**: 20/20 tests (15 unit + 5 integration)
+- ✅ `make check` - All prerequisites validated
+- ✅ `make destroy` + `make start` - Cluster lifecycle robust
+- ✅ `make build` - All images build successfully
+- ✅ `make test` - 15/15 unit tests passed
+- ✅ `make test-integration` - 5/5 integration tests passed
+- ✅ E2E document ingestion flow working
+- ✅ Duplicate detection working
+
+### Quick Fixes Applied
+1. **Indexer readiness probe bug** (src/indexer/main.py:155-157)
+   - Issue: Health server started with consumer=None, never updated after consumer creation
+   - Fix: Added code to update health_server.consumer after consumer initialization
+
+2. **Python version standardization** (infra/docker/Dockerfile.indexer:2)
+   - Issue: Indexer using python:3.13-slim while others use python:3.11-slim
+   - Fix: Changed to python:3.11-slim for consistency
+
+3. **MinIO connection leak** (src/indexer/processor.py:139-152)
+   - Issue: Connection not closed if exception occurred during processing
+   - Fix: Added try/finally block to ensure cleanup
+
+4. **Docker process name pattern** (scripts/check-ports.sh:28)
+   - Issue: Truncated process name "com.docke" used exact match instead of pattern
+   - Fix: Changed to pattern matching with wildcards
+
+5. **Pydantic V2 deprecation** (src/ingestion_api/main.py:32-35)
+   - Issue: Using deprecated `class Config` pattern
+   - Fix: Migrated to `model_config = ConfigDict(extra="forbid")`
+
+6. **Ingestion API metrics endpoint** (infra/k8s/monitoring/prometheus.yaml:17-19)
+   - Issue: Prometheus scraping wrong port (8082 instead of 8080)
+   - Fix: Corrected to scrape ingestion-api:8080
+
+## Known Issues (Require Future Work)
+
+### Critical Priority
+1. **Race condition in duplicate detection** (src/indexer/processor.py:312-328)
+   - Multiple indexer replicas can process same document simultaneously
+   - Solution: Requires distributed locking (Redis) or Weaviate transactions
+   - Workaround: Run single indexer replica
+
+2. **Blocking operations in indexer** (src/indexer/processor.py)
+   - Synchronous MinIO/Weaviate calls block async event loop
+   - Impacts throughput under high load
+   - Solution: Wrap in executor or use async clients
+
+3. **Weaviate connection thread safety** (src/indexer/processor.py:91-117)
+   - Lazy initialization has race condition
+   - Solution: Add threading.Lock for connection initialization
+
+### Security Issues
+4. **MinIO credentials exposed in YAML** (infra/k8s/minio/minio.yaml)
+   - Default credentials (minioadmin/minioadmin123) in plain text
+   - Solution: Move to Kubernetes Secret
+
+5. **No TLS for inter-service communication**
+   - All gRPC and HTTP traffic unencrypted within cluster
+   - Production deployment should enable mTLS
+
+6. **Weaviate anonymous access enabled**
+   - Authentication disabled for development
+   - Production should require API keys
+
+### Architecture Improvements
+7. **Kafka replication factor = 1** (infra/k8s/kafka/kafka.yaml)
+   - Single replica = no high availability or durability
+   - Current: Dev-only configuration
+   - Production: Increase to 3 replicas
+
+8. **Service list duplication** (scripts/build-images.sh, scripts/deploy-apps.sh)
+   - Service names hardcoded in multiple scripts
+   - Solution: Centralize in Makefile variable
+
+9. **Missing dev-* targets**
+   - No `dev-embedding`, `dev-ingest`, `dev-indexer` targets
+   - Would enable faster local iteration with --reload
+
+10. **No distributed tracing**
+    - Difficult to debug cross-service issues
+    - Solution: Add OpenTelemetry instrumentation
+
+### Nice to Have
+11. **Chunk overlap not implemented** (src/indexer/processor.py:156-188)
+    - Current: Fixed-size non-overlapping chunks
+    - Enhancement: Add sliding window with configurable overlap
+
+12. **Complex health check probes** (K8s deployments)
+    - Using Python exec commands for health checks
+    - Could simplify to TCP/HTTP checks
 
 ## When Working on This Project
 
