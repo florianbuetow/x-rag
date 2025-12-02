@@ -194,8 +194,8 @@ echo ""
 
 # Count ready pods (include both Running and Completed)
 total_pods=$(kubectl get pods -n ${NAMESPACE} --no-headers 2>/dev/null | wc -l | tr -d ' ')
-running_pods=$(kubectl get pods -n ${NAMESPACE} --no-headers 2>/dev/null | grep "1/1.*Running" | wc -l | tr -d ' ')
-completed_pods=$(kubectl get pods -n ${NAMESPACE} --no-headers 2>/dev/null | grep "0/1.*Completed" | wc -l | tr -d ' ')
+running_pods=$(kubectl get pods -n ${NAMESPACE} --no-headers 2>/dev/null | { grep "1/1.*Running" || true; } | wc -l | tr -d ' ')
+completed_pods=$(kubectl get pods -n ${NAMESPACE} --no-headers 2>/dev/null | { grep "0/1.*Completed" || true; } | wc -l | tr -d ' ')
 ready_pods=$((running_pods + completed_pods))
 
 if [ "$total_pods" -gt 0 ]; then
@@ -210,7 +210,3 @@ if [ "$ready_pods" -eq "$total_pods" ] && [ "$total_pods" -gt 0 ]; then
 else
     echo -e "  Status: ${YELLOW}Some services are not ready${NC}"
 fi
-
-echo ""
-echo "For detailed pod status, run: kubectl get pods -n ${NAMESPACE}"
-echo "For logs, run: make logs-<service-name>"
