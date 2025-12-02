@@ -2370,6 +2370,7 @@ dev = [
     { name = "pytest-cov" },
     { name = "pytest-grpc" },
     { name = "ruff" },
+    { name = "types-protobuf" },
 ]
 
 [package.metadata]
@@ -2396,6 +2397,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "redis", extras = ["hiredis"], specifier = ">=5.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
+    { name = "types-protobuf", marker = "extra == 'dev'", specifier = ">=5.27.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.24.0" },
     { name = "weaviate-client", specifier = ">=4.0.0" },
     { name = "weaviate-haystack", specifier = ">=2.0.0" },

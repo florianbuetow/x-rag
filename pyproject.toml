@@ -54,6 +54,8 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.7.0",
     "mypy-protobuf>=3.5.0",
+    # Type stubs
+    "types-protobuf>=5.27.0",
 ]
 
 [build-system]
@@ -95,9 +97,17 @@ python_functions = ["test_*"]
 
 [tool.mypy]
 python_version = "3.11"
+plugins = ["pydantic.mypy"]
+strict = true
+disallow_untyped_defs = true
 warn_return_any = true
 warn_unused_configs = true
-disallow_untyped_defs = false
+
+# Exclude generated and third-party code
+exclude = [
+    "src/proto_gen/",
+    ".venv/",
+]
 
 [tool.coverage.run]
 source = ["src"]
