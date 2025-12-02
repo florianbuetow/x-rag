@@ -89,6 +89,20 @@ make ci              # Run all CI checks (style + security + tests with coverage
 make cluster-status  # Show cluster status
 ```
 
+### Debugging
+
+```bash
+# Check detailed pod status
+kubectl get pods -n rag-system
+
+# View service logs
+make logs-<service-name>  # e.g., make logs-embedding, make logs-indexer
+
+# Debug specific pod
+kubectl describe pod <pod-name> -n rag-system
+kubectl logs <pod-name> -n rag-system
+```
+
 ### Project Structure
 
 ```
