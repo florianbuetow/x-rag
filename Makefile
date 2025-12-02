@@ -5,7 +5,7 @@
 
 .PHONY: help check setup
 .PHONY: cluster-start cluster-stop cluster-status cluster-clean cluster-reset cluster-destroy
-.PHONY: generate-grpc build deploy-apps
+.PHONY: apps-generate-grpc apps-build apps-deploy
 .PHONY: test test-integration test-coverage
 .PHONY: code-style code-format
 .PHONY: ci
@@ -48,7 +48,7 @@ check: ## Validate all prerequisites (Docker, kubectl, Kind, Helm, Python, uv)
 
 setup: check ## Build Docker images (does not start cluster)
 	@echo "$(BLUE)=== Building Docker Images ===$(NC)"
-	@$(MAKE) build
+	@$(MAKE) apps-build
 	@echo ""
 	@echo "$(GREEN)✓ Setup complete$(NC)"
 	@echo ""
@@ -63,7 +63,7 @@ cluster-start: ## Start the cluster and all services
 	@$(MAKE) .setup-registry
 	@$(MAKE) .deploy-infrastructure
 	@$(MAKE) .deploy-monitoring
-	@$(MAKE) deploy-apps
+	@$(MAKE) apps-deploy
 	@echo ""
 	@echo "$(GREEN)===== X-RAG Platform Started! =====$(NC)"
 	@echo ""
@@ -146,7 +146,7 @@ cluster-reset: ## Reset all pods and data (keeps cluster running, deletes all st
 	@echo "$(YELLOW)[6/6] Redeploying all services...$(NC)"
 	@$(MAKE) .deploy-infrastructure
 	@$(MAKE) .deploy-monitoring
-	@$(MAKE) deploy-apps
+	@$(MAKE) apps-deploy
 	@echo ""
 	@echo "$(GREEN)===== Reset Complete! =====$(NC)"
 	@echo ""
@@ -154,19 +154,19 @@ cluster-reset: ## Reset all pods and data (keeps cluster running, deletes all st
 	@echo "Run 'make cluster-status' to verify all services are running."
 	@echo ""
 
-##@ Build & Deploy
+##@ Application Build & Deploy
 
-generate-grpc: ## Generate Python gRPC code from protocol buffers
+apps-generate-grpc: ## Generate Python gRPC code from protocol buffers
 	@echo "$(BLUE)=== Generating gRPC Code ===$(NC)"
 	@./scripts/generate-grpc.sh
 	@echo ""
 
-build: ## Build all Docker images and push to local registry
+apps-build: ## Build all Docker images and push to local registry
 	@echo "$(BLUE)=== Building Docker Images ===$(NC)"
 	@./scripts/build-images.sh
 	@echo ""
 
-deploy-apps: ## Deploy application services to cluster
+apps-deploy: ## Deploy application services to cluster
 	@echo "$(BLUE)=== Deploying Applications ===$(NC)"
 	@./scripts/deploy-apps.sh
 	@echo ""
