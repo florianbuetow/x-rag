@@ -2,8 +2,7 @@
 
 from typing import Literal, Optional
 
-from pydantic import Field, field_validator
-from pydantic_core import ValidationInfo
+from pydantic import Field, ValidationInfo, field_validator
 
 from src.common.config import ServiceConfig
 

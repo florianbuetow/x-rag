@@ -63,9 +63,9 @@ make format
 ```bash
 make help           # Show all available commands
 make check          # Validate prerequisites
-make init           # Initialize project directories
-make setup          # One-time infrastructure setup
-make cluster-start  # Build and deploy services
+make init           # Initialize local dev environment (install deps, generate gRPC)
+make cluster-init   # Build Docker images for deployment
+make cluster-start  # Start cluster and deploy all services
 make test           # Run test suite
 make cluster-status # Show cluster status
 ```
