@@ -1388,7 +1388,7 @@ help:
 	@echo "  make dev-search    - Run Search API locally"
 	@echo "  make dev-ingest    - Run Ingestion API locally"
 	@echo "  make dev-embedding - Run Embedding Service locally"
-	@echo "  make build         - Build all Docker images"
+	@echo "  make apps-build    - Build all Docker images"
 	@echo "  make deploy        - Deploy applications to cluster"
 	@echo ""
 	@echo "Testing:"
