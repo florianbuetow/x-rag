@@ -200,7 +200,8 @@ def track_counter(metrics: MetricsRegistry, method_name: str, counter_name: str 
     """
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-        counter = metrics.get_custom(counter_name) or metrics.request_counter
+        custom_counter = metrics.get_custom(counter_name)
+        counter: Counter = custom_counter if isinstance(custom_counter, Counter) else metrics.request_counter
 
         @wraps(func)
         async def async_wrapper(*args: object, **kwargs: object) -> object:

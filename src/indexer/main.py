@@ -123,7 +123,8 @@ class IndexerService:
 
         def serve() -> None:
             logger.info(f"Health check server listening on port {self.config.health_port}")
-            self.health_server.serve_forever()
+            if self.health_server is not None:
+                self.health_server.serve_forever()
 
         health_thread = Thread(target=serve, daemon=True)
         health_thread.start()
