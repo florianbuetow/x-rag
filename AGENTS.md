@@ -38,7 +38,8 @@ See the project plan for complete architecture details.
 ```bash
 make help            # Show all commands
 make check           # Validate prerequisites
-make setup           # One-time setup
+make init            # Initialize local dev environment
+make cluster-init    # Build Docker images
 make cluster-start   # Start cluster and services
 make cluster-stop    # Stop cluster
 make cluster-status  # Show cluster status

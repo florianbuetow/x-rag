@@ -3,7 +3,7 @@
 #
 # Convention: All targets end with @echo "" for visual separation in terminal output
 
-.PHONY: help check setup init
+.PHONY: help check init cluster-init
 .PHONY: cluster-start cluster-stop cluster-status cluster-clean cluster-reset cluster-destroy
 .PHONY: apps-generate-grpc apps-build apps-deploy
 .PHONY: test test-integration test-coverage
@@ -11,6 +11,8 @@
 .PHONY: ci
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
 .PHONY: logs-weaviate logs-kafka logs-redis
+.PHONY: cli-weaviate cli-kafka cli-redis cli-minio cli-embedding cli-ingest cli-indexer
+.PHONY: cli-search-ui cli-search-service
 
 # Configuration
 CLUSTER_NAME := xrag-k8
@@ -46,22 +48,27 @@ check: ## Validate all prerequisites (Docker, kubectl, Kind, Helm, Python, uv)
 	@./scripts/check-prerequisites.sh
 	@echo ""
 
-setup: check ## Build Docker images (does not start cluster)
-	@echo "$(BLUE)=== Building Docker Images ===$(NC)"
-	@$(MAKE) apps-build
-	@echo ""
-	@echo "$(GREEN)✓ Setup complete$(NC)"
-	@echo ""
-
-init: ## Initialize project directories and dependencies
-	@echo "$(BLUE)=== Initializing Project ===$(NC)"
+init: ## Initialize local development environment
+	@echo "$(BLUE)=== Initializing Development Environment ===$(NC)"
 	@mkdir -p reports/coverage
 	@mkdir -p data/storage
 	@mkdir -p .setup
-	@echo "$(GREEN)✓ Project initialized$(NC)"
+	@echo "Installing Python dependencies..."
+	@uv sync
+	@echo ""
+	@echo "Generating gRPC code..."
+	@$(MAKE) apps-generate-grpc
+	@echo "$(GREEN)✓ Development environment ready$(NC)"
 	@echo ""
 
 ##@ Cluster Management
+
+cluster-init: init check ## Build Docker images and prepare for deployment
+	@echo "$(BLUE)=== Building Docker Images ===$(NC)"
+	@$(MAKE) apps-build
+	@echo ""
+	@echo "$(GREEN)✓ Cluster initialization complete - ready for deployment$(NC)"
+	@echo ""
 
 cluster-start: ## Start the cluster and all services
 	@echo "$(BLUE)=== Starting X-RAG Platform ===$(NC)"
@@ -105,24 +112,6 @@ cluster-clean: ## Delete cluster, registry, and all data
 	@echo "$(GREEN)Cleanup complete$(NC)"
 	@echo ""
 
-cluster-destroy: cluster-stop ## Stop cluster and delete all xrag-* Docker images
-	@echo "$(RED)WARNING: This will DELETE all project Docker images!$(NC)"
-	@echo -n "Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
-	@echo "$(YELLOW)Deleting project Docker images...$(NC)"
-	@for img in $$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "xrag-"); do \
-		echo "  Deleting $$img"; \
-		docker rmi -f $$img 2>/dev/null || true; \
-	done
-	@echo "  Deleting registry:2"; docker rmi -f registry:2 2>/dev/null || true
-	@echo "  Deleting kindest/node"; docker rmi -f kindest/node 2>/dev/null || true
-	@for img in $$(grep -rh "image:" infra/k8s/ | grep -v "^#" | awk '{print $$NF}' | sort -u); do \
-		echo "  Deleting $$img"; \
-		docker rmi -f $$img 2>/dev/null || true; \
-	done
-	@rm -rf $(SETUP_DIR)
-	@echo "$(GREEN)All project images deleted$(NC)"
-	@echo ""
-
 cluster-reset: ## Reset all pods and data (keeps cluster running, deletes all state)
 	@echo "$(YELLOW)WARNING: This will DELETE all pod data and restart services!$(NC)"
 	@echo -n "Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
@@ -160,6 +149,24 @@ cluster-reset: ## Reset all pods and data (keeps cluster running, deletes all st
 	@echo ""
 	@echo "All services have been redeployed with fresh state."
 	@echo "Run 'make cluster-status' to verify all services are running."
+	@echo ""
+
+cluster-destroy: cluster-stop ## Stop cluster and delete all xrag-* Docker images
+	@echo "$(RED)WARNING: This will DELETE all project Docker images!$(NC)"
+	@echo -n "Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+	@echo "$(YELLOW)Deleting project Docker images...$(NC)"
+	@for img in $$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "xrag-"); do \
+		echo "  Deleting $$img"; \
+		docker rmi -f $$img 2>/dev/null || true; \
+	done
+	@echo "  Deleting registry:2"; docker rmi -f registry:2 2>/dev/null || true
+	@echo "  Deleting kindest/node"; docker rmi -f kindest/node 2>/dev/null || true
+	@for img in $$(grep -rh "image:" infra/k8s/ | grep -v "^#" | awk '{print $$NF}' | sort -u); do \
+		echo "  Deleting $$img"; \
+		docker rmi -f $$img 2>/dev/null || true; \
+	done
+	@rm -rf $(SETUP_DIR)
+	@echo "$(GREEN)All project images deleted$(NC)"
 	@echo ""
 
 ##@ Application Build & Deploy
@@ -263,6 +270,44 @@ logs-kafka: ## Tail Kafka logs
 
 logs-redis: ## Tail Redis logs
 	@kubectl logs -f -l app=redis -n $(NAMESPACE)
+	@echo ""
+
+##@ Pod CLI Access
+
+cli-weaviate: ## Connect to Weaviate pod shell
+	@./scripts/connect-pod.sh weaviate $(NAMESPACE)
+	@echo ""
+
+cli-kafka: ## Connect to Kafka pod shell
+	@./scripts/connect-pod.sh kafka $(NAMESPACE)
+	@echo ""
+
+cli-redis: ## Connect to Redis pod shell
+	@./scripts/connect-pod.sh redis $(NAMESPACE)
+	@echo ""
+
+cli-minio: ## Connect to MinIO pod shell
+	@./scripts/connect-pod.sh minio $(NAMESPACE)
+	@echo ""
+
+cli-embedding: ## Connect to Embedding Service pod shell
+	@./scripts/connect-pod.sh embedding-service $(NAMESPACE)
+	@echo ""
+
+cli-ingest: ## Connect to Ingestion API pod shell
+	@./scripts/connect-pod.sh ingestion-api $(NAMESPACE)
+	@echo ""
+
+cli-indexer: ## Connect to Indexer pod shell
+	@./scripts/connect-pod.sh indexer $(NAMESPACE)
+	@echo ""
+
+cli-search-ui: ## Connect to Search UI pod shell
+	@./scripts/connect-pod.sh search-ui $(NAMESPACE)
+	@echo ""
+
+cli-search-service: ## Connect to Search Service pod shell
+	@./scripts/connect-pod.sh search-service $(NAMESPACE)
 	@echo ""
 
 # Internal targets (prefixed with . to hide from help)

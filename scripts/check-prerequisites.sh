@@ -105,7 +105,8 @@ if [ $HAS_ERROR -eq 0 ]; then
     echo "Next steps:"
     echo "  1. Copy .env.example to .env"
     echo "  2. Add your OPENAI_API_KEY to .env"
-    echo "  3. Run: make setup"
+    echo "  3. Run: make init           # Initialize dev environment"
+    echo "  4. Run: make cluster-init   # Build Docker images"
     exit 0
 else
     echo -e "${RED}✗ Some prerequisites are missing${NC}"

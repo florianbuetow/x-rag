@@ -31,7 +31,7 @@ for service in "${SERVICES[@]}"; do
     fi
 
     echo "  Building ${image_name}..."
-    docker build -t "${image_name}" -f "${dockerfile}" . --quiet
+    docker build --no-cache -t "${image_name}" -f "${dockerfile}" . --quiet
 
     echo "  Pushing ${image_name}..."
     docker push "${image_name}" --quiet
