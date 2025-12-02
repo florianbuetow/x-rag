@@ -182,12 +182,16 @@ async def ingest_document(request: IngestRequest) -> IngestResponse:
             }
 
             # Store in MinIO
+            if minio_client is None:
+                raise HTTPException(status_code=503, detail="MinIO client not initialized")
             object_name = f"{document_id}.json"
             doc_bytes = json.dumps(document, indent=2).encode("utf-8")
 
             minio_client.store_document(object_name, doc_bytes)
 
             # Publish to Kafka
+            if kafka_client is None:
+                raise HTTPException(status_code=503, detail="Kafka client not initialized")
             event = {
                 "event_type": "document.ingested",
                 "document_id": document_id,
@@ -231,6 +235,8 @@ async def health() -> dict[str, Any]:
     Raises:
         HTTPException: If service is unhealthy
     """
+    if health_checker is None:
+        raise HTTPException(status_code=503, detail="Health checker not initialized")
     result = await health_checker.check_all()
     if result["status"] == "UNHEALTHY":
         raise HTTPException(
@@ -260,6 +266,8 @@ async def readiness() -> dict[str, Any]:
     Raises:
         HTTPException: If service is not ready
     """
+    if health_checker is None:
+        raise HTTPException(status_code=503, detail="Health checker not initialized")
     result = await health_checker.check_all()
     if result["status"] == "UNHEALTHY":
         raise HTTPException(
