@@ -100,7 +100,7 @@ cluster-stop: ## Shutdown the cluster
 	@echo ""
 
 cluster-status: ## Display current system status and test all service connectivity
-	@./scripts/check-status.sh
+	@./scripts/cluster-status.sh
 	@echo ""
 
 cluster-clean: ## Delete cluster, registry, and all data
