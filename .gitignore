@@ -33,6 +33,11 @@ htmlcov/
 *.cover
 *.log
 
+# Test reports
+reports/*
+!reports/.gitkeep
+!reports/coverage/.gitkeep
+
 # gRPC generated files
 src/proto_gen/*.py
 src/proto_gen/*.pyi
@@ -41,6 +46,9 @@ src/proto_gen/*.pyi
 # Setup checkpoints
 .setup/
 setup.log
+
+# Temporary files
+tmp/
 
 # Data directories
 data/storage/*

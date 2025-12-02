@@ -43,8 +43,9 @@ make start        # Build and deploy apps
 make stop         # Stop services
 make status       # Show status
 make test         # Run tests
-make lint         # Check code style
-make format       # Auto-fix code style
+make code-style   # Check code style
+make code-format  # Auto-fix code style
+make ci           # Run all CI checks
 make clean        # Delete everything
 make destroy      # Stop + delete images
 make logs-*       # Tail service logs
@@ -68,6 +69,18 @@ Copy `.env.example` to `.env` and add `OPENAI_API_KEY`
 - **NEVER** run scripts directly
 - **ALWAYS** use `make` targets
 - Example: Use `make check`, NOT `./scripts/check-prerequisites.sh`
+
+### Makefile Conventions
+When editing the Makefile:
+- **ALWAYS** end every target with `@echo ""` for visual separation in terminal output
+- This creates clean spacing between command outputs
+- Example:
+  ```makefile
+  target-name: ## Description
+      @echo "$(BLUE)=== Doing Something ===$(NC)"
+      @./scripts/do-something.sh
+      @echo ""  # ← Always include this at the end
+  ```
 
 ### Everything Runs in Kubernetes
 - **NO local development outside Kind cluster**
@@ -99,8 +112,8 @@ This project follows the [Google Python Style Guide](https://google.github.io/st
 
 **Checking compliance:**
 ```bash
-make lint    # Check code style (read-only)
-make format  # Auto-fix style issues
+make code-style   # Check code style (read-only)
+make code-format  # Auto-fix style issues
 ```
 
 Configuration: All linting and formatting rules are in `pyproject.toml` using Ruff with Google-style docstring conventions.
