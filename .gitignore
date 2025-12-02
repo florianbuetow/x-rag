@@ -37,6 +37,7 @@ htmlcov/
 reports/*
 !reports/.gitkeep
 !reports/coverage/.gitkeep
+!reports/security/.gitkeep
 
 # gRPC generated files
 src/proto_gen/*.py

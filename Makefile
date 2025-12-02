@@ -7,7 +7,7 @@
 .PHONY: cluster-start cluster-stop cluster-status cluster-clean cluster-reset cluster-destroy
 .PHONY: apps-generate-grpc apps-build apps-deploy
 .PHONY: test test-integration test-coverage
-.PHONY: code-style code-format code-typecheck
+.PHONY: code-style code-format code-typecheck code-security
 .PHONY: ci
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
 .PHONY: logs-weaviate logs-kafka logs-redis
@@ -51,6 +51,7 @@ check: ## Validate all prerequisites (Docker, kubectl, Kind, Helm, Python, uv)
 init: ## Initialize local development environment
 	@echo "$(BLUE)=== Initializing Development Environment ===$(NC)"
 	@mkdir -p reports/coverage
+	@mkdir -p reports/security
 	@mkdir -p data/storage
 	@mkdir -p .setup
 	@echo "Installing Python dependencies..."
@@ -213,6 +214,15 @@ code-typecheck: ## Run static type checking with mypy
 	@echo "$(GREEN)✓ Type checks passed$(NC)"
 	@echo ""
 
+code-security: ## Run security checks with bandit
+	@echo "$(BLUE)=== Running Security Checks ===$(NC)"
+	@mkdir -p reports/security
+	@uv run bandit -c pyproject.toml -r src -f txt -o reports/security/bandit.txt || true
+	@uv run bandit -c pyproject.toml -r src
+	@echo ""
+	@echo "$(GREEN)✓ Security checks passed$(NC)"
+	@echo ""
+
 ##@ Testing
 
 test: ## Run unit tests only (fast, no cluster required)
@@ -241,7 +251,7 @@ test-coverage: init ## Run all tests with coverage report and threshold check
 
 ##@ CI/CD
 
-ci: init code-style test-coverage ## Run ALL validation checks (style + all tests with coverage)
+ci: init code-style code-security test-coverage ## Run ALL validation checks (style + security + all tests with coverage)
 	@echo "$(GREEN)✓ All CI checks passed$(NC)"
 	@echo "$(YELLOW)Note: Type checking available via 'make code-typecheck' (not blocking CI yet)$(NC)"
 	@echo ""
