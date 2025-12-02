@@ -4,6 +4,7 @@
 .PHONY: help check setup start stop status clean reset destroy
 .PHONY: generate-grpc build deploy-apps
 .PHONY: test test-integration test-all
+.PHONY: lint format
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
 .PHONY: logs-weaviate logs-kafka logs-redis
 
@@ -174,6 +175,28 @@ test-integration: ## Run integration tests (requires running cluster)
 test-all: ## Run all tests (unit + integration)
 	@echo "$(BLUE)=== Running All Tests ===$(NC)"
 	@uv run pytest tests/ -v -s
+
+##@ Code Quality
+
+lint: ## Run ruff linting and formatting checks (read-only)
+	@echo "$(BLUE)=== Running Ruff Linting ===$(NC)"
+	@echo "$(YELLOW)Checking code style...$(NC)"
+	@uv run ruff check .
+	@echo ""
+	@echo "$(YELLOW)Checking formatting...$(NC)"
+	@uv run ruff format --check .
+	@echo ""
+	@echo "$(GREEN)✓ All checks passed$(NC)"
+
+format: ## Run ruff linting and formatting with auto-fixes
+	@echo "$(BLUE)=== Running Ruff Auto-Fix ===$(NC)"
+	@echo "$(YELLOW)Fixing code style issues...$(NC)"
+	@uv run ruff check . --fix
+	@echo ""
+	@echo "$(YELLOW)Formatting code...$(NC)"
+	@uv run ruff format .
+	@echo ""
+	@echo "$(GREEN)✓ Code fixed and formatted$(NC)"
 
 ##@ Monitoring & Logs
 
