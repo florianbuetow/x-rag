@@ -3,7 +3,7 @@
 #
 # Convention: All targets end with @echo "" for visual separation in terminal output
 
-.PHONY: help check setup
+.PHONY: help check setup init
 .PHONY: cluster-start cluster-stop cluster-status cluster-clean cluster-reset cluster-destroy
 .PHONY: apps-generate-grpc apps-build apps-deploy
 .PHONY: test test-integration test-coverage
@@ -51,6 +51,14 @@ setup: check ## Build Docker images (does not start cluster)
 	@$(MAKE) apps-build
 	@echo ""
 	@echo "$(GREEN)✓ Setup complete$(NC)"
+	@echo ""
+
+init: ## Initialize project directories and dependencies
+	@echo "$(BLUE)=== Initializing Project ===$(NC)"
+	@mkdir -p reports/coverage
+	@mkdir -p data/storage
+	@mkdir -p .setup
+	@echo "$(GREEN)✓ Project initialized$(NC)"
 	@echo ""
 
 ##@ Cluster Management
@@ -204,9 +212,8 @@ test-integration: ## Run integration tests (requires running cluster)
 	@uv run pytest tests/integration/ -v -s
 	@echo ""
 
-test-coverage: ## Run all tests with coverage report and threshold check
+test-coverage: init ## Run all tests with coverage report and threshold check
 	@echo "$(BLUE)=== Running All Tests with Coverage ===$(NC)"
-	@mkdir -p reports/coverage
 	@uv run pytest tests/ -v -s \
 		--cov=src \
 		--cov-report=html:reports/coverage/html \

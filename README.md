@@ -63,10 +63,52 @@ make format
 ```bash
 make help           # Show all available commands
 make check          # Validate prerequisites
+make init           # Initialize project directories
 make setup          # One-time infrastructure setup
 make cluster-start  # Build and deploy services
 make test           # Run test suite
 make cluster-status # Show cluster status
 ```
+
+### Project Structure
+
+```
+x-rag/
+├── src/                    # Python application code
+│   ├── core/              # Core domain models and interfaces
+│   ├── common/            # Shared utilities (config, health, metrics)
+│   ├── search_api/        # Search API service (FastAPI)
+│   ├── ingestion_api/     # Ingestion API service (FastAPI)
+│   ├── embedding_service/ # Embedding service (gRPC)
+│   ├── indexer/           # Background document processor (Kafka consumer)
+│   ├── pipelines/         # Haystack RAG pipelines
+│   ├── retrievers/        # Custom retrievers (Weaviate, etc.)
+│   └── proto_gen/         # Generated gRPC code (auto-generated)
+├── proto/                  # Protocol buffer definitions
+├── infra/                  # Infrastructure configuration
+│   ├── kind/              # Kind cluster configuration
+│   ├── k8s/               # Kubernetes manifests (all services)
+│   └── docker/            # Dockerfiles for each service
+├── scripts/                # Automation scripts (cluster, deploy, status)
+├── tests/                  # Test suite
+│   ├── unit/              # Unit tests
+│   └── integration/       # Integration tests (requires cluster)
+├── reports/                # Test reports and coverage (gitignored)
+│   └── coverage/          # HTML and XML coverage reports
+├── data/                   # Persistent data
+│   └── storage/           # Kind cluster persistent volumes (gitignored)
+├── .setup/                 # Setup checkpoints (gitignored)
+├── Makefile               # Main developer interface
+├── pyproject.toml         # Python dependencies and tool configuration
+└── README.md              # This file
+```
+
+**Key Directories:**
+- **`src/`** — All Python application code organized by service
+- **`infra/`** — Kubernetes manifests, Dockerfiles, and cluster configuration
+- **`proto/`** — gRPC service definitions (use `make apps-generate-grpc` to regenerate)
+- **`scripts/`** — Shell scripts for cluster management and deployment
+- **`tests/`** — Unit and integration tests (use `make test` or `make ci`)
+- **`reports/`** — Generated test coverage reports (created by `make init`)
 
 For detailed setup instructions, see [SETUP.md](./SETUP.md). For architecture details, see [SYSTEM-DIAGRAM.md](./SYSTEM-DIAGRAM.md).
