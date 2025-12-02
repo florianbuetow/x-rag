@@ -54,7 +54,7 @@ if [ ${#CONFLICTS[@]} -gt 0 ]; then
     echo ""
     echo "  Fix options:"
     echo "    1. Stop conflicting services"
-    echo "    2. Run: make clean  # Remove old clusters"
+    echo "    2. Run: make cluster-clean  # Remove old clusters"
     echo "    3. Modify ports in infra/kind/cluster-config.yaml"
     echo ""
     exit 1
