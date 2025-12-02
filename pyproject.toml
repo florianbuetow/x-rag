@@ -54,6 +54,7 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.7.0",
     "mypy-protobuf>=3.5.0",
+    "bandit[toml]>=1.7.8",
     # Type stubs
     "types-protobuf>=5.27.0",
 ]
@@ -139,3 +140,16 @@ directory = "reports/coverage/html"
 
 [tool.coverage.xml]
 output = "reports/coverage/coverage.xml"
+
+[tool.bandit]
+targets = ["src"]
+exclude = [
+    "tests",
+    "*/proto_gen/*",
+    ".venv",
+    "venv",
+]
+
+# Reasonable default for CI:
+severity = "MEDIUM"
+confidence = "MEDIUM"

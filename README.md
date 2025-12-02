@@ -45,29 +45,48 @@ Before committing code, ensure it passes linting and formatting checks:
 
 ```bash
 # Check code style and formatting (read-only, no changes)
-make lint
+make code-style
 
 # Automatically fix linting issues and format code
-make format
+make code-format
 ```
 
 **What these commands do:**
 
-- `make lint` — Runs Ruff in check-only mode to identify style violations and formatting issues without making changes
-- `make format` — Automatically fixes linting issues and formats all Python code according to the style guide
+- `make code-style` — Runs Ruff in check-only mode to identify style violations and formatting issues without making changes
+- `make code-format` — Automatically fixes linting issues and formats all Python code according to the style guide
 
 **Configuration:** Ruff is configured in `pyproject.toml` with Google-style docstring conventions, line length of 140 characters, and Python 3.11+ target version.
+
+### Security Checks
+
+Run security analysis with Bandit to detect common security issues:
+
+```bash
+# Run security checks and generate reports
+make code-security
+```
+
+**What this does:**
+
+- Scans all code in `src/` for security vulnerabilities
+- Detects hardcoded passwords, SQL injection risks, unsafe deserialization, etc.
+- Generates a text report at `reports/security/bandit.txt`
+- Displays findings in CLI and fails on medium+ severity/confidence issues
+
+**Configuration:** Bandit is configured in `pyproject.toml` with medium severity and confidence thresholds.
 
 ### Quick Reference
 
 ```bash
-make help           # Show all available commands
-make check          # Validate prerequisites
-make init           # Initialize local dev environment (install deps, generate gRPC)
-make cluster-init   # Build Docker images for deployment
-make cluster-start  # Start cluster and deploy all services
-make test           # Run test suite
-make cluster-status # Show cluster status
+make help            # Show all available commands
+make check           # Validate prerequisites
+make init            # Initialize local dev environment (install deps, generate gRPC)
+make cluster-init    # Build Docker images for deployment
+make cluster-start   # Start cluster and deploy all services
+make test            # Run test suite
+make ci              # Run all CI checks (style + security + tests with coverage)
+make cluster-status  # Show cluster status
 ```
 
 ### Project Structure

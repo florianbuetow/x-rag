@@ -140,6 +140,11 @@ make test    # 3. Run test suite
 
 ## Version Control
 
+### Git Commands
+- **NEVER** use `git -C` command format
+- **ALWAYS** run git commands directly from the repository root
+- If in a different directory, `cd` to the repo first
+
 ### Git Commits
 - **NEVER** attribute AI in commit messages
 - Commit after each milestone
