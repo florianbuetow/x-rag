@@ -11,6 +11,7 @@ import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
 from types import FrameType
+from typing import cast
 
 from prometheus_client import Counter, Histogram, start_http_server
 
@@ -92,7 +93,9 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
             True if consumer is running and connected
         """
         try:
-            consumer = self.server.consumer
+            # Cast to HealthHTTPServer to access consumer attribute
+            health_server = cast(HealthHTTPServer, self.server)
+            consumer = health_server.consumer
             # Simple check: is consumer running?
             return consumer._running if consumer else False
         except Exception as e:

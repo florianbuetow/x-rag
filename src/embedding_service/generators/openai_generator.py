@@ -58,7 +58,7 @@ class OpenAIEmbeddingGenerator(EmbeddingGenerator):
             response = await self.client.embeddings.create(
                 input=text,
                 model=model,
-                **options,
+                **options,  # type: ignore[arg-type]
             )
             embedding = response.data[0].embedding
             logger.debug(f"Generated embedding for text (length={len(text)})")
@@ -100,7 +100,7 @@ class OpenAIEmbeddingGenerator(EmbeddingGenerator):
             response = await self.client.embeddings.create(
                 input=texts,
                 model=model,
-                **options,
+                **options,  # type: ignore[arg-type]
             )
             # Extract embeddings in the same order as input
             embeddings = [item.embedding for item in response.data]

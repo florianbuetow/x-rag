@@ -39,8 +39,8 @@ class GrpcClient:
         self.stub_class = stub_class
         self.timeout = timeout
         self.max_retries = max_retries
-        self.channel = None
-        self.stub = None
+        self.channel: grpc.Channel | None = None
+        self.stub: Any = None
 
     def __enter__(self) -> "GrpcClient":
         """Open connection."""
