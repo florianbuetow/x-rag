@@ -286,9 +286,10 @@ async def root() -> dict[str, str]:
 if __name__ == "__main__":
     import uvicorn
 
+    # Bind to 0.0.0.0 for Kubernetes service access - network isolation handled by K8s
     uvicorn.run(
         app,
-        host="0.0.0.0",
+        host="0.0.0.0",  # nosec B104
         port=config.port,
         log_level=config.log_level.lower(),
     )

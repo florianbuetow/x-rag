@@ -117,7 +117,8 @@ class IndexerService:
 
     def start_health_server(self) -> None:
         """Start the health check HTTP server."""
-        self.health_server = HTTPServer(("0.0.0.0", self.config.health_port), HealthCheckHandler)
+        # Bind to 0.0.0.0 for Kubernetes probes - network isolation handled by K8s
+        self.health_server = HTTPServer(("0.0.0.0", self.config.health_port), HealthCheckHandler)  # nosec B104
         self.health_server.consumer = self.consumer
 
         def serve() -> None:
