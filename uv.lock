@@ -2090,6 +2090,28 @@ wheels = [
 ]
 
 [[package]]
+name = "types-grpcio"
+version = "1.0.0.20251009"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/de/93/78aa083216853c667c9412df4ef8284b2a68c6bcd2aef833f970b311f3c1/types_grpcio-1.0.0.20251009.tar.gz", hash = "sha256:a8f615ea7a47b31f10da028ab5258d4f1611fbd70719ca450fc0ab3fb9c62b63", size = 14479, upload-time = "2025-10-09T02:54:14.539Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d4/93/66d28f41b16bb4e6b611bd608ef28dffc740facec93250b30cf83138da21/types_grpcio-1.0.0.20251009-py3-none-any.whl", hash = "sha256:112ac4312a5b0a273a4c414f7f2c7668f342990d9c6ab0f647391c36331f95ed", size = 15208, upload-time = "2025-10-09T02:54:13.588Z" },
+]
+
+[[package]]
+name = "types-grpcio-reflection"
+version = "1.0.0.20250506"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "types-grpcio" },
+    { name = "types-protobuf" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9b/ce/354708f6cdaed1fbc64c5e255b010c48f594146ce02b26a0ccd57a7d4ee7/types_grpcio_reflection-1.0.0.20250506.tar.gz", hash = "sha256:bbc872f00552e2d5a3250806a48f49192854b6dc6cd63d8f04b65efdec0ea451", size = 9088, upload-time = "2025-05-06T03:03:30.022Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1a/25/55ee9110c7ea61aa0601e8ba6fe230752ef139dd5d4106d4785bcc7bb23e/types_grpcio_reflection-1.0.0.20250506-py3-none-any.whl", hash = "sha256:d7d8eb23caf93d42be0f1be0c7013087fdb7828f97c65f2d4c3fb8c738fba0dc", size = 11080, upload-time = "2025-05-06T03:03:28.604Z" },
+]
+
+[[package]]
 name = "types-protobuf"
 version = "6.32.1.20251105"
 source = { registry = "https://pypi.org/simple" }
@@ -2395,6 +2417,8 @@ dev = [
     { name = "pytest-cov" },
     { name = "pytest-grpc" },
     { name = "ruff" },
+    { name = "types-grpcio" },
+    { name = "types-grpcio-reflection" },
     { name = "types-protobuf" },
 ]
 
@@ -2423,6 +2447,8 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "redis", extras = ["hiredis"], specifier = ">=5.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
+    { name = "types-grpcio", marker = "extra == 'dev'" },
+    { name = "types-grpcio-reflection", marker = "extra == 'dev'" },
     { name = "types-protobuf", marker = "extra == 'dev'", specifier = ">=5.27.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.24.0" },
     { name = "weaviate-client", specifier = ">=4.0.0" },
