@@ -16,7 +16,7 @@ data:
           - targets: ['search-service:50051']
       - job_name: 'ingestion-api'
         static_configs:
-          - targets: ['ingestion-api:8082']
+          - targets: ['ingestion-api:8080']
       - job_name: 'embedding-service'
         static_configs:
           - targets: ['embedding-service:50051']

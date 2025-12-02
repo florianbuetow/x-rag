@@ -1,9 +1,11 @@
 """Configuration for Embedding Service."""
 
 from typing import Literal, Optional
+
 from pydantic import Field, field_validator
 
-from src.common.config import BaseConfig, ServiceConfig
+from src.common.config import ServiceConfig
+
 
 class EmbeddingServiceConfig(ServiceConfig):
     """Embedding Service configuration."""

@@ -3,7 +3,7 @@
 import logging
 from typing import Any
 
-from openai import AsyncOpenAI, RateLimitError, APIError
+from openai import APIError, AsyncOpenAI, RateLimitError
 
 from src.core.errors import ServiceUnavailableError
 from src.embedding_service.generators.embedding_generator import EmbeddingGenerator

@@ -2,8 +2,8 @@
 
 import logging
 from concurrent import futures
-from typing import Any, Type
 from contextlib import contextmanager
+from typing import Any, Type
 
 import grpc
 from grpc_reflection.v1alpha import reflection

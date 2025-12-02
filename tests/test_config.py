@@ -1,16 +1,15 @@
 """Tests for configuration validation."""
 
-import os
 import pytest
 from pydantic import ValidationError
 
 from src.common.config import (
+    ConfigurationError,
+    OpenAIConfig,
+    RedisConfig,
     ServiceConfig,
     WeaviateConfig,
-    RedisConfig,
-    OpenAIConfig,
     require_env_file,
-    ConfigurationError,
 )
 
 

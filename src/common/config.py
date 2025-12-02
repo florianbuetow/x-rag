@@ -70,7 +70,7 @@ def require_env_file(path: str = ".env") -> None:
         error_msg = f"Configuration file '{path}' not found."
 
         if example_path.exists():
-            error_msg += f"\n\nCopy the example file to get started:"
+            error_msg += "\n\nCopy the example file to get started:"
             error_msg += f"\n  cp {path}.example {path}"
             error_msg += f"\n\nThen edit {path} and add your API keys and configuration."
         else:
