@@ -3,7 +3,7 @@
 
 .PHONY: help check setup start stop status clean reset destroy
 .PHONY: generate-grpc build deploy-apps
-.PHONY: test test-e2e
+.PHONY: test test-integration test-all
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
 .PHONY: logs-weaviate logs-kafka logs-redis
 
@@ -162,13 +162,18 @@ deploy-apps: ## Deploy application services to cluster
 
 ##@ Testing
 
-test: ## Run all tests using pytest
-	@echo "$(BLUE)=== Running Tests ===$(NC)"
-	@uv run pytest tests/ -v
+test: ## Run unit tests only (excludes integration tests)
+	@echo "$(BLUE)=== Running Unit Tests ===$(NC)"
+	@uv run pytest tests/ -v --ignore=tests/integration
 
-test-e2e: ## Run end-to-end integration tests
-	@echo "$(BLUE)=== Running E2E Tests ===$(NC)"
-	@uv run pytest tests/test_e2e.py -v
+test-integration: ## Run integration tests (requires running cluster)
+	@echo "$(BLUE)=== Running Integration Tests ===$(NC)"
+	@echo "$(YELLOW)Note: Requires running cluster (make start)$(NC)"
+	@uv run pytest tests/integration/ -v -s
+
+test-all: ## Run all tests (unit + integration)
+	@echo "$(BLUE)=== Running All Tests ===$(NC)"
+	@uv run pytest tests/ -v -s
 
 ##@ Monitoring & Logs
 

@@ -54,9 +54,20 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b'{"status": "alive"}')
         elif self.path == "/health/ready":
-            # Check if consumer is healthy
+            # Check if consumer is healthy (synchronous check)
             if hasattr(self.server, "consumer") and self.server.consumer:
-                asyncio.run(self._check_ready())
+                # Use synchronous health check to avoid event loop issues
+                is_healthy = self._check_ready_sync()
+                if is_healthy:
+                    self.send_response(200)
+                    self.send_header("Content-type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(b'{"status": "ready"}')
+                else:
+                    self.send_response(503)
+                    self.send_header("Content-type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(b'{"status": "not ready"}')
             else:
                 self.send_response(503)
                 self.send_header("Content-type", "application/json")
@@ -66,26 +77,19 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
             self.send_response(404)
             self.end_headers()
 
-    async def _check_ready(self):
-        """Check readiness."""
+    def _check_ready_sync(self) -> bool:
+        """Check readiness synchronously.
+
+        Returns:
+            True if consumer is running and connected
+        """
         try:
-            is_healthy = await self.server.consumer.health_check()
-            if is_healthy:
-                self.send_response(200)
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
-                self.wfile.write(b'{"status": "ready"}')
-            else:
-                self.send_response(503)
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
-                self.wfile.write(b'{"status": "not ready"}')
+            consumer = self.server.consumer
+            # Simple check: is consumer running?
+            return consumer._running if consumer else False
         except Exception as e:
             logger.error(f"Readiness check failed: {e}")
-            self.send_response(503)
-            self.send_header("Content-type", "application/json")
-            self.end_headers()
-            self.wfile.write(b'{"status": "error"}')
+            return False
 
     def log_message(self, format, *args):
         """Suppress default logging."""

@@ -23,9 +23,13 @@ nodes:
       - containerPort: 30082
         hostPort: 8082
         protocol: TCP
-      # Weaviate
+      # Weaviate HTTP
       - containerPort: 30081
         hostPort: 8081
+        protocol: TCP
+      # Weaviate gRPC
+      - containerPort: 30051
+        hostPort: 50051
         protocol: TCP
       # Grafana
       - containerPort: 30030
