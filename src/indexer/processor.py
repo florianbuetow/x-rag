@@ -1,10 +1,14 @@
 """Document processing and indexing logic."""
 
+import asyncio
 import json
 import logging
+import threading
 import uuid
+from contextlib import contextmanager
 from typing import Any, Dict, List
 
+import redis
 import weaviate
 from minio import Minio
 
@@ -70,6 +74,14 @@ class DocumentProcessor:
 
         # Weaviate client (initialized lazily)
         self.weaviate_client = None
+        self._weaviate_lock = threading.Lock()  # Thread-safe lazy init
+
+        # Initialize Redis client for distributed locking
+        self.redis_client = redis.Redis.from_url(
+            config.redis_url,
+            decode_responses=True,
+            socket_connect_timeout=5,
+        )
 
         # Initialize Embedding Service client
         self.embedding_client = EmbeddingServiceClient(
@@ -88,8 +100,17 @@ class DocumentProcessor:
         self.close()
 
     def _ensure_weaviate_connected(self) -> None:
-        """Ensure Weaviate client is connected (lazy initialization)."""
-        if self.weaviate_client is None:
+        """Ensure Weaviate client is connected (thread-safe lazy initialization)."""
+        # Fast path: check without lock (common case)
+        if self.weaviate_client is not None:
+            return
+
+        # Slow path: acquire lock and connect
+        with self._weaviate_lock:
+            # Double-check inside lock (another thread may have connected)
+            if self.weaviate_client is not None:
+                return
+
             logger.info("Connecting to Weaviate...")
 
             # Parse URL correctly
@@ -105,6 +126,7 @@ class DocumentProcessor:
                 host = url
                 port = 8080
 
+            # Connect (only one thread will reach here)
             self.weaviate_client = weaviate.connect_to_custom(
                 http_host=host,
                 http_port=port,
@@ -114,6 +136,45 @@ class DocumentProcessor:
                 grpc_secure=False,
             )
             logger.info(f"✓ Connected to Weaviate at {host}:{port}")
+
+    @contextmanager
+    def document_lock(self, document_id: str):
+        """Acquire distributed lock for document processing.
+
+        Uses Redis to ensure only one indexer replica processes a document at a time.
+
+        Args:
+            document_id: Document ID to lock
+
+        Yields:
+            None
+
+        Raises:
+            TimeoutError: If lock cannot be acquired within timeout
+        """
+        lock_key = f"indexer:lock:{document_id}"
+        lock = self.redis_client.lock(
+            lock_key,
+            timeout=self.config.redis_lock_timeout,
+            blocking_timeout=10,
+        )
+
+        acquired = lock.acquire(blocking=True)
+        if not acquired:
+            raise TimeoutError(
+                f"Could not acquire lock for document {document_id} within 10 seconds"
+            )
+
+        try:
+            logger.debug(f"Acquired lock for document {document_id}")
+            yield
+        finally:
+            try:
+                lock.release()
+                logger.debug(f"Released lock for document {document_id}")
+            except redis.exceptions.LockError:
+                # Lock already released or expired
+                logger.warning(f"Lock for document {document_id} already released")
 
     def close(self) -> None:
         """Close connections."""
@@ -311,36 +372,47 @@ class DocumentProcessor:
             return
 
         try:
-            # Check if document already exists in Weaviate (duplicate detection)
-            self._ensure_weaviate_connected()
-            collection = self.weaviate_client.collections.get(self.config.weaviate_class)
+            # Acquire distributed lock to prevent concurrent processing
+            with self.document_lock(document_id):
+                # Check if document already exists in Weaviate (duplicate detection)
+                self._ensure_weaviate_connected()
+                collection = self.weaviate_client.collections.get(self.config.weaviate_class)
 
-            # Query for existing chunks with this doc_id
-            existing = collection.query.fetch_objects(
-                filters=weaviate.classes.query.Filter.by_property("doc_id").equal(document_id),
-                limit=1
-            )
-
-            if len(existing.objects) > 0:
-                logger.info(
-                    f"Document {document_id} already indexed "
-                    f"({len(existing.objects)} chunks found), skipping..."
+                # Query for existing chunks with this doc_id (async)
+                existing = await asyncio.to_thread(
+                    collection.query.fetch_objects,
+                    filters=weaviate.classes.query.Filter.by_property("doc_id").equal(document_id),
+                    limit=1
                 )
-                return
 
-            # 1. Load document from MinIO
-            document = self.load_document(minio_bucket, minio_key)
+                if len(existing.objects) > 0:
+                    logger.info(
+                        f"Document {document_id} already indexed "
+                        f"({len(existing.objects)} chunks found), skipping..."
+                    )
+                    return
 
-            # 2. Create chunks
-            chunks = self.create_chunks(document)
+                # 1. Load document from MinIO (async)
+                document = await asyncio.to_thread(
+                    self.load_document, minio_bucket, minio_key
+                )
 
-            # 3. Generate embeddings
-            embeddings = self.embed_chunks(chunks)
+                # 2. Create chunks (async - CPU-bound operation)
+                chunks = await asyncio.to_thread(
+                    self.create_chunks, document
+                )
 
-            # 4. Store in Weaviate
-            self.store_chunks(chunks, embeddings)
+                # 3. Generate embeddings (async - gRPC I/O)
+                embeddings = await asyncio.to_thread(
+                    self.embed_chunks, chunks
+                )
 
-            logger.info(f"✓ Successfully processed document {document_id}")
+                # 4. Store in Weaviate (async)
+                await asyncio.to_thread(
+                    self.store_chunks, chunks, embeddings
+                )
+
+                logger.info(f"✓ Successfully processed document {document_id}")
 
         except Exception as e:
             logger.error(f"Failed to process document {document_id}: {e}", exc_info=True)
