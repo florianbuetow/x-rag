@@ -1,10 +1,13 @@
 # X-RAG Platform - Makefile
 # Main developer interface for infrastructure and application management
+#
+# Convention: All targets end with @echo "" for visual separation in terminal output
 
 .PHONY: help check setup start stop status clean reset destroy
 .PHONY: generate-grpc build deploy-apps
-.PHONY: test test-integration test-all
-.PHONY: lint format
+.PHONY: test test-integration test-coverage
+.PHONY: code-style code-format
+.PHONY: ci
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
 .PHONY: logs-weaviate logs-kafka logs-redis
 
@@ -32,6 +35,7 @@ help: ## Display this help message
 	@echo "$(BLUE)X-RAG Platform - Available Commands$(NC)"
 	@echo ""
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage:\n  make $(CYAN)<target>$(NC)\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  $(CYAN)%-20s$(NC) %s\n", $$1, $$2 } /^##@/ { printf "\n$(YELLOW)%s$(NC)\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+	@echo ""
 
 ##@ Setup & Management
 
@@ -45,11 +49,7 @@ setup: check ## Build Docker images (does not start cluster)
 	@echo "$(BLUE)=== Building Docker Images ===$(NC)"
 	@$(MAKE) build
 	@echo ""
-	@echo "$(GREEN)===== Setup Complete! =====$(NC)"
-	@echo ""
-	@echo "Next steps:"
-	@echo "  1. Copy .env.example to .env and add your OPENAI_API_KEY"
-	@echo "  2. Run: make start    # Start cluster and all services"
+	@echo "$(GREEN)✓ Setup complete$(NC)"
 	@echo ""
 
 
@@ -73,12 +73,14 @@ start: ## Start the cluster and all services
 	@echo "  Prometheus:    http://localhost:9090"
 	@echo "  Redis:         localhost:6379"
 	@echo "  Kafka:         localhost:9092"
+	@echo ""
 
 stop: ## Shutdown the cluster
 	@echo "$(YELLOW)Shutting down cluster...$(NC)"
 	@kind delete cluster --name $(CLUSTER_NAME) 2>/dev/null || true
 	@docker rm -f $(REGISTRY_NAME) 2>/dev/null || true
 	@echo "$(GREEN)Cluster stopped$(NC)"
+	@echo ""
 
 status: ## Display current system status and test all service connectivity
 	@./scripts/check-status.sh
@@ -91,6 +93,7 @@ clean: ## Delete cluster, registry, and all data
 	@rm -rf $(SETUP_DIR)
 	@rm -rf data/storage/*
 	@echo "$(GREEN)Cleanup complete$(NC)"
+	@echo ""
 
 destroy: stop ## Stop cluster and delete all xrag-* Docker images
 	@echo "$(RED)WARNING: This will DELETE all project Docker images!$(NC)"
@@ -108,6 +111,7 @@ destroy: stop ## Stop cluster and delete all xrag-* Docker images
 	done
 	@rm -rf $(SETUP_DIR)
 	@echo "$(GREEN)All project images deleted$(NC)"
+	@echo ""
 
 reset: ## Reset all pods and data (keeps cluster running, deletes all state)
 	@echo "$(YELLOW)WARNING: This will DELETE all pod data and restart services!$(NC)"
@@ -146,85 +150,113 @@ reset: ## Reset all pods and data (keeps cluster running, deletes all state)
 	@echo ""
 	@echo "All services have been redeployed with fresh state."
 	@echo "Run 'make status' to verify all services are running."
+	@echo ""
 
 ##@ Build & Deploy
 
 generate-grpc: ## Generate Python gRPC code from protocol buffers
 	@echo "$(BLUE)=== Generating gRPC Code ===$(NC)"
 	@./scripts/generate-grpc.sh
+	@echo ""
 
 build: ## Build all Docker images and push to local registry
 	@echo "$(BLUE)=== Building Docker Images ===$(NC)"
 	@./scripts/build-images.sh
+	@echo ""
 
 deploy-apps: ## Deploy application services to cluster
 	@echo "$(BLUE)=== Deploying Applications ===$(NC)"
 	@./scripts/deploy-apps.sh
+	@echo ""
+
+##@ Code Quality & Validation
+
+code-style: ## Check code style and formatting (read-only)
+	@echo "$(BLUE)=== Checking Code Style ===$(NC)"
+	@uv run ruff check .
+	@echo ""
+	@uv run ruff format --check .
+	@echo ""
+	@echo "$(GREEN)✓ Style checks passed$(NC)"
+	@echo ""
+
+code-format: ## Auto-fix code style and formatting
+	@echo "$(BLUE)=== Formatting Code ===$(NC)"
+	@uv run ruff check . --fix
+	@echo ""
+	@uv run ruff format .
+	@echo ""
+	@echo "$(GREEN)✓ Code formatted$(NC)"
+	@echo ""
 
 ##@ Testing
 
-test: ## Run unit tests only (excludes integration tests)
+test: ## Run unit tests only (fast, no cluster required)
 	@echo "$(BLUE)=== Running Unit Tests ===$(NC)"
 	@uv run pytest tests/ -v --ignore=tests/integration
+	@echo ""
 
 test-integration: ## Run integration tests (requires running cluster)
 	@echo "$(BLUE)=== Running Integration Tests ===$(NC)"
 	@echo "$(YELLOW)Note: Requires running cluster (make start)$(NC)"
 	@uv run pytest tests/integration/ -v -s
-
-test-all: ## Run all tests (unit + integration)
-	@echo "$(BLUE)=== Running All Tests ===$(NC)"
-	@uv run pytest tests/ -v -s
-
-##@ Code Quality
-
-lint: ## Run ruff linting and formatting checks (read-only)
-	@echo "$(BLUE)=== Running Ruff Linting ===$(NC)"
-	@echo "$(YELLOW)Checking code style...$(NC)"
-	@uv run ruff check .
 	@echo ""
-	@echo "$(YELLOW)Checking formatting...$(NC)"
-	@uv run ruff format --check .
-	@echo ""
-	@echo "$(GREEN)✓ All checks passed$(NC)"
 
-format: ## Run ruff linting and formatting with auto-fixes
-	@echo "$(BLUE)=== Running Ruff Auto-Fix ===$(NC)"
-	@echo "$(YELLOW)Fixing code style issues...$(NC)"
-	@uv run ruff check . --fix
+test-coverage: ## Run all tests with coverage report and threshold check
+	@echo "$(BLUE)=== Running All Tests with Coverage ===$(NC)"
+	@mkdir -p reports/coverage
+	@uv run pytest tests/ -v -s \
+		--cov=src \
+		--cov-report=html:reports/coverage/html \
+		--cov-report=term \
+		--cov-report=xml:reports/coverage/coverage.xml \
+		--cov-fail-under=80
 	@echo ""
-	@echo "$(YELLOW)Formatting code...$(NC)"
-	@uv run ruff format .
+	@echo "$(GREEN)✓ Coverage threshold met$(NC)"
+	@echo "  HTML: reports/coverage/html/index.html"
 	@echo ""
-	@echo "$(GREEN)✓ Code fixed and formatted$(NC)"
+
+##@ CI/CD
+
+ci: code-style test-coverage ## Run ALL validation checks (style + all tests with coverage)
+	@echo "$(GREEN)✓ All CI checks passed$(NC)"
+	@echo ""
 
 ##@ Monitoring & Logs
 
 logs-search-ui: ## Tail Search UI logs
 	@kubectl logs -f -l app=search-ui -n $(NAMESPACE)
+	@echo ""
 
 logs-search-service: ## Tail Search Service logs
 	@kubectl logs -f -l app=search-service -n $(NAMESPACE)
+	@echo ""
 
 logs-embedding: ## Tail Embedding Service logs
 	@kubectl logs -f -l app=embedding-service -n $(NAMESPACE)
+	@echo ""
 
 logs-ingest: ## Tail Ingestion API logs
 	@kubectl logs -f -l app=ingestion-api -n $(NAMESPACE)
+	@echo ""
 
 logs-indexer: ## Tail Indexer logs
 	@kubectl logs -f -l app=indexer -n $(NAMESPACE)
+	@echo ""
 
 logs-weaviate: ## Tail Weaviate logs
 	@kubectl logs -f -l app=weaviate -n $(NAMESPACE)
+	@echo ""
 
 logs-kafka: ## Tail Kafka logs
 	@kubectl logs -f -l app=kafka -n $(NAMESPACE)
+	@echo ""
 
 logs-redis: ## Tail Redis logs
 	@kubectl logs -f -l app=redis -n $(NAMESPACE)
+	@echo ""
 
-##@ Internal Targets (do not call directly)
+# Internal targets (prefixed with . to hide from help)
 
 .setup-cluster:
 	@if [ -f $(SETUP_DIR)/cluster.done ]; then \
