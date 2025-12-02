@@ -57,6 +57,8 @@ dev = [
     "bandit[toml]>=1.7.8",
     # Type stubs
     "types-protobuf>=5.27.0",
+    "types-grpcio",
+    "types-grpcio-reflection",
 ]
 
 [build-system]
