@@ -6,7 +6,6 @@ without requiring external API calls. Useful for testing, CI/CD, and development
 
 import hashlib
 import logging
-from typing import Any
 
 from src.embedding_service.generators.embedding_generator import EmbeddingGenerator
 
@@ -39,18 +38,16 @@ class HashBasedEmbeddingGenerator(EmbeddingGenerator):
         "hash-large": 1536,
     }
 
-    def __init__(self, default_dimension: int = 1536):
+    def __init__(self, default_dimension: int = 1536) -> None:
         """Initialize hash-based generator.
 
         Args:
             default_dimension: Default embedding dimension for unknown models
         """
         self.default_dimension = default_dimension
-        logger.info(
-            f"HashBasedEmbeddingGenerator initialized (default_dimension={default_dimension})"
-        )
+        logger.info(f"HashBasedEmbeddingGenerator initialized (default_dimension={default_dimension})")
 
-    async def embed(self, text: str, model: str, **options: Any) -> list[float]:
+    async def embed(self, text: str, model: str, **options: object) -> list[float]:
         """Generate deterministic embedding for a single text.
 
         Uses SHA-256 hash of the text to generate a deterministic embedding vector.
@@ -66,14 +63,10 @@ class HashBasedEmbeddingGenerator(EmbeddingGenerator):
         """
         dimension = self.get_dimension(model)
         embedding = self._generate_embedding(text, dimension)
-        logger.debug(
-            f"Generated hash-based embedding for text (length={len(text)}, dim={dimension})"
-        )
+        logger.debug(f"Generated hash-based embedding for text (length={len(text)}, dim={dimension})")
         return embedding
 
-    async def embed_batch(
-        self, texts: list[str], model: str, **options: Any
-    ) -> list[list[float]]:
+    async def embed_batch(self, texts: list[str], model: str, **options: object) -> list[list[float]]:
         """Generate deterministic embeddings for multiple texts.
 
         Args:
@@ -89,9 +82,7 @@ class HashBasedEmbeddingGenerator(EmbeddingGenerator):
 
         dimension = self.get_dimension(model)
         embeddings = [self._generate_embedding(text, dimension) for text in texts]
-        logger.debug(
-            f"Generated {len(embeddings)} hash-based embeddings in batch (dim={dimension})"
-        )
+        logger.debug(f"Generated {len(embeddings)} hash-based embeddings in batch (dim={dimension})")
         return embeddings
 
     def get_dimension(self, model: str) -> int:

@@ -30,7 +30,7 @@ class HealthChecker:
         status = await checker.check_all()
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize health checker."""
         self._checks: dict[str, tuple[Callable[[], Awaitable[bool]], bool]] = {}
 
@@ -77,7 +77,7 @@ class HealthChecker:
         critical_failed = []
         non_critical_failed = []
 
-        for (name, (_, critical)), result in zip(self._checks.items(), results):
+        for (name, (_, critical)), result in zip(self._checks.items(), results, strict=True):
             if isinstance(result, Exception):
                 status = "UNHEALTHY"
                 logger.warning(f"Health check failed for {name}: {result}")
@@ -184,7 +184,7 @@ async def check_redis(url: str) -> bool:
         loop = asyncio.get_event_loop()
         redis_client = Redis.from_url(url, socket_connect_timeout=5)
 
-        def ping():
+        def ping() -> bool:
             return redis_client.ping()
 
         result = await loop.run_in_executor(None, ping)
@@ -207,9 +207,7 @@ async def check_kafka(bootstrap_servers: str) -> bool:
     try:
         # Simple TCP connection check
         host, port = bootstrap_servers.split(":")
-        reader, writer = await asyncio.wait_for(
-            asyncio.open_connection(host, int(port)), timeout=5.0
-        )
+        reader, writer = await asyncio.wait_for(asyncio.open_connection(host, int(port)), timeout=5.0)
         writer.close()
         await writer.wait_closed()
         return True
@@ -218,7 +216,7 @@ async def check_kafka(bootstrap_servers: str) -> bool:
         return False
 
 
-async def check_grpc_service(address: str, stub_class: Any) -> bool:
+async def check_grpc_service(address: str, stub_class: type[Any]) -> bool:
     """Check if a gRPC service is responding.
 
     Args:
@@ -235,9 +233,7 @@ async def check_grpc_service(address: str, stub_class: Any) -> bool:
         # Import here to avoid circular dependency
         from src.proto_gen.common_pb2 import HealthCheckRequest
 
-        response = await asyncio.wait_for(
-            stub.HealthCheck(HealthCheckRequest()), timeout=5.0
-        )
+        response = await asyncio.wait_for(stub.HealthCheck(HealthCheckRequest()), timeout=5.0)
         await channel.close()
         return response.status == HealthCheckResponse.HEALTHY
     except Exception as e:

@@ -1,6 +1,7 @@
 """gRPC client for Embedding Service."""
 
 import logging
+from types import TracebackType
 from typing import List
 
 import grpc
@@ -16,7 +17,7 @@ class EmbeddingServiceClient:
     Provides methods to generate embeddings for text via gRPC.
     """
 
-    def __init__(self, address: str, timeout: float = 30.0):
+    def __init__(self, address: str, timeout: float = 30.0) -> None:
         """Initialize the Embedding Service client.
 
         Args:
@@ -28,12 +29,17 @@ class EmbeddingServiceClient:
         self.channel = None
         self.stub = None
 
-    def __enter__(self):
+    def __enter__(self) -> "EmbeddingServiceClient":
         """Context manager entry."""
         self.connect()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Context manager exit."""
         self.close()
 

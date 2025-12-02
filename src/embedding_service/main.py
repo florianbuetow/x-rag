@@ -8,11 +8,13 @@ import asyncio
 import logging
 import signal
 import sys
+from types import FrameType
 
 import grpc
 from prometheus_client import start_http_server
 
 from src.embedding_service.config import EmbeddingServiceConfig
+from src.embedding_service.generators.embedding_generator import EmbeddingGenerator
 from src.embedding_service.generators.factory import EmbeddingGeneratorFactory
 from src.embedding_service.server import EmbeddingServicer
 from src.proto_gen import embedding_pb2_grpc
@@ -29,7 +31,7 @@ logger = logging.getLogger(__name__)
 class EmbeddingServiceRunner:
     """Runner for Embedding Service with graceful shutdown."""
 
-    def __init__(self, config: EmbeddingServiceConfig):
+    def __init__(self, config: EmbeddingServiceConfig) -> None:
         """Initialize service runner.
 
         Args:
@@ -108,7 +110,7 @@ class EmbeddingServiceRunner:
             await self.server.stop(grace=5.0)
             logger.info("Server stopped")
 
-    def _create_generator(self):
+    def _create_generator(self) -> EmbeddingGenerator:
         """Create embedding generator based on configuration.
 
         Returns:
@@ -129,7 +131,7 @@ class EmbeddingServiceRunner:
         else:
             raise ValueError(f"Unknown generator: {self.config.embedding_generator}")
 
-    def signal_handler(self, signum: int, frame) -> None:
+    def signal_handler(self, signum: int, frame: FrameType | None) -> None:
         """Handle shutdown signals.
 
         Args:

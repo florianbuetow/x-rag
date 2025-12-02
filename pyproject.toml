@@ -72,8 +72,8 @@ target-version = "py311"
 # Core errors & warnings, Google-style docs, types, bugbear, quotes, imports, naming
 select = ["E", "F", "D", "ANN", "B", "Q", "I", "N"]
 ignore = [
-  "ANN101",  # don't require type annotation for `self`
   "D107",    # don't require __init__ docstring (class docstring is fine)
+  "N802",    # allow non-lowercase function names (needed for gRPC method names)
 ]
 
 [tool.ruff.lint.pydocstyle]

@@ -6,7 +6,6 @@ with validation and helpful error messages.
 
 import os
 from pathlib import Path
-from typing import Any
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -79,7 +78,7 @@ def require_env_file(path: str = ".env") -> None:
         raise ConfigurationError(error_msg)
 
 
-def get_env_or_error(key: str, default: Any = None) -> Any:
+def get_env_or_error(key: str, default: str | None = None) -> str:
     """Get environment variable or raise helpful error.
 
     Args:
@@ -95,8 +94,7 @@ def get_env_or_error(key: str, default: Any = None) -> Any:
     value = os.getenv(key, default)
     if value is None:
         raise ConfigurationError(
-            f"Required environment variable '{key}' is not set.\n"
-            f"Add it to your .env file or set it in your environment."
+            f"Required environment variable '{key}' is not set.\nAdd it to your .env file or set it in your environment."
         )
     return value
 
@@ -118,18 +116,14 @@ class ServiceConfig(BaseConfig):
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         v_upper = v.upper()
         if v_upper not in valid_levels:
-            raise ValueError(
-                f"Invalid log_level '{v}'. Must be one of: {', '.join(valid_levels)}"
-            )
+            raise ValueError(f"Invalid log_level '{v}'. Must be one of: {', '.join(valid_levels)}")
         return v_upper
 
 
 class WeaviateConfig(BaseConfig):
     """Weaviate connection configuration."""
 
-    weaviate_url: str = Field(
-        default="http://weaviate:8080", description="Weaviate URL"
-    )
+    weaviate_url: str = Field(default="http://weaviate:8080", description="Weaviate URL")
     weaviate_timeout: int = Field(default=30, description="Request timeout in seconds")
 
     @field_validator("weaviate_url")
@@ -159,21 +153,15 @@ class RedisConfig(BaseConfig):
 class KafkaConfig(BaseConfig):
     """Kafka connection configuration."""
 
-    kafka_bootstrap: str = Field(
-        default="kafka:9092", description="Kafka bootstrap servers"
-    )
-    kafka_topic: str = Field(
-        default="document-changes", description="Kafka topic for document changes"
-    )
+    kafka_bootstrap: str = Field(default="kafka:9092", description="Kafka bootstrap servers")
+    kafka_topic: str = Field(default="document-changes", description="Kafka topic for document changes")
 
 
 class OpenAIConfig(BaseConfig):
     """OpenAI API configuration."""
 
     openai_api_key: str = Field(..., description="OpenAI API key")
-    openai_embedding_model: str = Field(
-        default="text-embedding-3-small", description="Embedding model"
-    )
+    openai_embedding_model: str = Field(default="text-embedding-3-small", description="Embedding model")
     openai_chat_model: str = Field(default="gpt-4", description="Chat model")
 
     @field_validator("openai_api_key")
@@ -181,10 +169,7 @@ class OpenAIConfig(BaseConfig):
     def validate_api_key(cls, v: str) -> str:
         """Validate API key format."""
         if not v or v == "sk-your-key-here":
-            raise ValueError(
-                "OpenAI API key not configured. "
-                "Set OPENAI_API_KEY in your .env file with your actual API key."
-            )
+            raise ValueError("OpenAI API key not configured. Set OPENAI_API_KEY in your .env file with your actual API key.")
         if not v.startswith("sk-"):
             raise ValueError("Invalid OpenAI API key format. Should start with 'sk-'")
         return v

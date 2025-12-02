@@ -5,7 +5,7 @@ import logging
 import sys
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, AsyncGenerator
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, status
@@ -78,7 +78,7 @@ health_checker: HealthChecker | None = None
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """FastAPI lifespan context manager."""
     global minio_client, kafka_client, health_checker
 
@@ -218,7 +218,7 @@ async def ingest_document(request: IngestRequest) -> IngestResponse:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Ingestion failed: {str(e)}",
-            )
+            ) from e
 
 
 @app.get("/health")

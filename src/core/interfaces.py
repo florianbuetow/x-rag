@@ -7,7 +7,7 @@ They are compatible with Haystack and allow for dependency injection.
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Any, Literal, Protocol, runtime_checkable
+from typing import Literal, Protocol, runtime_checkable
 
 from .document import CoreDocument
 
@@ -115,7 +115,7 @@ class Cache(Protocol):
     """Protocol for caching."""
 
     @abstractmethod
-    def get(self, key: str) -> Any | None:
+    def get(self, key: str) -> object | None:
         """Get value from cache.
 
         Args:
@@ -127,7 +127,7 @@ class Cache(Protocol):
         ...
 
     @abstractmethod
-    def set(self, key: str, value: Any, ttl: int | None = None) -> None:
+    def set(self, key: str, value: object, ttl: int | None = None) -> None:
         """Set value in cache.
 
         Args:
