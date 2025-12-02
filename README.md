@@ -112,4 +112,4 @@ x-rag/
 - **`reports/`** — Generated test coverage reports (created by `make init`)
 - **`docs/`** — Additional documentation and guides
 
-For detailed setup instructions, see [SETUP.md](./SETUP.md). For architecture details, see [SYSTEM-DIAGRAM.md](./SYSTEM-DIAGRAM.md). For advanced Kind and pod access operations, see [docs/KIND-ACCESS-CHEAT-SHEET.md](docs/KIND-ACCESS-CHEAT-SHEET.md).
+For detailed setup instructions, see [SETUP.md](./SETUP.md). For architecture details, see [docs/SYSTEM-DIAGRAM.md](docs/SYSTEM-DIAGRAM.md). For advanced Kind and pod access operations, see [docs/KIND-ACCESS-CHEAT-SHEET.md](docs/KIND-ACCESS-CHEAT-SHEET.md).
