@@ -75,6 +75,7 @@ class SearchServiceConfig(ServiceConfig):
         # In production, this should be a real key
         if v == "sk-your-key-here":
             import logging
+
             logging.warning("Using placeholder OpenAI API key - LLM functionality will fail")
             return v
         if not v.startswith("sk-"):

@@ -66,10 +66,17 @@ def test_config_invalid_redis_url() -> None:
         )
 
 
-def test_config_missing_openai_key() -> None:
-    """Test that missing OpenAI API key fails validation."""
+def test_config_empty_openai_key() -> None:
+    """Test that empty OpenAI API key fails validation."""
     with pytest.raises(ValidationError, match="OpenAI API key not configured"):
-        SearchServiceConfig()
+        SearchServiceConfig(openai_api_key="")
+
+
+def test_config_placeholder_openai_key_allowed() -> None:
+    """Test that placeholder OpenAI API key is allowed for development."""
+    # Should not raise, but logs a warning
+    config = SearchServiceConfig(openai_api_key="sk-your-key-here")
+    assert config.openai_api_key == "sk-your-key-here"
 
 
 def test_config_invalid_openai_key_format() -> None:
