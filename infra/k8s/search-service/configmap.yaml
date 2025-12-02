@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: search-service-config
+  namespace: rag-system
+data:
+  SERVICE_NAME: "search-service"
+  LOG_LEVEL: "INFO"
+  PORT: "50052"
+  ENABLE_REFLECTION: "true"
+
+  # Weaviate settings
+  WEAVIATE_URL: "http://xrag-weaviate:8080"
+  WEAVIATE_TIMEOUT: "30"
+  WEAVIATE_COLLECTION: "DocumentChunk"
+
+  # Redis settings
+  REDIS_URL: "redis://xrag-redis:6379"
+  CACHE_TTL: "3600"
+  ENABLE_CACHE: "true"
+
+  # Embedding Service settings
+  EMBEDDING_SERVICE_ADDR: "embedding-service:50051"
+  EMBEDDING_SERVICE_TIMEOUT: "30"
+  EMBEDDING_MODEL: "text-embedding-3-small"
+
+  # OpenAI settings
+  OPENAI_MODEL: "gpt-4o-mini"
+  OPENAI_MAX_TOKENS: "500"
+  OPENAI_TEMPERATURE: "0.7"
+  OPENAI_MAX_RETRIES: "3"
+  OPENAI_TIMEOUT: "60"
+
+  # Search settings
+  DEFAULT_TOP_K: "10"
+  DEFAULT_MODE: "hybrid"
+  HYBRID_ALPHA: "0.5"
+  MAX_CONTEXT_LENGTH: "4000"
