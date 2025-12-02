@@ -3,7 +3,8 @@
 #
 # Convention: All targets end with @echo "" for visual separation in terminal output
 
-.PHONY: help check setup start stop status clean reset destroy
+.PHONY: help check setup
+.PHONY: cluster-start cluster-stop cluster-status cluster-clean cluster-reset cluster-destroy
 .PHONY: generate-grpc build deploy-apps
 .PHONY: test test-integration test-coverage
 .PHONY: code-style code-format
@@ -37,7 +38,7 @@ help: ## Display this help message
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage:\n  make $(CYAN)<target>$(NC)\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  $(CYAN)%-20s$(NC) %s\n", $$1, $$2 } /^##@/ { printf "\n$(YELLOW)%s$(NC)\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 	@echo ""
 
-##@ Setup & Management
+##@ Prerequisites
 
 check: ## Validate all prerequisites (Docker, kubectl, Kind, Helm, Python, uv)
 	@clear
@@ -52,8 +53,9 @@ setup: check ## Build Docker images (does not start cluster)
 	@echo "$(GREEN)✓ Setup complete$(NC)"
 	@echo ""
 
+##@ Cluster Management
 
-start: ## Start the cluster and all services
+cluster-start: ## Start the cluster and all services
 	@echo "$(BLUE)=== Starting X-RAG Platform ===$(NC)"
 	@echo ""
 	@mkdir -p $(SETUP_DIR)
@@ -75,18 +77,18 @@ start: ## Start the cluster and all services
 	@echo "  Kafka:         localhost:9092"
 	@echo ""
 
-stop: ## Shutdown the cluster
+cluster-stop: ## Shutdown the cluster
 	@echo "$(YELLOW)Shutting down cluster...$(NC)"
 	@kind delete cluster --name $(CLUSTER_NAME) 2>/dev/null || true
 	@docker rm -f $(REGISTRY_NAME) 2>/dev/null || true
 	@echo "$(GREEN)Cluster stopped$(NC)"
 	@echo ""
 
-status: ## Display current system status and test all service connectivity
+cluster-status: ## Display current system status and test all service connectivity
 	@./scripts/check-status.sh
 	@echo ""
 
-clean: ## Delete cluster, registry, and all data
+cluster-clean: ## Delete cluster, registry, and all data
 	@echo "$(YELLOW)Deleting cluster and all data...$(NC)"
 	@kind delete cluster --name $(CLUSTER_NAME) 2>/dev/null || true
 	@docker rm -f $(REGISTRY_NAME) 2>/dev/null || true
@@ -95,7 +97,7 @@ clean: ## Delete cluster, registry, and all data
 	@echo "$(GREEN)Cleanup complete$(NC)"
 	@echo ""
 
-destroy: stop ## Stop cluster and delete all xrag-* Docker images
+cluster-destroy: cluster-stop ## Stop cluster and delete all xrag-* Docker images
 	@echo "$(RED)WARNING: This will DELETE all project Docker images!$(NC)"
 	@echo -n "Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
 	@echo "$(YELLOW)Deleting project Docker images...$(NC)"
@@ -113,7 +115,7 @@ destroy: stop ## Stop cluster and delete all xrag-* Docker images
 	@echo "$(GREEN)All project images deleted$(NC)"
 	@echo ""
 
-reset: ## Reset all pods and data (keeps cluster running, deletes all state)
+cluster-reset: ## Reset all pods and data (keeps cluster running, deletes all state)
 	@echo "$(YELLOW)WARNING: This will DELETE all pod data and restart services!$(NC)"
 	@echo -n "Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
 	@echo "$(BLUE)=== Resetting X-RAG Platform ===$(NC)"
@@ -149,7 +151,7 @@ reset: ## Reset all pods and data (keeps cluster running, deletes all state)
 	@echo "$(GREEN)===== Reset Complete! =====$(NC)"
 	@echo ""
 	@echo "All services have been redeployed with fresh state."
-	@echo "Run 'make status' to verify all services are running."
+	@echo "Run 'make cluster-status' to verify all services are running."
 	@echo ""
 
 ##@ Build & Deploy
@@ -198,7 +200,7 @@ test: ## Run unit tests only (fast, no cluster required)
 
 test-integration: ## Run integration tests (requires running cluster)
 	@echo "$(BLUE)=== Running Integration Tests ===$(NC)"
-	@echo "$(YELLOW)Note: Requires running cluster (make start)$(NC)"
+	@echo "$(YELLOW)Note: Requires running cluster (make cluster-start)$(NC)"
 	@uv run pytest tests/integration/ -v -s
 	@echo ""
 

@@ -61,12 +61,12 @@ make format
 ### Quick Reference
 
 ```bash
-make help       # Show all available commands
-make check      # Validate prerequisites
-make setup      # One-time infrastructure setup
-make start      # Build and deploy services
-make test       # Run test suite
-make status     # Show cluster status
+make help           # Show all available commands
+make check          # Validate prerequisites
+make setup          # One-time infrastructure setup
+make cluster-start  # Build and deploy services
+make test           # Run test suite
+make cluster-status # Show cluster status
 ```
 
 For detailed setup instructions, see [SETUP.md](./SETUP.md). For architecture details, see [SYSTEM-DIAGRAM.md](./SYSTEM-DIAGRAM.md).

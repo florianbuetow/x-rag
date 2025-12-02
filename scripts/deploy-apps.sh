@@ -50,4 +50,4 @@ done
 echo ""
 echo "✓ Application services deployed successfully"
 echo ""
-echo "Run 'make status' to check service health"
+echo "Run 'make cluster-status' to check service health"

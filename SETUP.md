@@ -43,7 +43,7 @@ This document contains everything needed to prepare the development environment 
 ```bash
 git clone https://github.com/your-org/rag-hackathon-starter
 cd rag-hackathon-starter
-make start
+make cluster-start
 # → Everything running in 2-3 minutes
 ```
 
@@ -219,7 +219,7 @@ results = weaviate.query(query, mode="hybrid", alpha=0.5)
 
 ### 1 Day Before
 
-- [ ] Fresh clone and `make start` tested on multiple machines
+- [ ] Fresh clone and `make cluster-start` tested on multiple machines
 - [ ] Sample searches returning correct results
 - [ ] Grafana dashboards loading correctly
 - [ ] All test commands passing
@@ -230,7 +230,7 @@ results = weaviate.query(query, mode="hybrid", alpha=0.5)
 - [ ] Share repository link with participants
 - [ ] Distribute API keys
 - [ ] Have 2-3 mentors available for setup issues
-- [ ] Verify at least one successful `make start` per team
+- [ ] Verify at least one successful `make cluster-start` per team
 
 ---
 
@@ -1380,9 +1380,9 @@ help:
 	@echo "RAG Hackathon Commands"
 	@echo ""
 	@echo "Setup:"
-	@echo "  make start    - Create cluster and deploy services"
-	@echo "  make stop     - Delete cluster"
-	@echo "  make reset    - Delete and recreate everything"
+	@echo "  make cluster-start    - Create cluster and deploy services"
+	@echo "  make cluster-stop     - Delete cluster"
+	@echo "  make cluster-reset    - Delete and recreate everything"
 	@echo ""
 	@echo "Development:"
 	@echo "  make dev-search    - Run Search API locally"
@@ -1403,7 +1403,7 @@ help:
 	@echo "  make logs-ingest    - Tail Ingestion API logs"
 	@echo "  make logs-embedding - Tail Embedding Service logs"
 	@echo "  make logs-indexer   - Tail Indexer logs"
-	@echo "  make status         - Show cluster status"
+	@echo "  make cluster-status         - Show cluster status"
 
 start:
 	@./scripts/setup-kind-cluster.sh
@@ -1555,7 +1555,7 @@ git clone https://github.com/your-org/rag-hackathon-starter
 cd rag-hackathon-starter
 cp .env.example .env
 # Add your OPENAI_API_KEY to .env
-make start
+make cluster-start
 make seed
 ```
 
@@ -1584,13 +1584,13 @@ curl -X POST http://localhost:8082/ingest \
 
 | Command | Description |
 |---------|-------------|
-| `make start` | Start cluster |
-| `make stop` | Stop cluster |
+| `make cluster-start` | Start cluster |
+| `make cluster-stop` | Stop cluster |
 | `make dev-search` | Run Search API locally |
 | `make dev-ingest` | Run Ingestion API locally |
 | `make test` | Run tests |
 | `make logs-search` | View Search API logs |
-| `make status` | Check pods |
+| `make cluster-status` | Check pods |
 ```
 
 ---
@@ -1600,7 +1600,7 @@ curl -X POST http://localhost:8082/ingest \
 | Issue | Symptom | Solution |
 |-------|---------|----------|
 | Docker memory | OOM kills | Increase Docker to 8GB+ |
-| Port conflict | "Port in use" | `make stop` then `make start` |
+| Port conflict | "Port in use" | `make cluster-stop` then `make cluster-start` |
 | Weaviate not ready | Connection refused | Wait 60-90s |
 | Pods stuck | Pending status | Check `kubectl describe pod` |
 
@@ -1629,7 +1629,7 @@ kubectl exec -it redis-0 -n rag-system -- redis-cli ping
 
 ### Before Participants Arrive
 
-- [ ] `git clone` + `make start` tested on fresh machine
+- [ ] `git clone` + `make cluster-start` tested on fresh machine
 - [ ] Sample searches return results
 - [ ] Grafana loads at http://localhost:3000
 - [ ] Mentor assignments ready

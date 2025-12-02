@@ -36,19 +36,20 @@ See the project plan for complete architecture details.
 **ALWAYS use Makefile, NEVER run scripts directly:**
 
 ```bash
-make help         # Show all commands
-make check        # Validate prerequisites
-make setup        # One-time setup
-make start        # Build and deploy apps
-make stop         # Stop services
-make status       # Show status
-make test         # Run tests
-make code-style   # Check code style
-make code-format  # Auto-fix code style
-make ci           # Run all CI checks
-make clean        # Delete everything
-make destroy      # Stop + delete images
-make logs-*       # Tail service logs
+make help            # Show all commands
+make check           # Validate prerequisites
+make setup           # One-time setup
+make cluster-start   # Start cluster and services
+make cluster-stop    # Stop cluster
+make cluster-status  # Show cluster status
+make cluster-clean   # Delete cluster and data
+make cluster-reset   # Reset cluster state
+make cluster-destroy # Stop + delete images
+make test            # Run tests
+make code-style      # Check code style
+make code-format     # Auto-fix code style
+make ci              # Run all CI checks
+make logs-*          # Tail service logs
 ```
 
 ### Port Mappings
