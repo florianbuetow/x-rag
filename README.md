@@ -30,3 +30,43 @@ X-RAG is a production-grade, multi-tenant RAG platform that combines vector, lex
 | **Partition Tolerance** | Kubernetes + StatefulSets | Weaviate/OpenSearch/Neo4j replication; Kafka consumer group rebalancing on failure |
 | **Availability** | Multi-replica deployments | No single point of failure for stateless services; storage backends support replica failover |
 | **Consistency** | Eventual (tunable) | Kafka-based ingestion provides at-least-once delivery; storage backends handle their own consistency guarantees |
+
+---
+
+## Development
+
+### Code Style
+
+This project follows the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html). We use [Ruff](https://docs.astral.sh/ruff/) for linting and formatting to enforce consistent code style across the codebase.
+
+### Linting and Formatting
+
+Before committing code, ensure it passes linting and formatting checks:
+
+```bash
+# Check code style and formatting (read-only, no changes)
+make lint
+
+# Automatically fix linting issues and format code
+make format
+```
+
+**What these commands do:**
+
+- `make lint` — Runs Ruff in check-only mode to identify style violations and formatting issues without making changes
+- `make format` — Automatically fixes linting issues and formats all Python code according to the style guide
+
+**Configuration:** Ruff is configured in `pyproject.toml` with Google-style docstring conventions, line length of 140 characters, and Python 3.11+ target version.
+
+### Quick Reference
+
+```bash
+make help       # Show all available commands
+make check      # Validate prerequisites
+make setup      # One-time infrastructure setup
+make start      # Build and deploy services
+make test       # Run test suite
+make status     # Show cluster status
+```
+
+For detailed setup instructions, see [SETUP.md](./SETUP.md). For architecture details, see [SYSTEM-DIAGRAM.md](./SYSTEM-DIAGRAM.md).
