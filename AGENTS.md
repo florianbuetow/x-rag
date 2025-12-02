@@ -150,12 +150,53 @@ This guide covers:
 When testing code changes, **ALWAYS** run these commands in order:
 
 ```bash
-make format  # 1. Auto-fix code style issues
-make lint    # 2. Verify no linting errors remain
-make test    # 3. Run test suite
+make code-format    # 1. Auto-fix code style issues
+make code-style     # 2. Verify no linting errors remain
+make code-deptry    # 3. Check dependency hygiene
+make test           # 4. Run test suite
 ```
 
-**All three must pass before committing code.** No exceptions.
+**All four must pass before committing code.** No exceptions.
+
+Alternatively, run the full CI suite:
+```bash
+make ci  # Runs all checks: style + types + security + dependencies + tests with coverage
+```
+
+### Dependency Hygiene
+
+This project uses **deptry** to enforce clean dependency management.
+
+**Checking dependencies:**
+```bash
+make code-deptry  # Check dependency hygiene
+```
+
+**What deptry checks:**
+- **DEP001**: Missing dependencies - imports not declared in pyproject.toml
+- **DEP002**: Unused dependencies - declared deps never imported
+- **DEP003**: Transitive dependencies - imports available only via transitive deps
+- **DEP004**: Dev dependencies in production - dev deps imported in src/
+- **DEP005**: Standard library declared - stdlib packages in dependencies
+
+**Configuration:** All rules defined in `[tool.deptry]` section of `pyproject.toml`.
+
+**When to update deptry configuration:**
+
+1. **New non-runtime directories** (e.g., `benchmarks/`, `tools/`):
+   - Add to `extend_exclude` in `[tool.deptry]`
+
+2. **New first-party modules** (if project structure changes):
+   - Add to `known_first_party` list
+
+3. **New dev dependency groups** (e.g., `[project.optional-dependencies].benchmark`):
+   - Add group name to `pep621_dev_dependency_groups`
+
+4. **Legitimate dynamic dependencies** (loaded by name from config):
+   - Add to `[tool.deptry.per_rule_ignores]` with justification comment
+   - Example: `DEP002 = ["plugin-package"]  # Loaded dynamically by plugin system`
+
+**Do NOT disable entire rules.** Use `per_rule_ignores` for specific packages only.
 
 ## Version Control
 
