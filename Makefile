@@ -251,9 +251,8 @@ test-coverage: init ## Run all tests with coverage report and threshold check
 
 ##@ CI/CD
 
-ci: init code-style code-security test-coverage ## Run ALL validation checks (style + security + all tests with coverage)
+ci: init code-style code-typecheck code-security test-coverage ## Run ALL validation checks (style + type checking + security + all tests with coverage)
 	@echo "$(GREEN)✓ All CI checks passed$(NC)"
-	@echo "$(YELLOW)Note: Type checking available via 'make code-typecheck' (not blocking CI yet)$(NC)"
 	@echo ""
 
 ##@ Monitoring & Logs
