@@ -30,8 +30,9 @@ X-RAG is a production-grade distributed RAG platform:
 
 See the project plan for complete architecture details.
 
-## Main Commands
+## Quick Reference
 
+### Available Make Targets
 **ALWAYS use Makefile, NEVER run scripts directly:**
 
 ```bash
@@ -42,53 +43,93 @@ make start        # Build and deploy apps
 make stop         # Stop services
 make status       # Show status
 make test         # Run tests
+make lint         # Check code style
+make format       # Auto-fix code style
 make clean        # Delete everything
 make destroy      # Stop + delete images
 make logs-*       # Tail service logs
 ```
 
-## Critical Development Rules
+### Port Mappings
+- **8080** = Search UI
+- **8081** = Weaviate
+- **8082** = Ingestion API
+- **3000** = Grafana
+- **9090** = Prometheus
+- **6379** = Redis
+- **9092** = Kafka
 
-### 1. Everything Runs in Kubernetes
-- **NO local development outside Kind cluster**
-- All services run inside the cluster
-- No `dev-*` targets in Makefile
+### Environment Setup
+Copy `.env.example` to `.env` and add `OPENAI_API_KEY`
 
-### 2. Always Use Makefile
+## Development Principles
+
+### Always Use Makefile
 - **NEVER** run scripts directly
 - **ALWAYS** use `make` targets
 - Example: Use `make check`, NOT `./scripts/check-prerequisites.sh`
 
-### 3. Python & Dependencies
+### Everything Runs in Kubernetes
+- **NO local development outside Kind cluster**
+- All services run inside the cluster
+- No `dev-*` targets in Makefile
+
+### Python & Dependencies
 - Python version managed by `uv` (defined in pyproject.toml)
 - Don't check for Python version in prerequisites
 - All dependencies in pyproject.toml
 - **ALWAYS** use `uv run python` instead of `python` directly
 - **NEVER** run Python outside the virtual environment
 
-### 4. Docker Configuration
+### Docker Configuration
 - Minimum: 6GB RAM, 4 cores
 - Recommended: 10GB RAM, 8 cores
 - Use "cores" not "CPUs" in all messaging
+- Resource check output format:
+  ```
+  System Resources:
+    Recommended: 10GB RAM, 8 cores
+    Available: 31GB RAM, 16 cores (via docker configuration) ✓
+  ```
 
-### 5. Git Commits
+## Coding Guidelines
+
+### Code Style
+This project follows the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html).
+
+**Checking compliance:**
+```bash
+make lint    # Check code style (read-only)
+make format  # Auto-fix style issues
+```
+
+Configuration: All linting and formatting rules are in `pyproject.toml` using Ruff with Google-style docstring conventions.
+
+### Writing Tests
+- **ALWAYS write tests for new Python code**
+- **Update tests when code behavior is intentionally changed**
+- **Do NOT change tests when the code's intention hasn't changed** — fix the code instead
+- Tests are not optional — all new code requires corresponding tests
+
+## Testing Workflow
+
+When testing code changes, **ALWAYS** run these commands in order:
+
+```bash
+make format  # 1. Auto-fix code style issues
+make lint    # 2. Verify no linting errors remain
+make test    # 3. Run test suite
+```
+
+**All three must pass before committing code.** No exceptions.
+
+## Version Control
+
+### Git Commits
 - **NEVER** attribute AI in commit messages
 - Commit after each milestone
 - Use conventional format: `<type>: <description>`
 - Types: feat, fix, docs, infra, test, refactor, chore
-
-### 6. Resource Check Output Format
-```
-System Resources:
-  Recommended: 10GB RAM, 8 cores
-  Available: 31GB RAM, 16 cores (via docker configuration) ✓
-```
-
-## Quick Reference
-
-- **Project Structure**: See project plan for full directory tree
-- **Port Mappings**: 8080=UI, 8081=Weaviate, 8082=Ingestion, 3000=Grafana, 9090=Prometheus, 6379=Redis, 9092=Kafka
-- **Environment Variables**: Copy `.env.example` to `.env` and add `OPENAI_API_KEY`
 
 ## Implementation Status
 
