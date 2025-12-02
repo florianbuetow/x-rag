@@ -54,7 +54,7 @@ init: ## Initialize local development environment
 	@mkdir -p data/storage
 	@mkdir -p .setup
 	@echo "Installing Python dependencies..."
-	@uv sync
+	@uv sync --all-extras
 	@echo ""
 	@echo "Generating gRPC code..."
 	@$(MAKE) apps-generate-grpc
@@ -234,7 +234,7 @@ test-coverage: init ## Run all tests with coverage report and threshold check
 
 ##@ CI/CD
 
-ci: code-style test-coverage ## Run ALL validation checks (style + all tests with coverage)
+ci: init code-style test-coverage ## Run ALL validation checks (style + all tests with coverage)
 	@echo "$(GREEN)✓ All CI checks passed$(NC)"
 	@echo ""
 
