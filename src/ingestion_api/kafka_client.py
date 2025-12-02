@@ -2,9 +2,10 @@
 
 import json
 import logging
+from typing import Any
 
-from aiokafka import AIOKafkaProducer
-from aiokafka.errors import KafkaError
+from aiokafka import AIOKafkaProducer  # type: ignore[import-untyped]
+from aiokafka.errors import KafkaError  # type: ignore[import-untyped]
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +56,7 @@ class KafkaClient:
             await self.producer.stop()
             logger.info("Kafka producer stopped")
 
-    async def publish(self, topic: str, message: dict) -> None:
+    async def publish(self, topic: str, message: dict[str, Any]) -> None:
         """Publish message to Kafka topic.
 
         Args:

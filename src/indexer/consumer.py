@@ -5,8 +5,8 @@ import json
 import logging
 from typing import Any, AsyncIterator, Dict
 
-from aiokafka import AIOKafkaConsumer
-from aiokafka.errors import KafkaError
+from aiokafka import AIOKafkaConsumer  # type: ignore[import-untyped]
+from aiokafka.errors import KafkaError  # type: ignore[import-untyped]
 
 logger = logging.getLogger(__name__)
 

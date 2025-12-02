@@ -5,7 +5,7 @@ to/from Haystack documents and other formats.
 """
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 
 @dataclass
@@ -28,7 +28,7 @@ class CoreDocument:
         Returns:
             Namespace string (default: "default")
         """
-        return self.metadata.get("namespace", "default")
+        return cast(str, self.metadata.get("namespace", "default"))
 
     @property
     def source(self) -> str | None:

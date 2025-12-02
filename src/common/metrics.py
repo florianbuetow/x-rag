@@ -66,7 +66,7 @@ class MetricsRegistry:
         # Custom metrics can be added as needed
         self._custom_metrics: dict[str, Any] = {}
 
-    def add_counter(self, name: str, description: str, labels: list[str] = None) -> Counter:
+    def add_counter(self, name: str, description: str, labels: list[str] | None = None) -> Counter:
         """Add a custom counter metric.
 
         Args:
@@ -82,7 +82,7 @@ class MetricsRegistry:
         self._custom_metrics[name] = counter
         return counter
 
-    def add_histogram(self, name: str, description: str, labels: list[str] = None) -> Histogram:
+    def add_histogram(self, name: str, description: str, labels: list[str] | None = None) -> Histogram:
         """Add a custom histogram metric.
 
         Args:
@@ -98,7 +98,7 @@ class MetricsRegistry:
         self._custom_metrics[name] = histogram
         return histogram
 
-    def add_gauge(self, name: str, description: str, labels: list[str] = None) -> Gauge:
+    def add_gauge(self, name: str, description: str, labels: list[str] | None = None) -> Gauge:
         """Add a custom gauge metric.
 
         Args:
@@ -126,7 +126,7 @@ class MetricsRegistry:
         return self._custom_metrics.get(name)
 
 
-def track_time(metrics: MetricsRegistry, method_name: str) -> Callable:
+def track_time(metrics: MetricsRegistry, method_name: str) -> Callable[..., Any]:
     """Decorator to track function execution time.
 
     Args:
@@ -139,7 +139,7 @@ def track_time(metrics: MetricsRegistry, method_name: str) -> Callable:
             ...
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
         async def async_wrapper(*args: object, **kwargs: object) -> object:
             start = time.time()
@@ -185,7 +185,7 @@ def track_time(metrics: MetricsRegistry, method_name: str) -> Callable:
     return decorator
 
 
-def track_counter(metrics: MetricsRegistry, method_name: str, counter_name: str = "requests") -> Callable:
+def track_counter(metrics: MetricsRegistry, method_name: str, counter_name: str = "requests") -> Callable[..., Any]:
     """Decorator to track function calls with a counter.
 
     Args:
@@ -199,7 +199,7 @@ def track_counter(metrics: MetricsRegistry, method_name: str, counter_name: str 
             ...
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         counter = metrics.get_custom(counter_name) or metrics.request_counter
 
         @wraps(func)
