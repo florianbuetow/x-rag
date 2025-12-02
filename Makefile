@@ -12,7 +12,7 @@
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
 .PHONY: logs-weaviate logs-kafka logs-redis
 .PHONY: cli-weaviate cli-kafka cli-redis cli-minio cli-embedding cli-ingest cli-indexer
-.PHONY: cli-search-ui cli-search-service
+.PHONY: cli-search-ui cli-search-service cli-prometheus cli-grafana
 
 # Configuration
 CLUSTER_NAME := xrag-k8
@@ -275,19 +275,19 @@ logs-redis: ## Tail Redis logs
 ##@ Pod CLI Access
 
 cli-weaviate: ## Connect to Weaviate pod shell
-	@./scripts/connect-pod.sh weaviate $(NAMESPACE)
+	@./scripts/connect-pod.sh xrag-weaviate $(NAMESPACE)
 	@echo ""
 
 cli-kafka: ## Connect to Kafka pod shell
-	@./scripts/connect-pod.sh kafka $(NAMESPACE)
+	@./scripts/connect-pod.sh xrag-kafka $(NAMESPACE)
 	@echo ""
 
 cli-redis: ## Connect to Redis pod shell
-	@./scripts/connect-pod.sh redis $(NAMESPACE)
+	@./scripts/connect-pod.sh xrag-redis $(NAMESPACE)
 	@echo ""
 
 cli-minio: ## Connect to MinIO pod shell
-	@./scripts/connect-pod.sh minio $(NAMESPACE)
+	@./scripts/connect-pod.sh xrag-minio $(NAMESPACE)
 	@echo ""
 
 cli-embedding: ## Connect to Embedding Service pod shell
@@ -308,6 +308,14 @@ cli-search-ui: ## Connect to Search UI pod shell
 
 cli-search-service: ## Connect to Search Service pod shell
 	@./scripts/connect-pod.sh search-service $(NAMESPACE)
+	@echo ""
+
+cli-prometheus: ## Connect to Prometheus pod shell
+	@./scripts/connect-pod.sh xrag-prometheus $(NAMESPACE)
+	@echo ""
+
+cli-grafana: ## Connect to Grafana pod shell
+	@./scripts/connect-pod.sh xrag-grafana $(NAMESPACE)
 	@echo ""
 
 # Internal targets (prefixed with . to hide from help)
