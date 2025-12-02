@@ -6,7 +6,7 @@ and converting to gRPC HealthCheckResponse format.
 
 import asyncio
 import logging
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, cast
 
 import grpc
 import httpx
@@ -185,7 +185,7 @@ async def check_redis(url: str) -> bool:
         redis_client = Redis.from_url(url, socket_connect_timeout=5)
 
         def ping() -> bool:
-            return redis_client.ping()
+            return cast(bool, redis_client.ping())
 
         result = await loop.run_in_executor(None, ping)
         redis_client.close()
@@ -235,7 +235,7 @@ async def check_grpc_service(address: str, stub_class: type[Any]) -> bool:
 
         response = await asyncio.wait_for(stub.HealthCheck(HealthCheckRequest()), timeout=5.0)
         await channel.close()
-        return response.status == HealthCheckResponse.HEALTHY
+        return cast(bool, response.status == HealthCheckResponse.HEALTHY)
     except Exception as e:
         logger.debug(f"gRPC service health check failed for {address}: {e}")
         return False
