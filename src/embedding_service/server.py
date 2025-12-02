@@ -33,7 +33,7 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
     async def Embed(
         self,
         request: embedding_pb2.EmbedRequest,
-        context: grpc.aio.ServicerContext,
+        context: grpc.aio.ServicerContext[embedding_pb2.EmbedRequest, embedding_pb2.EmbedResponse],
     ) -> embedding_pb2.EmbedResponse:
         """Generate embedding for a single text.
 
@@ -83,7 +83,7 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
     async def EmbedBatch(
         self,
         request: embedding_pb2.EmbedBatchRequest,
-        context: grpc.aio.ServicerContext,
+        context: grpc.aio.ServicerContext[embedding_pb2.EmbedBatchRequest, embedding_pb2.EmbedBatchResponse],
     ) -> embedding_pb2.EmbedBatchResponse:
         """Generate embeddings for multiple texts (batched for efficiency).
 
@@ -139,7 +139,7 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
     async def HealthCheck(
         self,
         request: common_pb2.HealthCheckRequest,
-        context: grpc.aio.ServicerContext,
+        context: grpc.aio.ServicerContext[common_pb2.HealthCheckRequest, common_pb2.HealthCheckResponse],
     ) -> common_pb2.HealthCheckResponse:
         """Health check endpoint.
 
