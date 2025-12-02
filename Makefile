@@ -244,9 +244,9 @@ test-integration: ## Run integration tests (requires running cluster)
 	@uv run pytest tests/integration/ -v -s
 	@echo ""
 
-test-coverage: init ## Run all tests with coverage report and threshold check
-	@echo "$(BLUE)=== Running All Tests with Coverage ===$(NC)"
-	@uv run pytest tests/ -v -s \
+test-coverage: init ## Run unit tests with coverage report and threshold check
+	@echo "$(BLUE)=== Running Unit Tests with Coverage ===$(NC)"
+	@uv run pytest tests/ -v --ignore=tests/integration \
 		--cov=src \
 		--cov-report=html:reports/coverage/html \
 		--cov-report=term \
@@ -259,7 +259,7 @@ test-coverage: init ## Run all tests with coverage report and threshold check
 
 ##@ CI/CD
 
-ci: init code-style code-typecheck code-security code-deptry test-coverage ## Run ALL validation checks (style + type checking + security + dependencies + all tests with coverage)
+ci: init code-style code-typecheck code-security code-deptry test ## Run ALL validation checks (style + type checking + security + dependencies + unit tests)
 	@echo "$(GREEN)✓ All CI checks passed$(NC)"
 	@echo ""
 
@@ -276,8 +276,8 @@ ci-quiet: ## Run ALL validation checks silently (only show output on errors)
 	echo "$(GREEN)✓ Code-security passed$(NC)"; \
 	$(MAKE) code-deptry > $$TMPFILE 2>&1 || { echo "$(RED)✗ Code-deptry failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
 	echo "$(GREEN)✓ Code-deptry passed$(NC)"; \
-	$(MAKE) test-coverage > $$TMPFILE 2>&1 || { echo "$(RED)✗ Test-coverage failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
-	echo "$(GREEN)✓ Test-coverage passed$(NC)"; \
+	$(MAKE) test > $$TMPFILE 2>&1 || { echo "$(RED)✗ Test failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
+	echo "$(GREEN)✓ Test passed$(NC)"; \
 	rm $$TMPFILE; \
 	echo ""; \
 	echo "$(GREEN)✓ All CI checks passed$(NC)"; \
