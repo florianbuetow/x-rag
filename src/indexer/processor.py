@@ -92,15 +92,29 @@ class DocumentProcessor:
         """Ensure Weaviate client is connected (lazy initialization)."""
         if self.weaviate_client is None:
             logger.info("Connecting to Weaviate...")
+
+            # Parse URL correctly
+            url = self.config.weaviate_url
+            if "://" in url:
+                url = url.split("://")[1]  # Remove protocol
+
+            # Split host and port if present
+            if ":" in url:
+                host, port_str = url.rsplit(":", 1)
+                port = int(port_str)
+            else:
+                host = url
+                port = 8080
+
             self.weaviate_client = weaviate.connect_to_custom(
-                http_host=self.config.weaviate_url.replace("http://", "").replace("https://", ""),
-                http_port=8080,
+                http_host=host,
+                http_port=port,
                 http_secure=False,
-                grpc_host=self.config.weaviate_url.replace("http://", "").replace("https://", ""),
+                grpc_host=host,
                 grpc_port=50051,
                 grpc_secure=False,
             )
-            logger.info("✓ Connected to Weaviate")
+            logger.info(f"✓ Connected to Weaviate at {host}:{port}")
 
     def close(self) -> None:
         """Close connections."""
@@ -138,9 +152,10 @@ class DocumentProcessor:
             raise
 
     def chunk_text(self, text: str) -> List[str]:
-        """Chunk text into overlapping segments.
+        """Chunk text into segments based on word count.
 
-        Uses a simple character-based chunking strategy with overlap.
+        Uses a simple word-based chunking strategy: splits text into chunks
+        of approximately 100 words each (configurable via chunk_size).
 
         Args:
             text: Text to chunk
@@ -148,24 +163,26 @@ class DocumentProcessor:
         Returns:
             List of text chunks
         """
-        chunk_size = self.config.chunk_size
-        overlap = self.config.chunk_overlap
+        # Split text into words (whitespace-separated)
+        words = text.split()
 
-        if len(text) <= chunk_size:
+        # Use chunk_size as word count (default 500 chars ~= 100 words)
+        # Rough estimate: 1 word = ~5 characters
+        chunk_word_count = max(1, self.config.chunk_size // 5)
+
+        if len(words) <= chunk_word_count:
             return [text]
 
         chunks = []
-        start = 0
-
-        while start < len(text):
-            end = start + chunk_size
-            chunk = text[start:end]
+        for i in range(0, len(words), chunk_word_count):
+            chunk_words = words[i:i + chunk_word_count]
+            chunk = ' '.join(chunk_words)
             chunks.append(chunk)
 
-            # Move start position forward (with overlap)
-            start = end - overlap
-
-        logger.info(f"Created {len(chunks)} chunks from {len(text)} characters")
+        logger.info(
+            f"Created {len(chunks)} chunks from {len(words)} words "
+            f"({chunk_word_count} words per chunk)"
+        )
         return chunks
 
     def create_chunks(self, document: Dict[str, Any]) -> List[DocumentChunk]:
@@ -293,6 +310,23 @@ class DocumentProcessor:
             return
 
         try:
+            # Check if document already exists in Weaviate (duplicate detection)
+            self._ensure_weaviate_connected()
+            collection = self.weaviate_client.collections.get(self.config.weaviate_class)
+
+            # Query for existing chunks with this doc_id
+            existing = collection.query.fetch_objects(
+                filters=weaviate.classes.query.Filter.by_property("doc_id").equal(document_id),
+                limit=1
+            )
+
+            if len(existing.objects) > 0:
+                logger.info(
+                    f"Document {document_id} already indexed "
+                    f"({len(existing.objects)} chunks found), skipping..."
+                )
+                return
+
             # 1. Load document from MinIO
             document = self.load_document(minio_bucket, minio_key)
 
