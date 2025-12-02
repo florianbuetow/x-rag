@@ -1,0 +1,207 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-service
+  namespace: rag-system
+  labels:
+    app: search-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: search-service
+  template:
+    metadata:
+      labels:
+        app: search-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: search-service
+          image: xrag-k8-kind-registry:5000/search-service:latest
+          imagePullPolicy: Always
+          ports:
+            - name: grpc
+              containerPort: 50052
+              protocol: TCP
+            - name: metrics
+              containerPort: 8080
+              protocol: TCP
+          env:
+            # Service settings
+            - name: SERVICE_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: SERVICE_NAME
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: LOG_LEVEL
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: PORT
+            - name: ENABLE_REFLECTION
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: ENABLE_REFLECTION
+
+            # Weaviate settings
+            - name: WEAVIATE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: WEAVIATE_URL
+            - name: WEAVIATE_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: WEAVIATE_TIMEOUT
+            - name: WEAVIATE_COLLECTION
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: WEAVIATE_COLLECTION
+
+            # Redis settings
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: REDIS_URL
+            - name: CACHE_TTL
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: CACHE_TTL
+            - name: ENABLE_CACHE
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: ENABLE_CACHE
+
+            # Embedding Service settings
+            - name: EMBEDDING_SERVICE_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: EMBEDDING_SERVICE_ADDR
+            - name: EMBEDDING_SERVICE_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: EMBEDDING_SERVICE_TIMEOUT
+            - name: EMBEDDING_MODEL
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: EMBEDDING_MODEL
+
+            # OpenAI settings
+            - name: OPENAI_MODEL
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: OPENAI_MODEL
+            - name: OPENAI_MAX_TOKENS
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: OPENAI_MAX_TOKENS
+            - name: OPENAI_TEMPERATURE
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: OPENAI_TEMPERATURE
+            - name: OPENAI_MAX_RETRIES
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: OPENAI_MAX_RETRIES
+            - name: OPENAI_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: OPENAI_TIMEOUT
+
+            # Search settings
+            - name: DEFAULT_TOP_K
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: DEFAULT_TOP_K
+            - name: DEFAULT_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: DEFAULT_MODE
+            - name: HYBRID_ALPHA
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: HYBRID_ALPHA
+            - name: MAX_CONTEXT_LENGTH
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: MAX_CONTEXT_LENGTH
+
+            # Secrets
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: search-service-secret
+                  key: OPENAI_API_KEY
+
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2000m"
+              memory: "4Gi"
+
+          livenessProbe:
+            exec:
+              command:
+                - python
+                - -c
+                - |
+                  import grpc
+                  from src.proto_gen.search_pb2_grpc import SearchServiceStub
+                  from src.proto_gen.common_pb2 import HealthCheckRequest
+                  channel = grpc.insecure_channel('localhost:50052')
+                  stub = SearchServiceStub(channel)
+                  response = stub.HealthCheck(HealthCheckRequest(), timeout=5)
+                  exit(0 if response.status == 1 else 1)
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            exec:
+              command:
+                - python
+                - -c
+                - |
+                  import grpc
+                  from src.proto_gen.search_pb2_grpc import SearchServiceStub
+                  from src.proto_gen.common_pb2 import HealthCheckRequest
+                  channel = grpc.insecure_channel('localhost:50052')
+                  stub = SearchServiceStub(channel)
+                  response = stub.HealthCheck(HealthCheckRequest(), timeout=5)
+                  exit(0 if response.status == 1 else 1)
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+      restartPolicy: Always

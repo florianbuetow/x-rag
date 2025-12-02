@@ -15,6 +15,7 @@ SERVICES=(
     "embedding-service"
     "ingestion-api"
     "indexer"
+    "search-service"
 )
 
 for service in "${SERVICES[@]}"; do
