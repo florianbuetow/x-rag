@@ -8,7 +8,7 @@
 .PHONY: apps-generate-grpc apps-build apps-deploy
 .PHONY: test test-integration test-coverage
 .PHONY: code-style code-format code-typecheck code-security code-deptry
-.PHONY: ci
+.PHONY: ci ci-quiet
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
 .PHONY: logs-weaviate logs-kafka logs-redis
 .PHONY: cli-weaviate cli-kafka cli-redis cli-minio cli-embedding cli-ingest cli-indexer
@@ -261,6 +261,27 @@ test-coverage: init ## Run all tests with coverage report and threshold check
 
 ci: init code-style code-typecheck code-security code-deptry test-coverage ## Run ALL validation checks (style + type checking + security + dependencies + all tests with coverage)
 	@echo "$(GREEN)✓ All CI checks passed$(NC)"
+	@echo ""
+
+ci-quiet: ## Run ALL validation checks silently (only show output on errors)
+	@echo "$(BLUE)=== Running CI Checks (Quiet Mode) ===$(NC)"
+	@TMPFILE=$$(mktemp); \
+	$(MAKE) init > $$TMPFILE 2>&1 || { echo "$(RED)✗ Init failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
+	echo "$(GREEN)✓ Init passed$(NC)"; \
+	$(MAKE) code-style > $$TMPFILE 2>&1 || { echo "$(RED)✗ Code-style failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
+	echo "$(GREEN)✓ Code-style passed$(NC)"; \
+	$(MAKE) code-typecheck > $$TMPFILE 2>&1 || { echo "$(RED)✗ Code-typecheck failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
+	echo "$(GREEN)✓ Code-typecheck passed$(NC)"; \
+	$(MAKE) code-security > $$TMPFILE 2>&1 || { echo "$(RED)✗ Code-security failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
+	echo "$(GREEN)✓ Code-security passed$(NC)"; \
+	$(MAKE) code-deptry > $$TMPFILE 2>&1 || { echo "$(RED)✗ Code-deptry failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
+	echo "$(GREEN)✓ Code-deptry passed$(NC)"; \
+	$(MAKE) test-coverage > $$TMPFILE 2>&1 || { echo "$(RED)✗ Test-coverage failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
+	echo "$(GREEN)✓ Test-coverage passed$(NC)"; \
+	rm $$TMPFILE; \
+	echo ""; \
+	echo "$(GREEN)✓ All CI checks passed$(NC)"; \
+	echo ""
 	@echo ""
 
 ##@ Monitoring & Logs
