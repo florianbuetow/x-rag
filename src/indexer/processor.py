@@ -11,6 +11,7 @@ from typing import Any, Dict, Generator, List
 
 import redis
 import weaviate
+from weaviate import WeaviateClient
 from minio import Minio
 
 from src.indexer.config import IndexerConfig
@@ -74,7 +75,7 @@ class DocumentProcessor:
         )
 
         # Weaviate client (initialized lazily)
-        self.weaviate_client = None
+        self.weaviate_client: WeaviateClient | None = None
         self._weaviate_lock = threading.Lock()  # Thread-safe lazy init
 
         # Initialize Redis client for distributed locking
@@ -316,6 +317,8 @@ class DocumentProcessor:
 
         # Ensure Weaviate is connected
         self._ensure_weaviate_connected()
+        if self.weaviate_client is None:
+            raise RuntimeError("Weaviate client not initialized after connection attempt")
 
         collection = self.weaviate_client.collections.get(self.config.weaviate_class)
 
@@ -367,6 +370,8 @@ class DocumentProcessor:
             with self.document_lock(document_id):
                 # Check if document already exists in Weaviate (duplicate detection)
                 self._ensure_weaviate_connected()
+                if self.weaviate_client is None:
+                    raise RuntimeError("Weaviate client not initialized after connection attempt")
                 collection = self.weaviate_client.collections.get(self.config.weaviate_class)
 
                 # Query for existing chunks with this doc_id (async)

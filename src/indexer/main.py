@@ -18,6 +18,13 @@ from src.indexer.config import IndexerConfig
 from src.indexer.consumer import DocumentEventConsumer
 from src.indexer.processor import DocumentProcessor
 
+
+class HealthHTTPServer(HTTPServer):
+    """HTTPServer subclass with consumer attribute for health checks."""
+
+    consumer: DocumentEventConsumer | None
+
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -109,7 +116,7 @@ class IndexerService:
         self.config = config
         self.consumer: DocumentEventConsumer | None = None
         self.processor: DocumentProcessor | None = None
-        self.health_server: HTTPServer | None = None
+        self.health_server: HealthHTTPServer | None = None
         self.shutdown_event = asyncio.Event()
 
         # Configure logging level
@@ -118,7 +125,7 @@ class IndexerService:
     def start_health_server(self) -> None:
         """Start the health check HTTP server."""
         # Bind to 0.0.0.0 for Kubernetes probes - network isolation handled by K8s
-        self.health_server = HTTPServer(("0.0.0.0", self.config.health_port), HealthCheckHandler)  # nosec B104
+        self.health_server = HealthHTTPServer(("0.0.0.0", self.config.health_port), HealthCheckHandler)  # nosec B104
         self.health_server.consumer = self.consumer
 
         def serve() -> None:
