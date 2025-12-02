@@ -365,6 +365,10 @@ The X-RAG project uses Kubernetes for production-grade features:
 - **Health checks**: Automatic pod restarts
 - **Resource limits**: Prevent services from consuming all resources
 
+### Advanced Kind and Pod Access
+
+For advanced operations like copying files to/from pods, debugging containers without shells, inspecting containerd, and accessing services externally, see [docs/KIND-ACCESS-CHEAT-SHEET.md](docs/KIND-ACCESS-CHEAT-SHEET.md).
+
 ## Common Issues
 
 - **"Docker daemon not running"**: Start Docker Desktop or `sudo systemctl start docker`
