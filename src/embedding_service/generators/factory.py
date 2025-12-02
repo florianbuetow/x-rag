@@ -1,7 +1,7 @@
 """Factory for creating embedding generator instances."""
 
 import logging
-from typing import Literal
+from typing import Literal, cast
 
 from src.embedding_service.generators.embedding_generator import EmbeddingGenerator
 from src.embedding_service.generators.hash_based_generator import HashBasedEmbeddingGenerator
@@ -28,7 +28,7 @@ class EmbeddingGeneratorFactory:
     @staticmethod
     def _create_hash_based_generator(**kwargs: object) -> HashBasedEmbeddingGenerator:
         """Create hash-based embedding generator."""
-        default_dimension = kwargs.get("default_dimension", 1536)
+        default_dimension = cast(int, kwargs.get("default_dimension", 1536))
         logger.info(f"Creating hash-based embedding generator (dimension={default_dimension})")
         return HashBasedEmbeddingGenerator(default_dimension=default_dimension)
 
@@ -38,10 +38,10 @@ class EmbeddingGeneratorFactory:
         api_key = kwargs.get("api_key")
         if not api_key:
             raise ValueError("OpenAI generator requires 'api_key' parameter")
-        max_retries = kwargs.get("max_retries", 3)
-        timeout = kwargs.get("timeout", 30)
+        max_retries = cast(int, kwargs.get("max_retries", 3))
+        timeout = cast(int, kwargs.get("timeout", 30))
         logger.info("Creating OpenAI embedding generator")
-        return OpenAIEmbeddingGenerator(api_key=api_key, max_retries=max_retries, timeout=timeout)
+        return OpenAIEmbeddingGenerator(api_key=cast(str, api_key), max_retries=max_retries, timeout=timeout)
 
     @staticmethod
     def list_generators() -> list[str]:

@@ -76,7 +76,7 @@ class EmbeddingServiceRunner:
         )
 
         # Add servicer to server
-        embedding_pb2_grpc.add_EmbeddingServiceServicer_to_server(servicer, self.server)
+        embedding_pb2_grpc.add_EmbeddingServiceServicer_to_server(servicer, self.server)  # type: ignore[no-untyped-call]
 
         # Enable reflection for debugging with grpcurl
         if self.config.enable_reflection:

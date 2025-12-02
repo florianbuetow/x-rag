@@ -2,7 +2,7 @@
 
 import logging
 from types import TracebackType
-from typing import List
+from typing import List, cast
 
 import grpc
 
@@ -26,8 +26,8 @@ class EmbeddingServiceClient:
         """
         self.address = address
         self.timeout = timeout
-        self.channel = None
-        self.stub = None
+        self.channel: grpc.Channel | None = None
+        self.stub: embedding_pb2_grpc.EmbeddingServiceStub | None = None
 
     def __enter__(self) -> "EmbeddingServiceClient":
         """Context manager entry."""
@@ -55,7 +55,7 @@ class EmbeddingServiceClient:
                 ("grpc.keepalive_timeout_ms", 5000),
             ],
         )
-        self.stub = embedding_pb2_grpc.EmbeddingServiceStub(self.channel)
+        self.stub = embedding_pb2_grpc.EmbeddingServiceStub(self.channel)  # type: ignore[no-untyped-call]
         logger.info("Connected to Embedding Service")
 
     def close(self) -> None:
@@ -130,7 +130,7 @@ class EmbeddingServiceClient:
 
             request = common_pb2.HealthCheckRequest()
             response = self.stub.HealthCheck(request, timeout=5.0)
-            return response.status == common_pb2.HealthCheckResponse.HEALTHY
+            return cast(bool, response.status == common_pb2.HealthCheckResponse.HEALTHY)
         except grpc.RpcError as e:
             logger.warning(f"Health check failed: {e.code()}")
             return False

@@ -7,12 +7,12 @@ import threading
 import uuid
 from contextlib import contextmanager
 from types import TracebackType
-from typing import Any, Dict, Generator, List
+from typing import Any, Dict, Generator, List, cast
 
 import redis
 import weaviate
-from weaviate import WeaviateClient
 from minio import Minio
+from weaviate import WeaviateClient
 
 from src.indexer.config import IndexerConfig
 from src.indexer.grpc_clients import EmbeddingServiceClient
@@ -206,7 +206,7 @@ class DocumentProcessor:
                 data = response.read()
                 document = json.loads(data.decode("utf-8"))
                 logger.info(f"✓ Loaded document: {document.get('id')}")
-                return document
+                return cast(Dict[str, Any], document)
             finally:
                 # Always clean up connection
                 response.close()
@@ -257,7 +257,7 @@ class DocumentProcessor:
             List of DocumentChunk objects
         """
         text = document.get("text", "")
-        doc_id = document.get("id")
+        doc_id = cast(str, document.get("id"))
         namespace = document.get("namespace", "default")
         metadata = document.get("metadata", {})
 
@@ -354,10 +354,10 @@ class DocumentProcessor:
             Exception: If processing fails
         """
         event_type = event.get("event_type")
-        document_id = event.get("document_id")
+        document_id = cast(str, event.get("document_id"))
         namespace = event.get("namespace", "default")
-        minio_bucket = event.get("minio_bucket")
-        minio_key = event.get("minio_key")
+        minio_bucket = cast(str, event.get("minio_bucket"))
+        minio_key = cast(str, event.get("minio_key"))
 
         logger.info(f"Processing event: type={event_type}, doc_id={document_id}, namespace={namespace}")
 
