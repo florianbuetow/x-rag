@@ -120,6 +120,25 @@ make code-format  # Auto-fix style issues
 
 Configuration: All linting and formatting rules are in `pyproject.toml` using Ruff with Google-style docstring conventions.
 
+### Clean Code Principles
+For comprehensive guidance on writing clean, maintainable code, see [docs/CLEAN_CODE_GUIDE.md](docs/CLEAN_CODE_GUIDE.md).
+
+This guide covers:
+- Naming conventions and intention-revealing names
+- Function design and single responsibility
+- SOLID principles with Python examples
+- Error handling best practices
+- Clean Architecture patterns
+- Testing principles (F.I.R.S.T., AAA pattern)
+- Component cohesion and coupling
+- Complete multi-file architecture examples
+
+**When to reference the guide:**
+- Before writing new features or modules
+- During code reviews
+- When refactoring existing code
+- When unsure about architectural decisions
+
 ### Writing Tests
 - **ALWAYS write tests for new Python code**
 - **Update tests when code behavior is intentionally changed**
