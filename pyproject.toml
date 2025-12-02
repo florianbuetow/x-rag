@@ -35,7 +35,6 @@ dependencies = [
     "aiokafka>=0.9.0",
     
     # Object storage
-    "boto3>=1.29.0",
     "minio>=7.2.0",
     
     # Observability
@@ -55,6 +54,7 @@ dev = [
     "mypy>=1.7.0",
     "mypy-protobuf>=3.5.0",
     "bandit[toml]>=1.7.8",
+    "deptry>=0.20.0",
     # Type stubs
     "types-protobuf>=5.27.0",
     "types-grpcio",
@@ -174,3 +174,45 @@ exclude = [
 # Reasonable default for CI:
 severity = "MEDIUM"
 confidence = "MEDIUM"
+
+[tool.deptry]
+# Source scanning - only check src/ directory
+# Default excludes: .venv, .direnv, .git, tests, setup.py
+extend_exclude = [
+    "build",
+    "dist",
+    "docs",
+    "scripts",
+    "infra",
+    "proto",
+    "data",
+    "reports",
+    "src/proto_gen",  # Generated protobuf/gRPC code
+]
+
+# Ignore Jupyter notebooks (not part of production code)
+ignore_notebooks = true
+
+# First-party modules - tell deptry what belongs to this project
+known_first_party = [
+    "src",
+]
+
+# PEP 621 dev dependency groups - these are NOT runtime dependencies
+pep621_dev_dependency_groups = [
+    "dev",
+]
+
+# Keep all rules enabled (DEP001-DEP005)
+# Use per_rule_ignores for specific, justified exceptions only
+ignore = []
+
+# CI/Reporting integration
+json_output = "reports/deptry/deptry.json"
+
+[tool.deptry.per_rule_ignores]
+DEP002 = [
+    "haystack-ai",         # Phase 10: Haystack RAG pipelines (not yet implemented)
+    "weaviate-haystack",   # Phase 10: Weaviate integration for Haystack (not yet implemented)
+    "grpcio-tools",        # Build-time only: used by make apps-generate-grpc
+]

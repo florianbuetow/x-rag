@@ -7,10 +7,14 @@ with validation and helpful error messages.
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.core.errors import ConfigurationError
+
+# Load .env file at module import time
+load_dotenv()
 
 
 class BaseConfig(BaseSettings):

@@ -7,7 +7,7 @@
 .PHONY: cluster-start cluster-stop cluster-status cluster-clean cluster-reset cluster-destroy
 .PHONY: apps-generate-grpc apps-build apps-deploy
 .PHONY: test test-integration test-coverage
-.PHONY: code-style code-format code-typecheck code-security
+.PHONY: code-style code-format code-typecheck code-security code-deptry
 .PHONY: ci
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
 .PHONY: logs-weaviate logs-kafka logs-redis
@@ -223,6 +223,14 @@ code-security: ## Run security checks with bandit
 	@echo "$(GREEN)✓ Security checks passed$(NC)"
 	@echo ""
 
+code-deptry: ## Check dependency hygiene with deptry
+	@echo "$(BLUE)=== Checking Dependencies ===$(NC)"
+	@mkdir -p reports/deptry
+	@uv run deptry src
+	@echo ""
+	@echo "$(GREEN)✓ Dependency checks passed$(NC)"
+	@echo ""
+
 ##@ Testing
 
 test: ## Run unit tests only (fast, no cluster required)
@@ -251,7 +259,7 @@ test-coverage: init ## Run all tests with coverage report and threshold check
 
 ##@ CI/CD
 
-ci: init code-style code-typecheck code-security test-coverage ## Run ALL validation checks (style + type checking + security + all tests with coverage)
+ci: init code-style code-typecheck code-security code-deptry test-coverage ## Run ALL validation checks (style + type checking + security + dependencies + all tests with coverage)
 	@echo "$(GREEN)✓ All CI checks passed$(NC)"
 	@echo ""
 
