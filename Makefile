@@ -7,7 +7,7 @@
 .PHONY: cluster-start cluster-stop cluster-status cluster-clean cluster-reset cluster-destroy
 .PHONY: apps-generate-grpc apps-build apps-deploy
 .PHONY: test test-integration test-coverage
-.PHONY: code-style code-format
+.PHONY: code-style code-format code-typecheck
 .PHONY: ci
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
 .PHONY: logs-weaviate logs-kafka logs-redis
@@ -206,6 +206,13 @@ code-format: ## Auto-fix code style and formatting
 	@echo "$(GREEN)✓ Code formatted$(NC)"
 	@echo ""
 
+code-typecheck: ## Run static type checking with mypy
+	@echo "$(BLUE)=== Running Type Checks ===$(NC)"
+	@uv run mypy src/
+	@echo ""
+	@echo "$(GREEN)✓ Type checks passed$(NC)"
+	@echo ""
+
 ##@ Testing
 
 test: ## Run unit tests only (fast, no cluster required)
@@ -236,6 +243,7 @@ test-coverage: init ## Run all tests with coverage report and threshold check
 
 ci: init code-style test-coverage ## Run ALL validation checks (style + all tests with coverage)
 	@echo "$(GREEN)✓ All CI checks passed$(NC)"
+	@echo "$(YELLOW)Note: Type checking available via 'make code-typecheck' (not blocking CI yet)$(NC)"
 	@echo ""
 
 ##@ Monitoring & Logs
