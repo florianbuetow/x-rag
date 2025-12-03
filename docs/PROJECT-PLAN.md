@@ -196,8 +196,6 @@ x-rag/
 ├── Makefile                      # Main developer interface
 ├── pyproject.toml                # Python dependencies (uv)
 ├── README.md
-├── SETUP.md
-├── SYSTEM-DIAGRAM.md
 │
 ├── .setup/                       # Checkpoints (gitignored)
 │   ├── prerequisites.done

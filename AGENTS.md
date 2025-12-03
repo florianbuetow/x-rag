@@ -53,12 +53,16 @@ make ci              # Run all CI checks
 make logs-*          # Tail service logs
 ```
 
-### Port Mappings
-- **8080** = Search UI
+### Port Mappings (External HTTP)
+- **8080** = Search UI (web interface)
 - **8081** = Weaviate
 - **8082** = Ingestion API
 - **3000** = Grafana
 - **9090** = Prometheus
+
+### Internal Service Ports
+- **50051** = Embedding Service (gRPC)
+- **50052** = Search Service (gRPC)
 - **6379** = Redis
 - **9092** = Kafka
 
@@ -213,7 +217,7 @@ make code-deptry  # Check dependency hygiene
 
 ## Implementation Status
 
-### ✅ Completed (10/13 phases = 77%)
+### ✅ Completed (11/13 phases = 85%)
 - Phase 0: .gitignore
 - Phase 1: Foundation (Makefile, scripts, pyproject.toml, .env.example, directory structure)
 - Phase 2: Infrastructure Implementation (Kind cluster, K8s manifests)
@@ -225,9 +229,9 @@ make code-deptry  # Check dependency hygiene
 - Phase 8: Search Service (gRPC server, Haystack RAG pipeline, hybrid search)
 - Phase 9: Search UI (FastAPI web interface, Jinja2 templates, async gRPC client)
 - Phase 10: Haystack Integration (DocumentCleaner, DocumentSplitter with overlap support)
+- Phase 11: Testing (251 tests: 243 unit + 8 integration)
 
 ### 📋 Pending
-- Phase 11: Testing (unit/integration tests exist, need Search tests)
 - Phase 12: Documentation
 - Phase 13: Validation
 
@@ -235,9 +239,9 @@ make code-deptry  # Check dependency hygiene
 
 ### December 2025 - Phase 7 Validation & Bug Fixes
 
-**Testing Summary**: 20/20 tests passing (100% success rate)
-- ✅ 15/15 unit tests passed
-- ✅ 5/5 integration tests passed
+**Testing Summary**: 251/251 tests passing (100% success rate)
+- ✅ 243/243 unit tests passed
+- ✅ 8/8 integration tests passed
 - ✅ E2E document ingestion flow working
 - ✅ Cluster lifecycle robust and reliable
 
