@@ -213,7 +213,7 @@ make code-deptry  # Check dependency hygiene
 
 ## Implementation Status
 
-### ✅ Completed (9/13 phases = 69%)
+### ✅ Completed (10/13 phases = 77%)
 - Phase 0: .gitignore
 - Phase 1: Foundation (Makefile, scripts, pyproject.toml, .env.example, directory structure)
 - Phase 2: Infrastructure Implementation (Kind cluster, K8s manifests)
@@ -224,9 +224,9 @@ make code-deptry  # Check dependency hygiene
 - Phase 7: Indexer (Kafka consumer + document processing)
 - Phase 8: Search Service (gRPC server, Haystack RAG pipeline, hybrid search)
 - Phase 9: Search UI (FastAPI web interface, Jinja2 templates, async gRPC client)
+- Phase 10: Haystack Integration (DocumentCleaner, DocumentSplitter with overlap support)
 
 ### 📋 Pending
-- Phase 10: Haystack Pipelines
 - Phase 11: Testing (unit/integration tests exist, need Search tests)
 - Phase 12: Documentation
 - Phase 13: Validation

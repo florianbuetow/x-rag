@@ -2,17 +2,22 @@
 
 Orchestrates the complete document indexing pipeline:
 1. Load document from storage
-2. Clean and preprocess text
-3. Split text into chunks
+2. Clean and preprocess text (using Haystack DocumentCleaner)
+3. Split text into chunks (using Haystack DocumentSplitter)
 4. Generate embeddings via Embedding Service
 5. Store chunks in Weaviate
+
+Uses Haystack library components for text preprocessing while maintaining
+our existing gRPC and storage architecture.
 """
 
 import json
 import logging
 import uuid
-from typing import Any, Dict, List, Protocol
+from typing import Any, Dict, List, Literal, Protocol
 
+from haystack import Document
+from haystack.components.preprocessors import DocumentCleaner, DocumentSplitter
 from minio import Minio
 
 logger = logging.getLogger(__name__)
@@ -180,17 +185,40 @@ class MinIODocumentLoader:
             raise
 
 
-class BasicTextCleaner:
-    """Basic text cleaning implementation.
+class HaystackTextCleaner:
+    """Text cleaning using Haystack's DocumentCleaner.
 
-    Performs simple text normalization:
-    - Strips leading/trailing whitespace
-    - Normalizes internal whitespace
-    - Removes empty lines
+    Wraps Haystack's DocumentCleaner to provide:
+    - Unicode normalization
+    - Whitespace normalization
+    - Empty line removal
+
+    This is a thin adapter that maintains our TextCleaner protocol interface
+    while delegating to Haystack for the actual cleaning.
     """
 
+    def __init__(
+        self,
+        remove_empty_lines: bool = True,
+        remove_extra_whitespaces: bool = True,
+        unicode_normalization: Literal["NFC", "NFKC", "NFD", "NFKD"] | None = "NFC",
+    ) -> None:
+        """Initialize the Haystack-based text cleaner.
+
+        Args:
+            remove_empty_lines: Whether to remove empty lines
+            remove_extra_whitespaces: Whether to remove extra whitespaces
+            unicode_normalization: Unicode normalization form (NFC, NFKC, NFD, NFKD)
+        """
+        self._cleaner = DocumentCleaner(
+            remove_empty_lines=remove_empty_lines,
+            remove_extra_whitespaces=remove_extra_whitespaces,
+            unicode_normalization=unicode_normalization,
+        )
+        logger.info("✓ Haystack text cleaner initialized")
+
     def clean(self, text: str) -> str:
-        """Clean and normalize text.
+        """Clean and normalize text using Haystack.
 
         Args:
             text: Raw text
@@ -198,37 +226,66 @@ class BasicTextCleaner:
         Returns:
             Cleaned text
         """
-        # Strip and normalize whitespace
-        lines = [line.strip() for line in text.split("\n")]
-        # Remove empty lines
-        lines = [line for line in lines if line]
-        # Join with single newline
-        cleaned = "\n".join(lines)
+        if not text:
+            return ""
 
+        # Create a Haystack Document, clean it, extract the content
+        doc = Document(content=text)
+        result = self._cleaner.run(documents=[doc])
+        cleaned_docs = result.get("documents", [])
+
+        if not cleaned_docs:
+            return ""
+
+        cleaned = cleaned_docs[0].content or ""
         logger.debug(f"Cleaned text: {len(text)} -> {len(cleaned)} chars")
         return cleaned
 
 
-class WordBasedTextSplitter:
-    """Splits text into chunks based on word count.
+# Backward compatibility alias
+BasicTextCleaner = HaystackTextCleaner
 
-    Uses a simple word-based chunking strategy that splits text into
-    approximately equal-sized chunks based on word count.
+
+class HaystackTextSplitter:
+    """Splits text into chunks using Haystack's DocumentSplitter.
+
+    Uses Haystack's DocumentSplitter for word-based chunking with
+    configurable overlap support (which was missing in the original
+    implementation).
+
+    This is a thin adapter that maintains our TextSplitter protocol interface
+    while delegating to Haystack for the actual splitting.
     """
 
-    def __init__(self, chunk_size_words: int = 100) -> None:
-        """Initialize word-based text splitter.
+    def __init__(
+        self,
+        chunk_size_words: int = 100,
+        chunk_overlap_words: int = 0,
+    ) -> None:
+        """Initialize the Haystack-based text splitter.
 
         Args:
             chunk_size_words: Target number of words per chunk
+            chunk_overlap_words: Number of words to overlap between chunks
+
+        Raises:
+            ValueError: If chunk_size_words is not positive
         """
         if chunk_size_words <= 0:
             raise ValueError("chunk_size_words must be positive")
+
         self.chunk_size_words = chunk_size_words
-        logger.info(f"✓ Text splitter initialized (chunk_size={chunk_size_words} words)")
+        self.chunk_overlap_words = chunk_overlap_words
+
+        self._splitter = DocumentSplitter(
+            split_by="word",
+            split_length=chunk_size_words,
+            split_overlap=chunk_overlap_words,
+        )
+        logger.info(f"✓ Haystack text splitter initialized (chunk_size={chunk_size_words} words, overlap={chunk_overlap_words} words)")
 
     def split(self, text: str) -> List[str]:
-        """Split text into word-based chunks.
+        """Split text into word-based chunks using Haystack.
 
         Args:
             text: Text to split
@@ -236,19 +293,22 @@ class WordBasedTextSplitter:
         Returns:
             List of text chunks
         """
-        words = text.split()
+        if not text or not text.strip():
+            return []
 
-        if len(words) <= self.chunk_size_words:
-            return [text]
+        # Create a Haystack Document, split it, extract the contents
+        doc = Document(content=text)
+        result = self._splitter.run(documents=[doc])
+        split_docs = result.get("documents", [])
 
-        chunks = []
-        for i in range(0, len(words), self.chunk_size_words):
-            chunk_words = words[i : i + self.chunk_size_words]
-            chunk = " ".join(chunk_words)
-            chunks.append(chunk)
+        chunks = [d.content for d in split_docs if d.content]
 
-        logger.debug(f"Split {len(words)} words into {len(chunks)} chunks")
+        logger.debug(f"Split text into {len(chunks)} chunks")
         return chunks
+
+
+# Backward compatibility alias
+WordBasedTextSplitter = HaystackTextSplitter
 
 
 class IndexingPipeline:
