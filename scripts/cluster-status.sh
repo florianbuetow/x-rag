@@ -97,7 +97,7 @@ echo ""
 echo -e "${BLUE}[5/8] Weaviate (Vector Database)${NC}"
 if curl -s -f http://localhost:8081/v1/.well-known/ready &>/dev/null; then
     echo -e "  ${check_mark} Weaviate is ready"
-    echo -e "  Endpoint: http://localhost:8081"
+    echo -e "  URL: http://localhost:8081"
 
     # Get version via curl
     weaviate_version=$(curl -s http://localhost:8081/v1/meta 2>/dev/null | grep -o '"version":"[^"]*"' | cut -d'"' -f4)
@@ -158,7 +158,7 @@ echo ""
 echo -e "${BLUE}[Monitoring] Prometheus${NC}"
 if curl -s -f http://localhost:9090/-/healthy &>/dev/null; then
     echo -e "  ${check_mark} Prometheus is healthy"
-    echo -e "  Endpoint: http://localhost:9090"
+    echo -e "  URL: http://localhost:9090"
 
     # Get version via curl
     prom_version=$(curl -s http://localhost:9090/api/v1/status/buildinfo 2>/dev/null | grep -o '"version":"[^"]*"' | cut -d'"' -f4)
@@ -174,7 +174,7 @@ echo ""
 echo -e "${BLUE}[Monitoring] Grafana${NC}"
 if curl -s -f http://localhost:3000 &>/dev/null; then
     echo -e "  ${check_mark} Grafana is accessible"
-    echo -e "  Endpoint: http://localhost:3000 (admin/admin)"
+    echo -e "  URL: http://localhost:3000 (admin/admin)"
 
     # Get version via curl
     grafana_version=$(curl -s http://localhost:3000/api/health 2>/dev/null | grep version | awk -F'"' '{print $4}')
@@ -192,9 +192,7 @@ if kubectl get pod -n kubernetes-dashboard -l k8s-app=kubernetes-dashboard &>/de
     dashboard_ready=$(kubectl get pod -n kubernetes-dashboard -l k8s-app=kubernetes-dashboard -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)
     if [[ "$dashboard_ready" == "True" ]]; then
         echo -e "  ${check_mark} Dashboard is running"
-        echo -e "  Endpoint: https://localhost:8443"
-        echo -e "  ${YELLOW}  Tip: Run 'make open-k8-dashboard' to open${NC}"
-        echo -e "  ${YELLOW}  Tip: Run 'make dashboard-token' for access token${NC}"
+        echo -e "  URL: https://localhost:8443"
     else
         echo -e "  ${cross_mark} Dashboard not ready"
     fi
@@ -207,7 +205,7 @@ echo ""
 echo -e "${BLUE}[Application] Search UI${NC}"
 if curl -s -f http://localhost:8080/health/live &>/dev/null; then
     echo -e "  ${check_mark} Search UI is accessible"
-    echo -e "  Endpoint: http://localhost:8080"
+    echo -e "  URL: http://localhost:8080"
 
     # Check if ready
     if curl -s -f http://localhost:8080/health/ready &>/dev/null; then
@@ -215,7 +213,6 @@ if curl -s -f http://localhost:8080/health/live &>/dev/null; then
     fi
 else
     echo -e "  ${cross_mark} Search UI not accessible"
-    echo -e "  ${YELLOW}  Tip: Run 'make open-search-ui' to open in browser${NC}"
 fi
 echo ""
 
@@ -223,8 +220,8 @@ echo ""
 echo -e "${BLUE}[Application] Ingestion API${NC}"
 if curl -s -f http://localhost:8082/health/live &>/dev/null; then
     echo -e "  ${check_mark} Ingestion API is accessible"
-    echo -e "  Endpoint: http://localhost:8082"
-    echo -e "  API Docs: http://localhost:8082/docs"
+    echo -e "  URL: http://localhost:8082"
+    echo -e "  Docs: http://localhost:8082/docs"
 
     # Check if ready
     if curl -s -f http://localhost:8082/health/ready &>/dev/null; then
@@ -232,7 +229,6 @@ if curl -s -f http://localhost:8082/health/live &>/dev/null; then
     fi
 else
     echo -e "  ${cross_mark} Ingestion API not accessible"
-    echo -e "  ${YELLOW}  Tip: Run 'make open-ingestion-api' to open docs${NC}"
 fi
 echo ""
 

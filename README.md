@@ -89,6 +89,27 @@ make ci              # Run all CI checks (style + security + tests with coverage
 make cluster-status  # Show cluster status
 ```
 
+### Accessing Web UIs
+
+```bash
+# Open Search UI in browser
+make open-search-ui        # http://localhost:8080
+
+# Open Ingestion API documentation
+make open-ingestion-api    # http://localhost:8082/docs
+
+# Open monitoring dashboards
+make open-grafana          # http://localhost:3000 (admin/admin)
+make open-prometheus       # http://localhost:9090
+
+# Open Weaviate console
+make open-weaviate         # http://localhost:8081
+
+# Open Kubernetes Dashboard
+make open-k8-dashboard     # https://localhost:8443
+make dashboard-token       # Get authentication token (if needed)
+```
+
 ### Debugging
 
 ```bash
