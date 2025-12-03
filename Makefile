@@ -13,6 +13,7 @@
 .PHONY: logs-weaviate logs-kafka logs-redis
 .PHONY: cli-weaviate cli-kafka cli-redis cli-minio cli-embedding cli-ingest cli-indexer
 .PHONY: cli-search-ui cli-search-service cli-prometheus cli-grafana
+.PHONY: open-search-ui open-ingestion-api open-weaviate open-grafana open-prometheus
 
 # Configuration
 CLUSTER_NAME := xrag-k8
@@ -362,6 +363,69 @@ cli-prometheus: ## Connect to Prometheus pod shell
 
 cli-grafana: ## Connect to Grafana pod shell
 	@./scripts/connect-pod.sh xrag-grafana $(NAMESPACE)
+	@echo ""
+
+##@ UI Shortcuts
+
+open-search-ui: ## Open Search UI in browser (http://localhost:8080)
+	@echo "$(BLUE)=== Opening Search UI ===$(NC)"
+	@echo "URL: http://localhost:8080"
+	@if command -v open > /dev/null 2>&1; then \
+		open http://localhost:8080; \
+	elif command -v xdg-open > /dev/null 2>&1; then \
+		xdg-open http://localhost:8080; \
+	else \
+		echo "$(YELLOW)Please open http://localhost:8080 in your browser$(NC)"; \
+	fi
+	@echo ""
+
+open-ingestion-api: ## Open Ingestion API docs in browser (http://localhost:8082/docs)
+	@echo "$(BLUE)=== Opening Ingestion API Documentation ===$(NC)"
+	@echo "URL: http://localhost:8082/docs"
+	@if command -v open > /dev/null 2>&1; then \
+		open http://localhost:8082/docs; \
+	elif command -v xdg-open > /dev/null 2>&1; then \
+		xdg-open http://localhost:8082/docs; \
+	else \
+		echo "$(YELLOW)Please open http://localhost:8082/docs in your browser$(NC)"; \
+	fi
+	@echo ""
+
+open-weaviate: ## Open Weaviate console in browser (http://localhost:8081)
+	@echo "$(BLUE)=== Opening Weaviate Console ===$(NC)"
+	@echo "URL: http://localhost:8081/v1/meta"
+	@if command -v open > /dev/null 2>&1; then \
+		open http://localhost:8081/v1/meta; \
+	elif command -v xdg-open > /dev/null 2>&1; then \
+		xdg-open http://localhost:8081/v1/meta; \
+	else \
+		echo "$(YELLOW)Please open http://localhost:8081/v1/meta in your browser$(NC)"; \
+	fi
+	@echo ""
+
+open-grafana: ## Open Grafana dashboard in browser (http://localhost:3000)
+	@echo "$(BLUE)=== Opening Grafana Dashboard ===$(NC)"
+	@echo "URL: http://localhost:3000"
+	@echo "Credentials: admin / admin"
+	@if command -v open > /dev/null 2>&1; then \
+		open http://localhost:3000; \
+	elif command -v xdg-open > /dev/null 2>&1; then \
+		xdg-open http://localhost:3000; \
+	else \
+		echo "$(YELLOW)Please open http://localhost:3000 in your browser$(NC)"; \
+	fi
+	@echo ""
+
+open-prometheus: ## Open Prometheus UI in browser (http://localhost:9090)
+	@echo "$(BLUE)=== Opening Prometheus UI ===$(NC)"
+	@echo "URL: http://localhost:9090"
+	@if command -v open > /dev/null 2>&1; then \
+		open http://localhost:9090; \
+	elif command -v xdg-open > /dev/null 2>&1; then \
+		xdg-open http://localhost:9090; \
+	else \
+		echo "$(YELLOW)Please open http://localhost:9090 in your browser$(NC)"; \
+	fi
 	@echo ""
 
 # Internal targets (prefixed with . to hide from help)
