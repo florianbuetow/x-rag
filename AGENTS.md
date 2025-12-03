@@ -232,8 +232,13 @@ make code-deptry  # Check dependency hygiene
 - Phase 11: Testing (251 tests: 243 unit + 8 integration)
 
 ### 📋 Pending
-- Phase 12: Documentation
 - Phase 13: Validation
+  1. Fresh clone on new machine
+  2. Run `make check` and `make cluster-start`
+  3. Test search endpoint (POST http://localhost:8080/api/search)
+  4. Test ingestion endpoint (POST http://localhost:8082/ingest)
+  5. Verify monitoring dashboards (Grafana at :3000, Prometheus at :9090)
+  6. Document any issues found
 
 ## Recent Fixes
 
