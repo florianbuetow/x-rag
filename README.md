@@ -106,8 +106,8 @@ make open-prometheus       # http://localhost:9090
 make open-weaviate         # http://localhost:8081
 
 # Open Kubernetes Dashboard
-make open-k8-dashboard     # https://localhost:8443
-make k8-dashboard-token    # Get authentication token (if needed)
+make open-k8-dashboard        # https://localhost:8443
+make show-k8-dashboard-token  # Get authentication token (if needed)
 ```
 
 ### Debugging
