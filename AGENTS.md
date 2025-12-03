@@ -213,7 +213,7 @@ make code-deptry  # Check dependency hygiene
 
 ## Implementation Status
 
-### ✅ Completed (7/13 phases = 54%)
+### ✅ Completed (9/13 phases = 69%)
 - Phase 0: .gitignore
 - Phase 1: Foundation (Makefile, scripts, pyproject.toml, .env.example, directory structure)
 - Phase 2: Infrastructure Implementation (Kind cluster, K8s manifests)
@@ -222,10 +222,10 @@ make code-deptry  # Check dependency hygiene
 - Phase 5: Embedding Service (gRPC server, OpenAI backend, Dockerfile, K8s manifests)
 - Phase 6: Ingestion API (FastAPI + Kafka + MinIO)
 - Phase 7: Indexer (Kafka consumer + document processing)
+- Phase 8: Search Service (gRPC server, Haystack RAG pipeline, hybrid search)
+- Phase 9: Search UI (FastAPI web interface, Jinja2 templates, async gRPC client)
 
 ### 📋 Pending
-- Phase 8: Search Service
-- Phase 9: Search UI
 - Phase 10: Haystack Pipelines
 - Phase 11: Testing (unit/integration tests exist, need Search tests)
 - Phase 12: Documentation
