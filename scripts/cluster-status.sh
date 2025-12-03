@@ -186,6 +186,39 @@ else
 fi
 echo ""
 
+# Test Search UI
+echo -e "${BLUE}[Application] Search UI${NC}"
+if curl -s -f http://localhost:8080/health/live &>/dev/null; then
+    echo -e "  ${check_mark} Search UI is accessible"
+    echo -e "  Endpoint: http://localhost:8080"
+
+    # Check if ready
+    if curl -s -f http://localhost:8080/health/ready &>/dev/null; then
+        echo -e "  Status: Ready"
+    fi
+else
+    echo -e "  ${cross_mark} Search UI not accessible"
+    echo -e "  ${YELLOW}  Tip: Run 'make open-search-ui' to open in browser${NC}"
+fi
+echo ""
+
+# Test Ingestion API
+echo -e "${BLUE}[Application] Ingestion API${NC}"
+if curl -s -f http://localhost:8082/health/live &>/dev/null; then
+    echo -e "  ${check_mark} Ingestion API is accessible"
+    echo -e "  Endpoint: http://localhost:8082"
+    echo -e "  API Docs: http://localhost:8082/docs"
+
+    # Check if ready
+    if curl -s -f http://localhost:8082/health/ready &>/dev/null; then
+        echo -e "  Status: Ready"
+    fi
+else
+    echo -e "  ${cross_mark} Ingestion API not accessible"
+    echo -e "  ${YELLOW}  Tip: Run 'make open-ingestion-api' to open docs${NC}"
+fi
+echo ""
+
 # Summary
 echo -e "${BLUE}=============================================="
 echo "  Summary"
