@@ -3,7 +3,7 @@
 ## 🚨 CRITICAL: Read the Project Plan First
 
 **The complete project plan is located at:**
-`/Users/flo/.claude/plans/mighty-jumping-bachman.md`
+[docs/PROJECT-PLAN.md](docs/PROJECT-PLAN.md)
 
 **You MUST read the project plan before working on this project.** It contains:
 - Complete architecture and service definitions
