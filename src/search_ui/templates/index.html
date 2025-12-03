@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X-RAG Search</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        .search-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .options-row {
+            display: flex;
+            gap: 20px;
+        }
+        .options-row .form-group {
+            flex: 1;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .results {
+            display: none;
+        }
+        .results.show {
+            display: block;
+        }
+        .answer-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+        }
+        .answer-card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        .answer-text {
+            font-size: 1.1em;
+            line-height: 1.7;
+            color: #333;
+        }
+        .sources-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        .sources-card h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+        .source {
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .source-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .source-id {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 0.9em;
+        }
+        .source-score {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .source-content {
+            color: #555;
+            line-height: 1.6;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+            margin: 20px 0;
+        }
+        .loading.show {
+            display: block;
+        }
+        .error {
+            display: none;
+            background: #fff;
+            border-left: 4px solid #e74c3c;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #e74c3c;
+        }
+        .error.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>X-RAG Search</h1>
+            <p>Retrieval-Augmented Generation Search Interface</p>
+        </div>
+
+        <div class="search-card">
+            <form id="searchForm">
+                <div class="form-group">
+                    <label for="query">Search Query</label>
+                    <input type="text" id="query" name="query" placeholder="Enter your question..." required>
+                </div>
+
+                <div class="options-row">
+                    <div class="form-group">
+                        <label for="namespace">Namespace</label>
+                        <input type="text" id="namespace" name="namespace" value="default">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mode">Search Mode</label>
+                        <select id="mode" name="mode">
+                            <option value="hybrid" selected>Hybrid (Vector + BM25)</option>
+                            <option value="vector">Vector Only</option>
+                            <option value="bm25">BM25 Only</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="top_k">Results</label>
+                        <select id="top_k" name="top_k">
+                            <option value="3">3</option>
+                            <option value="5" selected>5</option>
+                            <option value="10">10</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit">Search</button>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            Searching...
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="results" id="results">
+            <div class="answer-card">
+                <h2>Answer</h2>
+                <div class="answer-text" id="answer"></div>
+            </div>
+
+            <div class="sources-card">
+                <h3>Sources</h3>
+                <div id="sources"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('searchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const query = document.getElementById('query').value;
+            const namespace = document.getElementById('namespace').value;
+            const mode = document.getElementById('mode').value;
+            const top_k = parseInt(document.getElementById('top_k').value);
+
+            // Show loading, hide results and errors
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('results').classList.remove('show');
+            document.getElementById('error').classList.remove('show');
+
+            try {
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query, namespace, top_k, mode }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Search failed');
+                }
+
+                // Display answer
+                document.getElementById('answer').textContent = data.answer;
+
+                // Display sources
+                const sourcesHtml = data.sources.map(source => `
+                    <div class="source">
+                        <div class="source-header">
+                            <span class="source-id">${source.id}</span>
+                            <span class="source-score">Score: ${source.score.toFixed(3)}</span>
+                        </div>
+                        <div class="source-content">${source.content}</div>
+                    </div>
+                `).join('');
+                document.getElementById('sources').innerHTML = sourcesHtml;
+
+                // Show results
+                document.getElementById('results').classList.add('show');
+            } catch (err) {
+                document.getElementById('error').textContent = `Error: ${err.message}`;
+                document.getElementById('error').classList.add('show');
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

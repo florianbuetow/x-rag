@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: search-ui-config
+  namespace: rag-system
+data:
+  # Service settings
+  SERVICE_NAME: "search-ui"
+  LOG_LEVEL: "INFO"
+  PORT: "8080"
+
+  # Search Service connection
+  SEARCH_SERVICE_ADDR: "search-service:50052"
+  SEARCH_SERVICE_TIMEOUT: "30.0"
+
+  # UI settings
+  CORS_ENABLED: "true"
+  MAX_QUERY_LENGTH: "1000"
+  DEFAULT_TOP_K: "5"
+  DEFAULT_MODE: "hybrid"
