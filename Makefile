@@ -439,7 +439,7 @@ open-k8-dashboard: ## Open Kubernetes Dashboard in browser (https://localhost:84
 	@echo ""
 	@echo "$(YELLOW)Authentication Required:$(NC)"
 	@echo "  1. Click 'Token' option"
-	@echo "  2. Run: make dashboard-token"
+	@echo "  2. Run: make k8-dashboard-token"
 	@echo "  3. Copy the token and paste it"
 	@echo "  4. Click 'Sign In'"
 	@echo ""
@@ -455,7 +455,7 @@ open-k8-dashboard: ## Open Kubernetes Dashboard in browser (https://localhost:84
 	fi
 	@echo ""
 
-dashboard-token: ## Display Kubernetes Dashboard access token
+k8-dashboard-token: ## Display Kubernetes Dashboard access token
 	@./scripts/get-dashboard-token.sh
 	@echo ""
 
