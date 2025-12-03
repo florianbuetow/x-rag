@@ -431,13 +431,20 @@ open-prometheus: ## Open Prometheus UI in browser (http://localhost:9090)
 
 open-k8-dashboard: ## Open Kubernetes Dashboard in browser (https://localhost:8443)
 	@echo "$(BLUE)=== Opening Kubernetes Dashboard ===$(NC)"
-	@echo "URL: https://localhost:8443"
+	@echo "Setting up port-forward..."
+	@kubectl port-forward -n kubernetes-dashboard svc/kubernetes-dashboard 8443:443 > /dev/null 2>&1 & \
+	echo $$! > /tmp/k8-dashboard-port-forward.pid
+	@sleep 2
+	@echo "$(GREEN)✓ Dashboard available at https://localhost:8443$(NC)"
 	@echo ""
 	@echo "$(YELLOW)Authentication Required:$(NC)"
 	@echo "  1. Click 'Token' option"
 	@echo "  2. Run: make dashboard-token"
 	@echo "  3. Copy the token and paste it"
 	@echo "  4. Click 'Sign In'"
+	@echo ""
+	@echo "$(YELLOW)Note: Port-forward is running in background (PID: $$(cat /tmp/k8-dashboard-port-forward.pid))$(NC)"
+	@echo "To stop: kill $$(cat /tmp/k8-dashboard-port-forward.pid)"
 	@echo ""
 	@if command -v open > /dev/null 2>&1; then \
 		open https://localhost:8443; \
