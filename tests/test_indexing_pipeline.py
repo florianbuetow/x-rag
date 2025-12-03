@@ -1,7 +1,6 @@
 """Tests for the document indexing pipeline."""
 
 import json
-from typing import Any, Dict, List
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -148,7 +147,7 @@ class TestMinIODocumentLoader:
     @patch("src.pipelines.indexing_pipeline.Minio")
     def test_loader_initialization(self, mock_minio):
         """Test loader initialization."""
-        loader = MinIODocumentLoader(
+        _ = MinIODocumentLoader(
             endpoint="localhost:9000",
             access_key="minioadmin",
             secret_key="minioadmin123",
@@ -218,24 +217,24 @@ class TestIndexingPipeline:
         loader = Mock()
         cleaner = Mock()
         splitter = Mock()
-        embedding_generator = Mock()
-        chunk_store = Mock()
+        embedder = Mock()
+        chunk_ingester = Mock()
 
         # Initialize pipeline
         pipeline = IndexingPipeline(
             loader=loader,
             cleaner=cleaner,
             splitter=splitter,
-            embedding_generator=embedding_generator,
-            chunk_store=chunk_store,
+            embedder=embedder,
+            chunk_ingester=chunk_ingester,
         )
 
         # Verify components are stored
         assert pipeline.loader == loader
         assert pipeline.cleaner == cleaner
         assert pipeline.splitter == splitter
-        assert pipeline.embedding_generator == embedding_generator
-        assert pipeline.chunk_store == chunk_store
+        assert pipeline.embedder == embedder
+        assert pipeline.chunk_ingester == chunk_ingester
 
     def test_process_document_success(self):
         """Test processing a document through the pipeline."""
@@ -255,22 +254,22 @@ class TestIndexingPipeline:
         splitter = Mock()
         splitter.split.return_value = ["This is test", "content for the", "document"]
 
-        embedding_generator = Mock()
-        embedding_generator.generate.return_value = [
+        embedder = Mock()
+        embedder.generate.return_value = [
             [0.1, 0.2, 0.3],
             [0.4, 0.5, 0.6],
             [0.7, 0.8, 0.9],
         ]
 
-        chunk_store = Mock()
+        chunk_ingester = Mock()
 
         # Create pipeline
         pipeline = IndexingPipeline(
             loader=loader,
             cleaner=cleaner,
             splitter=splitter,
-            embedding_generator=embedding_generator,
-            chunk_store=chunk_store,
+            embedder=embedder,
+            chunk_ingester=chunk_ingester,
         )
 
         # Process document
@@ -280,14 +279,14 @@ class TestIndexingPipeline:
         loader.load.assert_called_once_with("test-bucket", "test-key")
         cleaner.clean.assert_called_once_with("This is test content for the document")
         splitter.split.assert_called_once_with("This is test content for the document")
-        embedding_generator.generate.assert_called_once()
-        chunk_store.store.assert_called_once()
+        embedder.generate.assert_called_once()
+        chunk_ingester.store.assert_called_once()
 
         # Verify result
         assert num_chunks == 3
 
         # Verify chunks created correctly
-        stored_chunks, stored_embeddings = chunk_store.store.call_args[0]
+        stored_chunks, stored_embeddings = chunk_ingester.store.call_args[0]
         assert len(stored_chunks) == 3
         assert len(stored_embeddings) == 3
 
@@ -315,18 +314,18 @@ class TestIndexingPipeline:
         splitter = Mock()
         splitter.split.return_value = []
 
-        embedding_generator = Mock()
-        embedding_generator.generate.return_value = []
+        embedder = Mock()
+        embedder.generate.return_value = []
 
-        chunk_store = Mock()
+        chunk_ingester = Mock()
 
         # Create pipeline
         pipeline = IndexingPipeline(
             loader=loader,
             cleaner=cleaner,
             splitter=splitter,
-            embedding_generator=embedding_generator,
-            chunk_store=chunk_store,
+            embedder=embedder,
+            chunk_ingester=chunk_ingester,
         )
 
         # Process document
@@ -334,7 +333,7 @@ class TestIndexingPipeline:
 
         # Verify result
         assert num_chunks == 0
-        chunk_store.store.assert_called_once()
+        chunk_ingester.store.assert_called_once()
 
     def test_process_document_embedding_mismatch(self):
         """Test that mismatched embeddings raise an error."""
@@ -353,19 +352,19 @@ class TestIndexingPipeline:
         splitter = Mock()
         splitter.split.return_value = ["Test", "content"]
 
-        embedding_generator = Mock()
+        embedder = Mock()
         # Return wrong number of embeddings
-        embedding_generator.generate.return_value = [[0.1, 0.2, 0.3]]
+        embedder.generate.return_value = [[0.1, 0.2, 0.3]]
 
-        chunk_store = Mock()
+        chunk_ingester = Mock()
 
         # Create pipeline
         pipeline = IndexingPipeline(
             loader=loader,
             cleaner=cleaner,
             splitter=splitter,
-            embedding_generator=embedding_generator,
-            chunk_store=chunk_store,
+            embedder=embedder,
+            chunk_ingester=chunk_ingester,
         )
 
         # Should raise error due to mismatch
@@ -390,18 +389,18 @@ class TestIndexingPipeline:
         splitter = Mock()
         splitter.split.return_value = []
 
-        embedding_generator = Mock()
-        embedding_generator.generate.return_value = []
+        embedder = Mock()
+        embedder.generate.return_value = []
 
-        chunk_store = Mock()
+        chunk_ingester = Mock()
 
         # Create pipeline
         pipeline = IndexingPipeline(
             loader=loader,
             cleaner=cleaner,
             splitter=splitter,
-            embedding_generator=embedding_generator,
-            chunk_store=chunk_store,
+            embedder=embedder,
+            chunk_ingester=chunk_ingester,
         )
 
         # Process document (should handle missing text gracefully)

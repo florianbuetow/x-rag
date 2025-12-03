@@ -1,25 +1,23 @@
 """Document processing and indexing logic.
 
-Integrates the indexing pipeline with Weaviate storage, distributed locking,
-and Kafka event processing.
+Integrates the indexing pipeline with Weaviate storage and Kafka event processing.
 """
 
 import asyncio
 import json
 import logging
 import threading
-from contextlib import contextmanager
 from types import TracebackType
-from typing import Any, Dict, Generator, List, cast
+from typing import Any, Callable, Dict, List, cast
 
-import redis
 import weaviate
 from weaviate import WeaviateClient
 
 from src.indexer.config import IndexerConfig
-from src.indexer.grpc_clients import EmbeddingServiceClient
+from src.indexer.grpc_clients import EmbeddingServiceClient as GrpcEmbeddingServiceClient
 from src.pipelines.indexing_pipeline import (
     BasicTextCleaner,
+    ChunkIngestionInterface,
     DocumentChunk,
     IndexingPipeline,
     MinIODocumentLoader,
@@ -29,29 +27,29 @@ from src.pipelines.indexing_pipeline import (
 logger = logging.getLogger(__name__)
 
 
-class GrpcEmbeddingGenerator:
-    """Generates embeddings via gRPC Embedding Service.
+class BatchEmbedder:
+    """Batches text and calls embedding service to generate embeddings.
 
-    Implements the EmbeddingGenerator protocol for the indexing pipeline.
+    Implements the AbstractEmbedder interface for the indexing pipeline.
     """
 
     def __init__(
         self,
-        client: EmbeddingServiceClient,
+        client: GrpcEmbeddingServiceClient,
         model: str,
         batch_size: int = 32,
     ) -> None:
-        """Initialize gRPC embedding generator.
+        """Initialize batch embedder.
 
         Args:
-            client: Connected Embedding Service client
+            client: Connected embedding service client
             model: Embedding model name
             batch_size: Batch size for embedding generation
         """
         self.client = client
         self.model = model
         self.batch_size = batch_size
-        logger.info(f"✓ gRPC embedding generator initialized (model={model}, batch_size={batch_size})")
+        logger.info(f"✓ Batch embedder initialized (model={model}, batch_size={batch_size})")
 
     def generate(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for texts.
@@ -81,10 +79,10 @@ class GrpcEmbeddingGenerator:
         return all_embeddings
 
 
-class WeaviateChunkStore:
-    """Stores document chunks in Weaviate.
+class WeaviateBatchInserter:
+    """Inserts document chunks into Weaviate in batches.
 
-    Implements the ChunkStore protocol for the indexing pipeline.
+    Implements the ChunkIngestionInterface for the indexing pipeline.
     """
 
     def __init__(
@@ -92,7 +90,7 @@ class WeaviateChunkStore:
         client: WeaviateClient,
         collection_name: str,
     ) -> None:
-        """Initialize Weaviate chunk store.
+        """Initialize Weaviate batch inserter.
 
         Args:
             client: Connected Weaviate client
@@ -100,7 +98,7 @@ class WeaviateChunkStore:
         """
         self.client = client
         self.collection_name = collection_name
-        logger.info(f"✓ Weaviate chunk store initialized (collection={collection_name})")
+        logger.info(f"✓ Weaviate batch inserter initialized (collection={collection_name})")
 
     def store(self, chunks: List[DocumentChunk], embeddings: List[List[float]]) -> None:
         """Store chunks and embeddings in Weaviate.
@@ -139,18 +137,17 @@ class WeaviateChunkStore:
                 batch.add_object(properties=obj, vector=vector)
 
 
-class DocumentProcessor:
-    """Processes documents using the indexing pipeline.
+class DocumentIndexer:
+    """Indexes documents by coordinating the indexing pipeline.
 
     Integrates the indexing pipeline with:
-    - Distributed locking via Redis (prevents duplicate processing)
     - Duplicate detection via Weaviate
     - Lazy Weaviate connection management
     - Async event processing from Kafka
     """
 
     def __init__(self, config: IndexerConfig) -> None:
-        """Initialize the document processor.
+        """Initialize the document indexer.
 
         Args:
             config: Indexer configuration
@@ -161,21 +158,18 @@ class DocumentProcessor:
         self.weaviate_client: WeaviateClient | None = None
         self._weaviate_lock = threading.Lock()
 
-        # Initialize Redis client for distributed locking
-        self.redis_client = redis.Redis.from_url(
-            config.redis_url,
-            decode_responses=True,
-            socket_connect_timeout=5,
-        )
-
         # Initialize Embedding Service client
-        self.embedding_client = EmbeddingServiceClient(address=config.embedding_service_addr)
+        self.embedding_client = GrpcEmbeddingServiceClient(address=config.embedding_service_addr)
         self.embedding_client.connect()
+
+        # Pipeline components (typed for mypy)
+        self._pipeline_components: Dict[str, Any]
+        self._chunk_ingester_factory: Callable[[], ChunkIngestionInterface]
 
         # Initialize indexing pipeline components
         self._init_pipeline()
 
-        logger.info("✓ Document processor initialized")
+        logger.info("✓ Document indexer initialized")
 
     def _init_pipeline(self) -> None:
         """Initialize the indexing pipeline and its components."""
@@ -194,33 +188,33 @@ class DocumentProcessor:
         chunk_size_words = max(1, self.config.chunk_size // 5)
         splitter = WordBasedTextSplitter(chunk_size_words=chunk_size_words)
 
-        # Embedding generator
-        embedding_generator = GrpcEmbeddingGenerator(
+        # Embedder
+        embedder = BatchEmbedder(
             client=self.embedding_client,
             model=self.config.embedding_model,
             batch_size=self.config.batch_size,
         )
 
-        # Chunk store (initialized lazily, uses _ensure_weaviate_connected)
+        # Chunk ingester (initialized lazily, uses _get_weaviate_client)
         # We'll create this on-demand when processing
-        self._chunk_store_factory = lambda: WeaviateChunkStore(
+        self._chunk_ingester_factory = lambda: WeaviateBatchInserter(
             client=self._get_weaviate_client(),
             collection_name=self.config.weaviate_class,
         )
 
-        # Create the pipeline
-        # Note: We can't initialize chunk_store yet because Weaviate is lazy
+        # Create the pipeline components
+        # Note: We can't initialize chunk_ingester yet because Weaviate is lazy
         # We'll recreate the pipeline in process_event after ensuring connection
         self._pipeline_components = {
             "loader": loader,
             "cleaner": cleaner,
             "splitter": splitter,
-            "embedding_generator": embedding_generator,
+            "embedder": embedder,
         }
 
         logger.info("✓ Indexing pipeline components initialized")
 
-    def __enter__(self) -> "DocumentProcessor":
+    def __enter__(self) -> "DocumentIndexer":
         """Context manager entry."""
         return self
 
@@ -279,43 +273,6 @@ class DocumentProcessor:
             logger.info(f"✓ Connected to Weaviate at {host}:{port}")
             return self.weaviate_client
 
-    @contextmanager
-    def document_lock(self, document_id: str) -> Generator[None, None, None]:
-        """Acquire distributed lock for document processing.
-
-        Uses Redis to ensure only one indexer replica processes a document at a time.
-
-        Args:
-            document_id: Document ID to lock
-
-        Yields:
-            None
-
-        Raises:
-            TimeoutError: If lock cannot be acquired within timeout
-        """
-        lock_key = f"indexer:lock:{document_id}"
-        lock = self.redis_client.lock(
-            lock_key,
-            timeout=self.config.redis_lock_timeout,
-            blocking_timeout=10,
-        )
-
-        acquired = lock.acquire(blocking=True)
-        if not acquired:
-            raise TimeoutError(f"Could not acquire lock for document {document_id} within 10 seconds")
-
-        try:
-            logger.debug(f"Acquired lock for document {document_id}")
-            yield
-        finally:
-            try:
-                lock.release()
-                logger.debug(f"Released lock for document {document_id}")
-            except redis.exceptions.LockError:
-                # Lock already released or expired
-                logger.warning(f"Lock for document {document_id} already released")
-
     def close(self) -> None:
         """Close connections."""
         if self.embedding_client:
@@ -345,41 +302,39 @@ class DocumentProcessor:
             return
 
         try:
-            # Acquire distributed lock to prevent concurrent processing
-            with self.document_lock(document_id):
-                # Check if document already exists in Weaviate (duplicate detection)
-                weaviate_client = self._get_weaviate_client()
-                collection = weaviate_client.collections.get(self.config.weaviate_class)
+            # Check if document already exists in Weaviate (duplicate detection)
+            weaviate_client = self._get_weaviate_client()
+            collection = weaviate_client.collections.get(self.config.weaviate_class)
 
-                # Query for existing chunks with this doc_id (async)
-                existing = await asyncio.to_thread(
-                    collection.query.fetch_objects,
-                    filters=weaviate.classes.query.Filter.by_property("doc_id").equal(document_id),
-                    limit=1,
-                )
+            # Query for existing chunks with this doc_id (async)
+            existing = await asyncio.to_thread(
+                collection.query.fetch_objects,
+                filters=weaviate.classes.query.Filter.by_property("doc_id").equal(document_id),
+                limit=1,
+            )
 
-                if len(existing.objects) > 0:
-                    logger.info(f"Document {document_id} already indexed ({len(existing.objects)} chunks found), skipping...")
-                    return
+            if len(existing.objects) > 0:
+                logger.info(f"Document {document_id} already indexed ({len(existing.objects)} chunks found), skipping...")
+                return
 
-                # Create indexing pipeline with Weaviate client
-                chunk_store = self._chunk_store_factory()
-                pipeline = IndexingPipeline(
-                    loader=self._pipeline_components["loader"],
-                    cleaner=self._pipeline_components["cleaner"],
-                    splitter=self._pipeline_components["splitter"],
-                    embedding_generator=self._pipeline_components["embedding_generator"],
-                    chunk_store=chunk_store,
-                )
+            # Create indexing pipeline with Weaviate client
+            chunk_ingester = self._chunk_ingester_factory()
+            pipeline = IndexingPipeline(
+                loader=self._pipeline_components["loader"],
+                cleaner=self._pipeline_components["cleaner"],
+                splitter=self._pipeline_components["splitter"],
+                embedder=self._pipeline_components["embedder"],
+                chunk_ingester=chunk_ingester,
+            )
 
-                # Process document through pipeline (async)
-                num_chunks = await asyncio.to_thread(
-                    pipeline.process_document,
-                    bucket=minio_bucket,
-                    key=minio_key,
-                )
+            # Process document through pipeline (async)
+            num_chunks = await asyncio.to_thread(
+                pipeline.process_document,
+                bucket=minio_bucket,
+                key=minio_key,
+            )
 
-                logger.info(f"✓ Successfully processed document {document_id} ({num_chunks} chunks)")
+            logger.info(f"✓ Successfully processed document {document_id} ({num_chunks} chunks)")
 
         except Exception as e:
             logger.error(f"Failed to process document {document_id}: {e}", exc_info=True)

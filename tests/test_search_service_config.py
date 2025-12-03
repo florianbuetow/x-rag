@@ -14,13 +14,11 @@ def test_config_defaults() -> None:
     assert config.service_name == "search-service"
     assert config.port == 50052
     assert config.weaviate_url == "http://weaviate:8080"
-    assert config.redis_url == "redis://redis:6379"
     assert config.embedding_service_addr == "embedding-service:50051"
     assert config.openai_model == "gpt-4o-mini"
     assert config.default_top_k == 10
     assert config.default_mode == "hybrid"
     assert config.hybrid_alpha == 0.5
-    assert config.enable_cache is True
 
 
 def test_config_custom_values() -> None:
@@ -29,7 +27,6 @@ def test_config_custom_values() -> None:
         service_name="custom-search",
         port=50099,
         weaviate_url="http://custom-weaviate:8080",
-        redis_url="redis://custom-redis:6379",
         openai_api_key="sk-customkey",
         openai_model="gpt-4",
         default_top_k=20,
@@ -40,7 +37,6 @@ def test_config_custom_values() -> None:
     assert config.service_name == "custom-search"
     assert config.port == 50099
     assert config.weaviate_url == "http://custom-weaviate:8080"
-    assert config.redis_url == "redis://custom-redis:6379"
     assert config.openai_api_key == "sk-customkey"
     assert config.openai_model == "gpt-4"
     assert config.default_top_k == 20
@@ -53,15 +49,6 @@ def test_config_invalid_weaviate_url() -> None:
     with pytest.raises(ValidationError, match="Invalid Weaviate URL"):
         SearchServiceConfig(
             weaviate_url="invalid-url",
-            openai_api_key="sk-test123",
-        )
-
-
-def test_config_invalid_redis_url() -> None:
-    """Test that invalid Redis URL fails validation."""
-    with pytest.raises(ValidationError, match="Invalid Redis URL"):
-        SearchServiceConfig(
-            redis_url="http://wrong-protocol",
             openai_api_key="sk-test123",
         )
 

@@ -9,7 +9,7 @@ class SearchServiceConfig(ServiceConfig):
     """Search Service configuration.
 
     Combines all required configuration for the search service including
-    Weaviate, Redis, Embedding Service, and OpenAI settings.
+    Weaviate, Embedding Service, and OpenAI settings.
     """
 
     # Service settings
@@ -21,11 +21,6 @@ class SearchServiceConfig(ServiceConfig):
     weaviate_url: str = Field(default="http://weaviate:8080", description="Weaviate URL")
     weaviate_timeout: int = Field(default=30, description="Weaviate request timeout in seconds")
     weaviate_collection: str = Field(default="DocumentChunk", description="Weaviate collection name")
-
-    # Redis settings
-    redis_url: str = Field(default="redis://redis:6379", description="Redis URL")
-    cache_ttl: int = Field(default=3600, description="Cache TTL in seconds")
-    enable_cache: bool = Field(default=True, description="Enable query caching")
 
     # Embedding Service settings
     embedding_service_addr: str = Field(
@@ -56,14 +51,6 @@ class SearchServiceConfig(ServiceConfig):
         if not v.startswith(("http://", "https://")):
             raise ValueError(f"Invalid Weaviate URL '{v}'. Must start with http:// or https://")
         return v.rstrip("/")
-
-    @field_validator("redis_url")
-    @classmethod
-    def validate_redis_url(cls, v: str) -> str:
-        """Validate Redis URL format."""
-        if not v.startswith("redis://"):
-            raise ValueError(f"Invalid Redis URL '{v}'. Must start with redis://")
-        return v
 
     @field_validator("openai_api_key")
     @classmethod

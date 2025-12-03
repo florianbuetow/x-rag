@@ -90,7 +90,6 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
                 mode=search_mode,
                 alpha=alpha,
                 namespace=namespace,
-                use_cache=True,
                 openai_max_tokens=self.config.openai_max_tokens,
                 openai_temperature=self.config.openai_temperature,
             )
@@ -142,7 +141,6 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
 
         Checks all critical dependencies:
         - Weaviate (critical)
-        - Redis (non-critical)
         - Embedding Service (critical)
         - OpenAI API (critical)
 
@@ -167,23 +165,6 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
                 logger.warning(f"Weaviate health check failed: {e}")
                 dependencies["weaviate"] = "UNHEALTHY"
                 all_critical_healthy = False
-
-            # Check Redis (non-critical, degraded if down)
-            redis_healthy = False
-            try:
-                if self.pipeline.redis_client:
-                    ping_result = self.pipeline.redis_client.ping()
-                    # Handle both sync and async ping
-                    if hasattr(ping_result, "__await__"):
-                        await ping_result
-                    redis_healthy = True
-                    dependencies["redis"] = "HEALTHY"
-                else:
-                    dependencies["redis"] = "DISABLED"
-            except Exception as e:
-                logger.warning(f"Redis health check failed: {e}")
-                dependencies["redis"] = "UNHEALTHY"
-                # Redis failure is non-critical (just disables caching)
 
             # Check Embedding Service (critical)
             try:
@@ -215,12 +196,9 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
                 if not openai_is_critical and dependencies.get("openai") == "UNHEALTHY":
                     status = common_pb2.HealthCheckResponse.HEALTHY
                     message = "Search service is healthy (dev mode: OpenAI disabled)"
-                elif redis_healthy or not self.config.enable_cache:
+                else:
                     status = common_pb2.HealthCheckResponse.HEALTHY
                     message = "Search service is healthy"
-                else:
-                    status = common_pb2.HealthCheckResponse.DEGRADED
-                    message = "Search service is degraded (cache unavailable)"
             else:
                 status = common_pb2.HealthCheckResponse.UNHEALTHY
                 message = "Search service is unhealthy (critical dependencies down)"
