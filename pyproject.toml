@@ -212,7 +212,6 @@ json_output = "reports/deptry/deptry.json"
 
 [tool.deptry.per_rule_ignores]
 DEP002 = [
-    "haystack-ai",         # Phase 10: Haystack RAG pipelines (not yet implemented)
-    "weaviate-haystack",   # Phase 10: Weaviate integration for Haystack (not yet implemented)
+    "weaviate-haystack",   # Optional: for WeaviateDocumentStore (we use custom Weaviate integration)
     "grpcio-tools",        # Build-time only: used by make apps-generate-grpc
 ]
