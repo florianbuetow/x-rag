@@ -17,7 +17,7 @@ from prometheus_client import Counter, Histogram, start_http_server
 
 from src.indexer.config import IndexerConfig
 from src.indexer.consumer import DocumentEventConsumer
-from src.indexer.processor import DocumentProcessor
+from src.indexer.processor import DocumentIndexer
 
 
 class HealthHTTPServer(HTTPServer):
@@ -118,7 +118,7 @@ class IndexerService:
         """
         self.config = config
         self.consumer: DocumentEventConsumer | None = None
-        self.processor: DocumentProcessor | None = None
+        self.indexer: DocumentIndexer | None = None
         self.health_server: HealthHTTPServer | None = None
         self.shutdown_event = asyncio.Event()
 
@@ -169,8 +169,8 @@ class IndexerService:
         if self.health_server:
             self.health_server.consumer = self.consumer
 
-        # Initialize processor
-        self.processor = DocumentProcessor(self.config)
+        # Initialize indexer
+        self.indexer = DocumentIndexer(self.config)
 
         # Start consumer
         await self.consumer.start()
@@ -185,7 +185,7 @@ class IndexerService:
 
                 with PROCESSING_DURATION.labels(namespace=namespace).time():
                     try:
-                        await self.processor.process_event(event)
+                        await self.indexer.process_event(event)
                         PROCESSED_DOCS.labels(status="success", namespace=namespace).inc()
                     except Exception as e:
                         logger.error(f"Failed to process event: {e}", exc_info=True)
@@ -204,8 +204,8 @@ class IndexerService:
         if self.consumer:
             await self.consumer.stop()
 
-        if self.processor:
-            self.processor.close()
+        if self.indexer:
+            self.indexer.close()
 
         self.stop_health_server()
 

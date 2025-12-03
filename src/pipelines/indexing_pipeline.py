@@ -96,8 +96,8 @@ class TextSplitter(Protocol):
         ...
 
 
-class EmbeddingGenerator(Protocol):
-    """Protocol for generating embeddings."""
+class AbstractEmbedder(Protocol):
+    """Abstract interface for embedding text into vectors."""
 
     def generate(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for texts.
@@ -111,8 +111,8 @@ class EmbeddingGenerator(Protocol):
         ...
 
 
-class ChunkStore(Protocol):
-    """Protocol for storing document chunks."""
+class ChunkIngestionInterface(Protocol):
+    """Abstract interface for ingesting document chunks into storage."""
 
     def store(self, chunks: List[DocumentChunk], embeddings: List[List[float]]) -> None:
         """Store chunks with embeddings.
@@ -270,8 +270,8 @@ class IndexingPipeline:
         loader: DocumentLoader,
         cleaner: TextCleaner,
         splitter: TextSplitter,
-        embedding_generator: EmbeddingGenerator,
-        chunk_store: ChunkStore,
+        embedder: AbstractEmbedder,
+        chunk_ingester: ChunkIngestionInterface,
     ) -> None:
         """Initialize indexing pipeline.
 
@@ -279,14 +279,14 @@ class IndexingPipeline:
             loader: Document loader implementation
             cleaner: Text cleaner implementation
             splitter: Text splitter implementation
-            embedding_generator: Embedding generator implementation
-            chunk_store: Chunk store implementation
+            embedder: Embedder implementation
+            chunk_ingester: Chunk ingestion implementation
         """
         self.loader = loader
         self.cleaner = cleaner
         self.splitter = splitter
-        self.embedding_generator = embedding_generator
-        self.chunk_store = chunk_store
+        self.embedder = embedder
+        self.chunk_ingester = chunk_ingester
 
         logger.info("✓ Indexing pipeline initialized")
 
@@ -417,7 +417,7 @@ class IndexingPipeline:
 
         logger.info(f"Generating embeddings for {len(chunks)} chunks")
         texts = [chunk.content for chunk in chunks]
-        embeddings = self.embedding_generator.generate(texts)
+        embeddings = self.embedder.generate(texts)
 
         if len(embeddings) != len(chunks):
             raise ValueError(f"Expected {len(chunks)} embeddings, got {len(embeddings)}")
@@ -440,5 +440,5 @@ class IndexingPipeline:
             raise ValueError("Number of chunks and embeddings must match")
 
         logger.info(f"Storing {len(chunks)} chunks")
-        self.chunk_store.store(chunks, embeddings)
+        self.chunk_ingester.store(chunks, embeddings)
         logger.info(f"✓ Stored {len(chunks)} chunks")

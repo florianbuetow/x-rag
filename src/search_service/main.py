@@ -95,9 +95,6 @@ class SearchServiceRunner:
             retriever=self.retriever,
             embedding_client=self.embedding_client,
             llm_client=self.llm_client,
-            redis_url=self.config.redis_url,
-            cache_ttl=self.config.cache_ttl,
-            enable_cache=self.config.enable_cache,
             max_context_length=self.config.max_context_length,
         )
 
@@ -141,7 +138,6 @@ class SearchServiceRunner:
         logger.info(f"Default search mode: {self.config.default_mode}")
         logger.info(f"Default top_k: {self.config.default_top_k}")
         logger.info(f"OpenAI model: {self.config.openai_model}")
-        logger.info(f"Cache enabled: {self.config.enable_cache}")
         logger.info("Ready to serve requests")
 
         # Wait for shutdown signal
