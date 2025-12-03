@@ -186,6 +186,23 @@ else
 fi
 echo ""
 
+# Test Kubernetes Dashboard
+echo -e "${BLUE}[Monitoring] Kubernetes Dashboard${NC}"
+if kubectl get pod -n kubernetes-dashboard -l k8s-app=kubernetes-dashboard &>/dev/null; then
+    dashboard_ready=$(kubectl get pod -n kubernetes-dashboard -l k8s-app=kubernetes-dashboard -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)
+    if [[ "$dashboard_ready" == "True" ]]; then
+        echo -e "  ${check_mark} Dashboard is running"
+        echo -e "  Endpoint: https://localhost:8443"
+        echo -e "  ${YELLOW}  Tip: Run 'make open-k8-dashboard' to open${NC}"
+        echo -e "  ${YELLOW}  Tip: Run 'make dashboard-token' for access token${NC}"
+    else
+        echo -e "  ${cross_mark} Dashboard not ready"
+    fi
+else
+    echo -e "  ${cross_mark} Dashboard not deployed"
+fi
+echo ""
+
 # Test Search UI
 echo -e "${BLUE}[Application] Search UI${NC}"
 if curl -s -f http://localhost:8080/health/live &>/dev/null; then

@@ -13,7 +13,8 @@
 .PHONY: logs-weaviate logs-kafka logs-redis
 .PHONY: cli-weaviate cli-kafka cli-redis cli-minio cli-embedding cli-ingest cli-indexer
 .PHONY: cli-search-ui cli-search-service cli-prometheus cli-grafana
-.PHONY: open-search-ui open-ingestion-api open-weaviate open-grafana open-prometheus
+.PHONY: open-search-ui open-ingestion-api open-weaviate open-grafana open-prometheus open-k8-dashboard
+.PHONY: dashboard-token
 
 # Configuration
 CLUSTER_NAME := xrag-k8
@@ -38,7 +39,7 @@ help: ## Display this help message
 	@clear
 	@echo "$(BLUE)X-RAG Platform - Available Commands$(NC)"
 	@echo ""
-	@awk 'BEGIN {FS = ":.*##"; printf "Usage:\n  make $(CYAN)<target>$(NC)\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  $(CYAN)%-20s$(NC) %s\n", $$1, $$2 } /^##@/ { printf "\n$(YELLOW)%s$(NC)\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"; printf "Usage:\n  make $(CYAN)<target>$(NC)\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  $(CYAN)%-20s$(NC) %s\n", $$1, $$2 } /^##@/ { printf "\n$(YELLOW)%s$(NC)\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 	@echo ""
 
 ##@ Prerequisites
@@ -426,6 +427,29 @@ open-prometheus: ## Open Prometheus UI in browser (http://localhost:9090)
 	else \
 		echo "$(YELLOW)Please open http://localhost:9090 in your browser$(NC)"; \
 	fi
+	@echo ""
+
+open-k8-dashboard: ## Open Kubernetes Dashboard in browser (https://localhost:8443)
+	@echo "$(BLUE)=== Opening Kubernetes Dashboard ===$(NC)"
+	@echo "URL: https://localhost:8443"
+	@echo ""
+	@echo "$(YELLOW)Authentication Required:$(NC)"
+	@echo "  1. Click 'Token' option"
+	@echo "  2. Run: make dashboard-token"
+	@echo "  3. Copy the token and paste it"
+	@echo "  4. Click 'Sign In'"
+	@echo ""
+	@if command -v open > /dev/null 2>&1; then \
+		open https://localhost:8443; \
+	elif command -v xdg-open > /dev/null 2>&1; then \
+		xdg-open https://localhost:8443; \
+	else \
+		echo "$(YELLOW)Please open https://localhost:8443 in your browser$(NC)"; \
+	fi
+	@echo ""
+
+dashboard-token: ## Display Kubernetes Dashboard access token
+	@./scripts/get-dashboard-token.sh
 	@echo ""
 
 # Internal targets (prefixed with . to hide from help)
