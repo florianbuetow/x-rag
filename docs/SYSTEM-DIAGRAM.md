@@ -16,7 +16,7 @@ flowchart TB
         subgraph RagSystem["Namespace: rag-system"]
             
             subgraph AppLayer["Application Layer (independently scalable)"]
-                SearchAPI["Search API<br/>/search, /health, /metrics<br/>NodePort 30080"]
+                SearchUI["Search UI<br/>/api/search, /health, /metrics<br/>NodePort 30080"]
                 IngestAPI["Ingestion API<br/>/ingest, /health, /metrics<br/>NodePort 30082"]
                 EmbeddingService["Embedding Service<br/>/embed, /health, /metrics"]
                 Indexer["Indexer<br/>/health, /metrics"]
@@ -47,24 +47,24 @@ flowchart TB
     end
 
     %% User connections through port mappings
-    User -->|"HTTP :8080<br/>POST /search"| PM8080
+    User -->|"HTTP :8080<br/>POST /api/search"| PM8080
     User -->|"HTTP :8082<br/>POST /ingest"| PM8082
     User -->|"HTTP :8081<br/>Weaviate REST"| PM8081
     User -->|"HTTP :3000<br/>Dashboards"| PM3000
     User -->|"HTTP :9090<br/>PromQL"| PM9090
 
     %% Port mappings to services
-    PM8080 --> SearchAPI
+    PM8080 --> SearchUI
     PM8082 --> IngestAPI
     PM8081 --> Weaviate
     PM3000 --> Grafana
     PM9090 --> Prometheus
 
     %% Search flow
-    SearchAPI -->|"1. Check cache"| Redis
-    SearchAPI -->|"2. Get query embedding"| EmbeddingService
-    SearchAPI -->|"3. Vector/BM25/Hybrid search"| Weaviate
-    SearchAPI -->|"4. Generate answer"| OpenAI
+    SearchUI -->|"1. Check cache"| Redis
+    SearchUI -->|"2. Get query embedding"| EmbeddingService
+    SearchUI -->|"3. Vector/BM25/Hybrid search"| Weaviate
+    SearchUI -->|"4. Generate answer"| OpenAI
 
     %% Ingestion flow
     IngestAPI -->|"Store raw doc"| MinIO
@@ -81,7 +81,7 @@ flowchart TB
     EmbeddingService -.->|"or local model"| SentenceTrans
 
     %% Observability - scrape all services
-    Prometheus -->|"Scrape /metrics"| SearchAPI
+    Prometheus -->|"Scrape /metrics"| SearchUI
     Prometheus -->|"Scrape /metrics"| IngestAPI
     Prometheus -->|"Scrape /metrics"| EmbeddingService
     Prometheus -->|"Scrape /metrics"| Indexer
@@ -97,7 +97,7 @@ flowchart TB
     classDef backend fill:#fff8e1,stroke:#f9a825
 
     class User external
-    class SearchAPI,IngestAPI,EmbeddingService,Indexer app
+    class SearchUI,IngestAPI,EmbeddingService,Indexer app
     class Weaviate,Kafka,MinIO,Redis data
     class Prometheus,Grafana obs
     class OpenAI extapi
@@ -107,14 +107,14 @@ flowchart TB
 
 ## Connection Summary
 
-### Search Request Flow (Search API)
-1. **User → Search API** (`:8080/search`) - HTTP POST with query
-2. **Search API → Redis** - Check if response is cached
-3. **Search API → Embedding Service** - Get embedding for query
-4. **Search API → Weaviate** - Vector/BM25/Hybrid search
-5. **Search API → OpenAI** - Generate answer from context
-6. **Search API → Redis** - Cache the response
-7. **Search API → User** - Return answer + sources
+### Search Request Flow (Search UI)
+1. **User → Search UI** (`:8080/api/search`) - HTTP POST with query
+2. **Search UI → Redis** - Check if response is cached
+3. **Search UI → Embedding Service** - Get embedding for query
+4. **Search UI → Weaviate** - Vector/BM25/Hybrid search
+5. **Search UI → OpenAI** - Generate answer from context
+6. **Search UI → Redis** - Cache the response
+7. **Search UI → User** - Return answer + sources
 
 ### Document Ingestion Flow (Ingestion API + Indexer)
 1. **User → Ingestion API** (`:8082/ingest`) - Upload document
@@ -133,7 +133,7 @@ flowchart TB
 ### Port Mappings (Host → Container)
 | Host Port | Container Port | Service |
 |-----------|----------------|---------|
-| 8080 | 30080 | Search API |
+| 8080 | 30080 | Search UI |
 | 8082 | 30082 | Ingestion API |
 | 8081 | 30081 | Weaviate |
 | 3000 | 30030 | Grafana |
@@ -145,7 +145,7 @@ The four application components can be scaled independently:
 
 ```bash
 # Scale search for high query load
-kubectl scale deployment search-api --replicas=5 -n rag-system
+kubectl scale deployment search-ui --replicas=5 -n rag-system
 
 # Scale ingestion API for bulk uploads
 kubectl scale deployment ingestion-api --replicas=3 -n rag-system
@@ -161,7 +161,7 @@ Each service has its own Docker image:
 
 | Service | Image | Dockerfile |
 |---------|-------|------------|
-| Search API | `localhost:5000/search-api:latest` | `Dockerfile.search-api` |
+| Search UI | `localhost:5000/search-ui:latest` | `Dockerfile.search-ui` |
 | Ingestion API | `localhost:5000/ingestion-api:latest` | `Dockerfile.ingestion-api` |
 | Embedding Service | `localhost:5000/embedding-service:latest` | `Dockerfile.embedding-service` |
 | Indexer | `localhost:5000/indexer:latest` | `Dockerfile.indexer` |

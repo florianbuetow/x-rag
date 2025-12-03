@@ -68,6 +68,10 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
                 model=model,
             )
 
+        except grpc.RpcError:
+            # Re-raise gRPC errors (already aborted)
+            raise
+
         except ServiceUnavailableError as e:
             logger.error(f"Service unavailable: {e}")
             await context.abort(grpc.StatusCode.UNAVAILABLE, str(e))
@@ -123,6 +127,10 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
             ]
 
             return embedding_pb2.EmbedBatchResponse(embeddings=embed_responses)
+
+        except grpc.RpcError:
+            # Re-raise gRPC errors (already aborted)
+            raise
 
         except ServiceUnavailableError as e:
             logger.error(f"Service unavailable: {e}")
