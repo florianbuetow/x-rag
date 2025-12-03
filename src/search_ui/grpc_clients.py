@@ -101,7 +101,7 @@ class SearchServiceClient:
         )
 
         try:
-            response = await self.stub.Search(request, timeout=self.timeout)
+            response: search_pb2.SearchResponse = await self.stub.Search(request, timeout=self.timeout)
             return response
         except grpc.RpcError as e:
             logger.error(f"Search request failed: {e.code()} - {e.details()}")
