@@ -144,12 +144,10 @@ Answer:"""
         """
         try:
             # Make a minimal API call to test connectivity
-            # Use max_tokens=5 to avoid issues with some local LLM servers
-            # that have bugs with very low token limits (e.g., LM Studio MLX)
             response = await self.client.chat.completions.create(
                 model=self.model,
-                messages=[{"role": "user", "content": "hi"}],
-                max_tokens=5,
+                messages=[{"role": "user", "content": "ping"}],
+                max_tokens=100,
             )
             return response is not None
         except Exception as e:
