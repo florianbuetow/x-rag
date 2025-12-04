@@ -14,7 +14,7 @@ our existing gRPC and storage architecture.
 import json
 import logging
 import uuid
-from typing import Any, Dict, List, Literal, Protocol
+from typing import Any, Literal, Protocol
 
 from haystack import Document
 from haystack.components.preprocessors import DocumentCleaner, DocumentSplitter
@@ -36,7 +36,7 @@ class DocumentChunk:
         doc_id: str,
         chunk_index: int,
         namespace: str,
-        metadata: Dict[str, Any],
+        metadata: dict[str, Any],
     ) -> None:
         """Initialize a document chunk.
 
@@ -58,7 +58,7 @@ class DocumentChunk:
 class DocumentLoader(Protocol):
     """Protocol for loading documents from storage."""
 
-    def load(self, bucket: str, key: str) -> Dict[str, Any]:
+    def load(self, bucket: str, key: str) -> dict[str, Any]:
         """Load document from storage.
 
         Args:
@@ -89,7 +89,7 @@ class TextCleaner(Protocol):
 class TextSplitter(Protocol):
     """Protocol for splitting text into chunks."""
 
-    def split(self, text: str) -> List[str]:
+    def split(self, text: str) -> list[str]:
         """Split text into chunks.
 
         Args:
@@ -104,7 +104,7 @@ class TextSplitter(Protocol):
 class AbstractEmbedder(Protocol):
     """Abstract interface for embedding text into vectors."""
 
-    def generate(self, texts: List[str]) -> List[List[float]]:
+    def generate(self, texts: list[str]) -> list[list[float]]:
         """Generate embeddings for texts.
 
         Args:
@@ -119,7 +119,7 @@ class AbstractEmbedder(Protocol):
 class ChunkIngestionInterface(Protocol):
     """Abstract interface for ingesting document chunks into storage."""
 
-    def store(self, chunks: List[DocumentChunk], embeddings: List[List[float]]) -> None:
+    def store(self, chunks: list[DocumentChunk], embeddings: list[list[float]]) -> None:
         """Store chunks with embeddings.
 
         Args:
@@ -155,7 +155,7 @@ class MinIODocumentLoader:
         )
         logger.info(f"✓ MinIO loader initialized (endpoint={endpoint})")
 
-    def load(self, bucket: str, key: str) -> Dict[str, Any]:
+    def load(self, bucket: str, key: str) -> dict[str, Any]:
         """Load document from MinIO.
 
         Args:
@@ -173,7 +173,7 @@ class MinIODocumentLoader:
             response = self.client.get_object(bucket, key)
             try:
                 data = response.read()
-                document: Dict[str, Any] = json.loads(data.decode("utf-8"))
+                document: dict[str, Any] = json.loads(data.decode("utf-8"))
                 logger.debug(f"✓ Loaded document: {document.get('id')}")
                 return document
             finally:
@@ -284,7 +284,7 @@ class HaystackTextSplitter:
         )
         logger.info(f"✓ Haystack text splitter initialized (chunk_size={chunk_size_words} words, overlap={chunk_overlap_words} words)")
 
-    def split(self, text: str) -> List[str]:
+    def split(self, text: str) -> list[str]:
         """Split text into word-based chunks using Haystack.
 
         Args:
@@ -389,7 +389,7 @@ class IndexingPipeline:
         logger.info(f"✓ Processed document {doc_id}: {len(chunks)} chunks created")
         return len(chunks)
 
-    def _load_document(self, bucket: str, key: str) -> Dict[str, Any]:
+    def _load_document(self, bucket: str, key: str) -> dict[str, Any]:
         """Load document from storage.
 
         Args:
@@ -402,7 +402,7 @@ class IndexingPipeline:
         logger.info(f"Loading document: {bucket}/{key}")
         return self.loader.load(bucket, key)
 
-    def _clean_text(self, document: Dict[str, Any]) -> str:
+    def _clean_text(self, document: dict[str, Any]) -> str:
         """Extract and clean text from document.
 
         Args:
@@ -419,7 +419,7 @@ class IndexingPipeline:
         logger.debug("Cleaning document text")
         return self.cleaner.clean(raw_text)
 
-    def _split_text(self, text: str) -> List[str]:
+    def _split_text(self, text: str) -> list[str]:
         """Split text into chunks.
 
         Args:
@@ -433,9 +433,9 @@ class IndexingPipeline:
 
     def _create_chunks(
         self,
-        document: Dict[str, Any],
-        text_chunks: List[str],
-    ) -> List[DocumentChunk]:
+        document: dict[str, Any],
+        text_chunks: list[str],
+    ) -> list[DocumentChunk]:
         """Create DocumentChunk objects from text chunks.
 
         Args:
@@ -463,7 +463,7 @@ class IndexingPipeline:
         logger.debug(f"Created {len(chunks)} chunk objects")
         return chunks
 
-    def _generate_embeddings(self, chunks: List[DocumentChunk]) -> List[List[float]]:
+    def _generate_embeddings(self, chunks: list[DocumentChunk]) -> list[list[float]]:
         """Generate embeddings for chunks.
 
         Args:
@@ -487,8 +487,8 @@ class IndexingPipeline:
 
     def _store_chunks(
         self,
-        chunks: List[DocumentChunk],
-        embeddings: List[List[float]],
+        chunks: list[DocumentChunk],
+        embeddings: list[list[float]],
     ) -> None:
         """Store chunks and embeddings.
 

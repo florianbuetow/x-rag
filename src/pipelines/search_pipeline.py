@@ -7,7 +7,7 @@ Orchestrates the complete RAG pipeline:
 """
 
 import logging
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
 
 from src.llm.openai_client import OpenAIClient
 from src.pipelines.prompt_templates import build_no_results_response, build_rag_prompt
@@ -50,10 +50,10 @@ class SearchPipeline:
         top_k: int = 10,
         mode: Literal["vector", "bm25", "hybrid"] = "hybrid",
         alpha: float = 0.5,
-        namespace: Optional[str] = None,
+        namespace: str | None = None,
         openai_max_tokens: int = 500,
         openai_temperature: float = 0.7,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Execute RAG search pipeline.
 
         Args:
@@ -69,7 +69,7 @@ class SearchPipeline:
             Dictionary with answer, sources, and metadata
         """
         # Step 1: Generate query embedding (for vector/hybrid modes)
-        query_embedding: Optional[List[float]] = None
+        query_embedding: list[float] | None = None
         if mode in ("vector", "hybrid"):
             logger.debug(f"Generating embedding for query: {query[:50]}...")
             query_embedding = await self.embedding_client.embed(
@@ -80,7 +80,7 @@ class SearchPipeline:
 
         # Step 2: Retrieve relevant documents
         logger.info(f"Retrieving documents (mode={mode}, top_k={top_k})")
-        results: List[SearchResult] = self.retriever.search(
+        results: list[SearchResult] = self.retriever.search(
             query=query,
             query_embedding=query_embedding,
             top_k=top_k,
@@ -90,7 +90,7 @@ class SearchPipeline:
         )
 
         # Step 3: Build context from results
-        response: Dict[str, Any]
+        response: dict[str, Any]
         if not results:
             logger.info("No results found")
             response = {
@@ -118,7 +118,7 @@ class SearchPipeline:
             )
 
             # Build response
-            sources_list: List[Dict[str, Any]] = [r.to_dict() for r in results]
+            sources_list: list[dict[str, Any]] = [r.to_dict() for r in results]
             response = {
                 "answer": answer,
                 "sources": sources_list,
@@ -132,7 +132,7 @@ class SearchPipeline:
 
         return response
 
-    def _build_context(self, results: List[SearchResult]) -> str:
+    def _build_context(self, results: list[SearchResult]) -> str:
         """Build context string from search results.
 
         Args:

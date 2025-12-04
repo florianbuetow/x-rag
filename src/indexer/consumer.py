@@ -3,7 +3,8 @@
 import asyncio
 import json
 import logging
-from typing import Any, AsyncIterator, Dict
+from collections.abc import AsyncIterator
+from typing import Any
 
 from aiokafka import AIOKafkaConsumer  # type: ignore[import-untyped]
 from aiokafka.errors import KafkaError  # type: ignore[import-untyped]
@@ -69,7 +70,7 @@ class DocumentEventConsumer:
             await self.consumer.stop()
             logger.info("✓ Kafka consumer stopped")
 
-    async def consume(self) -> AsyncIterator[Dict[str, Any]]:
+    async def consume(self) -> AsyncIterator[dict[str, Any]]:
         """Consume events from Kafka.
 
         Yields:

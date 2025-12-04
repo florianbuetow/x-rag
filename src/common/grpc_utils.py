@@ -1,10 +1,11 @@
 """gRPC utilities for client and server management."""
 
 import logging
+from collections.abc import Generator
 from concurrent import futures
 from contextlib import contextmanager
 from types import TracebackType
-from typing import Any, Generator, Type
+from typing import Any
 
 import grpc
 from grpc_reflection.v1alpha import reflection
@@ -23,7 +24,7 @@ class GrpcClient:
     def __init__(
         self,
         address: str,
-        stub_class: Type[Any],
+        stub_class: type[Any],
         timeout: int = 30,
         max_retries: int = 3,
     ) -> None:

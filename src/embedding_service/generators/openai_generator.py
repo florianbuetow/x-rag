@@ -1,7 +1,6 @@
 """OpenAI embedding generator implementation."""
 
 import logging
-from typing import Optional
 
 from openai import APIError, AsyncOpenAI, RateLimitError
 
@@ -36,7 +35,7 @@ class OpenAIEmbeddingGenerator(EmbeddingGenerator):
         api_key: str,
         max_retries: int = 3,
         timeout: int = 30,
-        base_url: Optional[str] = None,
+        base_url: str | None = None,
     ) -> None:
         """Initialize OpenAI generator.
 

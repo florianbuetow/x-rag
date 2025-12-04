@@ -1,6 +1,6 @@
 """Configuration for Embedding Service."""
 
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import Field, ValidationInfo, field_validator
 
@@ -28,8 +28,8 @@ class EmbeddingServiceConfig(ServiceConfig):
     max_workers: int = Field(default=10, description="Max worker threads")
 
     # OpenAI/Local provider settings
-    openai_api_key: Optional[str] = Field(default=None, description="OpenAI API key")
-    openai_api_base: Optional[str] = Field(
+    openai_api_key: str | None = Field(default=None, description="OpenAI API key")
+    openai_api_base: str | None = Field(
         default=None,
         description="OpenAI API base URL for compatible APIs (e.g., LM Studio)",
     )
@@ -42,7 +42,7 @@ class EmbeddingServiceConfig(ServiceConfig):
 
     @field_validator("openai_api_key")
     @classmethod
-    def validate_openai_api_key(cls, v: Optional[str], info: ValidationInfo) -> Optional[str]:
+    def validate_openai_api_key(cls, v: str | None, info: ValidationInfo) -> str | None:
         """Validate OpenAI API key if using openai generator.
 
         Note: When using a custom base URL (e.g., LM Studio), any non-empty

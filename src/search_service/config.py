@@ -1,6 +1,5 @@
 """Configuration for Search Service."""
 
-from typing import Optional
 
 from pydantic import Field, field_validator
 
@@ -35,7 +34,7 @@ class SearchServiceConfig(ServiceConfig):
 
     # OpenAI settings
     openai_api_key: str = Field(..., description="OpenAI API key")
-    openai_api_base: Optional[str] = Field(
+    openai_api_base: str | None = Field(
         default=None,
         description="OpenAI API base URL for compatible APIs (e.g., LM Studio)",
     )

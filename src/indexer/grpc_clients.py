@@ -2,7 +2,7 @@
 
 import logging
 from types import TracebackType
-from typing import List, cast
+from typing import cast
 
 import grpc
 
@@ -66,7 +66,7 @@ class EmbeddingServiceClient:
             self.channel = None
             self.stub = None
 
-    def embed(self, text: str, model: str) -> List[float]:
+    def embed(self, text: str, model: str) -> list[float]:
         """Generate embedding for a single text.
 
         Args:
@@ -91,7 +91,7 @@ class EmbeddingServiceClient:
             logger.error(f"Embedding request failed: {e.code()} - {e.details()}")
             raise
 
-    def embed_batch(self, texts: List[str], model: str) -> List[List[float]]:
+    def embed_batch(self, texts: list[str], model: str) -> list[list[float]]:
         """Generate embeddings for multiple texts.
 
         Args:
