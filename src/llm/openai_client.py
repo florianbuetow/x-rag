@@ -25,6 +25,7 @@ class OpenAIClient:
         model: str = "gpt-4o-mini",
         max_retries: int = 3,
         timeout: int = 60,
+        base_url: Optional[str] = None,
     ) -> None:
         """Initialize OpenAI client.
 
@@ -33,14 +34,17 @@ class OpenAIClient:
             model: Model to use (e.g., "gpt-4o-mini", "gpt-4")
             max_retries: Maximum number of retries on failure
             timeout: Request timeout in seconds
+            base_url: Optional base URL for OpenAI-compatible APIs (e.g., LM Studio)
         """
         self.model = model
         self.client = AsyncOpenAI(
             api_key=api_key,
             max_retries=max_retries,
             timeout=timeout,
+            base_url=base_url,
         )
-        logger.info(f"✓ OpenAI client initialized (model={model})")
+        base_info = f", base_url={base_url}" if base_url else ""
+        logger.info(f"✓ OpenAI client initialized (model={model}{base_info})")
 
     async def generate(
         self,
@@ -140,10 +144,12 @@ Answer:"""
         """
         try:
             # Make a minimal API call to test connectivity
+            # Use max_tokens=5 to avoid issues with some local LLM servers
+            # that have bugs with very low token limits (e.g., LM Studio MLX)
             response = await self.client.chat.completions.create(
                 model=self.model,
-                messages=[{"role": "user", "content": "test"}],
-                max_tokens=1,
+                messages=[{"role": "user", "content": "hi"}],
+                max_tokens=5,
             )
             return response is not None
         except Exception as e:

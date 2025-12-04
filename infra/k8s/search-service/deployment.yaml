@@ -104,7 +104,13 @@ spec:
                   name: search-service-config
                   key: EMBEDDING_MODEL
 
-            # OpenAI settings
+            # OpenAI settings (or OpenAI-compatible API like LM Studio)
+            - name: OPENAI_API_BASE
+              valueFrom:
+                configMapKeyRef:
+                  name: search-service-config
+                  key: OPENAI_API_BASE
+                  optional: true
             - name: OPENAI_MODEL
               valueFrom:
                 configMapKeyRef:

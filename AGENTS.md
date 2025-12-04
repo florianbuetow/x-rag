@@ -229,7 +229,7 @@ make code-deptry  # Check dependency hygiene
 - Phase 8: Search Service (gRPC server, Haystack RAG pipeline, hybrid search)
 - Phase 9: Search UI (FastAPI web interface, Jinja2 templates, async gRPC client)
 - Phase 10: Haystack Integration (DocumentCleaner, DocumentSplitter with overlap support)
-- Phase 11: Testing (251 tests: 243 unit + 8 integration)
+- Phase 11: Testing (546 tests: 538 unit + 8 integration, 78% coverage)
 
 ### 📋 Pending
 - Phase 13: Validation
@@ -244,11 +244,27 @@ make code-deptry  # Check dependency hygiene
 
 ### December 2025 - Phase 7 Validation & Bug Fixes
 
-**Testing Summary**: 251/251 tests passing (100% success rate)
-- ✅ 243/243 unit tests passed
+**Testing Summary**: 546/546 tests passing (100% success rate)
+- ✅ 538/538 unit tests passed
 - ✅ 8/8 integration tests passed
+- ✅ 78.10% line coverage
 - ✅ E2E document ingestion flow working
 - ✅ Cluster lifecycle robust and reliable
+
+**New Test Files Added (December 2025):**
+- `tests/unit/core/test_document.py` - CoreDocument tests (100% coverage)
+- `tests/unit/core/test_errors.py` - Error hierarchy tests (100% coverage)
+- `tests/unit/core/test_interfaces.py` - Protocol tests (100% coverage)
+- `tests/unit/common/test_grpc_utils.py` - gRPC utilities tests (87% coverage)
+- `tests/unit/common/test_metrics.py` - Prometheus metrics tests (100% coverage)
+- `tests/unit/llm/test_openai_client.py` - LLM client tests (100% coverage)
+- `tests/unit/embedding_service/generators/test_factory.py` - Factory tests (100% coverage)
+- `tests/unit/embedding_service/generators/test_hash_based_generator.py` - Hash generator tests (98% coverage)
+- `tests/unit/embedding_service/generators/test_openai_generator.py` - OpenAI generator tests (100% coverage)
+- `tests/unit/ingestion_api/test_kafka_client.py` - Kafka client tests (94% coverage)
+- `tests/unit/ingestion_api/test_minio_client.py` - MinIO client tests (100% coverage)
+- `tests/unit/indexer/test_grpc_clients.py` - Indexer gRPC client tests (100% coverage)
+- `tests/unit/search_service/test_grpc_clients.py` - Search service gRPC client tests (100% coverage)
 
 ### First Round: Quick Fixes (6 items)
 1. **Indexer readiness probe bug** (src/indexer/main.py:155-157)

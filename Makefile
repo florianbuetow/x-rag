@@ -116,8 +116,7 @@ cluster-clean: ## Delete cluster, registry, and all data
 	@echo ""
 
 cluster-reset: ## Reset all pods and data (keeps cluster running, deletes all state)
-	@echo "$(YELLOW)WARNING: This will DELETE all pod data and restart services!$(NC)"
-	@echo -n "Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+	@echo "$(YELLOW)WARNING: Deleting all pod data and restarting services$(NC)"
 	@echo "$(BLUE)=== Resetting X-RAG Platform ===$(NC)"
 	@echo ""
 	@echo "$(YELLOW)[1/6] Deleting all workloads...$(NC)"

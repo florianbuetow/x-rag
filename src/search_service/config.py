@@ -1,8 +1,11 @@
 """Configuration for Search Service."""
 
+from typing import Optional
+
 from pydantic import Field, field_validator
 
 from src.common.config import ServiceConfig
+from src.llm.config import LLMConfig, LLMProvider
 
 
 class SearchServiceConfig(ServiceConfig):
@@ -32,6 +35,10 @@ class SearchServiceConfig(ServiceConfig):
 
     # OpenAI settings
     openai_api_key: str = Field(..., description="OpenAI API key")
+    openai_api_base: Optional[str] = Field(
+        default=None,
+        description="OpenAI API base URL for compatible APIs (e.g., LM Studio)",
+    )
     openai_model: str = Field(default="gpt-4o-mini", description="OpenAI model for answer generation")
     openai_max_tokens: int = Field(default=500, description="Maximum tokens in OpenAI response")
     openai_temperature: float = Field(default=0.7, description="OpenAI temperature (0.0-2.0)")
@@ -55,18 +62,14 @@ class SearchServiceConfig(ServiceConfig):
     @field_validator("openai_api_key")
     @classmethod
     def validate_openai_api_key(cls, v: str) -> str:
-        """Validate OpenAI API key format."""
-        if not v:
-            raise ValueError("OpenAI API key not configured. Set OPENAI_API_KEY in your .env file with your actual API key.")
-        # Allow placeholder key for development/testing
-        # In production, this should be a real key
-        if v == "sk-your-key-here":
-            import logging
+        """Validate OpenAI API key format.
 
-            logging.warning("Using placeholder OpenAI API key - LLM functionality will fail")
-            return v
-        if not v.startswith("sk-"):
-            raise ValueError("Invalid OpenAI API key format. Should start with 'sk-'")
+        Note: When using a custom base URL (e.g., LM Studio), any non-empty
+        key is accepted since local LLM servers don't require real API keys.
+        """
+        if not v:
+            raise ValueError("OpenAI API key not configured. Set OPENAI_API_KEY in your .env file.")
+        # Any non-empty key is valid - local LLM servers accept any key
         return v
 
     @field_validator("openai_temperature")
@@ -103,3 +106,24 @@ class SearchServiceConfig(ServiceConfig):
         if v > 100:
             raise ValueError(f"default_top_k too large (max 100), got {v}")
         return v
+
+    def get_llm_config(self) -> LLMConfig:
+        """Create LLMConfig from service configuration.
+
+        Automatically detects provider type based on base_url presence.
+
+        Returns:
+            LLMConfig instance for creating LLM client
+        """
+        provider = LLMProvider.LOCAL if self.openai_api_base else LLMProvider.OPENAI
+
+        return LLMConfig(
+            provider=provider,
+            api_key=self.openai_api_key,
+            base_url=self.openai_api_base,
+            model=self.openai_model,
+            max_tokens=self.openai_max_tokens,
+            temperature=self.openai_temperature,
+            max_retries=self.openai_max_retries,
+            timeout=self.openai_timeout,
+        )

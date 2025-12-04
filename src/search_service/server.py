@@ -97,12 +97,16 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
             # Build protobuf response
             sources = []
             for source_dict in result["sources"]:
+                # Convert metadata values to strings (protobuf requires map<string, string>)
+                source_metadata = {
+                    str(k): str(v) for k, v in source_dict.get("metadata", {}).items()
+                }
                 sources.append(
                     search_pb2.Source(
                         id=source_dict["id"],
                         content=source_dict["content"],
                         score=source_dict["score"],
-                        metadata=source_dict["metadata"],
+                        metadata=source_metadata,
                     )
                 )
 
@@ -111,7 +115,7 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
                 "mode": result["metadata"]["mode"],
                 "top_k": str(result["metadata"]["top_k"]),
                 "namespace": result["metadata"]["namespace"],
-                "cache_hit": str(result["metadata"]["cache_hit"]),
+                "cache_hit": str(result["metadata"].get("cache_hit", False)),
                 "num_sources": str(result["metadata"]["num_sources"]),
             }
 
@@ -121,7 +125,7 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
                 metadata=metadata,
             )
 
-            logger.info(f"Search completed: {len(sources)} sources, cache_hit={result['metadata']['cache_hit']}")
+            logger.info(f"Search completed: {len(sources)} sources, cache_hit={result['metadata'].get('cache_hit', False)}")
             return response
 
         except grpc.RpcError:
