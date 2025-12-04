@@ -19,8 +19,8 @@ class EmbeddingServiceConfig(ServiceConfig):
     service_name: str = Field(default="embedding-service", description="Service name")
     port: int = Field(default=50051, description="gRPC port")
     embedding_generator: Literal["hash_based", "openai"] = Field(
-        default="hash_based",
-        description="Embedding generator to use (hash_based or openai)",
+        ...,
+        description="Embedding generator to use (hash_based or openai). Required - no default.",
     )
     default_model: str = Field(default="hash-small", description="Default embedding model")
     max_batch_size: int = Field(default=100, description="Maximum batch size")
