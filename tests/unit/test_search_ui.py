@@ -205,18 +205,20 @@ class TestSearchUIEndpoints:
     @pytest.fixture
     def app_client(self, mock_search_client):
         """Create test client with mocked dependencies."""
-        with patch("src.search_ui.main.search_client", mock_search_client):
-            with patch("src.search_ui.main.health_checker") as mock_health:
-                mock_health.check_all = AsyncMock(
-                    return_value={
-                        "status": "HEALTHY",
-                        "dependencies": {"search_service": "HEALTHY"},
-                        "message": "All dependencies healthy",
-                    },
-                )
-                from src.search_ui.main import app
+        with (
+            patch("src.search_ui.main.search_client", mock_search_client),
+            patch("src.search_ui.main.health_checker") as mock_health,
+        ):
+            mock_health.check_all = AsyncMock(
+                return_value={
+                    "status": "HEALTHY",
+                    "dependencies": {"search_service": "HEALTHY"},
+                    "message": "All dependencies healthy",
+                },
+            )
+            from src.search_ui.main import app
 
-                yield TestClient(app)
+            yield TestClient(app)
 
     def test_root_endpoint(self, app_client):
         """Test root endpoint returns HTML."""
@@ -430,14 +432,16 @@ class TestSearchServiceClient:
         """Test client as async context manager."""
         client = SearchServiceClient(address="localhost:50052")
 
-        with patch.object(client, "connect", new_callable=AsyncMock) as mock_connect:
-            with patch.object(client, "close", new_callable=AsyncMock) as mock_close:
-                async with client as ctx_client:
-                    assert ctx_client is client
-                    mock_connect.assert_called_once()
+        with (
+            patch.object(client, "connect", new_callable=AsyncMock) as mock_connect,
+            patch.object(client, "close", new_callable=AsyncMock) as mock_close,
+        ):
+            async with client as ctx_client:
+                assert ctx_client is client
+                mock_connect.assert_called_once()
 
-                # Verify close called after exit
-                mock_close.assert_called_once()
+            # Verify close called after exit
+            mock_close.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_search_success(self):

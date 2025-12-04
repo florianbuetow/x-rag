@@ -77,6 +77,8 @@ packages = ["src"]
 line-length = 140
 indent-width = 4
 target-version = "py311"
+# Exclude generated gRPC/protobuf code from all linting
+exclude = ["src/proto_gen/*"]
 
 [tool.ruff.lint]
 # Core errors & warnings, Google-style docs, types, bugbear, quotes, imports, naming

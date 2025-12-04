@@ -84,11 +84,8 @@ class KafkaClient:
             True if healthy, False otherwise
         """
         try:
-            # Simple check: producer is started
-            if self.producer is None:
-                return False
-            # Producer is started and ready
-            return True
+            # Simple check: producer is started and ready
+            return self.producer is not None
         except Exception as e:
             logger.debug(f"Kafka health check failed: {e}")
             return False
