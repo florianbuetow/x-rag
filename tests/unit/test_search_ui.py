@@ -564,10 +564,13 @@ class TestSearchServiceClient:
         """Test health check when gRPC error occurs."""
         client = SearchServiceClient(address="localhost:50052")
 
+        # Create a real RpcError exception
+        class MockRpcError(grpc.RpcError, Exception):
+            def code(self):
+                return grpc.StatusCode.UNAVAILABLE
+
         mock_stub = MagicMock()
-        mock_error = MagicMock()
-        mock_error.code = MagicMock(return_value=grpc.StatusCode.UNAVAILABLE)
-        mock_stub.HealthCheck = AsyncMock(side_effect=mock_error)
+        mock_stub.HealthCheck = AsyncMock(side_effect=MockRpcError())
         client.stub = mock_stub
 
         result = await client.health_check()

@@ -28,6 +28,7 @@ class TestOpenAIEmbeddingGeneratorInit:
             api_key="test-key",
             max_retries=3,
             timeout=30,
+            base_url=None,
         )
 
     @patch("src.embedding_service.generators.openai_generator.AsyncOpenAI")
@@ -39,6 +40,7 @@ class TestOpenAIEmbeddingGeneratorInit:
             api_key="test-key",
             max_retries=5,
             timeout=30,
+            base_url=None,
         )
 
     @patch("src.embedding_service.generators.openai_generator.AsyncOpenAI")
@@ -50,6 +52,7 @@ class TestOpenAIEmbeddingGeneratorInit:
             api_key="test-key",
             max_retries=3,
             timeout=60,
+            base_url=None,
         )
 
     @patch("src.embedding_service.generators.openai_generator.AsyncOpenAI")
