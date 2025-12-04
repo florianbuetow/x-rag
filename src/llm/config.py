@@ -33,8 +33,8 @@ class LLMConfig(BaseModel):
     """
 
     provider: LLMProvider = Field(
-        default=LLMProvider.OPENAI,
-        description="LLM provider type",
+        ...,
+        description="LLM provider type. Required - no default.",
     )
     api_key: str = Field(
         ...,
@@ -140,8 +140,8 @@ class EmbeddingConfig(BaseModel):
     """
 
     provider: EmbeddingProvider = Field(
-        default=EmbeddingProvider.OPENAI,
-        description="Embedding provider type",
+        ...,
+        description="Embedding provider type. Required - no default.",
     )
     model: str = Field(
         default="text-embedding-3-small",
