@@ -6,7 +6,6 @@ Supports multiple LLM backends:
 """
 
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -40,7 +39,7 @@ class LLMConfig(BaseModel):
         ...,
         description="API key (any non-empty value for local LLMs)",
     )
-    base_url: Optional[str] = Field(
+    base_url: str | None = Field(
         default=None,
         description="Base URL for API (None = OpenAI default, or local server URL)",
     )
@@ -83,7 +82,7 @@ class LLMConfig(BaseModel):
 
     @field_validator("base_url")
     @classmethod
-    def validate_base_url(cls, v: Optional[str]) -> Optional[str]:
+    def validate_base_url(cls, v: str | None) -> str | None:
         """Validate and normalize base URL."""
         if v is None or v == "":
             return None
@@ -148,11 +147,11 @@ class EmbeddingConfig(BaseModel):
         description="Embedding model name/ID",
     )
     # OpenAI/Local provider settings
-    api_key: Optional[str] = Field(
+    api_key: str | None = Field(
         default=None,
         description="API key (required for OpenAI/Local providers)",
     )
-    base_url: Optional[str] = Field(
+    base_url: str | None = Field(
         default=None,
         description="Base URL for API (required for Local provider)",
     )
@@ -172,7 +171,7 @@ class EmbeddingConfig(BaseModel):
 
     @field_validator("base_url")
     @classmethod
-    def validate_base_url(cls, v: Optional[str]) -> Optional[str]:
+    def validate_base_url(cls, v: str | None) -> str | None:
         """Validate and normalize base URL."""
         if v is None or v == "":
             return None

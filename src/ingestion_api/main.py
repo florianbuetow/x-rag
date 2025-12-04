@@ -3,9 +3,10 @@
 import json
 import logging
 import sys
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
-from typing import Any, AsyncGenerator
+from datetime import UTC, datetime
+from typing import Any
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, status
@@ -178,7 +179,7 @@ async def ingest_document(request: IngestRequest) -> IngestResponse:
                 "text": request.text,
                 "metadata": request.metadata.model_dump(),
                 "namespace": request.namespace,
-                "ingested_at": datetime.now(timezone.utc).isoformat(),
+                "ingested_at": datetime.now(UTC).isoformat(),
             }
 
             # Store in MinIO
@@ -198,7 +199,7 @@ async def ingest_document(request: IngestRequest) -> IngestResponse:
                 "namespace": request.namespace,
                 "minio_bucket": config.minio_bucket,
                 "minio_key": object_name,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
             await kafka_client.publish(config.kafka_topic, event)

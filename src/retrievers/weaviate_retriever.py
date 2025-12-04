@@ -5,7 +5,7 @@ stored in Weaviate.
 """
 
 import logging
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
 
 import weaviate
 from weaviate import WeaviateClient
@@ -21,7 +21,7 @@ class SearchResult:
         id: str,
         content: str,
         score: float,
-        metadata: Dict[str, Any],
+        metadata: dict[str, Any],
     ) -> None:
         """Initialize search result.
 
@@ -36,7 +36,7 @@ class SearchResult:
         self.score = score
         self.metadata = metadata
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "id": self.id,
@@ -107,12 +107,12 @@ class WeaviateRetriever:
     def search(
         self,
         query: str,
-        query_embedding: Optional[List[float]] = None,
+        query_embedding: list[float] | None = None,
         top_k: int = 10,
         mode: Literal["vector", "bm25", "hybrid"] = "hybrid",
         alpha: float = 0.5,
-        namespace: Optional[str] = None,
-    ) -> List[SearchResult]:
+        namespace: str | None = None,
+    ) -> list[SearchResult]:
         """Search for relevant documents.
 
         Args:

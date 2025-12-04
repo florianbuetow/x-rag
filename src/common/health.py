@@ -6,7 +6,8 @@ and converting to gRPC HealthCheckResponse format.
 
 import asyncio
 import logging
-from typing import Any, Awaitable, Callable, cast
+from collections.abc import Awaitable, Callable
+from typing import Any, cast
 
 import grpc
 import httpx

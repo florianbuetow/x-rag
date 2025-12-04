@@ -5,7 +5,6 @@ error handling, and cost tracking.
 """
 
 import logging
-from typing import Dict, Optional
 
 from openai import AsyncOpenAI, OpenAIError
 
@@ -25,7 +24,7 @@ class OpenAIClient:
         model: str = "gpt-4o-mini",
         max_retries: int = 3,
         timeout: int = 60,
-        base_url: Optional[str] = None,
+        base_url: str | None = None,
     ) -> None:
         """Initialize OpenAI client.
 
@@ -51,7 +50,7 @@ class OpenAIClient:
         prompt: str,
         max_tokens: int = 500,
         temperature: float = 0.7,
-        system_message: Optional[str] = None,
+        system_message: str | None = None,
     ) -> str:
         """Generate text using OpenAI chat model.
 
@@ -69,7 +68,7 @@ class OpenAIClient:
         """
         try:
             # Build messages
-            messages: list[Dict[str, str]] = []
+            messages: list[dict[str, str]] = []
             if system_message:
                 messages.append({"role": "system", "content": system_message})
             messages.append({"role": "user", "content": prompt})

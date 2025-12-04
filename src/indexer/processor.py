@@ -7,8 +7,9 @@ import asyncio
 import json
 import logging
 import threading
+from collections.abc import Callable
 from types import TracebackType
-from typing import Any, Callable, Dict, List, cast
+from typing import Any, cast
 
 import weaviate
 from weaviate import WeaviateClient
@@ -51,7 +52,7 @@ class BatchEmbedder:
         self.batch_size = batch_size
         logger.info(f"✓ Batch embedder initialized (model={model}, batch_size={batch_size})")
 
-    def generate(self, texts: List[str]) -> List[List[float]]:
+    def generate(self, texts: list[str]) -> list[list[float]]:
         """Generate embeddings for texts.
 
         Args:
@@ -100,7 +101,7 @@ class WeaviateBatchInserter:
         self.collection_name = collection_name
         logger.info(f"✓ Weaviate batch inserter initialized (collection={collection_name})")
 
-    def store(self, chunks: List[DocumentChunk], embeddings: List[List[float]]) -> None:
+    def store(self, chunks: list[DocumentChunk], embeddings: list[list[float]]) -> None:
         """Store chunks and embeddings in Weaviate.
 
         Args:
@@ -163,7 +164,7 @@ class DocumentIndexer:
         self.embedding_client.connect()
 
         # Pipeline components (typed for mypy)
-        self._pipeline_components: Dict[str, Any]
+        self._pipeline_components: dict[str, Any]
         self._chunk_ingester_factory: Callable[[], ChunkIngestionInterface]
 
         # Initialize indexing pipeline components
@@ -280,7 +281,7 @@ class DocumentIndexer:
         if self.weaviate_client:
             self.weaviate_client.close()
 
-    async def process_event(self, event: Dict[str, Any]) -> None:
+    async def process_event(self, event: dict[str, Any]) -> None:
         """Process a document ingestion event.
 
         Args:
