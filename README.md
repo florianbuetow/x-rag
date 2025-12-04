@@ -124,6 +124,31 @@ kubectl describe pod <pod-name> -n rag-system
 kubectl logs <pod-name> -n rag-system
 ```
 
+#### Debugging gRPC Services
+
+For debugging gRPC services (embedding-service, search-service), install [grpcurl](https://github.com/fullstorydev/grpcurl):
+
+```bash
+# Install (macOS)
+brew install grpcurl
+
+# Install (Linux)
+go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
+```
+
+Example commands:
+
+```bash
+# List available services (server reflection enabled)
+grpcurl -plaintext localhost:50051 list
+
+# Call health check on embedding service
+grpcurl -plaintext localhost:50051 xrag.embedding.EmbeddingService/HealthCheck
+
+# Call health check on search service
+grpcurl -plaintext localhost:50052 xrag.search.SearchService/HealthCheck
+```
+
 ### Project Structure
 
 ```
