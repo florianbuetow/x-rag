@@ -7,7 +7,7 @@
 .PHONY: cluster-start cluster-stop cluster-status cluster-clean cluster-reset cluster-destroy
 .PHONY: apps-generate-grpc apps-build apps-deploy
 .PHONY: test test-integration test-coverage test-e2e
-.PHONY: code-style code-format code-typecheck code-security code-deptry code-stats code-spell
+.PHONY: code-style code-format code-typecheck code-security code-deptry code-stats code-spell code-audit
 .PHONY: ci ci-quiet
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
 .PHONY: logs-weaviate logs-kafka logs-redis
@@ -249,6 +249,13 @@ code-spell: ## Check spelling in code and documentation
 	@uv run codespell src tests docs scripts infra proto *.md *.toml
 	@echo ""
 	@echo "$(GREEN)✓ Spelling checks passed$(NC)"
+	@echo ""
+
+code-audit: ## Scan dependencies for known vulnerabilities
+	@echo "$(BLUE)=== Scanning Dependencies for Vulnerabilities ===$(NC)"
+	@uv run pip-audit
+	@echo ""
+	@echo "$(GREEN)✓ No known vulnerabilities found$(NC)"
 	@echo ""
 
 ##@ Testing
