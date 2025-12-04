@@ -77,11 +77,33 @@ target-version = "py311"
 
 [tool.ruff.lint]
 # Core errors & warnings, Google-style docs, types, bugbear, quotes, imports, naming
-select = ["E", "F", "D", "ANN", "B", "Q", "I", "N"]
+# Plus: complexity, modern syntax, performance, simplifications, tidy imports
+select = [
+  "E", "F",   # pycodestyle errors, pyflakes
+  "D",        # pydocstyle (Google-style)
+  "ANN",      # flake8-annotations
+  "B",        # flake8-bugbear
+  "Q",        # flake8-quotes
+  "I",        # isort
+  "N",        # pep8-naming
+  "C90",      # mccabe complexity
+  "UP",       # pyupgrade (modern Python 3.11+ syntax)
+  "PERF",     # perflint (performance anti-patterns)
+  "SIM",      # flake8-simplify
+  "TID",      # flake8-tidy-imports
+]
 ignore = [
   "D107",    # don't require __init__ docstring (class docstring is fine)
   "N802",    # allow non-lowercase function names (needed for gRPC method names)
 ]
+
+[tool.ruff.lint.mccabe]
+# Flag functions with complexity > 10 (default is 10, explicit for clarity)
+max-complexity = 10
+
+[tool.ruff.lint.flake8-tidy-imports]
+# Ban relative imports for cleaner, more explicit code
+ban-relative-imports = "all"
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
