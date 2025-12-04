@@ -71,6 +71,13 @@ Copy `.env.example` to `.env` and add `OPENAI_API_KEY`
 
 ## Development Principles
 
+### No Default Values - Explicit Configuration Required
+- **NEVER** use default values for configuration that could hide errors
+- **ALL** provider/backend configuration must be explicitly set
+- Missing configuration = immediate startup failure with clear error message
+- This applies to: `EMBEDDING_GENERATOR`, `LLM_PROVIDER`, `LLM_API_KEY`, etc.
+- Silent fallbacks are an anti-pattern - they hide configuration problems
+
 ### Always Use Makefile
 - **NEVER** run scripts directly
 - **ALWAYS** use `make` targets
@@ -112,6 +119,20 @@ When editing the Makefile:
   ```
 
 ## Coding Guidelines
+
+### No Default Fallbacks in Code
+When writing configuration classes or factory methods:
+- **NEVER** provide default values for provider/backend selection
+- Use `Field(...)` (Ellipsis = required) instead of `Field(default=...)`
+- Factory methods must raise `ValueError` for unknown types
+- Example:
+  ```python
+  # WRONG - silent fallback hides misconfiguration
+  embedding_generator: str = Field(default="hash_based")
+
+  # CORRECT - Ellipsis (...) means required, fails if not set
+  embedding_generator: str = Field(..., description="Required - no default")
+  ```
 
 ### Code Style
 This project follows the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html).
