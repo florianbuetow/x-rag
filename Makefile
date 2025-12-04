@@ -6,7 +6,7 @@
 .PHONY: help check init cluster-init
 .PHONY: cluster-start cluster-stop cluster-status cluster-clean cluster-reset cluster-destroy
 .PHONY: apps-generate-grpc apps-build apps-deploy
-.PHONY: test test-integration test-coverage
+.PHONY: test test-integration test-coverage test-e2e
 .PHONY: code-style code-format code-typecheck code-security code-deptry
 .PHONY: ci ci-quiet
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
@@ -256,6 +256,12 @@ test-coverage: init ## Run unit tests with coverage report and threshold check
 	@echo ""
 	@echo "$(GREEN)✓ Coverage threshold met$(NC)"
 	@echo "  HTML: reports/coverage/html/index.html"
+	@echo ""
+
+test-e2e: ## Run E2E tests (destructive - resets cluster and data)
+	@echo "$(BLUE)=== Running E2E Tests ===$(NC)"
+	@echo "$(RED)WARNING: This will reset the cluster and delete all data!$(NC)"
+	@./tests/e2e/run_all.sh
 	@echo ""
 
 ##@ CI/CD
