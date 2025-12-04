@@ -99,6 +99,22 @@ echo ""
 
 echo ""
 
+# Check optional tools
+echo "Optional tools:"
+printf "  %-20s " "grpcurl..."
+if command -v grpcurl &> /dev/null; then
+    version=$(grpcurl --version 2>&1 | head -1 | cut -d' ' -f2)
+    echo -e "${GREEN}✓ $version${NC}"
+else
+    echo -e "${YELLOW}! NOT FOUND (optional)${NC}"
+    echo ""
+    echo "  grpcurl is recommended for debugging gRPC services."
+    echo "  Install: brew install grpcurl (macOS) | go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest"
+    echo ""
+fi
+
+echo ""
+
 if [ $HAS_ERROR -eq 0 ]; then
     echo -e "${GREEN}✓ All prerequisites met${NC}"
     echo ""
