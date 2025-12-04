@@ -205,8 +205,8 @@ spec:
                   stub = SearchServiceStub(channel)
                   response = stub.HealthCheck(HealthCheckRequest(), timeout=5)
                   exit(0 if response.status == 1 else 1)
-            initialDelaySeconds: 10
-            periodSeconds: 10
+            initialDelaySeconds: 15
+            periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 3
 
