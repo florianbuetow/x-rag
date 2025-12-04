@@ -430,3 +430,256 @@ class TestWeaviateRetrieverHealth:
         retriever.client.collections.get.side_effect = RuntimeError("Connection refused")
 
         assert retriever.health_check() is False
+
+
+class TestHelperMethods:
+    """Tests for private helper methods extracted during refactoring."""
+
+    @pytest.fixture
+    def retriever(self):
+        """Create a WeaviateRetriever for testing."""
+        retriever = WeaviateRetriever(
+            weaviate_url="http://localhost:8080",
+            collection_name="DocumentChunk",
+        )
+        retriever.client = Mock()
+        return retriever
+
+    @pytest.fixture
+    def mock_collection(self):
+        """Create a mock Weaviate collection."""
+        return Mock()
+
+    @pytest.fixture
+    def mock_weaviate_object(self):
+        """Create a mock Weaviate result object."""
+        obj = Mock()
+        obj.uuid = "test-uuid-123"
+        obj.properties = {
+            "content": "Test content",
+            "doc_id": "doc-123",
+            "chunk_index": 0,
+            "namespace": "default",
+            "source": "test.txt",
+            "title": "Test Document",
+            "metadata_json": '{"custom": "value"}',
+        }
+        obj.metadata = Mock()
+        obj.metadata.distance = 0.1
+        obj.metadata.score = 0.9
+        return obj
+
+    # Tests for _execute_query
+    def test_execute_query_vector_mode(self, retriever, mock_collection):
+        """_execute_query uses near_vector for vector mode."""
+        mock_result = Mock()
+        mock_collection.query.near_vector.return_value = mock_result
+
+        query_embedding = [0.1, 0.2, 0.3]
+        result = retriever._execute_query(
+            collection=mock_collection,
+            query="test",
+            query_embedding=query_embedding,
+            top_k=10,
+            mode="vector",
+            alpha=0.5,
+            filters=None,
+        )
+
+        assert result is mock_result
+        mock_collection.query.near_vector.assert_called_once()
+        call_kwargs = mock_collection.query.near_vector.call_args[1]
+        assert call_kwargs["near_vector"] == query_embedding
+        assert call_kwargs["limit"] == 10
+
+    def test_execute_query_bm25_mode(self, retriever, mock_collection):
+        """_execute_query uses bm25 for bm25 mode."""
+        mock_result = Mock()
+        mock_collection.query.bm25.return_value = mock_result
+
+        result = retriever._execute_query(
+            collection=mock_collection,
+            query="search terms",
+            query_embedding=None,
+            top_k=5,
+            mode="bm25",
+            alpha=0.5,
+            filters=None,
+        )
+
+        assert result is mock_result
+        mock_collection.query.bm25.assert_called_once()
+        call_kwargs = mock_collection.query.bm25.call_args[1]
+        assert call_kwargs["query"] == "search terms"
+        assert call_kwargs["limit"] == 5
+
+    def test_execute_query_hybrid_mode(self, retriever, mock_collection):
+        """_execute_query uses hybrid for hybrid mode."""
+        mock_result = Mock()
+        mock_collection.query.hybrid.return_value = mock_result
+
+        query_embedding = [0.1, 0.2, 0.3]
+        result = retriever._execute_query(
+            collection=mock_collection,
+            query="test query",
+            query_embedding=query_embedding,
+            top_k=10,
+            mode="hybrid",
+            alpha=0.7,
+            filters=None,
+        )
+
+        assert result is mock_result
+        mock_collection.query.hybrid.assert_called_once()
+        call_kwargs = mock_collection.query.hybrid.call_args[1]
+        assert call_kwargs["query"] == "test query"
+        assert call_kwargs["vector"] == query_embedding
+        assert call_kwargs["alpha"] == 0.7
+
+    def test_execute_query_invalid_mode(self, retriever, mock_collection):
+        """_execute_query raises ValueError for invalid mode."""
+        with pytest.raises(ValueError) as exc_info:
+            retriever._execute_query(
+                collection=mock_collection,
+                query="test",
+                query_embedding=[0.1],
+                top_k=10,
+                mode="invalid",
+                alpha=0.5,
+                filters=None,
+            )
+
+        assert "Invalid search mode" in str(exc_info.value)
+
+    def test_execute_query_with_filters(self, retriever, mock_collection):
+        """_execute_query passes filters to query."""
+        mock_result = Mock()
+        mock_collection.query.bm25.return_value = mock_result
+        mock_filter = Mock()
+
+        retriever._execute_query(
+            collection=mock_collection,
+            query="test",
+            query_embedding=None,
+            top_k=10,
+            mode="bm25",
+            alpha=0.5,
+            filters=mock_filter,
+        )
+
+        call_kwargs = mock_collection.query.bm25.call_args[1]
+        assert call_kwargs["filters"] is mock_filter
+
+    # Tests for _convert_to_search_result
+    def test_convert_to_search_result_vector_mode(self, retriever, mock_weaviate_object):
+        """_convert_to_search_result calculates score from distance in vector mode."""
+        mock_weaviate_object.metadata.distance = 0.1
+
+        result = retriever._convert_to_search_result(mock_weaviate_object, mode="vector")
+
+        assert result.id == "test-uuid-123"
+        assert result.content == "Test content"
+        # Score = 1 / (1 + 0.1) = 0.909...
+        assert result.score == pytest.approx(0.909, rel=0.01)
+
+    def test_convert_to_search_result_bm25_mode(self, retriever, mock_weaviate_object):
+        """_convert_to_search_result uses score directly in bm25 mode."""
+        mock_weaviate_object.metadata.score = 0.85
+
+        result = retriever._convert_to_search_result(mock_weaviate_object, mode="bm25")
+
+        assert result.score == 0.85
+
+    def test_convert_to_search_result_hybrid_mode(self, retriever, mock_weaviate_object):
+        """_convert_to_search_result uses score directly in hybrid mode."""
+        mock_weaviate_object.metadata.score = 0.75
+
+        result = retriever._convert_to_search_result(mock_weaviate_object, mode="hybrid")
+
+        assert result.score == 0.75
+
+    def test_convert_to_search_result_extracts_metadata(self, retriever, mock_weaviate_object):
+        """_convert_to_search_result extracts all metadata fields."""
+        result = retriever._convert_to_search_result(mock_weaviate_object, mode="bm25")
+
+        assert result.metadata["doc_id"] == "doc-123"
+        assert result.metadata["chunk_index"] == 0
+        assert result.metadata["namespace"] == "default"
+        assert result.metadata["source"] == "test.txt"
+        assert result.metadata["title"] == "Test Document"
+
+    def test_convert_to_search_result_parses_metadata_json(self, retriever, mock_weaviate_object):
+        """_convert_to_search_result parses metadata_json field."""
+        mock_weaviate_object.properties["metadata_json"] = '{"key1": "value1", "key2": 42}'
+
+        result = retriever._convert_to_search_result(mock_weaviate_object, mode="bm25")
+
+        assert result.metadata["key1"] == "value1"
+        assert result.metadata["key2"] == 42
+
+    def test_convert_to_search_result_handles_invalid_json(self, retriever, mock_weaviate_object):
+        """_convert_to_search_result handles invalid metadata_json gracefully."""
+        mock_weaviate_object.properties["metadata_json"] = "not valid json"
+
+        # Should not raise
+        result = retriever._convert_to_search_result(mock_weaviate_object, mode="bm25")
+
+        assert result.id == "test-uuid-123"
+        # Invalid JSON is skipped, but base metadata still works
+        assert result.metadata["doc_id"] == "doc-123"
+
+    def test_convert_to_search_result_handles_empty_metadata_json(self, retriever, mock_weaviate_object):
+        """_convert_to_search_result handles empty metadata_json."""
+        mock_weaviate_object.properties["metadata_json"] = ""
+
+        result = retriever._convert_to_search_result(mock_weaviate_object, mode="bm25")
+
+        assert result.id == "test-uuid-123"
+
+    def test_convert_to_search_result_handles_none_content(self, retriever, mock_weaviate_object):
+        """_convert_to_search_result handles None content."""
+        mock_weaviate_object.properties["content"] = None
+
+        result = retriever._convert_to_search_result(mock_weaviate_object, mode="bm25")
+
+        assert result.content == ""
+
+    def test_convert_to_search_result_handles_missing_optional_fields(self, retriever, mock_weaviate_object):
+        """_convert_to_search_result handles missing optional properties."""
+        mock_weaviate_object.properties = {
+            "content": "Minimal content",
+        }
+
+        result = retriever._convert_to_search_result(mock_weaviate_object, mode="bm25")
+
+        assert result.content == "Minimal content"
+        assert result.metadata["doc_id"] == ""
+        assert result.metadata["chunk_index"] == 0
+        assert result.metadata["namespace"] == ""
+
+    def test_convert_to_search_result_zero_distance(self, retriever, mock_weaviate_object):
+        """_convert_to_search_result handles zero distance (exact match)."""
+        mock_weaviate_object.metadata.distance = 0.0
+
+        result = retriever._convert_to_search_result(mock_weaviate_object, mode="vector")
+
+        # Score = 1 / (1 + 0) = 1.0
+        assert result.score == 1.0
+
+    def test_convert_to_search_result_none_distance(self, retriever, mock_weaviate_object):
+        """_convert_to_search_result handles None distance."""
+        mock_weaviate_object.metadata.distance = None
+
+        result = retriever._convert_to_search_result(mock_weaviate_object, mode="vector")
+
+        # Score = 1 / (1 + 0) = 1.0 (None treated as 0)
+        assert result.score == 1.0
+
+    def test_convert_to_search_result_none_score(self, retriever, mock_weaviate_object):
+        """_convert_to_search_result handles None score."""
+        mock_weaviate_object.metadata.score = None
+
+        result = retriever._convert_to_search_result(mock_weaviate_object, mode="bm25")
+
+        # None treated as 0.0
+        assert result.score == 0.0
