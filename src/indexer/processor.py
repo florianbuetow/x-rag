@@ -185,9 +185,13 @@ class DocumentIndexer:
         # Text cleaner
         cleaner = BasicTextCleaner()
 
-        # Text splitter (convert char-based chunk_size to word count)
+        # Text splitter (convert char-based chunk_size/overlap to word counts)
         chunk_size_words = max(1, self.config.chunk_size // 5)
-        splitter = WordBasedTextSplitter(chunk_size_words=chunk_size_words)
+        chunk_overlap_words = max(0, self.config.chunk_overlap // 5)
+        splitter = WordBasedTextSplitter(
+            chunk_size_words=chunk_size_words,
+            chunk_overlap_words=chunk_overlap_words,
+        )
 
         # Embedder
         embedder = BatchEmbedder(
