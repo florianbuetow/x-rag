@@ -154,8 +154,6 @@ cluster-reset: ## Reset all pods and data (keeps cluster running, deletes all st
 	@echo ""
 
 cluster-destroy: cluster-stop ## Stop cluster and delete all xrag-* Docker images
-	@echo "$(RED)WARNING: This will DELETE all project Docker images!$(NC)"
-	@echo -n "Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
 	@echo "$(YELLOW)Deleting project Docker images...$(NC)"
 	@for img in $$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "xrag-"); do \
 		echo "  Deleting $$img"; \
