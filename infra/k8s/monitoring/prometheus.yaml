@@ -10,19 +10,19 @@ data:
     scrape_configs:
       - job_name: 'search-ui'
         static_configs:
-          - targets: ['search-ui:8080']
+          - targets: ['search-ui:9091']
       - job_name: 'search-service'
         static_configs:
-          - targets: ['search-service:50051']
+          - targets: ['search-service:8080']
       - job_name: 'ingestion-api'
         static_configs:
           - targets: ['ingestion-api:8080']
       - job_name: 'embedding-service'
         static_configs:
-          - targets: ['embedding-service:50051']
+          - targets: ['embedding-service:8080']
       - job_name: 'indexer'
         static_configs:
-          - targets: ['indexer:8084']
+          - targets: ['indexer:8081']
       - job_name: 'prometheus'
         static_configs:
           - targets: ['localhost:9090']
