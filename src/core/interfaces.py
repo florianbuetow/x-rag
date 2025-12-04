@@ -9,7 +9,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Literal, Protocol, runtime_checkable
 
-from .document import CoreDocument
+from src.core.document import CoreDocument
 
 SearchMode = Literal["vector", "bm25", "hybrid"]
 

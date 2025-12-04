@@ -1,6 +1,5 @@
 """Configuration for Search Service."""
 
-
 from pydantic import Field, field_validator
 
 from src.common.config import ServiceConfig

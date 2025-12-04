@@ -4,11 +4,16 @@ Provides vector, BM25, and hybrid search capabilities over documents
 stored in Weaviate.
 """
 
+import json
 import logging
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import weaviate
 from weaviate import WeaviateClient
+from weaviate.classes.query import Filter
+
+if TYPE_CHECKING:
+    from weaviate.collections.classes.filters import _Filters
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +109,100 @@ class WeaviateRetriever:
             self.client.close()
             self.client = None
 
+    def _execute_query(
+        self,
+        collection: Any,  # noqa: ANN401 - Weaviate Collection type is generic
+        query: str,
+        query_embedding: list[float] | None,
+        top_k: int,
+        mode: Literal["vector", "bm25", "hybrid"],
+        alpha: float,
+        filters: "_Filters | None",
+    ) -> Any:  # noqa: ANN401 - QueryReturn type is generic
+        """Execute the search query based on mode.
+
+        Args:
+            collection: Weaviate collection to query
+            query: Search query text
+            query_embedding: Query embedding vector
+            top_k: Number of results
+            mode: Search mode
+            alpha: Hybrid search alpha
+            filters: Optional namespace filter
+
+        Returns:
+            Weaviate query result
+        """
+        if mode == "vector":
+            return collection.query.near_vector(
+                near_vector=query_embedding,
+                limit=top_k,
+                return_metadata=["distance"],
+                filters=filters,
+            )
+        elif mode == "bm25":
+            return collection.query.bm25(
+                query=query,
+                limit=top_k,
+                return_metadata=["score"],
+                filters=filters,
+            )
+        elif mode == "hybrid":
+            return collection.query.hybrid(
+                query=query,
+                vector=query_embedding,
+                alpha=alpha,
+                limit=top_k,
+                return_metadata=["score"],
+                filters=filters,
+            )
+        else:
+            raise ValueError(f"Invalid search mode: {mode}")
+
+    def _convert_to_search_result(
+        self,
+        obj: Any,  # noqa: ANN401 - Weaviate Object type is generic
+        mode: Literal["vector", "bm25", "hybrid"],
+    ) -> SearchResult:
+        """Convert a Weaviate object to a SearchResult.
+
+        Args:
+            obj: Weaviate result object
+            mode: Search mode used (affects score extraction)
+
+        Returns:
+            SearchResult instance
+        """
+        # Extract score/distance based on mode
+        if mode == "vector":
+            distance = obj.metadata.distance or 0.0
+            score = 1.0 / (1.0 + distance)
+        else:
+            score = obj.metadata.score or 0.0
+
+        # Build metadata
+        metadata = {
+            "doc_id": obj.properties.get("doc_id", ""),
+            "chunk_index": obj.properties.get("chunk_index", 0),
+            "namespace": obj.properties.get("namespace", ""),
+            "source": obj.properties.get("source", ""),
+            "title": obj.properties.get("title", ""),
+        }
+
+        # Add custom metadata if present
+        metadata_json = obj.properties.get("metadata_json", "")
+        if metadata_json and isinstance(metadata_json, str):
+            try:
+                custom_metadata = json.loads(metadata_json)
+                metadata.update(custom_metadata)
+            except json.JSONDecodeError:
+                logger.warning(f"Failed to parse metadata_json for chunk {obj.uuid}")
+
+        content = obj.properties.get("content", "")
+        content_str = str(content) if content is not None else ""
+
+        return SearchResult(id=str(obj.uuid), content=content_str, score=score, metadata=metadata)
+
     def search(
         self,
         query: str,
@@ -141,84 +240,11 @@ class WeaviateRetriever:
             collection = self.client.collections.get(self.collection_name)
 
             # Build namespace filter if specified
-            filters = None
-            if namespace:
-                from weaviate.classes.query import Filter
+            filters = Filter.by_property("namespace").equal(namespace) if namespace else None
 
-                filters = Filter.by_property("namespace").equal(namespace)
-
-            # Execute search based on mode
-            if mode == "vector":
-                if query_embedding is None:
-                    raise RuntimeError("query_embedding required for vector mode")
-                result = collection.query.near_vector(
-                    near_vector=query_embedding,
-                    limit=top_k,
-                    return_metadata=["distance"],
-                    filters=filters,
-                )
-            elif mode == "bm25":
-                result = collection.query.bm25(
-                    query=query,
-                    limit=top_k,
-                    return_metadata=["score"],
-                    filters=filters,
-                )
-            elif mode == "hybrid":
-                result = collection.query.hybrid(
-                    query=query,
-                    vector=query_embedding,
-                    alpha=alpha,
-                    limit=top_k,
-                    return_metadata=["score"],
-                    filters=filters,
-                )
-            else:
-                raise ValueError(f"Invalid search mode: {mode}")
-
-            # Convert Weaviate results to SearchResult objects
-            search_results = []
-            for obj in result.objects:
-                # Extract score/distance
-                if mode == "vector":
-                    # Convert distance to similarity score (lower distance = higher score)
-                    distance = obj.metadata.distance or 0.0
-                    score = 1.0 / (1.0 + distance)  # Simple conversion
-                else:
-                    score = obj.metadata.score or 0.0
-
-                # Build metadata
-                metadata = {
-                    "doc_id": obj.properties.get("doc_id", ""),
-                    "chunk_index": obj.properties.get("chunk_index", 0),
-                    "namespace": obj.properties.get("namespace", ""),
-                    "source": obj.properties.get("source", ""),
-                    "title": obj.properties.get("title", ""),
-                }
-
-                # Add custom metadata if present
-                metadata_json = obj.properties.get("metadata_json", "")
-                if metadata_json and isinstance(metadata_json, str):
-                    try:
-                        import json
-
-                        custom_metadata = json.loads(metadata_json)
-                        metadata.update(custom_metadata)
-                    except json.JSONDecodeError:
-                        logger.warning(f"Failed to parse metadata_json for chunk {obj.uuid}")
-
-                # Get content as string
-                content = obj.properties.get("content", "")
-                content_str = str(content) if content is not None else ""
-
-                search_results.append(
-                    SearchResult(
-                        id=str(obj.uuid),
-                        content=content_str,
-                        score=score,
-                        metadata=metadata,
-                    )
-                )
+            # Execute search and convert results
+            result = self._execute_query(collection, query, query_embedding, top_k, mode, alpha, filters)
+            search_results = [self._convert_to_search_result(obj, mode) for obj in result.objects]
 
             logger.info(f"Retrieved {len(search_results)} results using {mode} mode")
             return search_results

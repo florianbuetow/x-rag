@@ -143,6 +143,13 @@ make code-style   # Check code style (read-only)
 make code-format  # Auto-fix style issues
 ```
 
+### Fixing Check Failures
+- **NEVER ignore files that fail a check** — fix the code, not the configuration
+- Do NOT add per-file ignores to bypass linting/complexity rules
+- Do NOT raise thresholds just to silence warnings
+- If code is too complex, refactor it into smaller functions
+- Generated code (e.g., `src/proto_gen/`) is already excluded in config — that's the only valid exclusion
+
 Configuration: All linting and formatting rules are in `pyproject.toml` using Ruff with Google-style docstring conventions.
 
 ### Clean Code Principles

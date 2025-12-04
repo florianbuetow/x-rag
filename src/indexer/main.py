@@ -5,6 +5,7 @@ and stores them in Weaviate for retrieval.
 """
 
 import asyncio
+import contextlib
 import logging
 import signal
 import sys
@@ -244,10 +245,8 @@ async def main() -> None:
 
         # Cancel run task
         run_task.cancel()
-        try:
+        with contextlib.suppress(asyncio.CancelledError):
             await run_task
-        except asyncio.CancelledError:
-            pass
 
         # Shutdown
         await service.shutdown()
