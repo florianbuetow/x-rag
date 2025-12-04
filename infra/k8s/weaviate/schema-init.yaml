@@ -25,8 +25,10 @@ data:
     def create_schema():
         schema = {
             "class": "DocumentChunk",
-            "vectorizer": "text2vec-openai",
-            "moduleConfig": {"text2vec-openai": {"model": "text-embedding-3-small"}},
+            "vectorizer": "none",  # We provide our own embeddings via embedding-service
+            "vectorIndexConfig": {
+                "distance": "cosine",
+            },
             "properties": [
                 {"name": "content", "dataType": ["text"]},
                 {"name": "doc_id", "dataType": ["text"]},

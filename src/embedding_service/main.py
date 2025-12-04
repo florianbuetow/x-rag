@@ -116,20 +116,9 @@ class EmbeddingServiceRunner:
         Returns:
             Configured embedding generator instance
         """
-        if self.config.embedding_generator == "hash_based":
-            return EmbeddingGeneratorFactory.create_generator(
-                "hash_based",
-                default_dimension=self.config.hash_based_dimension,
-            )
-        elif self.config.embedding_generator == "openai":
-            return EmbeddingGeneratorFactory.create_generator(
-                "openai",
-                api_key=self.config.openai_api_key,
-                max_retries=self.config.openai_max_retries,
-                timeout=self.config.openai_timeout,
-            )
-        else:
-            raise ValueError(f"Unknown generator: {self.config.embedding_generator}")
+        embedding_config = self.config.get_embedding_config()
+        logger.info(f"Creating {embedding_config.provider.value} embedding generator (model={embedding_config.model})")
+        return EmbeddingGeneratorFactory.create_from_config(embedding_config)
 
     def signal_handler(self, signum: int, frame: FrameType | None) -> None:
         """Handle shutdown signals.

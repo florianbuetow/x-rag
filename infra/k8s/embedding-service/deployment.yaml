@@ -77,12 +77,37 @@ spec:
                 configMapKeyRef:
                   name: embedding-service-config
                   key: MAX_WORKERS
+
+            # OpenAI settings
+            - name: OPENAI_API_BASE
+              valueFrom:
+                configMapKeyRef:
+                  name: embedding-service-config
+                  key: OPENAI_API_BASE
+                  optional: true
+            - name: OPENAI_EMBEDDING_MODEL
+              valueFrom:
+                configMapKeyRef:
+                  name: embedding-service-config
+                  key: OPENAI_EMBEDDING_MODEL
+            - name: OPENAI_MAX_RETRIES
+              valueFrom:
+                configMapKeyRef:
+                  name: embedding-service-config
+                  key: OPENAI_MAX_RETRIES
+            - name: OPENAI_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: embedding-service-config
+                  key: OPENAI_TIMEOUT
+
             # Load from Secret
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: embedding-service-secret
                   key: OPENAI_API_KEY
+                  optional: true
           resources:
             requests:
               cpu: "100m"

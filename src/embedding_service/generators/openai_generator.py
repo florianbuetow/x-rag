@@ -1,6 +1,7 @@
 """OpenAI embedding generator implementation."""
 
 import logging
+from typing import Optional
 
 from openai import APIError, AsyncOpenAI, RateLimitError
 
@@ -17,28 +18,43 @@ class OpenAIEmbeddingGenerator(EmbeddingGenerator):
     text-embedding-3-large with automatic retry logic.
     """
 
-    # Model dimensions mapping
+    # Model dimensions mapping (includes OpenAI and common local models)
     MODEL_DIMENSIONS = {
+        # OpenAI models
         "text-embedding-3-small": 1536,
         "text-embedding-3-large": 3072,
         "text-embedding-ada-002": 1536,
+        # BGE models (via LM Studio or other local servers)
+        "text-embedding-bge-large-en-v1.5": 1024,
+        "bge-large-en-v1.5": 1024,
+        "text-embedding-nomic-embed-text-v1.5": 768,
+        "nomic-embed-text-v1.5": 768,
     }
 
-    def __init__(self, api_key: str, max_retries: int = 3, timeout: int = 30) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        max_retries: int = 3,
+        timeout: int = 30,
+        base_url: Optional[str] = None,
+    ) -> None:
         """Initialize OpenAI generator.
 
         Args:
             api_key: OpenAI API key
             max_retries: Maximum number of retry attempts
             timeout: Request timeout in seconds
+            base_url: Optional base URL for OpenAI-compatible APIs (e.g., LM Studio)
         """
         self.client = AsyncOpenAI(
             api_key=api_key,
             max_retries=max_retries,
             timeout=timeout,
+            base_url=base_url,
         )
         self.max_retries = max_retries
-        logger.info("OpenAIEmbeddingGenerator initialized")
+        base_info = f", base_url={base_url}" if base_url else ""
+        logger.info(f"OpenAIEmbeddingGenerator initialized{base_info}")
 
     async def embed(self, text: str, model: str, **options: object) -> list[float]:
         """Generate embedding for a single text.

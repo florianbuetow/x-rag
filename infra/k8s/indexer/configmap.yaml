@@ -14,7 +14,7 @@ data:
   WEAVIATE_URL: "http://xrag-weaviate:8080"
   WEAVIATE_CLASS: "DocumentChunk"
   EMBEDDING_SERVICE_ADDR: "embedding-service:50051"
-  EMBEDDING_MODEL: "text-embedding-3-small"
+  EMBEDDING_MODEL: "text-embedding-bge-large-en-v1.5"
   CHUNK_SIZE: "500"
   CHUNK_OVERLAP: "50"
   BATCH_SIZE: "10"

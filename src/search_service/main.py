@@ -13,6 +13,7 @@ from types import FrameType
 import grpc
 from prometheus_client import start_http_server
 
+from src.llm.factory import create_llm_client
 from src.llm.openai_client import OpenAIClient
 from src.pipelines.search_pipeline import SearchPipeline
 from src.proto_gen import search_pb2_grpc
@@ -80,14 +81,10 @@ class SearchServiceRunner:
         )
         await self.embedding_client.connect()
 
-        # 3. OpenAI LLM client
-        logger.info(f"Initializing OpenAI client (model={self.config.openai_model})")
-        self.llm_client = OpenAIClient(
-            api_key=self.config.openai_api_key,
-            model=self.config.openai_model,
-            max_retries=self.config.openai_max_retries,
-            timeout=self.config.openai_timeout,
-        )
+        # 3. LLM client (OpenAI or local LLM via factory)
+        llm_config = self.config.get_llm_config()
+        logger.info(f"Initializing LLM client (provider={llm_config.provider.value}, model={llm_config.model})")
+        self.llm_client = create_llm_client(llm_config)
 
         # 4. Search pipeline
         logger.info("Creating search pipeline...")
