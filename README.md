@@ -76,6 +76,23 @@ make code-security
 
 **Configuration:** Bandit is configured in `pyproject.toml` with medium severity and confidence thresholds.
 
+### Dependency Vulnerability Scanning
+
+Scan dependencies for known security vulnerabilities using pip-audit:
+
+```bash
+# Scan dependencies against PyPI Advisory Database and OSV
+make code-audit
+```
+
+**What this does:**
+
+- Checks all installed packages against known CVE databases
+- Reports vulnerabilities with severity and remediation advice
+- Uses PyPI Advisory Database and OSV as data sources
+
+**When to run:** Before releases, periodically (weekly/monthly), or when updating dependencies.
+
 ### Quick Reference
 
 ```bash
