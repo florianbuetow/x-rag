@@ -56,6 +56,7 @@ dev = [
     "bandit[toml]>=1.7.8",
     "deptry>=0.20.0",
     "pygount>=1.6.4",
+    "codespell>=2.3.0",
     # Type stubs
     "types-protobuf>=5.27.0",
     "types-grpcio",
@@ -219,3 +220,18 @@ DEP002 = [
 
 # pygount configuration (reference only - pygount uses CLI args, not pyproject.toml)
 # Run: make code-stats
+
+[tool.codespell]
+# Paths to check
+check-filenames = true
+check-hidden = false
+
+# Directories to skip
+skip = ".git,.venv,venv,build,dist,reports,src/proto_gen,*.lock,uv.lock"
+
+# File extensions to check
+# Empty means "all"; explicit is safer
+# Note: codespell uses comma-separated without spaces for extensions
+
+# Use external ignore file for maintainability
+ignore-words = "config/codespell-ignore.txt"
