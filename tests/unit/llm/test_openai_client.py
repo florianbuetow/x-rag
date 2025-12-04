@@ -28,6 +28,7 @@ class TestOpenAIClientInit:
             api_key="test-key",
             max_retries=3,
             timeout=60,
+            base_url=None,
         )
         assert client.model == "gpt-4o-mini"
 
@@ -47,6 +48,7 @@ class TestOpenAIClientInit:
             api_key="test-key",
             max_retries=5,
             timeout=60,
+            base_url=None,
         )
 
     @patch("src.llm.openai_client.AsyncOpenAI")
@@ -58,6 +60,7 @@ class TestOpenAIClientInit:
             api_key="test-key",
             max_retries=3,
             timeout=120,
+            base_url=None,
         )
 
 
@@ -268,8 +271,9 @@ class TestOpenAIClientHealthCheck:
         await mock_client.health_check()
 
         call_kwargs = mock_client.client.chat.completions.create.call_args[1]
-        assert call_kwargs["max_tokens"] == 1
-        assert call_kwargs["messages"] == [{"role": "user", "content": "test"}]
+        # Uses max_tokens=100 for health check (minimal request)
+        assert call_kwargs["max_tokens"] == 100
+        assert call_kwargs["messages"] == [{"role": "user", "content": "ping"}]
 
     @pytest.mark.asyncio
     async def test_health_check_returns_false_on_error(self, mock_client):
