@@ -254,31 +254,32 @@ class TestOpenAIClientHealthCheck:
 
     @pytest.mark.asyncio
     async def test_health_check_returns_true_on_success(self, mock_client):
-        """Tests that health_check returns True when API responds."""
-        mock_response = MagicMock()
-        mock_client.client.chat.completions.create = AsyncMock(return_value=mock_response)
+        """Tests that health_check returns True when models.list succeeds."""
+        mock_models = MagicMock()
+        mock_client.client.models.list = AsyncMock(return_value=mock_models)
 
         result = await mock_client.health_check()
 
         assert result is True
+        mock_client.client.models.list.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_health_check_makes_minimal_request(self, mock_client):
-        """Tests that health_check makes minimal API request."""
-        mock_response = MagicMock()
-        mock_client.client.chat.completions.create = AsyncMock(return_value=mock_response)
+    async def test_health_check_uses_models_list_not_completions(self, mock_client):
+        """Tests that health_check uses models.list endpoint (no token consumption)."""
+        mock_models = MagicMock()
+        mock_client.client.models.list = AsyncMock(return_value=mock_models)
+        mock_client.client.chat.completions.create = AsyncMock()
 
         await mock_client.health_check()
 
-        call_kwargs = mock_client.client.chat.completions.create.call_args[1]
-        # Uses max_tokens=100 for health check (minimal request)
-        assert call_kwargs["max_tokens"] == 100
-        assert call_kwargs["messages"] == [{"role": "user", "content": "ping"}]
+        # Should use models.list, not chat.completions.create
+        mock_client.client.models.list.assert_called_once()
+        mock_client.client.chat.completions.create.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_health_check_returns_false_on_error(self, mock_client):
         """Tests that health_check returns False on error."""
-        mock_client.client.chat.completions.create = AsyncMock(side_effect=Exception("API Error"))
+        mock_client.client.models.list = AsyncMock(side_effect=Exception("API Error"))
 
         result = await mock_client.health_check()
 
@@ -287,7 +288,7 @@ class TestOpenAIClientHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_returns_false_on_none_response(self, mock_client):
         """Tests that health_check returns False when response is None."""
-        mock_client.client.chat.completions.create = AsyncMock(return_value=None)
+        mock_client.client.models.list = AsyncMock(return_value=None)
 
         result = await mock_client.health_check()
 
