@@ -20,10 +20,7 @@ def create_llm_client(config: LLMConfig) -> OpenAIClient:
     Returns:
         Configured LLM client
     """
-    logger.info(
-        f"Creating LLM client (provider={config.provider.value}, "
-        f"model={config.model}, base_url={config.base_url})"
-    )
+    logger.info(f"Creating LLM client (provider={config.provider.value}, model={config.model}, base_url={config.base_url})")
 
     return OpenAIClient(
         api_key=config.api_key,
