@@ -7,7 +7,7 @@
 .PHONY: cluster-start cluster-stop cluster-status cluster-clean cluster-reset cluster-destroy
 .PHONY: apps-generate-grpc apps-build apps-deploy
 .PHONY: test test-integration test-coverage test-e2e
-.PHONY: code-style code-format code-typecheck code-security code-deptry
+.PHONY: code-style code-format code-typecheck code-security code-deptry code-stats
 .PHONY: ci ci-quiet
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
 .PHONY: logs-weaviate logs-kafka logs-redis
@@ -230,6 +230,18 @@ code-deptry: ## Check dependency hygiene with deptry
 	@uv run deptry src
 	@echo ""
 	@echo "$(GREEN)✓ Dependency checks passed$(NC)"
+	@echo ""
+
+PYGOUNT_DIRS := src/ tests/ proto/ scripts/ infra/ docs/ *.md *.toml
+PYGOUNT_OPTS := --suffix=py,js,html,htm,sh,yaml,yml,proto,md,txt,css,toml,log --format=summary
+
+code-stats: ## Generate code statistics with pygount
+	@echo "$(BLUE)=== Code Statistics ===$(NC)"
+	@mkdir -p reports
+	@uv run pygount $(PYGOUNT_DIRS) $(PYGOUNT_OPTS)
+	@echo ""
+	@uv run pygount $(PYGOUNT_DIRS) $(PYGOUNT_OPTS) > reports/code-stats.txt
+	@echo "$(GREEN)✓ Report saved to reports/code-stats.txt$(NC)"
 	@echo ""
 
 ##@ Testing
