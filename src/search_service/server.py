@@ -98,9 +98,7 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
             sources = []
             for source_dict in result["sources"]:
                 # Convert metadata values to strings (protobuf requires map<string, string>)
-                source_metadata = {
-                    str(k): str(v) for k, v in source_dict.get("metadata", {}).items()
-                }
+                source_metadata = {str(k): str(v) for k, v in source_dict.get("metadata", {}).items()}
                 sources.append(
                     search_pb2.Source(
                         id=source_dict["id"],
