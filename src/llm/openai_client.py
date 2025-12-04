@@ -137,21 +137,22 @@ Answer:"""
         )
 
     async def health_check(self) -> bool:
-        """Check if OpenAI API is accessible.
+        """Check if OpenAI/LLM API is accessible.
+
+        Uses the models list endpoint instead of making a completion call
+        to avoid consuming tokens on every health check.
 
         Returns:
             True if healthy, False otherwise
         """
         try:
-            # Make a minimal API call to test connectivity
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                messages=[{"role": "user", "content": "ping"}],
-                max_tokens=100,
-            )
-            return response is not None
+            # Use models.list() endpoint - doesn't consume tokens
+            # For OpenAI: lists available models
+            # For local LLMs (LM Studio/Ollama): also supports this endpoint
+            models = await self.client.models.list()
+            return models is not None
         except Exception as e:
-            logger.warning(f"OpenAI health check failed: {e}")
+            logger.warning(f"LLM health check failed: {e}")
             return False
 
     async def close(self) -> None:
