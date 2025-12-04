@@ -178,14 +178,15 @@ When testing code changes, **ALWAYS** run these commands in order:
 make code-format    # 1. Auto-fix code style issues
 make code-style     # 2. Verify no linting errors remain
 make code-deptry    # 3. Check dependency hygiene
-make test           # 4. Run test suite
+make code-spell     # 4. Check spelling
+make test           # 5. Run test suite
 ```
 
-**All four must pass before committing code.** No exceptions.
+**All five must pass before committing code.** No exceptions.
 
 Alternatively, run the full CI suite:
 ```bash
-make ci  # Runs all checks: style + types + security + dependencies + tests with coverage
+make ci  # Runs all checks: style + types + security + deps + spelling + tests
 ```
 
 ### Dependency Hygiene
@@ -223,6 +224,24 @@ make code-deptry  # Check dependency hygiene
 
 **Do NOT disable entire rules.** Use `per_rule_ignores` for specific packages only.
 
+### Spellchecking
+
+This project uses **codespell** to catch typos in code and documentation.
+
+**Checking spelling:**
+```bash
+make code-spell  # Check spelling in src, tests, docs, scripts, infra, proto
+```
+
+**Configuration:** Defined in `[tool.codespell]` section of `pyproject.toml`.
+
+**Ignore file:** Domain-specific terms are listed in `config/codespell-ignore.txt`. Add new terms when you encounter false positives.
+
+**When to update the ignore list:**
+- New technology/library names (e.g., `grpcio`, `weaviate`)
+- Project-specific terms (e.g., `xrag`)
+- Legitimate technical terms flagged as typos
+
 ## Version Control
 
 ### Git Commands
@@ -238,7 +257,7 @@ make code-deptry  # Check dependency hygiene
 
 ## Implementation Status
 
-### ✅ Completed (11/13 phases = 85%)
+### ✅ Completed (12/13 phases = 92%)
 - Phase 0: .gitignore
 - Phase 1: Foundation (Makefile, scripts, pyproject.toml, .env.example, directory structure)
 - Phase 2: Infrastructure Implementation (Kind cluster, K8s manifests)
@@ -251,17 +270,39 @@ make code-deptry  # Check dependency hygiene
 - Phase 9: Search UI (FastAPI web interface, Jinja2 templates, async gRPC client)
 - Phase 10: Haystack Integration (DocumentCleaner, DocumentSplitter with overlap support)
 - Phase 11: Testing (546 tests: 538 unit + 8 integration, 78% coverage)
+- Phase 13: Validation (completed December 2025)
 
 ### 📋 Pending
-- Phase 13: Validation
-  1. Fresh clone on new machine
-  2. Run `make check` and `make cluster-start`
-  3. Test search endpoint (POST http://localhost:8080/api/search)
-  4. Test ingestion endpoint (POST http://localhost:8082/ingest)
-  5. Verify monitoring dashboards (Grafana at :3000, Prometheus at :9090)
-  6. Document any issues found
+- None - all phases complete!
 
 ## Recent Fixes
+
+### December 2025 - Phase 13 Validation Results
+
+**Validation Summary**: All systems operational
+- ✅ `make check` - All prerequisites validated (Docker, kubectl, Kind, Helm, uv)
+- ✅ Cluster running with 15/15 pods healthy
+- ✅ Search endpoint working (POST http://localhost:8080/api/search)
+- ✅ Ingestion endpoint working (POST http://localhost:8082/ingest)
+- ✅ Prometheus collecting metrics from all 6 services
+- ✅ Grafana accessible at http://localhost:3000
+
+**Issues Fixed During Validation:**
+1. **Prometheus scrape targets misconfigured** (infra/k8s/monitoring/prometheus.yaml)
+   - Issue: Prometheus was scraping wrong ports for several services
+   - Fix: Updated scrape targets to correct metrics ports:
+     - search-ui: 9091 (was 8080)
+     - search-service: 8080 (was 50051)
+     - embedding-service: 8080 (was 50051)
+     - indexer: 8081 (was 8084)
+
+2. **search-ui service missing metrics port** (infra/k8s/search-ui/service.yaml)
+   - Issue: Service only exposed port 8080, but metrics server runs on 9091
+   - Fix: Added metrics port (9091) to service definition
+
+**Notes:**
+- LLM backend (LM Studio) requires initial model loading on first search request
+- First search request may fail while model loads; subsequent requests work normally
 
 ### December 2025 - Phase 7 Validation & Bug Fixes
 

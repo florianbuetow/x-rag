@@ -7,7 +7,7 @@
 .PHONY: cluster-start cluster-stop cluster-status cluster-clean cluster-reset cluster-destroy
 .PHONY: apps-generate-grpc apps-build apps-deploy
 .PHONY: test test-integration test-coverage test-e2e
-.PHONY: code-style code-format code-typecheck code-security code-deptry code-stats
+.PHONY: code-style code-format code-typecheck code-security code-deptry code-stats code-spell
 .PHONY: ci ci-quiet
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
 .PHONY: logs-weaviate logs-kafka logs-redis
@@ -244,6 +244,13 @@ code-stats: ## Generate code statistics with pygount
 	@echo "$(GREEN)✓ Report saved to reports/code-stats.txt$(NC)"
 	@echo ""
 
+code-spell: ## Check spelling in code and documentation
+	@echo "$(BLUE)=== Checking Spelling ===$(NC)"
+	@uv run codespell src tests docs scripts infra proto *.md *.toml
+	@echo ""
+	@echo "$(GREEN)✓ Spelling checks passed$(NC)"
+	@echo ""
+
 ##@ Testing
 
 test: ## Run unit tests only (fast, no cluster required)
@@ -278,7 +285,7 @@ test-e2e: ## Run E2E tests (destructive - resets cluster and data)
 
 ##@ CI/CD
 
-ci: init code-style code-typecheck code-security code-deptry test ## Run ALL validation checks (style + type checking + security + dependencies + unit tests)
+ci: init code-style code-typecheck code-security code-deptry code-spell test ## Run ALL validation checks (style + types + security + deps + spelling + tests)
 	@echo "$(GREEN)✓ All CI checks passed$(NC)"
 	@echo ""
 
@@ -295,6 +302,8 @@ ci-quiet: ## Run ALL validation checks silently (only show output on errors)
 	echo "$(GREEN)✓ Code-security passed$(NC)"; \
 	$(MAKE) code-deptry > $$TMPFILE 2>&1 || { echo "$(RED)✗ Code-deptry failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
 	echo "$(GREEN)✓ Code-deptry passed$(NC)"; \
+	$(MAKE) code-spell > $$TMPFILE 2>&1 || { echo "$(RED)✗ Code-spell failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
+	echo "$(GREEN)✓ Code-spell passed$(NC)"; \
 	$(MAKE) test > $$TMPFILE 2>&1 || { echo "$(RED)✗ Test failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
 	echo "$(GREEN)✓ Test passed$(NC)"; \
 	rm $$TMPFILE; \
