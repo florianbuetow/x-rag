@@ -1,0 +1,323 @@
+"""Unit tests for src/llm/config.py.
+
+Tests cover:
+- LLMProvider enum
+- EmbeddingProvider enum
+- LLMConfig initialization and validation
+- LLMConfig factory methods (for_openai, for_local)
+- EmbeddingConfig initialization and validation
+- EmbeddingConfig factory methods (for_openai, for_local, for_hash_based)
+"""
+
+import pytest
+from pydantic import ValidationError
+
+from src.llm.config import EmbeddingConfig, EmbeddingProvider, LLMConfig, LLMProvider
+
+
+class TestLLMProvider:
+    """Tests for LLMProvider enum."""
+
+    def test_openai_provider(self):
+        """Tests OPENAI provider value."""
+        assert LLMProvider.OPENAI.value == "openai"
+
+    def test_local_provider(self):
+        """Tests LOCAL provider value."""
+        assert LLMProvider.LOCAL.value == "local"
+
+
+class TestEmbeddingProvider:
+    """Tests for EmbeddingProvider enum."""
+
+    def test_openai_provider(self):
+        """Tests OPENAI provider value."""
+        assert EmbeddingProvider.OPENAI.value == "openai"
+
+    def test_local_provider(self):
+        """Tests LOCAL provider value."""
+        assert EmbeddingProvider.LOCAL.value == "local"
+
+    def test_hash_based_provider(self):
+        """Tests HASH_BASED provider value."""
+        assert EmbeddingProvider.HASH_BASED.value == "hash_based"
+
+
+class TestLLMConfigDefaults:
+    """Tests for LLMConfig default values."""
+
+    def test_defaults(self):
+        """Tests that defaults are set correctly."""
+        config = LLMConfig(provider=LLMProvider.OPENAI, api_key="test-key")
+
+        assert config.provider == LLMProvider.OPENAI
+        assert config.api_key == "test-key"
+        assert config.base_url is None
+        assert config.model == "gpt-4o-mini"
+        assert config.max_tokens == 500
+        assert config.temperature == 0.7
+        assert config.max_retries == 3
+        assert config.timeout == 60
+
+
+class TestLLMConfigValidation:
+    """Tests for LLMConfig validation."""
+
+    def test_empty_api_key_raises(self):
+        """Tests that empty API key raises ValidationError."""
+        with pytest.raises(ValidationError) as exc_info:
+            LLMConfig(provider=LLMProvider.OPENAI, api_key="")
+
+        assert "API key cannot be empty" in str(exc_info.value)
+
+    def test_invalid_temperature_too_high(self):
+        """Tests that temperature > 2.0 raises ValidationError."""
+        with pytest.raises(ValidationError) as exc_info:
+            LLMConfig(provider=LLMProvider.OPENAI, api_key="test", temperature=2.5)
+
+        assert "Temperature must be between" in str(exc_info.value)
+
+    def test_invalid_temperature_negative(self):
+        """Tests that negative temperature raises ValidationError."""
+        with pytest.raises(ValidationError) as exc_info:
+            LLMConfig(provider=LLMProvider.OPENAI, api_key="test", temperature=-0.1)
+
+        assert "Temperature must be between" in str(exc_info.value)
+
+    def test_valid_temperature_boundary(self):
+        """Tests that temperature at boundaries is valid."""
+        config_low = LLMConfig(provider=LLMProvider.OPENAI, api_key="test", temperature=0.0)
+        config_high = LLMConfig(provider=LLMProvider.OPENAI, api_key="test", temperature=2.0)
+
+        assert config_low.temperature == 0.0
+        assert config_high.temperature == 2.0
+
+    def test_invalid_base_url(self):
+        """Tests that invalid base URL raises ValidationError."""
+        with pytest.raises(ValidationError) as exc_info:
+            LLMConfig(provider=LLMProvider.OPENAI, api_key="test", base_url="invalid-url")
+
+        assert "Invalid base URL" in str(exc_info.value)
+
+    def test_base_url_strips_trailing_slash(self):
+        """Tests that base URL trailing slash is stripped."""
+        config = LLMConfig(provider=LLMProvider.OPENAI, api_key="test", base_url="http://localhost:1234/")
+
+        assert config.base_url == "http://localhost:1234"
+
+    def test_empty_base_url_becomes_none(self):
+        """Tests that empty string base URL becomes None."""
+        config = LLMConfig(provider=LLMProvider.OPENAI, api_key="test", base_url="")
+
+        assert config.base_url is None
+
+
+class TestLLMConfigFactoryMethods:
+    """Tests for LLMConfig factory methods."""
+
+    def test_for_openai(self):
+        """Tests for_openai factory method."""
+        config = LLMConfig.for_openai(api_key="sk-test123")
+
+        assert config.provider == LLMProvider.OPENAI
+        assert config.api_key == "sk-test123"
+        assert config.base_url is None
+        assert config.model == "gpt-4o-mini"
+
+    def test_for_openai_with_custom_model(self):
+        """Tests for_openai with custom model."""
+        config = LLMConfig.for_openai(api_key="sk-test", model="gpt-4")
+
+        assert config.model == "gpt-4"
+
+    def test_for_openai_with_kwargs(self):
+        """Tests for_openai with additional kwargs."""
+        config = LLMConfig.for_openai(
+            api_key="sk-test",
+            max_tokens=1000,
+            temperature=0.5,
+        )
+
+        assert config.max_tokens == 1000
+        assert config.temperature == 0.5
+
+    def test_for_local(self):
+        """Tests for_local factory method."""
+        config = LLMConfig.for_local(
+            base_url="http://localhost:1234/v1",
+            model="qwen2.5-7b",
+        )
+
+        assert config.provider == LLMProvider.LOCAL
+        assert config.base_url == "http://localhost:1234/v1"
+        assert config.model == "qwen2.5-7b"
+        assert config.api_key == "local"
+
+    def test_for_local_with_custom_api_key(self):
+        """Tests for_local with custom API key."""
+        config = LLMConfig.for_local(
+            base_url="http://localhost:1234/v1",
+            model="model",
+            api_key="custom-key",
+        )
+
+        assert config.api_key == "custom-key"
+
+
+class TestLLMConfigProperties:
+    """Tests for LLMConfig properties."""
+
+    def test_is_local_with_local_provider(self):
+        """Tests is_local returns True for LOCAL provider."""
+        config = LLMConfig.for_local(
+            base_url="http://localhost:1234/v1",
+            model="model",
+        )
+
+        assert config.is_local is True
+
+    def test_is_local_with_base_url(self):
+        """Tests is_local returns True when base_url is set."""
+        config = LLMConfig(
+            api_key="test",
+            provider=LLMProvider.OPENAI,
+            base_url="http://localhost:1234/v1",
+        )
+
+        assert config.is_local is True
+
+    def test_is_local_with_openai_no_base_url(self):
+        """Tests is_local returns False for OpenAI without base_url."""
+        config = LLMConfig.for_openai(api_key="sk-test")
+
+        assert config.is_local is False
+
+
+class TestEmbeddingConfigDefaults:
+    """Tests for EmbeddingConfig default values."""
+
+    def test_defaults(self):
+        """Tests that defaults are set correctly."""
+        config = EmbeddingConfig(provider=EmbeddingProvider.OPENAI)
+
+        assert config.provider == EmbeddingProvider.OPENAI
+        assert config.model == "text-embedding-3-small"
+        assert config.api_key is None
+        assert config.base_url is None
+        assert config.max_retries == 3
+        assert config.timeout == 30
+        assert config.dimension == 768
+
+
+class TestEmbeddingConfigValidation:
+    """Tests for EmbeddingConfig validation."""
+
+    def test_invalid_base_url(self):
+        """Tests that invalid base URL raises ValidationError."""
+        with pytest.raises(ValidationError) as exc_info:
+            EmbeddingConfig(provider=EmbeddingProvider.OPENAI, base_url="invalid-url")
+
+        assert "Invalid base URL" in str(exc_info.value)
+
+    def test_base_url_strips_trailing_slash(self):
+        """Tests that base URL trailing slash is stripped."""
+        config = EmbeddingConfig(provider=EmbeddingProvider.OPENAI, base_url="http://localhost:1234/")
+
+        assert config.base_url == "http://localhost:1234"
+
+    def test_empty_base_url_becomes_none(self):
+        """Tests that empty string base URL becomes None."""
+        config = EmbeddingConfig(provider=EmbeddingProvider.OPENAI, base_url="")
+
+        assert config.base_url is None
+
+
+class TestEmbeddingConfigFactoryMethods:
+    """Tests for EmbeddingConfig factory methods."""
+
+    def test_for_openai(self):
+        """Tests for_openai factory method."""
+        config = EmbeddingConfig.for_openai(api_key="sk-test123")
+
+        assert config.provider == EmbeddingProvider.OPENAI
+        assert config.api_key == "sk-test123"
+        assert config.base_url is None
+        assert config.model == "text-embedding-3-small"
+
+    def test_for_openai_with_custom_model(self):
+        """Tests for_openai with custom model."""
+        config = EmbeddingConfig.for_openai(
+            api_key="sk-test",
+            model="text-embedding-3-large",
+        )
+
+        assert config.model == "text-embedding-3-large"
+
+    def test_for_local(self):
+        """Tests for_local factory method."""
+        config = EmbeddingConfig.for_local(
+            base_url="http://localhost:1234/v1",
+            model="bge-large-en-v1.5",
+        )
+
+        assert config.provider == EmbeddingProvider.LOCAL
+        assert config.base_url == "http://localhost:1234/v1"
+        assert config.model == "bge-large-en-v1.5"
+        assert config.api_key == "local"
+
+    def test_for_hash_based(self):
+        """Tests for_hash_based factory method."""
+        config = EmbeddingConfig.for_hash_based()
+
+        assert config.provider == EmbeddingProvider.HASH_BASED
+        assert config.model == "hash-based"
+        assert config.dimension == 768
+
+    def test_for_hash_based_with_custom_dimension(self):
+        """Tests for_hash_based with custom dimension."""
+        config = EmbeddingConfig.for_hash_based(dimension=1536)
+
+        assert config.dimension == 1536
+
+
+class TestEmbeddingConfigProperties:
+    """Tests for EmbeddingConfig properties."""
+
+    def test_is_local_with_local_provider(self):
+        """Tests is_local returns True for LOCAL provider."""
+        config = EmbeddingConfig.for_local(
+            base_url="http://localhost:1234/v1",
+            model="model",
+        )
+
+        assert config.is_local is True
+
+    def test_is_local_with_hash_based(self):
+        """Tests is_local returns True for HASH_BASED provider."""
+        config = EmbeddingConfig.for_hash_based()
+
+        assert config.is_local is True
+
+    def test_is_local_with_openai(self):
+        """Tests is_local returns False for OpenAI provider."""
+        config = EmbeddingConfig.for_openai(api_key="sk-test")
+
+        assert config.is_local is False
+
+    def test_requires_api_key_openai(self):
+        """Tests requires_api_key returns True for OpenAI."""
+        config = EmbeddingConfig(provider=EmbeddingProvider.OPENAI)
+
+        assert config.requires_api_key is True
+
+    def test_requires_api_key_local(self):
+        """Tests requires_api_key returns True for LOCAL."""
+        config = EmbeddingConfig(provider=EmbeddingProvider.LOCAL)
+
+        assert config.requires_api_key is True
+
+    def test_requires_api_key_hash_based(self):
+        """Tests requires_api_key returns False for HASH_BASED."""
+        config = EmbeddingConfig.for_hash_based()
+
+        assert config.requires_api_key is False
