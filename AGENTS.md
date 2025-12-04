@@ -171,6 +171,20 @@ This guide covers:
 - When refactoring existing code
 - When unsure about architectural decisions
 
+### Future Tooling (Not Yet Implemented)
+
+The following guides describe tools that may be added in the future:
+
+- **[docs/HYPOTHESIS_GUIDE.md](docs/HYPOTHESIS_GUIDE.md)** - Property-based testing with Hypothesis
+  - Generates random test inputs to find edge cases
+  - Complements existing unit tests
+  - Useful for testing chunking, serialization, and search invariants
+
+- **[docs/SEMGREP_GUIDE.md](docs/SEMGREP_GUIDE.md)** - Semantic static analysis with Semgrep
+  - Pattern-based code analysis (not regex-based like grep)
+  - Encode architectural rules (e.g., "no direct Redis in domain layer")
+  - Catches patterns that ruff/mypy/bandit cannot express
+
 ### Writing Tests
 - **ALWAYS write tests for new Python code**
 - **Update tests when code behavior is intentionally changed**

@@ -639,3 +639,242 @@ class TestHealthCheckMethod:
         # Should handle exception gracefully - weaviate will be unhealthy
         assert response.status == common_pb2.HealthCheckResponse.UNHEALTHY
         assert response.dependencies["weaviate"] == "UNHEALTHY"
+
+
+class TestHelperMethods:
+    """Tests for private helper methods extracted during refactoring."""
+
+    @pytest.fixture
+    def servicer(self, mock_search_pipeline, search_service_config):
+        """Create a SearchServicer instance for testing."""
+        return SearchServicer(
+            pipeline=mock_search_pipeline,
+            config=search_service_config,
+        )
+
+    @pytest.fixture
+    def servicer_dev_mode(self, mock_search_pipeline, search_service_config_dev_mode):
+        """Create a SearchServicer with dev mode config."""
+        return SearchServicer(
+            pipeline=mock_search_pipeline,
+            config=search_service_config_dev_mode,
+        )
+
+    # Tests for _build_search_response
+    def test_build_search_response_basic(self, servicer, sample_search_result):
+        """_build_search_response creates correct protobuf response."""
+        response = servicer._build_search_response(sample_search_result)
+
+        assert response.answer == sample_search_result["answer"]
+        assert len(response.sources) == 2
+        assert response.sources[0].id == "doc1"
+        assert response.sources[0].content == "Machine learning is a subset of artificial intelligence."
+        assert response.sources[0].score == pytest.approx(0.95, rel=1e-5)
+        assert response.metadata["mode"] == "hybrid"
+        assert response.metadata["top_k"] == "10"
+
+    def test_build_search_response_empty_sources(self, servicer):
+        """_build_search_response handles empty sources list."""
+        result = {
+            "answer": "No results found.",
+            "sources": [],
+            "metadata": {
+                "mode": "bm25",
+                "top_k": 5,
+                "namespace": "test",
+                "cache_hit": True,
+                "num_sources": 0,
+            },
+        }
+
+        response = servicer._build_search_response(result)
+
+        assert response.answer == "No results found."
+        assert len(response.sources) == 0
+        assert response.metadata["cache_hit"] == "True"
+        assert response.metadata["num_sources"] == "0"
+
+    def test_build_search_response_metadata_conversion(self, servicer):
+        """_build_search_response converts metadata values to strings."""
+        result = {
+            "answer": "Test answer",
+            "sources": [
+                {
+                    "id": "doc1",
+                    "content": "Content",
+                    "score": 0.8,
+                    "metadata": {"count": 42, "active": True, "ratio": 3.14},
+                }
+            ],
+            "metadata": {
+                "mode": "vector",
+                "top_k": 10,
+                "namespace": "default",
+                "num_sources": 1,
+            },
+        }
+
+        response = servicer._build_search_response(result)
+
+        # Metadata values should be converted to strings
+        source_meta = response.sources[0].metadata
+        assert source_meta["count"] == "42"
+        assert source_meta["active"] == "True"
+        assert source_meta["ratio"] == "3.14"
+
+    # Tests for _determine_health_status
+    def test_determine_health_status_all_healthy(self, servicer):
+        """All healthy returns HEALTHY status."""
+        status, message = servicer._determine_health_status(
+            all_critical_healthy=True,
+            openai_is_critical=True,
+            openai_ok=True,
+        )
+
+        assert status == common_pb2.HealthCheckResponse.HEALTHY
+        assert "healthy" in message.lower()
+        assert "dev mode" not in message.lower()
+
+    def test_determine_health_status_critical_unhealthy(self, servicer):
+        """Critical dependency unhealthy returns UNHEALTHY status."""
+        status, message = servicer._determine_health_status(
+            all_critical_healthy=False,
+            openai_is_critical=True,
+            openai_ok=True,
+        )
+
+        assert status == common_pb2.HealthCheckResponse.UNHEALTHY
+        assert "unhealthy" in message.lower()
+
+    def test_determine_health_status_dev_mode_openai_down(self, servicer):
+        """Dev mode with OpenAI down returns HEALTHY with dev mode message."""
+        status, message = servicer._determine_health_status(
+            all_critical_healthy=True,
+            openai_is_critical=False,
+            openai_ok=False,
+        )
+
+        assert status == common_pb2.HealthCheckResponse.HEALTHY
+        assert "dev mode" in message.lower()
+
+    def test_determine_health_status_dev_mode_all_ok(self, servicer):
+        """Dev mode with all ok returns HEALTHY without dev mode message."""
+        status, message = servicer._determine_health_status(
+            all_critical_healthy=True,
+            openai_is_critical=False,
+            openai_ok=True,
+        )
+
+        assert status == common_pb2.HealthCheckResponse.HEALTHY
+        # When OpenAI is ok, no need to mention dev mode
+        assert "Search service is healthy" in message
+
+    # Tests for _check_dependency
+    @pytest.mark.asyncio
+    async def test_check_dependency_sync_healthy(self, servicer):
+        """_check_dependency with sync function returning True."""
+
+        def sync_check() -> bool:
+            return True
+
+        status, healthy = await servicer._check_dependency("TestService", sync_check, is_async=False)
+
+        assert status == "HEALTHY"
+        assert healthy is True
+
+    @pytest.mark.asyncio
+    async def test_check_dependency_sync_unhealthy(self, servicer):
+        """_check_dependency with sync function returning False."""
+
+        def sync_check() -> bool:
+            return False
+
+        status, healthy = await servicer._check_dependency("TestService", sync_check, is_async=False)
+
+        assert status == "UNHEALTHY"
+        assert healthy is False
+
+    @pytest.mark.asyncio
+    async def test_check_dependency_async_healthy(self, servicer):
+        """_check_dependency with async function returning True."""
+
+        async def async_check() -> bool:
+            return True
+
+        status, healthy = await servicer._check_dependency("TestService", async_check, is_async=True)
+
+        assert status == "HEALTHY"
+        assert healthy is True
+
+    @pytest.mark.asyncio
+    async def test_check_dependency_async_unhealthy(self, servicer):
+        """_check_dependency with async function returning False."""
+
+        async def async_check() -> bool:
+            return False
+
+        status, healthy = await servicer._check_dependency("TestService", async_check, is_async=True)
+
+        assert status == "UNHEALTHY"
+        assert healthy is False
+
+    @pytest.mark.asyncio
+    async def test_check_dependency_sync_exception(self, servicer):
+        """_check_dependency handles sync function exception."""
+
+        def sync_check() -> bool:
+            raise RuntimeError("Connection failed")
+
+        status, healthy = await servicer._check_dependency("TestService", sync_check, is_async=False)
+
+        assert status == "UNHEALTHY"
+        assert healthy is False
+
+    @pytest.mark.asyncio
+    async def test_check_dependency_async_exception(self, servicer):
+        """_check_dependency handles async function exception."""
+
+        async def async_check() -> bool:
+            raise RuntimeError("Connection failed")
+
+        status, healthy = await servicer._check_dependency("TestService", async_check, is_async=True)
+
+        assert status == "UNHEALTHY"
+        assert healthy is False
+
+    # Tests for _parse_alpha
+    @pytest.mark.asyncio
+    async def test_parse_alpha_default(self, servicer, mock_async_grpc_context):
+        """_parse_alpha returns config default when not specified."""
+        request = search_pb2.SearchRequest(query="test")
+
+        alpha = await servicer._parse_alpha(request, mock_async_grpc_context)
+
+        assert alpha == 0.5  # Default from config
+
+    @pytest.mark.asyncio
+    async def test_parse_alpha_valid_value(self, servicer, mock_async_grpc_context):
+        """_parse_alpha parses valid alpha value."""
+        request = search_pb2.SearchRequest(query="test", options={"alpha": "0.8"})
+
+        alpha = await servicer._parse_alpha(request, mock_async_grpc_context)
+
+        assert alpha == 0.8
+
+    @pytest.mark.asyncio
+    async def test_parse_alpha_boundary_zero(self, servicer, mock_async_grpc_context):
+        """_parse_alpha accepts alpha=0.0."""
+        request = search_pb2.SearchRequest(query="test", options={"alpha": "0.0"})
+
+        alpha = await servicer._parse_alpha(request, mock_async_grpc_context)
+
+        assert alpha == 0.0
+
+    @pytest.mark.asyncio
+    async def test_parse_alpha_boundary_one(self, servicer, mock_async_grpc_context):
+        """_parse_alpha accepts alpha=1.0."""
+        request = search_pb2.SearchRequest(query="test", options={"alpha": "1.0"})
+
+        alpha = await servicer._parse_alpha(request, mock_async_grpc_context)
+
+        assert alpha == 1.0
