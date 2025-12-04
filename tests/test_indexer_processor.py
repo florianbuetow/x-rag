@@ -487,3 +487,227 @@ class TestDocumentIndexer:
 
         # No Weaviate connection should be made
         assert indexer.weaviate_client is None
+
+    @patch("src.indexer.processor.weaviate.connect_to_custom")
+    @patch("src.indexer.processor.GrpcEmbeddingServiceClient")
+    def test_get_weaviate_client_url_without_port(
+        self,
+        mock_embedding_client_class,
+        mock_weaviate_connect,
+    ):
+        """Test Weaviate client initialization with URL without port."""
+        from src.indexer.config import IndexerConfig
+
+        config = IndexerConfig(
+            minio_endpoint="localhost:9000",
+            minio_access_key="minioadmin",
+            minio_secret_key="minioadmin123",
+            minio_secure=False,
+            weaviate_url="http://weaviate",  # No port!
+            weaviate_class="TestCollection",
+            embedding_service_addr="embedding-service:50051",
+            embedding_model="test-model",
+            kafka_bootstrap="kafka:9092",
+            kafka_topic="test-topic",
+            batch_size=10,
+            chunk_size=500,
+        )
+
+        mock_client_instance = Mock()
+        mock_embedding_client_class.return_value = mock_client_instance
+
+        mock_weaviate_client = Mock()
+        mock_weaviate_connect.return_value = mock_weaviate_client
+
+        indexer = DocumentIndexer(config)
+        client = indexer._get_weaviate_client()
+
+        # Verify client was returned
+        assert client == mock_weaviate_client
+
+        # Verify default port 8080 is used
+        mock_weaviate_connect.assert_called_once_with(
+            http_host="weaviate",
+            http_port=8080,
+            http_secure=False,
+            grpc_host="weaviate",
+            grpc_port=50051,
+            grpc_secure=False,
+        )
+
+    @patch("src.indexer.processor.weaviate.connect_to_custom")
+    @patch("src.indexer.processor.GrpcEmbeddingServiceClient")
+    def test_close_with_weaviate_client(
+        self,
+        mock_embedding_client_class,
+        mock_weaviate_connect,
+    ):
+        """Test closing indexer with Weaviate client connected."""
+        from src.indexer.config import IndexerConfig
+
+        config = IndexerConfig(
+            minio_endpoint="localhost:9000",
+            minio_access_key="minioadmin",
+            minio_secret_key="minioadmin123",
+            minio_secure=False,
+            weaviate_url="http://weaviate:8080",
+            weaviate_class="TestCollection",
+            embedding_service_addr="embedding-service:50051",
+            embedding_model="test-model",
+            kafka_bootstrap="kafka:9092",
+            kafka_topic="test-topic",
+            batch_size=10,
+            chunk_size=500,
+        )
+
+        mock_client_instance = Mock()
+        mock_embedding_client_class.return_value = mock_client_instance
+
+        mock_weaviate_client = Mock()
+        mock_weaviate_connect.return_value = mock_weaviate_client
+
+        indexer = DocumentIndexer(config)
+
+        # Connect to Weaviate
+        client = indexer._get_weaviate_client()
+        assert client == mock_weaviate_client
+
+        # Close indexer
+        indexer.close()
+
+        # Verify both clients are closed
+        mock_client_instance.close.assert_called_once()
+        mock_weaviate_client.close.assert_called_once()
+
+    @patch("src.indexer.processor.IndexingPipeline")
+    @patch("src.indexer.processor.asyncio.to_thread")
+    @patch("src.indexer.processor.weaviate.connect_to_custom")
+    @patch("src.indexer.processor.GrpcEmbeddingServiceClient")
+    @pytest.mark.asyncio
+    async def test_process_event_new_document(
+        self,
+        mock_embedding_client_class,
+        mock_weaviate_connect,
+        mock_to_thread,
+        mock_pipeline_class,
+    ):
+        """Test processing event for new document."""
+        from src.indexer.config import IndexerConfig
+
+        config = IndexerConfig(
+            minio_endpoint="localhost:9000",
+            minio_access_key="minioadmin",
+            minio_secret_key="minioadmin123",
+            minio_secure=False,
+            weaviate_url="http://weaviate:8080",
+            weaviate_class="TestCollection",
+            embedding_service_addr="embedding-service:50051",
+            embedding_model="test-model",
+            kafka_bootstrap="kafka:9092",
+            kafka_topic="test-topic",
+            batch_size=10,
+            chunk_size=500,
+        )
+
+        mock_client_instance = Mock()
+        mock_embedding_client_class.return_value = mock_client_instance
+
+        # Setup Weaviate mock with no existing document
+        mock_collection = Mock()
+        mock_existing_result = Mock()
+        mock_existing_result.objects = []  # No existing document
+        mock_collection.query.fetch_objects.return_value = mock_existing_result
+
+        mock_weaviate_client = Mock()
+        mock_weaviate_client.collections.get.return_value = mock_collection
+        mock_weaviate_connect.return_value = mock_weaviate_client
+
+        # Make to_thread execute synchronously for testing
+        call_count = 0
+
+        async def async_execute(func, *args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                # First call is fetch_objects
+                return func(*args, **kwargs)
+            else:
+                # Second call is pipeline.process_document
+                return 5  # Number of chunks
+
+        mock_to_thread.side_effect = async_execute
+
+        # Setup pipeline mock
+        mock_pipeline = Mock()
+        mock_pipeline.process_document.return_value = 5
+        mock_pipeline_class.return_value = mock_pipeline
+
+        indexer = DocumentIndexer(config)
+
+        # Process event for new document
+        event = {
+            "event_type": "document.ingested",
+            "document_id": "doc123",
+            "namespace": "test",
+            "minio_bucket": "documents",
+            "minio_key": "doc123.json",
+        }
+
+        await indexer.process_event(event)
+
+        # Verify document was processed
+        assert mock_to_thread.call_count == 2
+
+    @patch("src.indexer.processor.asyncio.to_thread")
+    @patch("src.indexer.processor.weaviate.connect_to_custom")
+    @patch("src.indexer.processor.GrpcEmbeddingServiceClient")
+    @pytest.mark.asyncio
+    async def test_process_event_raises_on_error(
+        self,
+        mock_embedding_client_class,
+        mock_weaviate_connect,
+        mock_to_thread,
+    ):
+        """Test processing event raises error on failure."""
+        from src.indexer.config import IndexerConfig
+
+        config = IndexerConfig(
+            minio_endpoint="localhost:9000",
+            minio_access_key="minioadmin",
+            minio_secret_key="minioadmin123",
+            minio_secure=False,
+            weaviate_url="http://weaviate:8080",
+            weaviate_class="TestCollection",
+            embedding_service_addr="embedding-service:50051",
+            embedding_model="test-model",
+            kafka_bootstrap="kafka:9092",
+            kafka_topic="test-topic",
+            batch_size=10,
+            chunk_size=500,
+        )
+
+        mock_client_instance = Mock()
+        mock_embedding_client_class.return_value = mock_client_instance
+
+        # Setup Weaviate mock
+        mock_weaviate_client = Mock()
+        mock_weaviate_connect.return_value = mock_weaviate_client
+
+        # Make to_thread raise an exception
+        async def raise_error(func, *args, **kwargs):
+            raise RuntimeError("Processing failed")
+
+        mock_to_thread.side_effect = raise_error
+
+        indexer = DocumentIndexer(config)
+
+        event = {
+            "event_type": "document.ingested",
+            "document_id": "doc123",
+            "namespace": "test",
+            "minio_bucket": "documents",
+            "minio_key": "doc123.json",
+        }
+
+        with pytest.raises(RuntimeError, match="Processing failed"):
+            await indexer.process_event(event)
