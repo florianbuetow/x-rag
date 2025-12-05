@@ -15,6 +15,7 @@ import weaviate
 from weaviate import WeaviateClient
 
 from src.common.metrics import track_latency
+from src.common.tracing_utils import trace_document_processing, trace_embedding_generation
 from src.indexer.config import IndexerConfig
 from src.indexer.grpc_clients import EmbeddingServiceClient as GrpcEmbeddingServiceClient
 from src.indexer.metrics import (
@@ -73,7 +74,10 @@ class BatchEmbedder:
         all_embeddings = []
 
         # Process in batches
-        with track_latency(embedding_duration):
+        with (
+            track_latency(embedding_duration),
+            trace_embedding_generation(model=self.model, chunk_count=len(texts)) as embed_span,
+        ):
             for i in range(0, len(texts), self.batch_size):
                 batch = texts[i : i + self.batch_size]
                 logger.debug(f"Generating embeddings for batch {i // self.batch_size + 1} ({len(batch)} texts)")
@@ -83,6 +87,8 @@ class BatchEmbedder:
                     model=self.model,
                 )
                 all_embeddings.extend(embeddings)
+
+            embed_span.set_attribute("embedding.batch_count", (len(texts) + self.batch_size - 1) // self.batch_size)
 
         return all_embeddings
 
@@ -322,12 +328,16 @@ class DocumentIndexer:
             collection = weaviate_client.collections.get(self.config.weaviate_class)
 
             # Query for existing chunks with this doc_id (async) with metrics
-            with track_latency(duplicate_check_duration):
+            with (
+                track_latency(duplicate_check_duration),
+                trace_document_processing(document_id, "duplicate_check") as dup_span,
+            ):
                 existing = await asyncio.to_thread(
                     collection.query.fetch_objects,
                     filters=weaviate.classes.query.Filter.by_property("doc_id").equal(document_id),
                     limit=1,
                 )
+                dup_span.set_attribute("document.existing_chunks", len(existing.objects))
 
             if len(existing.objects) > 0:
                 logger.info(f"Document {document_id} already indexed ({len(existing.objects)} chunks found), skipping...")
@@ -344,11 +354,16 @@ class DocumentIndexer:
             )
 
             # Process document through pipeline (async)
-            num_chunks = await asyncio.to_thread(
-                pipeline.process_document,
-                bucket=minio_bucket,
-                key=minio_key,
-            )
+            with trace_document_processing(document_id, "pipeline") as pipeline_span:
+                pipeline_span.set_attribute("document.namespace", namespace)
+                pipeline_span.set_attribute("document.bucket", minio_bucket)
+                pipeline_span.set_attribute("document.key", minio_key)
+                num_chunks = await asyncio.to_thread(
+                    pipeline.process_document,
+                    bucket=minio_bucket,
+                    key=minio_key,
+                )
+                pipeline_span.set_attribute("document.chunk_count", num_chunks)
 
             logger.info(f"✓ Successfully processed document {document_id} ({num_chunks} chunks)")
             return {"chunks_created": num_chunks, "skipped": False}

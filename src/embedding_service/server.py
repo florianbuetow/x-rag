@@ -6,6 +6,7 @@ import grpc
 
 from src.common.health import HealthChecker
 from src.common.metrics import track_latency
+from src.common.tracing_utils import trace_embedding_generation
 from src.core.errors import ServiceUnavailableError
 from src.embedding_service.generators.embedding_generator import EmbeddingGenerator
 from src.embedding_service.metrics import (
@@ -69,11 +70,14 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
 
                 # Generate embedding
                 logger.debug(f"Generating embedding for text (model={model})")
-                with track_latency(backend_duration, {"model": model}):
+                with (
+                    track_latency(backend_duration, {"model": model}),
+                    trace_embedding_generation(model=model, chunk_count=1) as embed_span,
+                ):
                     embedding = await self.generator.embed(request.text, model, **options)
-
-                # Get dimension
-                dimension = self.generator.get_dimension(model)
+                    dimension = self.generator.get_dimension(model)
+                    embed_span.set_attribute("embedding.dimensions", dimension)
+                    embed_span.set_attribute("embedding.text_length", len(request.text))
 
                 # Record embedding generated
                 embeddings_total.labels(model=model).inc()
@@ -144,11 +148,15 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
 
                 # Generate embeddings
                 logger.debug(f"Generating {num_texts} embeddings in batch (model={model})")
-                with track_latency(backend_duration, {"model": model}):
+                with (
+                    track_latency(backend_duration, {"model": model}),
+                    trace_embedding_generation(model=model, chunk_count=num_texts) as embed_span,
+                ):
                     embeddings = await self.generator.embed_batch(list(request.texts), model, **options)
-
-                # Get dimension
-                dimension = self.generator.get_dimension(model)
+                    dimension = self.generator.get_dimension(model)
+                    embed_span.set_attribute("embedding.dimensions", dimension)
+                    total_text_length = sum(len(t) for t in request.texts)
+                    embed_span.set_attribute("embedding.total_text_length", total_text_length)
 
                 # Record embeddings generated
                 embeddings_total.labels(model=model).inc(num_texts)

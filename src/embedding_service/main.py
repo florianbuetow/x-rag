@@ -11,8 +11,10 @@ import sys
 from types import FrameType
 
 import grpc
+from opentelemetry.instrumentation.grpc import GrpcAioInstrumentorServer
 from prometheus_client import start_http_server
 
+from src.common.tracing import init_tracing, shutdown_tracing
 from src.embedding_service.config import EmbeddingServiceConfig
 from src.embedding_service.generators.embedding_generator import EmbeddingGenerator
 from src.embedding_service.generators.factory import EmbeddingGeneratorFactory
@@ -47,6 +49,12 @@ class EmbeddingServiceRunner:
     async def start(self) -> None:
         """Start the gRPC server."""
         logger.info(f"Starting {self.config.service_name}...")
+
+        # Initialize distributed tracing
+        init_tracing(service_name=self.config.service_name)
+
+        # Instrument gRPC server for distributed tracing
+        GrpcAioInstrumentorServer().instrument()  # type: ignore[no-untyped-call]
 
         # Start Prometheus metrics server
         metrics_port = 8080
@@ -105,8 +113,12 @@ class EmbeddingServiceRunner:
 
     async def stop(self) -> None:
         """Stop the gRPC server gracefully."""
+        logger.info("Shutting down server...")
+
+        # Shutdown tracing
+        shutdown_tracing()
+
         if self.server:
-            logger.info("Shutting down server...")
             await self.server.stop(grace=5.0)
             logger.info("Server stopped")
 

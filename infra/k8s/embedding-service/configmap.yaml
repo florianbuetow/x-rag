@@ -24,3 +24,7 @@ data:
   OPENAI_EMBEDDING_MODEL: "text-embedding-bge-large-en-v1.5"
   OPENAI_MAX_RETRIES: "3"
   OPENAI_TIMEOUT: "30"
+
+  # Distributed tracing (OpenTelemetry)
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://xrag-tempo:4317"
+  ENVIRONMENT: "development"
