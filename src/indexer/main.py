@@ -14,10 +14,17 @@ from threading import Thread
 from types import FrameType
 from typing import cast
 
-from prometheus_client import Counter, Histogram, start_http_server
+from prometheus_client import start_http_server
 
 from src.indexer.config import IndexerConfig
 from src.indexer.consumer import DocumentEventConsumer
+from src.indexer.metrics import (
+    active_documents,
+    chunks_created_total,
+    documents_processed_total,
+    errors_total,
+    processing_duration,
+)
 from src.indexer.processor import DocumentIndexer
 
 
@@ -34,23 +41,6 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
-
-# Prometheus Metrics
-PROCESSED_DOCS = Counter(
-    "indexer_documents_processed_total",
-    "Total documents processed",
-    ["status", "namespace"],
-)
-PROCESSING_DURATION = Histogram(
-    "indexer_processing_duration_seconds",
-    "Time to process a document",
-    ["namespace"],
-)
-CHUNKS_CREATED = Counter(
-    "indexer_chunks_created_total",
-    "Total chunks created",
-    ["namespace"],
-)
 
 
 class HealthCheckHandler(BaseHTTPRequestHandler):
@@ -183,14 +173,21 @@ class IndexerService:
         try:
             async for event in self.consumer.consume():
                 namespace = event.get("namespace", "default")
+                active_documents.inc()
 
-                with PROCESSING_DURATION.labels(namespace=namespace).time():
+                with processing_duration.labels(namespace=namespace).time():
                     try:
-                        await self.indexer.process_event(event)
-                        PROCESSED_DOCS.labels(status="success", namespace=namespace).inc()
+                        result = await self.indexer.process_event(event)
+                        documents_processed_total.labels(status="success", namespace=namespace).inc()
+                        # Record chunks created if available
+                        if result and "chunks_created" in result:
+                            chunks_created_total.labels(namespace=namespace).inc(result["chunks_created"])
                     except Exception as e:
                         logger.error(f"Failed to process event: {e}", exc_info=True)
-                        PROCESSED_DOCS.labels(status="error", namespace=namespace).inc()
+                        documents_processed_total.labels(status="error", namespace=namespace).inc()
+                        errors_total.labels(stage="processing", error_type=type(e).__name__).inc()
+                    finally:
+                        active_documents.dec()
 
         except asyncio.CancelledError:
             logger.info("Indexer task cancelled")

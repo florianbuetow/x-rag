@@ -14,8 +14,14 @@ from typing import Any, cast
 import weaviate
 from weaviate import WeaviateClient
 
+from src.common.metrics import track_latency
 from src.indexer.config import IndexerConfig
 from src.indexer.grpc_clients import EmbeddingServiceClient as GrpcEmbeddingServiceClient
+from src.indexer.metrics import (
+    duplicate_check_duration,
+    embedding_duration,
+    weaviate_insert_duration,
+)
 from src.pipelines.indexing_pipeline import (
     BasicTextCleaner,
     ChunkIngestionInterface,
@@ -67,15 +73,16 @@ class BatchEmbedder:
         all_embeddings = []
 
         # Process in batches
-        for i in range(0, len(texts), self.batch_size):
-            batch = texts[i : i + self.batch_size]
-            logger.debug(f"Generating embeddings for batch {i // self.batch_size + 1} ({len(batch)} texts)")
+        with track_latency(embedding_duration):
+            for i in range(0, len(texts), self.batch_size):
+                batch = texts[i : i + self.batch_size]
+                logger.debug(f"Generating embeddings for batch {i // self.batch_size + 1} ({len(batch)} texts)")
 
-            embeddings = self.client.embed_batch(
-                texts=batch,
-                model=self.model,
-            )
-            all_embeddings.extend(embeddings)
+                embeddings = self.client.embed_batch(
+                    texts=batch,
+                    model=self.model,
+                )
+                all_embeddings.extend(embeddings)
 
         return all_embeddings
 
@@ -131,9 +138,9 @@ class WeaviateBatchInserter:
             }
             objects.append((obj, embedding))
 
-        # Batch insert
+        # Batch insert with metrics
         logger.debug(f"Inserting {len(objects)} chunks into Weaviate collection {self.collection_name}")
-        with collection.batch.dynamic() as batch:
+        with track_latency(weaviate_insert_duration), collection.batch.dynamic() as batch:
             for obj, vector in objects:
                 batch.add_object(properties=obj, vector=vector)
 
@@ -285,11 +292,14 @@ class DocumentIndexer:
         if self.weaviate_client:
             self.weaviate_client.close()
 
-    async def process_event(self, event: dict[str, Any]) -> None:
+    async def process_event(self, event: dict[str, Any]) -> dict[str, Any]:
         """Process a document ingestion event.
 
         Args:
             event: Event dictionary from Kafka
+
+        Returns:
+            Dictionary with processing results including chunks_created
 
         Raises:
             Exception: If processing fails
@@ -304,23 +314,24 @@ class DocumentIndexer:
 
         if event_type != "document.ingested":
             logger.warning(f"Unknown event type: {event_type}")
-            return
+            return {"chunks_created": 0, "skipped": True, "reason": "unknown_event_type"}
 
         try:
             # Check if document already exists in Weaviate (duplicate detection)
             weaviate_client = self._get_weaviate_client()
             collection = weaviate_client.collections.get(self.config.weaviate_class)
 
-            # Query for existing chunks with this doc_id (async)
-            existing = await asyncio.to_thread(
-                collection.query.fetch_objects,
-                filters=weaviate.classes.query.Filter.by_property("doc_id").equal(document_id),
-                limit=1,
-            )
+            # Query for existing chunks with this doc_id (async) with metrics
+            with track_latency(duplicate_check_duration):
+                existing = await asyncio.to_thread(
+                    collection.query.fetch_objects,
+                    filters=weaviate.classes.query.Filter.by_property("doc_id").equal(document_id),
+                    limit=1,
+                )
 
             if len(existing.objects) > 0:
                 logger.info(f"Document {document_id} already indexed ({len(existing.objects)} chunks found), skipping...")
-                return
+                return {"chunks_created": 0, "skipped": True, "reason": "duplicate"}
 
             # Create indexing pipeline with Weaviate client
             chunk_ingester = self._chunk_ingester_factory()
@@ -340,6 +351,7 @@ class DocumentIndexer:
             )
 
             logger.info(f"✓ Successfully processed document {document_id} ({num_chunks} chunks)")
+            return {"chunks_created": num_chunks, "skipped": False}
 
         except Exception as e:
             logger.error(f"Failed to process document {document_id}: {e}", exc_info=True)

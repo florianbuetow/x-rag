@@ -5,8 +5,18 @@ import logging
 import grpc
 
 from src.common.health import HealthChecker
+from src.common.metrics import track_latency
 from src.core.errors import ServiceUnavailableError
 from src.embedding_service.generators.embedding_generator import EmbeddingGenerator
+from src.embedding_service.metrics import (
+    active_requests,
+    backend_duration,
+    batch_size,
+    embeddings_total,
+    errors_total,
+    request_duration,
+    requests_total,
+)
 from src.proto_gen import common_pb2, embedding_pb2, embedding_pb2_grpc
 
 logger = logging.getLogger(__name__)
@@ -44,24 +54,31 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
         Returns:
             EmbedResponse with embedding vector
         """
+        active_requests.labels(method="Embed").inc()
         try:
-            # Validate request
-            if not request.text:
-                await context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Text cannot be empty")
+            with track_latency(request_duration, {"method": "Embed"}):
+                # Validate request
+                if not request.text:
+                    await context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Text cannot be empty")
 
-            # Use default model if not specified
-            model = request.model or self.default_model
+                # Use default model if not specified
+                model = request.model or self.default_model
 
-            # Convert options map to dict
-            options = dict(request.options) if request.options else {}
+                # Convert options map to dict
+                options = dict(request.options) if request.options else {}
 
-            # Generate embedding
-            logger.debug(f"Generating embedding for text (model={model})")
-            embedding = await self.generator.embed(request.text, model, **options)
+                # Generate embedding
+                logger.debug(f"Generating embedding for text (model={model})")
+                with track_latency(backend_duration, {"model": model}):
+                    embedding = await self.generator.embed(request.text, model, **options)
 
-            # Get dimension
-            dimension = self.generator.get_dimension(model)
+                # Get dimension
+                dimension = self.generator.get_dimension(model)
 
+                # Record embedding generated
+                embeddings_total.labels(model=model).inc()
+
+            requests_total.labels(method="Embed", status="success").inc()
             return embedding_pb2.EmbedResponse(
                 embedding=embedding,
                 dimension=dimension,
@@ -70,19 +87,29 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
 
         except grpc.RpcError:
             # Re-raise gRPC errors (already aborted)
+            requests_total.labels(method="Embed", status="error").inc()
             raise
 
         except ServiceUnavailableError as e:
             logger.error(f"Service unavailable: {e}")
+            requests_total.labels(method="Embed", status="error").inc()
+            errors_total.labels(method="Embed", error_type="ServiceUnavailableError").inc()
             await context.abort(grpc.StatusCode.UNAVAILABLE, str(e))
 
         except ValueError as e:
             logger.error(f"Invalid request: {e}")
+            requests_total.labels(method="Embed", status="error").inc()
+            errors_total.labels(method="Embed", error_type="ValueError").inc()
             await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
 
         except Exception as e:
             logger.error(f"Unexpected error in Embed: {e}")
+            requests_total.labels(method="Embed", status="error").inc()
+            errors_total.labels(method="Embed", error_type=type(e).__name__).inc()
             await context.abort(grpc.StatusCode.INTERNAL, f"Internal error: {e}")
+
+        finally:
+            active_requests.labels(method="Embed").dec()
 
     async def EmbedBatch(
         self,
@@ -98,51 +125,72 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
         Returns:
             EmbedBatchResponse with list of embeddings
         """
+        active_requests.labels(method="EmbedBatch").inc()
         try:
-            # Validate request
-            if not request.texts:
-                await context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Texts list cannot be empty")
+            with track_latency(request_duration, {"method": "EmbedBatch"}):
+                # Validate request
+                if not request.texts:
+                    await context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Texts list cannot be empty")
 
-            # Use default model if not specified
-            model = request.model or self.default_model
+                # Use default model if not specified
+                model = request.model or self.default_model
 
-            # Convert options map to dict
-            options = dict(request.options) if request.options else {}
+                # Convert options map to dict
+                options = dict(request.options) if request.options else {}
 
-            # Generate embeddings
-            logger.debug(f"Generating {len(request.texts)} embeddings in batch (model={model})")
-            embeddings = await self.generator.embed_batch(list(request.texts), model, **options)
+                # Record batch size
+                num_texts = len(request.texts)
+                batch_size.observe(num_texts)
 
-            # Get dimension
-            dimension = self.generator.get_dimension(model)
+                # Generate embeddings
+                logger.debug(f"Generating {num_texts} embeddings in batch (model={model})")
+                with track_latency(backend_duration, {"model": model}):
+                    embeddings = await self.generator.embed_batch(list(request.texts), model, **options)
 
-            # Build response with individual EmbedResponse messages
-            embed_responses = [
-                embedding_pb2.EmbedResponse(
-                    embedding=emb,
-                    dimension=dimension,
-                    model=model,
-                )
-                for emb in embeddings
-            ]
+                # Get dimension
+                dimension = self.generator.get_dimension(model)
 
+                # Record embeddings generated
+                embeddings_total.labels(model=model).inc(num_texts)
+
+                # Build response with individual EmbedResponse messages
+                embed_responses = [
+                    embedding_pb2.EmbedResponse(
+                        embedding=emb,
+                        dimension=dimension,
+                        model=model,
+                    )
+                    for emb in embeddings
+                ]
+
+            requests_total.labels(method="EmbedBatch", status="success").inc()
             return embedding_pb2.EmbedBatchResponse(embeddings=embed_responses)
 
         except grpc.RpcError:
             # Re-raise gRPC errors (already aborted)
+            requests_total.labels(method="EmbedBatch", status="error").inc()
             raise
 
         except ServiceUnavailableError as e:
             logger.error(f"Service unavailable: {e}")
+            requests_total.labels(method="EmbedBatch", status="error").inc()
+            errors_total.labels(method="EmbedBatch", error_type="ServiceUnavailableError").inc()
             await context.abort(grpc.StatusCode.UNAVAILABLE, str(e))
 
         except ValueError as e:
             logger.error(f"Invalid request: {e}")
+            requests_total.labels(method="EmbedBatch", status="error").inc()
+            errors_total.labels(method="EmbedBatch", error_type="ValueError").inc()
             await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
 
         except Exception as e:
             logger.error(f"Unexpected error in EmbedBatch: {e}")
+            requests_total.labels(method="EmbedBatch", status="error").inc()
+            errors_total.labels(method="EmbedBatch", error_type=type(e).__name__).inc()
             await context.abort(grpc.StatusCode.INTERNAL, f"Internal error: {e}")
+
+        finally:
+            active_requests.labels(method="EmbedBatch").dec()
 
     async def HealthCheck(
         self,

@@ -6,9 +6,16 @@ from typing import Any, Literal, cast
 
 import grpc
 
+from src.common.metrics import track_latency
 from src.pipelines.search_pipeline import SearchPipeline
 from src.proto_gen import common_pb2, search_pb2, search_pb2_grpc
 from src.search_service.config import SearchServiceConfig
+from src.search_service.metrics import (
+    active_requests,
+    errors_total,
+    request_duration,
+    requests_total,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -188,37 +195,47 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
         Returns:
             SearchResponse with answer and sources
         """
+        active_requests.labels(method="Search").inc()
         try:
-            # Validate and extract parameters
-            query, namespace, top_k, mode, alpha = await self._validate_search_params(request, context)
+            with track_latency(request_duration, {"method": "Search"}):
+                # Validate and extract parameters
+                query, namespace, top_k, mode, alpha = await self._validate_search_params(request, context)
 
-            logger.info(f"Search request: query='{query[:50]}...', mode={mode}, top_k={top_k}, namespace={namespace}")
+                logger.info(f"Search request: query='{query[:50]}...', mode={mode}, top_k={top_k}, namespace={namespace}")
 
-            # Execute search pipeline
-            # Cast mode to literal type after validation
-            search_mode = cast(Literal["vector", "bm25", "hybrid"], mode)
-            result = await self.pipeline.search(
-                query=query,
-                top_k=top_k,
-                mode=search_mode,
-                alpha=alpha,
-                namespace=namespace,
-                openai_max_tokens=self.config.openai_max_tokens,
-                openai_temperature=self.config.openai_temperature,
-            )
+                # Execute search pipeline
+                # Cast mode to literal type after validation
+                search_mode = cast(Literal["vector", "bm25", "hybrid"], mode)
+                result = await self.pipeline.search(
+                    query=query,
+                    top_k=top_k,
+                    mode=search_mode,
+                    alpha=alpha,
+                    namespace=namespace,
+                    openai_max_tokens=self.config.openai_max_tokens,
+                    openai_temperature=self.config.openai_temperature,
+                )
 
-            # Build and return response
-            response = self._build_search_response(result)
-            logger.info(f"Search completed: {len(response.sources)} sources, cache_hit={result['metadata'].get('cache_hit', False)}")
+                # Build and return response
+                response = self._build_search_response(result)
+                logger.info(f"Search completed: {len(response.sources)} sources, cache_hit={result['metadata'].get('cache_hit', False)}")
+
+            requests_total.labels(method="Search", status="success").inc()
             return response
 
         except grpc.RpcError:
             # Re-raise gRPC errors (already aborted)
+            requests_total.labels(method="Search", status="error").inc()
             raise
 
         except Exception as e:
             logger.error(f"Unexpected error in Search: {e}", exc_info=True)
+            requests_total.labels(method="Search", status="error").inc()
+            errors_total.labels(method="Search", error_type=type(e).__name__).inc()
             await context.abort(grpc.StatusCode.INTERNAL, f"Internal error: {e}")
+
+        finally:
+            active_requests.labels(method="Search").dec()
 
     async def HealthCheck(
         self,

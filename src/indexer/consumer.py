@@ -3,11 +3,14 @@
 import asyncio
 import json
 import logging
+import time
 from collections.abc import AsyncIterator
 from typing import Any
 
 from aiokafka import AIOKafkaConsumer  # type: ignore[import-untyped]
 from aiokafka.errors import KafkaError  # type: ignore[import-untyped]
+
+from src.indexer.metrics import kafka_messages_total, kafka_poll_duration
 
 logger = logging.getLogger(__name__)
 
@@ -86,10 +89,19 @@ class DocumentEventConsumer:
 
         try:
             async for message in self.consumer:
+                # Track poll duration (time between messages)
+                poll_start = time.perf_counter()
+
                 logger.debug(f"Received message: partition={message.partition}, offset={message.offset}")
 
                 event = message.value
                 logger.info(f"Event: type={event.get('event_type')}, doc_id={event.get('document_id')}")
+
+                # Track message count
+                kafka_messages_total.labels(topic=self.topic).inc()
+
+                # Record poll duration for next iteration
+                kafka_poll_duration.observe(time.perf_counter() - poll_start)
 
                 yield event
 

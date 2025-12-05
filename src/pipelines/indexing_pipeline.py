@@ -20,6 +20,13 @@ from haystack import Document
 from haystack.components.preprocessors import DocumentCleaner, DocumentSplitter
 from minio import Minio
 
+from src.common.metrics import track_latency
+from src.indexer.metrics import (
+    minio_load_duration,
+    text_cleaning_duration,
+    text_splitting_duration,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -400,7 +407,8 @@ class IndexingPipeline:
             Document dictionary
         """
         logger.info(f"Loading document: {bucket}/{key}")
-        return self.loader.load(bucket, key)
+        with track_latency(minio_load_duration):
+            return self.loader.load(bucket, key)
 
     def _clean_text(self, document: dict[str, Any]) -> str:
         """Extract and clean text from document.
@@ -417,7 +425,8 @@ class IndexingPipeline:
             return ""
 
         logger.debug("Cleaning document text")
-        return self.cleaner.clean(raw_text)
+        with track_latency(text_cleaning_duration):
+            return self.cleaner.clean(raw_text)
 
     def _split_text(self, text: str) -> list[str]:
         """Split text into chunks.
@@ -429,7 +438,8 @@ class IndexingPipeline:
             List of text chunks
         """
         logger.debug("Splitting text into chunks")
-        return self.splitter.split(text)
+        with track_latency(text_splitting_duration):
+            return self.splitter.split(text)
 
     def _create_chunks(
         self,
