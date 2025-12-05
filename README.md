@@ -33,6 +33,53 @@ X-RAG is a production-grade, multi-tenant RAG platform that combines vector, lex
 
 ---
 
+## Observability
+
+### Prometheus Metrics
+
+All services expose Prometheus metrics following the **Four Golden Signals** pattern:
+
+| Signal | Metric Type | Example |
+|--------|-------------|---------|
+| **Latency** | Histogram | `search_service_request_duration_seconds` |
+| **Traffic** | Counter | `search_service_requests_total` |
+| **Errors** | Counter | `search_service_errors_total` |
+| **Saturation** | Gauge | `search_service_active_requests` |
+
+**Key design decisions:**
+- All durations in **seconds** (Prometheus convention)
+- Explicit histogram buckets for accurate percentiles (p50, p95, p99)
+- Labels for filtering: `method`, `status`, `namespace`, `error_type`
+
+**Bucket configurations by operation type:**
+
+| Type | Buckets (seconds) | Use Case |
+|------|-------------------|----------|
+| FAST | 0.005 → 5.0 | Embedding, cache lookups (target p99 < 100ms) |
+| MEDIUM | 0.01 → 10.0 | Weaviate queries, text processing (target p99 < 500ms) |
+| SLOW | 0.1 → 60.0 | LLM generation, full pipeline (target p99 < 30s) |
+| BATCH | 0.05 → 60.0 | Kafka consume, batch operations (target p99 < 5s) |
+
+**Example PromQL queries:**
+
+```promql
+# p99 search latency in milliseconds
+histogram_quantile(0.99,
+  sum(rate(search_service_request_duration_seconds_bucket{method="Search"}[5m])) by (le)
+) * 1000
+
+# Search availability (success rate %)
+sum(rate(search_service_requests_total{status="success"}[5m]))
+/ sum(rate(search_service_requests_total[5m])) * 100
+
+# Error rate by type
+sum by (error_type) (rate(search_service_errors_total[5m]))
+```
+
+**Documentation:** See [docs/METRICS.md](docs/METRICS.md) for complete metric catalog, testing plan, and alerting rules.
+
+---
+
 ## Development
 
 ### Code Style
