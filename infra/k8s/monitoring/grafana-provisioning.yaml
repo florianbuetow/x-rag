@@ -1,0 +1,47 @@
+# Grafana Provisioning ConfigMaps
+# These ConfigMaps configure Grafana's auto-provisioning feature to automatically
+# set up datasources and dashboards when Grafana starts.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: rag-system
+  labels:
+    app: xrag-grafana
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        uid: prometheus
+        url: http://xrag-prometheus:9090
+        access: proxy
+        isDefault: true
+        editable: false
+        jsonData:
+          timeInterval: "15s"
+          httpMethod: POST
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-providers
+  namespace: rag-system
+  labels:
+    app: xrag-grafana
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: 'X-RAG Dashboards'
+        orgId: 1
+        folder: 'X-RAG'
+        folderUid: 'xrag'
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 30
+        allowUiUpdates: true
+        options:
+          path: /var/lib/grafana/dashboards
