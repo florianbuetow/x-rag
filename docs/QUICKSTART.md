@@ -68,11 +68,14 @@ curl -X POST http://localhost:8082/ingest \
   -d '{
     "text": "Machine learning is a subset of artificial intelligence that enables systems to learn from data.",
     "metadata": {
-      "title": "ML Introduction"
+      "title": "ML Introduction",
+      "type": "text"
     },
     "namespace": "default"
   }'
 ```
+
+**Note**: The metadata schema requires a `title` field and optionally accepts `source_file`, `type`, and `transcription_method`.
 
 Or open the API docs at [http://localhost:8082/docs](http://localhost:8082/docs) to use the interactive interface.
 
