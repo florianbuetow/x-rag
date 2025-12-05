@@ -481,6 +481,68 @@ Run through this checklist for each service after deployment:
 | Labels present | `grep {method=` output | Labels appear on metrics |
 | Buckets match config | Check le values | Match BucketConfig values |
 
+---
+
+## Grafana Dashboards
+
+X-RAG includes a pre-built Grafana dashboard that is automatically provisioned when deploying the monitoring stack.
+
+### Accessing the Dashboard
+
+```bash
+# Open Grafana in browser
+make open-grafana
+
+# Or manually port-forward
+kubectl port-forward svc/xrag-grafana 3000:3000 -n rag-system
+# Then open http://localhost:3000
+```
+
+**Credentials:** admin / admin
+
+**Dashboard location:** Dashboards > Browse > X-RAG folder > X-RAG Overview
+
+### Dashboard Panels
+
+The X-RAG Overview dashboard includes 22 panels organized into sections:
+
+| Section | Panels |
+|---------|--------|
+| **Overview** | Availability (%), p99 Latency, Throughput (req/s), Active Requests |
+| **Search Service** | Latency Distribution (p50/p95/p99), Request Rate by status, Component Latencies (Embedding/Retrieval/LLM), Error Rate by type |
+| **Embedding Service** | Latency by Method, Request Rate |
+| **Indexer** | Throughput (docs & chunks/s), Pipeline Latencies (MinIO/Cleaning/Splitting/Embedding/Weaviate) |
+| **Ingestion API** | Request Rate, Component Latencies (MinIO Upload/Kafka Publish) |
+| **Search UI** | Request Rate by mode, gRPC Call Latency |
+
+### Dashboard Provisioning
+
+Dashboards are auto-provisioned via Kubernetes ConfigMaps, meaning they survive pod restarts and cluster recreations.
+
+**How it works:**
+1. Dashboard JSON files are stored in `infra/k8s/monitoring/grafana-dashboards/`
+2. The `deploy-monitoring.sh` script creates a ConfigMap from these files
+3. Grafana mounts the ConfigMap and loads dashboards on startup
+
+**To add or modify dashboards:**
+
+```bash
+# 1. Edit or add JSON files in the dashboards directory
+vim infra/k8s/monitoring/grafana-dashboards/xrag-overview.json
+
+# 2. Regenerate the ConfigMap and restart Grafana
+./scripts/generate-grafana-dashboards-configmap.sh
+
+# Or redeploy the full monitoring stack
+./scripts/deploy-monitoring.sh
+```
+
+**Exporting dashboards from Grafana UI:**
+1. Make changes in Grafana UI
+2. Go to Dashboard Settings > JSON Model
+3. Copy the JSON and save to `infra/k8s/monitoring/grafana-dashboards/`
+4. Run the regenerate script
+
 ### Grafana Dashboard Verification
 
 After importing dashboards, verify:
