@@ -78,6 +78,26 @@ sum by (error_type) (rate(search_service_errors_total[5m]))
 
 **Documentation:** See [docs/METRICS.md](docs/METRICS.md) for complete metric catalog, testing plan, and alerting rules.
 
+### Grafana Dashboards
+
+X-RAG includes a pre-built **X-RAG Overview** dashboard that is automatically provisioned when deploying the monitoring stack.
+
+```bash
+# Open Grafana dashboard
+make open-grafana
+# Navigate to: Dashboards > Browse > X-RAG folder
+```
+
+**Dashboard sections:**
+- **Overview**: Availability, p99 latency, throughput, active requests
+- **Search Service**: Latency distribution, request rate, component latencies, errors
+- **Embedding Service**: Latency by method, request rate
+- **Indexer**: Throughput, pipeline stage latencies
+- **Ingestion API**: Request rate, component latencies
+- **Search UI**: Request rate, gRPC latencies
+
+Dashboards are provisioned via ConfigMaps and persist across cluster recreations. To update dashboards, edit JSON files in `infra/k8s/monitoring/grafana-dashboards/` and run `./scripts/generate-grafana-dashboards-configmap.sh`.
+
 ---
 
 ## Development
