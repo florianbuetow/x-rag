@@ -16,7 +16,7 @@ from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from enum import Enum
 from functools import wraps
-from typing import Any
+from typing import Any, cast
 
 from prometheus_client import REGISTRY, CollectorRegistry, Counter, Gauge, Histogram
 
@@ -74,7 +74,7 @@ class BucketConfig:
         Returns:
             Tuple of bucket upper bounds in seconds
         """
-        return getattr(cls, op_type.value.upper())
+        return cast(tuple[float, ...], getattr(cls, op_type.value.upper()))
 
 
 @contextmanager
