@@ -240,12 +240,14 @@ x-rag/
 ├── src/                    # Python application code
 │   ├── core/              # Core domain models and interfaces
 │   ├── common/            # Shared utilities (config, health, metrics)
-│   ├── search_api/        # Search API service (FastAPI)
+│   ├── search_ui/         # Search UI service (FastAPI web interface)
+│   ├── search_service/    # Search Service (gRPC, Haystack RAG pipeline)
 │   ├── ingestion_api/     # Ingestion API service (FastAPI)
 │   ├── embedding_service/ # Embedding service (gRPC)
 │   ├── indexer/           # Background document processor (Kafka consumer)
 │   ├── pipelines/         # Haystack RAG pipelines
 │   ├── retrievers/        # Custom retrievers (Weaviate, etc.)
+│   ├── llm/               # LLM client for answer generation
 │   └── proto_gen/         # Generated gRPC code (auto-generated)
 ├── proto/                  # Protocol buffer definitions
 ├── infra/                  # Infrastructure configuration
