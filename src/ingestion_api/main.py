@@ -11,12 +11,22 @@ from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from prometheus_client import Counter, Histogram, start_http_server
+from prometheus_client import start_http_server
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.common.health import HealthChecker
+from src.common.metrics import track_latency
 from src.ingestion_api.config import IngestionAPIConfig
 from src.ingestion_api.kafka_client import KafkaClient
+from src.ingestion_api.metrics import (
+    active_requests,
+    document_size_bytes,
+    errors_total,
+    kafka_publish_duration,
+    minio_upload_duration,
+    request_duration,
+    requests_total,
+)
 from src.ingestion_api.minio_client import MinioClient
 
 # Configure logging
@@ -58,18 +68,6 @@ class IngestResponse(BaseModel):
     minio_key: str = Field(..., description="Storage key")
     message: str = Field(default="Document accepted for processing")
 
-
-# Prometheus Metrics
-INGEST_REQUESTS = Counter(
-    "ingestion_requests_total",
-    "Total ingestion requests",
-    ["status", "namespace"],
-)
-INGEST_DURATION = Histogram(
-    "ingestion_duration_seconds",
-    "Time to process ingestion request",
-    ["operation"],
-)
 
 # Global state
 config = IngestionAPIConfig()
@@ -168,8 +166,9 @@ async def ingest_document(request: IngestRequest) -> IngestResponse:
     Raises:
         HTTPException: If ingestion fails
     """
-    with INGEST_DURATION.labels(operation="ingest").time():
-        try:
+    active_requests.inc()
+    try:
+        with track_latency(request_duration, {"operation": "ingest"}):
             # Generate unique ID
             document_id = str(uuid4())
 
@@ -188,7 +187,11 @@ async def ingest_document(request: IngestRequest) -> IngestResponse:
             object_name = f"{document_id}.json"
             doc_bytes = json.dumps(document, indent=2).encode("utf-8")
 
-            minio_client.store_document(object_name, doc_bytes)
+            # Record document size
+            document_size_bytes.observe(len(doc_bytes))
+
+            with track_latency(minio_upload_duration):
+                minio_client.store_document(object_name, doc_bytes)
 
             # Publish to Kafka
             if kafka_client is None:
@@ -202,28 +205,37 @@ async def ingest_document(request: IngestRequest) -> IngestResponse:
                 "timestamp": datetime.now(UTC).isoformat(),
             }
 
-            await kafka_client.publish(config.kafka_topic, event)
+            with track_latency(kafka_publish_duration):
+                await kafka_client.publish(config.kafka_topic, event)
 
-            # Track success
-            INGEST_REQUESTS.labels(status="success", namespace=request.namespace).inc()
+        # Track success
+        requests_total.labels(status="success", namespace=request.namespace).inc()
 
-            logger.info(f"Ingested document {document_id} ({len(doc_bytes)} bytes)")
+        logger.info(f"Ingested document {document_id} ({len(doc_bytes)} bytes)")
 
-            return IngestResponse(
-                document_id=document_id,
-                status="accepted",
-                minio_bucket=config.minio_bucket,
-                minio_key=object_name,
-                message="Document accepted for processing",
-            )
+        return IngestResponse(
+            document_id=document_id,
+            status="accepted",
+            minio_bucket=config.minio_bucket,
+            minio_key=object_name,
+            message="Document accepted for processing",
+        )
 
-        except Exception as e:
-            INGEST_REQUESTS.labels(status="error", namespace=request.namespace).inc()
-            logger.error(f"Ingestion failed: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Ingestion failed: {str(e)}",
-            ) from e
+    except HTTPException:
+        requests_total.labels(status="error", namespace=request.namespace).inc()
+        raise
+
+    except Exception as e:
+        requests_total.labels(status="error", namespace=request.namespace).inc()
+        errors_total.labels(operation="ingest", error_type=type(e).__name__).inc()
+        logger.error(f"Ingestion failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ingestion failed: {str(e)}",
+        ) from e
+
+    finally:
+        active_requests.dec()
 
 
 @app.get("/health")

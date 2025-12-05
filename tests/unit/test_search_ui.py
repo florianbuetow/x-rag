@@ -290,9 +290,9 @@ class TestSearchUIEndpoints:
                 "/api/search",
                 json={"query": "test", "namespace": "default"},
             )
-            # Returns 500 because exception is caught by general exception handler
-            assert response.status_code == 500
-            assert "Search failed" in response.json()["detail"]
+            # Returns 503 Service Unavailable when client not initialized
+            assert response.status_code == 503
+            assert "not initialized" in response.json()["detail"]
 
     def test_search_endpoint_grpc_error(self, app_client, mock_search_client):
         """Test search when gRPC call fails."""

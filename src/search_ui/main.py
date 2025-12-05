@@ -11,11 +11,20 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from prometheus_client import Counter, Histogram, start_http_server
+from prometheus_client import start_http_server
 
 from src.common.health import HealthChecker
+from src.common.metrics import track_latency
 from src.search_ui.config import SearchUIConfig
 from src.search_ui.grpc_clients import SearchServiceClient
+from src.search_ui.metrics import (
+    active_requests,
+    errors_total,
+    grpc_call_duration,
+    request_duration,
+    requests_total,
+    sources_returned,
+)
 from src.search_ui.models import SearchRequest, SearchResponse, Source
 
 # Configure logging
@@ -25,18 +34,6 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
-
-# Prometheus Metrics
-SEARCH_REQUESTS = Counter(
-    "search_ui_requests_total",
-    "Total search requests",
-    ["status", "mode"],
-)
-SEARCH_DURATION = Histogram(
-    "search_ui_duration_seconds",
-    "Time to process search request",
-    ["operation"],
-)
 
 # Global state
 config = SearchUIConfig()
@@ -133,21 +130,23 @@ async def search(request: SearchRequest) -> SearchResponse:
     Raises:
         HTTPException: If search fails
     """
-    with SEARCH_DURATION.labels(operation="search").time():
-        try:
+    active_requests.inc()
+    try:
+        with track_latency(request_duration, {"operation": "search"}):
             if search_client is None:
                 raise HTTPException(
                     status_code=503,
                     detail="Search Service client not initialized",
                 )
 
-            # Call Search Service via gRPC
-            grpc_response = await search_client.search(
-                query=request.query,
-                namespace=request.namespace,
-                top_k=request.top_k,
-                mode=request.mode,
-            )
+            # Call Search Service via gRPC with metrics
+            with track_latency(grpc_call_duration, {"method": "Search"}):
+                grpc_response = await search_client.search(
+                    query=request.query,
+                    namespace=request.namespace,
+                    top_k=request.top_k,
+                    mode=request.mode,
+                )
 
             # Convert gRPC response to Pydantic model
             sources = [
@@ -160,28 +159,39 @@ async def search(request: SearchRequest) -> SearchResponse:
                 for source in grpc_response.sources
             ]
 
+            # Record number of sources returned
+            sources_returned.observe(len(sources))
+
             response = SearchResponse(
                 answer=grpc_response.answer,
                 sources=sources,
                 metadata=dict(grpc_response.metadata),
             )
 
-            # Track success
-            SEARCH_REQUESTS.labels(status="success", mode=request.mode).inc()
+        # Track success
+        requests_total.labels(status="success", mode=request.mode).inc()
 
-            logger.info(
-                f"Search completed: query='{request.query[:50]}...', mode={request.mode}, sources={len(sources)}",
-            )
+        logger.info(
+            f"Search completed: query='{request.query[:50]}...', mode={request.mode}, sources={len(sources)}",
+        )
 
-            return response
+        return response
 
-        except Exception as e:
-            SEARCH_REQUESTS.labels(status="error", mode=request.mode).inc()
-            logger.error(f"Search failed: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Search failed: {str(e)}",
-            ) from e
+    except HTTPException:
+        requests_total.labels(status="error", mode=request.mode).inc()
+        raise
+
+    except Exception as e:
+        requests_total.labels(status="error", mode=request.mode).inc()
+        errors_total.labels(operation="search", error_type=type(e).__name__).inc()
+        logger.error(f"Search failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Search failed: {str(e)}",
+        ) from e
+
+    finally:
+        active_requests.dec()
 
 
 @app.get("/health")

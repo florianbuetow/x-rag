@@ -189,8 +189,8 @@ class TestIngestEndpoint:
             with pytest.raises(HTTPException) as exc_info:
                 await ingest_document(request)
 
-            # HTTPException is caught by generic handler and wrapped as 500
-            assert exc_info.value.status_code == 500
+            # HTTPException with 503 for service unavailable
+            assert exc_info.value.status_code == 503
             assert "MinIO" in exc_info.value.detail
 
         finally:
@@ -218,8 +218,8 @@ class TestIngestEndpoint:
             with pytest.raises(HTTPException) as exc_info:
                 await ingest_document(request)
 
-            # HTTPException is caught by generic handler and wrapped as 500
-            assert exc_info.value.status_code == 500
+            # HTTPException with 503 for service unavailable
+            assert exc_info.value.status_code == 503
             assert "Kafka" in exc_info.value.detail
 
         finally:
