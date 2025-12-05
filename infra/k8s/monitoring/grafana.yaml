@@ -38,6 +38,8 @@ spec:
               value: "true"
             - name: GF_PATHS_PROVISIONING
               value: "/etc/grafana/provisioning"
+            - name: GF_FEATURE_TOGGLES_ENABLE
+              value: "traceqlEditor"
           resources:
             requests:
               cpu: "100m"

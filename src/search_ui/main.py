@@ -11,10 +11,12 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_client import start_http_server
 
 from src.common.health import HealthChecker
 from src.common.metrics import track_latency
+from src.common.tracing import get_current_trace_id, init_tracing, shutdown_tracing
 from src.search_ui.config import SearchUIConfig
 from src.search_ui.grpc_clients import SearchServiceClient
 from src.search_ui.metrics import (
@@ -53,6 +55,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Startup
     logger.info(f"Starting {config.service_name}...")
 
+    # Initialize distributed tracing
+    init_tracing(service_name=config.service_name)
+
     # Start Prometheus metrics server on separate port
     start_http_server(9091)
     logger.info("Prometheus metrics available at http://0.0.0.0:9091/metrics")
@@ -79,6 +84,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Shutdown
     logger.info("Shutting down...")
+    shutdown_tracing()
     if search_client:
         await search_client.close()
     logger.info("✓ Shutdown complete")
@@ -91,6 +97,9 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+# Instrument FastAPI for distributed tracing
+FastAPIInstrumentor.instrument_app(app)
 
 # CORS
 if config.cors_enabled:
@@ -162,10 +171,16 @@ async def search(request: SearchRequest) -> SearchResponse:
             # Record number of sources returned
             sources_returned.observe(len(sources))
 
+            # Add trace_id to metadata for debugging
+            response_metadata = dict(grpc_response.metadata)
+            trace_id = get_current_trace_id()
+            if trace_id:
+                response_metadata["trace_id"] = trace_id
+
             response = SearchResponse(
                 answer=grpc_response.answer,
                 sources=sources,
-                metadata=dict(grpc_response.metadata),
+                metadata=response_metadata,
             )
 
         # Track success

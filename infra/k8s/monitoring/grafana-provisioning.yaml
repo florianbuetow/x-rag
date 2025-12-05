@@ -23,6 +23,27 @@ data:
         jsonData:
           timeInterval: "15s"
           httpMethod: POST
+      - name: Tempo
+        type: tempo
+        uid: tempo
+        url: http://xrag-tempo:3200
+        access: proxy
+        editable: false
+        jsonData:
+          tracesToLogsV2:
+            datasourceUid: ''
+          tracesToMetrics:
+            datasourceUid: prometheus
+          nodeGraph:
+            enabled: true
+          search:
+            hide: false
+          lokiSearch:
+            datasourceUid: ''
+          traceQuery:
+            timeShiftEnabled: true
+            spanStartTimeShift: '1h'
+            spanEndTimeShift: '1h'
 ---
 apiVersion: v1
 kind: ConfigMap

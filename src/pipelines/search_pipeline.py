@@ -10,6 +10,11 @@ import logging
 from typing import Any, Literal
 
 from src.common.metrics import track_latency
+from src.common.tracing_utils import (
+    trace_embedding_generation,
+    trace_llm_generation,
+    trace_vector_search,
+)
 from src.llm.openai_client import OpenAIClient
 from src.pipelines.prompt_templates import build_no_results_response, build_rag_prompt
 from src.retrievers.weaviate_retriever import SearchResult, WeaviateRetriever
@@ -74,16 +79,29 @@ class SearchPipeline:
         query_embedding: list[float] | None = None
         if mode in ("vector", "hybrid"):
             logger.debug(f"Generating embedding for query: {query[:50]}...")
-            with track_latency(embedding_duration):
+            with (
+                track_latency(embedding_duration),
+                trace_embedding_generation("text-embedding-3-small", chunk_count=1) as embed_span,
+            ):
                 query_embedding = await self.embedding_client.embed(
                     text=query,
                     model="text-embedding-3-small",
                 )
+                embed_span.set_attribute("embedding.dimensions", len(query_embedding))
             logger.debug(f"Generated embedding (dim={len(query_embedding)})")
 
         # Step 2: Retrieve relevant documents
         logger.info(f"Retrieving documents (mode={mode}, top_k={top_k})")
-        with track_latency(retrieval_duration, {"mode": mode}):
+        query_dim = len(query_embedding) if query_embedding else None
+        with (
+            track_latency(retrieval_duration, {"mode": mode}),
+            trace_vector_search(
+                index_name="DocumentChunk",
+                top_k=top_k,
+                query_vector_dim=query_dim,
+                search_mode=mode,
+            ) as search_span,
+        ):
             results: list[SearchResult] = self.retriever.search(
                 query=query,
                 query_embedding=query_embedding,
@@ -92,6 +110,7 @@ class SearchPipeline:
                 alpha=alpha,
                 namespace=namespace,
             )
+            search_span.set_attribute("vector_search.result_count", len(results))
 
         # Step 3: Build context from results
         response: dict[str, Any]
@@ -115,12 +134,22 @@ class SearchPipeline:
             # Step 4: Generate answer using LLM
             logger.info("Generating answer with OpenAI")
             prompt = build_rag_prompt(query=query, context=context)
-            with track_latency(llm_generation_duration):
+            with (
+                track_latency(llm_generation_duration),
+                trace_llm_generation(
+                    model=self.llm_client.model,
+                    operation="rag_completion",
+                    max_tokens=openai_max_tokens,
+                    temperature=openai_temperature,
+                ) as llm_span,
+            ):
                 answer = await self.llm_client.generate(
                     prompt=prompt,
                     max_tokens=openai_max_tokens,
                     temperature=openai_temperature,
                 )
+                llm_span.set_attribute("llm.prompt_length", len(prompt))
+                llm_span.set_attribute("llm.response_length", len(answer))
 
             # Build response
             sources_list: list[dict[str, Any]] = [r.to_dict() for r in results]

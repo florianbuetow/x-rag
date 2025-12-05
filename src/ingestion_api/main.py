@@ -11,11 +11,13 @@ from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_client import start_http_server
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.common.health import HealthChecker
 from src.common.metrics import track_latency
+from src.common.tracing import init_tracing, shutdown_tracing
 from src.ingestion_api.config import IngestionAPIConfig
 from src.ingestion_api.kafka_client import KafkaClient
 from src.ingestion_api.metrics import (
@@ -84,6 +86,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Startup
     logger.info(f"Starting {config.service_name}...")
 
+    # Initialize distributed tracing
+    init_tracing(service_name=config.service_name)
+
     # Start Prometheus metrics server
     start_http_server(8080)
     logger.info("Prometheus metrics available at http://0.0.0.0:8080/metrics")
@@ -125,6 +130,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Shutdown
     logger.info("Shutting down...")
+    shutdown_tracing()
     if kafka_client:
         await kafka_client.stop()
     logger.info("✓ Shutdown complete")
@@ -137,6 +143,9 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+# Instrument FastAPI for distributed tracing
+FastAPIInstrumentor.instrument_app(app)
 
 # CORS
 if config.cors_enabled:

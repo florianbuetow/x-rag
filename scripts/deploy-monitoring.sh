@@ -12,15 +12,23 @@ echo "=============================================="
 
 # Deploy Prometheus
 echo ""
-echo "[1/4] Deploying Prometheus..."
+echo "[1/5] Deploying Prometheus..."
 kubectl apply -f "${PROJECT_ROOT}/infra/k8s/monitoring/prometheus.yaml" -n ${NAMESPACE}
 echo "Waiting for Prometheus to be ready..."
 kubectl wait --for=condition=Ready pod -l app=xrag-prometheus -n ${NAMESPACE} --timeout=120s
 echo "Prometheus ready"
 
+# Deploy Tempo (distributed tracing)
+echo ""
+echo "[2/5] Deploying Tempo..."
+kubectl apply -f "${PROJECT_ROOT}/infra/k8s/monitoring/tempo.yaml" -n ${NAMESPACE}
+echo "Waiting for Tempo to be ready..."
+kubectl wait --for=condition=Ready pod -l app=xrag-tempo -n ${NAMESPACE} --timeout=120s
+echo "Tempo ready"
+
 # Deploy Grafana provisioning ConfigMaps
 echo ""
-echo "[2/4] Setting up Grafana provisioning..."
+echo "[3/5] Setting up Grafana provisioning..."
 kubectl apply -f "${PROJECT_ROOT}/infra/k8s/monitoring/grafana-provisioning.yaml" -n ${NAMESPACE}
 echo "Grafana provisioning ConfigMaps created"
 
@@ -42,7 +50,7 @@ fi
 
 # Deploy Grafana
 echo ""
-echo "[3/4] Deploying Grafana..."
+echo "[4/5] Deploying Grafana..."
 kubectl apply -f "${PROJECT_ROOT}/infra/k8s/monitoring/grafana.yaml" -n ${NAMESPACE}
 echo "Waiting for Grafana to be ready..."
 kubectl wait --for=condition=Ready pod -l app=xrag-grafana -n ${NAMESPACE} --timeout=120s
@@ -50,7 +58,7 @@ echo "Grafana ready"
 
 # Deploy Kubernetes Dashboard
 echo ""
-echo "[4/4] Deploying Kubernetes Dashboard..."
+echo "[5/5] Deploying Kubernetes Dashboard..."
 kubectl apply -f "${PROJECT_ROOT}/infra/k8s/monitoring/dashboard.yaml"
 echo "Waiting for Dashboard to be ready..."
 kubectl wait --for=condition=Ready pod -l k8s-app=kubernetes-dashboard -n kubernetes-dashboard --timeout=120s 2>/dev/null || true
@@ -63,6 +71,7 @@ echo "=============================================="
 echo ""
 echo "Access points:"
 echo "  Prometheus:     http://localhost:9090"
+echo "  Tempo:          http://localhost:3200 (traces)"
 echo "  Grafana:        http://localhost:3000 (admin/admin)"
 echo "  K8s Dashboard:  https://localhost:8443 (token required)"
 echo ""
@@ -73,4 +82,4 @@ echo "  2. Run: ./scripts/generate-grafana-dashboards-configmap.sh"
 echo ""
 echo "Get dashboard token: make show-k8-dashboard-token"
 echo ""
-echo "Verify with: kubectl get pods -n ${NAMESPACE} -l 'app in (xrag-prometheus,xrag-grafana)'"
+echo "Verify with: kubectl get pods -n ${NAMESPACE} -l 'app in (xrag-prometheus,xrag-tempo,xrag-grafana)'"

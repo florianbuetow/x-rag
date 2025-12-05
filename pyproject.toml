@@ -39,7 +39,16 @@ dependencies = [
     
     # Observability
     "prometheus-client>=0.19.0",
-    
+
+    # Distributed Tracing (OpenTelemetry)
+    "opentelemetry-api>=1.20.0",
+    "opentelemetry-sdk>=1.20.0",
+    "opentelemetry-exporter-otlp>=1.20.0",
+    "opentelemetry-instrumentation-fastapi>=0.41b0",
+    "opentelemetry-instrumentation-grpc>=0.41b0",
+    "opentelemetry-instrumentation-httpx>=0.41b0",
+    "opentelemetry-instrumentation-logging>=0.41b0",
+
     # Utilities
     "python-dotenv>=1.0.0",
 ]

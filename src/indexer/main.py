@@ -16,6 +16,7 @@ from typing import cast
 
 from prometheus_client import start_http_server
 
+from src.common.tracing import init_tracing, shutdown_tracing
 from src.indexer.config import IndexerConfig
 from src.indexer.consumer import DocumentEventConsumer
 from src.indexer.metrics import (
@@ -140,6 +141,9 @@ class IndexerService:
         """Run the indexer service."""
         logger.info(f"Starting {self.config.service_name}...")
 
+        # Initialize distributed tracing
+        init_tracing(service_name=self.config.service_name)
+
         # Start health check server FIRST for K8s probes
         self.start_health_server()
 
@@ -198,6 +202,9 @@ class IndexerService:
     async def shutdown(self) -> None:
         """Shutdown the service gracefully."""
         logger.info("Shutting down indexer service...")
+
+        # Shutdown tracing
+        shutdown_tracing()
 
         if self.consumer:
             await self.consumer.stop()

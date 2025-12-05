@@ -18,3 +18,7 @@ data:
   MAX_QUERY_LENGTH: "1000"
   DEFAULT_TOP_K: "5"
   DEFAULT_MODE: "hybrid"
+
+  # Distributed tracing (OpenTelemetry)
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://xrag-tempo:4317"
+  ENVIRONMENT: "development"

@@ -21,3 +21,7 @@ data:
   # API
   MAX_CONTENT_LENGTH: "10485760"
   CORS_ENABLED: "true"
+
+  # Distributed tracing (OpenTelemetry)
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://xrag-tempo:4317"
+  ENVIRONMENT: "development"
