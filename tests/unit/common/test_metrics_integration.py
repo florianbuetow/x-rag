@@ -47,6 +47,68 @@ class TestMetricsRecording:
         # Due to timing variance, should definitely be in 0.1 bucket
         assert bucket_0_1 >= 1
 
+    def test_different_durations_land_in_correct_buckets(self, fresh_registry):
+        """Verify different duration values land in the correct histogram buckets."""
+        histogram = Histogram(
+            "test_buckets_seconds",
+            "Test bucket distribution",
+            buckets=(0.01, 0.05, 0.1, 0.5, 1.0),
+            registry=fresh_registry,
+        )
+
+        # Record a very fast operation (~5ms)
+        with track_latency(histogram):
+            time.sleep(0.005)
+
+        # Record a medium operation (~50ms)
+        with track_latency(histogram):
+            time.sleep(0.05)
+
+        # Record a slower operation (~200ms)
+        with track_latency(histogram):
+            time.sleep(0.2)
+
+        # Verify total count
+        count = fresh_registry.get_sample_value("test_buckets_seconds_count")
+        assert count == 3
+
+        # Verify bucket distribution (cumulative)
+        bucket_10ms = fresh_registry.get_sample_value("test_buckets_seconds_bucket", {"le": "0.01"})
+        bucket_100ms = fresh_registry.get_sample_value("test_buckets_seconds_bucket", {"le": "0.1"})
+        bucket_500ms = fresh_registry.get_sample_value("test_buckets_seconds_bucket", {"le": "0.5"})
+
+        # First operation (5ms) should be in 10ms bucket
+        assert bucket_10ms >= 1
+        # First two operations should be in 100ms bucket (5ms + 50ms)
+        assert bucket_100ms >= 2
+        # All three should be in 500ms bucket
+        assert bucket_500ms >= 3
+
+    def test_sum_accumulates_correctly(self, fresh_registry):
+        """Verify histogram sum accumulates total duration correctly."""
+        histogram = Histogram(
+            "test_sum_seconds",
+            "Test sum accumulation",
+            buckets=BucketConfig.FAST,
+            registry=fresh_registry,
+        )
+
+        # Record multiple operations with known durations
+        durations = [0.01, 0.02, 0.03]  # 10ms, 20ms, 30ms
+        for d in durations:
+            with track_latency(histogram):
+                time.sleep(d)
+
+        # Verify count
+        count = fresh_registry.get_sample_value("test_sum_seconds_count")
+        assert count == 3
+
+        # Verify sum is approximately the total (with tolerance for timing)
+        total = fresh_registry.get_sample_value("test_sum_seconds_sum")
+        expected_min = sum(durations) * 0.8  # Allow 20% under
+        expected_max = sum(durations) * 1.5  # Allow 50% over (timing variance)
+        assert expected_min < total < expected_max
+
     def test_labeled_histogram_records_per_label(self, fresh_registry):
         """Verify labeled histograms record separately per label value."""
         histogram = Histogram(
@@ -276,3 +338,179 @@ class TestServiceMetricsImport:
 
         assert hasattr(request_duration, "labels")
         assert hasattr(requests_total, "labels")
+
+
+class TestSearchServiceMetrics:
+    """Comprehensive tests for Search Service metrics."""
+
+    def test_all_latency_metrics_exist(self):
+        """Verify all latency histograms are defined."""
+        from src.search_service.metrics import (
+            embedding_duration,
+            llm_generation_duration,
+            request_duration,
+            retrieval_duration,
+        )
+
+        # All should be Histograms with observe method
+        for metric in [request_duration, embedding_duration, retrieval_duration, llm_generation_duration]:
+            assert hasattr(metric, "observe") or hasattr(metric, "labels")
+
+    def test_all_counter_metrics_exist(self):
+        """Verify all counters are defined."""
+        from src.search_service.metrics import errors_total, requests_total
+
+        for metric in [requests_total, errors_total]:
+            assert hasattr(metric, "inc") or hasattr(metric, "labels")
+
+    def test_all_gauge_metrics_exist(self):
+        """Verify all gauges are defined."""
+        from src.search_service.metrics import active_requests
+
+        assert hasattr(active_requests, "inc") or hasattr(active_requests, "labels")
+
+    def test_request_duration_has_method_label(self):
+        """Verify request_duration uses method label."""
+        from src.search_service.metrics import request_duration
+
+        # Should be usable with method label
+        labeled = request_duration.labels(method="Search")
+        assert hasattr(labeled, "observe")
+
+
+class TestEmbeddingServiceMetrics:
+    """Comprehensive tests for Embedding Service metrics."""
+
+    def test_all_latency_metrics_exist(self):
+        """Verify all latency histograms are defined."""
+        from src.embedding_service.metrics import (
+            backend_duration,
+            batch_size,
+            request_duration,
+        )
+
+        for metric in [request_duration, backend_duration, batch_size]:
+            assert hasattr(metric, "observe") or hasattr(metric, "labels")
+
+    def test_all_counter_metrics_exist(self):
+        """Verify all counters are defined."""
+        from src.embedding_service.metrics import (
+            embeddings_total,
+            errors_total,
+            requests_total,
+        )
+
+        for metric in [requests_total, embeddings_total, errors_total]:
+            assert hasattr(metric, "inc") or hasattr(metric, "labels")
+
+    def test_all_gauge_metrics_exist(self):
+        """Verify all gauges are defined."""
+        from src.embedding_service.metrics import active_requests
+
+        assert hasattr(active_requests, "inc") or hasattr(active_requests, "labels")
+
+
+class TestIndexerMetrics:
+    """Comprehensive tests for Indexer metrics."""
+
+    def test_all_latency_metrics_exist(self):
+        """Verify all pipeline stage histograms are defined."""
+        from src.indexer.metrics import (
+            duplicate_check_duration,
+            embedding_duration,
+            kafka_poll_duration,
+            minio_load_duration,
+            processing_duration,
+            text_cleaning_duration,
+            text_splitting_duration,
+            weaviate_insert_duration,
+        )
+
+        metrics = [
+            processing_duration,
+            kafka_poll_duration,
+            minio_load_duration,
+            text_cleaning_duration,
+            text_splitting_duration,
+            embedding_duration,
+            weaviate_insert_duration,
+            duplicate_check_duration,
+        ]
+        for metric in metrics:
+            assert hasattr(metric, "observe") or hasattr(metric, "labels")
+
+    def test_all_counter_metrics_exist(self):
+        """Verify all counters are defined."""
+        from src.indexer.metrics import (
+            chunks_created_total,
+            documents_processed_total,
+            errors_total,
+            kafka_messages_total,
+        )
+
+        for metric in [documents_processed_total, chunks_created_total, kafka_messages_total, errors_total]:
+            assert hasattr(metric, "inc") or hasattr(metric, "labels")
+
+    def test_all_gauge_metrics_exist(self):
+        """Verify all gauges are defined."""
+        from src.indexer.metrics import active_documents, kafka_lag
+
+        for metric in [active_documents, kafka_lag]:
+            assert hasattr(metric, "inc") or hasattr(metric, "labels") or hasattr(metric, "set")
+
+
+class TestIngestionAPIMetrics:
+    """Comprehensive tests for Ingestion API metrics."""
+
+    def test_all_latency_metrics_exist(self):
+        """Verify all latency histograms are defined."""
+        from src.ingestion_api.metrics import (
+            document_size_bytes,
+            kafka_publish_duration,
+            minio_upload_duration,
+            request_duration,
+        )
+
+        for metric in [request_duration, minio_upload_duration, kafka_publish_duration, document_size_bytes]:
+            assert hasattr(metric, "observe") or hasattr(metric, "labels")
+
+    def test_all_counter_metrics_exist(self):
+        """Verify all counters are defined."""
+        from src.ingestion_api.metrics import errors_total, requests_total
+
+        for metric in [requests_total, errors_total]:
+            assert hasattr(metric, "inc") or hasattr(metric, "labels")
+
+    def test_all_gauge_metrics_exist(self):
+        """Verify all gauges are defined."""
+        from src.ingestion_api.metrics import active_requests
+
+        assert hasattr(active_requests, "inc") or hasattr(active_requests, "labels")
+
+
+class TestSearchUIMetrics:
+    """Comprehensive tests for Search UI metrics."""
+
+    def test_all_latency_metrics_exist(self):
+        """Verify all latency histograms are defined."""
+        from src.search_ui.metrics import (
+            grpc_call_duration,
+            request_duration,
+            sources_returned,
+        )
+
+        for metric in [request_duration, grpc_call_duration, sources_returned]:
+            assert hasattr(metric, "observe") or hasattr(metric, "labels")
+
+    def test_all_counter_metrics_exist(self):
+        """Verify all counters are defined."""
+        from src.search_ui.metrics import errors_total, requests_total
+
+        for metric in [requests_total, errors_total]:
+            assert hasattr(metric, "inc") or hasattr(metric, "labels")
+
+    def test_all_gauge_metrics_exist(self):
+        """Verify all gauges are defined."""
+        from src.search_ui.metrics import active_requests
+
+        assert hasattr(active_requests, "inc") or hasattr(active_requests, "labels")
