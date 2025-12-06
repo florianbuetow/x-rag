@@ -1,0 +1,52 @@
+{
+  "run_id": "production-v1-20251206-000811",
+  "dataset_name": "@JasonLiu/video-transcripts/medium-en/qwen2.5-7b-instruct-mlx",
+  "metrics": {
+    "recall_at_k": 0.04200542005420054,
+    "precision_at_k": 0.004200542005420054,
+    "hit_rate_at_k": 0.04200542005420054,
+    "mrr": 0.011526756140577278,
+    "ndcg_at_k": 0.018616048458265814,
+    "k": 10,
+    "num_samples": 738
+  },
+  "config": {
+    "name": "production-v1",
+    "dataset_path": "data/eval/@JasonLiu/video-transcripts/medium-en/qwen2.5-7b-instruct-mlx/dataset.json",
+    "embedding": {
+      "provider": "local",
+      "model": "text-embedding-bge-large-en-v1.5",
+      "base_url": "http://localhost:1234/v1",
+      "batch_size": 50
+    },
+    "chunking": {
+      "chunk_size": 500,
+      "chunk_overlap": 50
+    },
+    "search": {
+      "mode": "hybrid",
+      "top_k": 10,
+      "alpha": 0.5
+    },
+    "index": {
+      "documents_path": "data/raw/@JasonLiu/video-transcripts/medium-en",
+      "collection": "DocumentChunk"
+    },
+    "output_dir": "evals/reports",
+    "include_per_sample": false
+  },
+  "started_at": "2025-12-06T00:08:11.088512Z",
+  "completed_at": "2025-12-06T00:10:28.906794Z",
+  "duration_seconds": 137.8182737827301,
+  "per_sample_results": [],
+  "metadata": {
+    "num_samples": 738,
+    "num_chunks": 5335,
+    "num_documents": 53,
+    "dataset_version": "1.0.0",
+    "embedding_provider": "local",
+    "embedding_model": "text-embedding-bge-large-en-v1.5",
+    "embedding_dimension": 1024,
+    "weaviate_type": "embedded"
+  }
+}
