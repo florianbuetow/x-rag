@@ -13,7 +13,6 @@ our existing gRPC and storage architecture.
 
 import json
 import logging
-import uuid
 from typing import Any, Literal, Protocol
 
 from haystack import Document
@@ -35,6 +34,9 @@ class DocumentChunk:
 
     A document chunk is a segment of a larger document with associated metadata.
     Each chunk will be embedded and stored separately for retrieval.
+
+    Chunk IDs are deterministic based on doc_id and chunk_index, enabling
+    reproducible evaluation and testing.
     """
 
     def __init__(
@@ -54,7 +56,8 @@ class DocumentChunk:
             namespace: Namespace for multi-tenancy
             metadata: Additional metadata from parent document
         """
-        self.chunk_id = str(uuid.uuid4())
+        # Deterministic chunk ID for reproducible evaluation
+        self.chunk_id = f"{doc_id}-chunk-{chunk_index}"
         self.content = content
         self.doc_id = doc_id
         self.chunk_index = chunk_index
