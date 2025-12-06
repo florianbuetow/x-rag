@@ -15,6 +15,7 @@
 .PHONY: cli-search-ui cli-search-service cli-prometheus cli-grafana
 .PHONY: open-search-ui open-ingestion-api open-weaviate open-grafana open-prometheus open-k8-dashboard
 .PHONY: dashboard-token
+.PHONY: eval
 
 # Configuration
 CLUSTER_NAME := xrag-k8
@@ -488,6 +489,13 @@ open-k8-dashboard: ## Open Kubernetes Dashboard in browser (https://localhost:84
 
 show-k8-dashboard-token: ## Display Kubernetes Dashboard access token
 	@./scripts/get-dashboard-token.sh
+	@echo ""
+
+##@ Evaluation
+
+eval: ## Run evaluation (CONFIG=path, default: evals/configs/production.yaml)
+	@echo "$(BLUE)=== Running Evaluation ===$(NC)"
+	@uv run python -m evals.run_eval --config "$(or $(CONFIG),evals/configs/production.yaml)"
 	@echo ""
 
 # Internal targets (prefixed with . to hide from help)
