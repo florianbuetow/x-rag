@@ -37,6 +37,7 @@ class BaseConfig(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
+        frozen=True,  # Immutable configs for reproducible evaluation
     )
 
     @classmethod
