@@ -7,7 +7,7 @@
 .PHONY: cluster-start cluster-stop cluster-status cluster-clean cluster-reset cluster-destroy
 .PHONY: apps-generate-grpc apps-build apps-deploy
 .PHONY: test test-integration test-coverage test-e2e
-.PHONY: code-style code-format code-typecheck code-security code-deptry code-stats code-spell code-audit
+.PHONY: code-style code-format code-typecheck code-security code-deptry code-stats code-spell code-audit code-semgrep
 .PHONY: ci ci-quiet
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
 .PHONY: logs-weaviate logs-kafka logs-redis
@@ -257,6 +257,13 @@ code-audit: ## Scan dependencies for known vulnerabilities
 	@echo "$(GREEN)✓ No known vulnerabilities found$(NC)"
 	@echo ""
 
+code-semgrep: ## Run Semgrep static analysis (no default values)
+	@echo "$(BLUE)=== Running Semgrep Static Analysis ===$(NC)"
+	@uv run semgrep --config semgrep/ --error src evals
+	@echo ""
+	@echo "$(GREEN)✓ Semgrep checks passed$(NC)"
+	@echo ""
+
 ##@ Testing
 
 test: ## Run unit tests only (fast, no cluster required)
@@ -291,7 +298,7 @@ test-e2e: ## Run E2E tests (destructive - resets cluster and data)
 
 ##@ CI/CD
 
-ci: init code-style code-typecheck code-security code-deptry code-spell test ## Run ALL validation checks (style + types + security + deps + spelling + tests)
+ci: init code-style code-typecheck code-security code-deptry code-spell code-semgrep code-audit test ## Run ALL validation checks (style + types + security + deps + spelling + semgrep + audit + tests)
 	@echo "$(GREEN)✓ All CI checks passed$(NC)"
 	@echo ""
 
@@ -310,6 +317,10 @@ ci-quiet: ## Run ALL validation checks silently (only show output on errors)
 	echo "$(GREEN)✓ Code-deptry passed$(NC)"; \
 	$(MAKE) code-spell > $$TMPFILE 2>&1 || { echo "$(RED)✗ Code-spell failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
 	echo "$(GREEN)✓ Code-spell passed$(NC)"; \
+	$(MAKE) code-semgrep > $$TMPFILE 2>&1 || { echo "$(RED)✗ Code-semgrep failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
+	echo "$(GREEN)✓ Code-semgrep passed$(NC)"; \
+	$(MAKE) code-audit > $$TMPFILE 2>&1 || { echo "$(RED)✗ Code-audit failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
+	echo "$(GREEN)✓ Code-audit passed$(NC)"; \
 	$(MAKE) test > $$TMPFILE 2>&1 || { echo "$(RED)✗ Test failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
 	echo "$(GREEN)✓ Test passed$(NC)"; \
 	rm $$TMPFILE; \
