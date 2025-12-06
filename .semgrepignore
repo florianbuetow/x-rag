@@ -1,0 +1,10 @@
+:include .gitignore
+
+.venv/
+venv/
+build/
+dist/
+reports/
+.data/
+.cache/
+src/proto_gen/
