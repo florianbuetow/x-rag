@@ -1,0 +1,22 @@
+service:
+  name: ingestion-api
+  port: 8082
+  log_level: INFO
+
+minio:
+  endpoint: http://xrag-minio:9000
+  bucket: documents
+  secure: false
+
+kafka:
+  bootstrap: xrag-kafka:9092
+  topic: document-changes
+  acks: 1
+
+api:
+  max_content_length: 10485760
+  cors_enabled: true
+
+tracing:
+  otlp_endpoint: http://xrag-tempo:4317
+  environment: development

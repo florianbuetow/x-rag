@@ -1,0 +1,41 @@
+service:
+  name: search-service
+  port: 50052
+  log_level: INFO
+
+grpc:
+  enable_reflection: true
+  timeout: 30
+
+weaviate:
+  url: http://xrag-weaviate:8080
+  timeout: 30
+  collection: DocumentChunk
+
+redis:
+  url: redis://xrag-redis:6379
+  cache_ttl: 3600
+  enable_cache: true
+
+embedding_service:
+  address: embedding-service:50051
+  timeout: 30
+  model: text-embedding-bge-large-en-v1.5
+
+openai:
+  api_base: http://host.docker.internal:1234/v1
+  model: qwen2.5-7b-instruct-mlx
+  max_tokens: 500
+  temperature: 0.7
+  max_retries: 3
+  timeout: 60
+
+search:
+  default_top_k: 10
+  default_mode: hybrid
+  hybrid_alpha: 0.5
+  max_context_length: 4000
+
+tracing:
+  otlp_endpoint: http://xrag-tempo:4317
+  environment: development
