@@ -514,6 +514,73 @@ kubectl port-forward svc/search-service 9090:8080
 curl -s http://localhost:9090/metrics | grep search_service
 ```
 
+## Retrieval Evaluation
+
+The eval harness measures retrieval quality using standard IR metrics. It reuses production components - no duplicate configs or clients.
+
+### Running Evaluations
+
+```bash
+make eval                                    # Run with production.yaml (default)
+make eval CONFIG=evals/configs/baseline.yaml # Run with specific config
+```
+
+### Configuration
+
+YAML configs in `evals/configs/` specify embedding provider and search parameters:
+
+```yaml
+name: production-v1
+dataset_path: data/eval/.../dataset.json
+embedding:
+  provider: local  # Uses EmbeddingConfig.for_local()
+  model: text-embedding-bge-large-en-v1.5
+  base_url: http://localhost:1234/v1
+search:
+  mode: hybrid
+  top_k: 10
+  alpha: 0.5
+```
+
+Providers:
+- `local` → LM Studio/Ollama (requires running server)
+- `hash_based` → Deterministic hashing (no network, for testing)
+- `openai` → OpenAI API (requires `OPENAI_API_KEY`)
+
+### Metrics
+
+| Metric | Description |
+|--------|-------------|
+| Recall@K | % of relevant chunks retrieved in top K |
+| Precision@K | % of top K results that are relevant |
+| Hit Rate@K | % of queries with at least 1 relevant result |
+| MRR | Mean Reciprocal Rank of first relevant result |
+| NDCG@K | Normalized Discounted Cumulative Gain |
+
+### Reports
+
+Results saved to `evals/reports/{config-name}-{timestamp}.json`:
+
+```json
+{
+  "run_id": "production-v1-20251205-224957",
+  "metrics": {
+    "recall_at_k": 0.588,
+    "mrr": 0.411,
+    "ndcg_at_k": 0.468
+  }
+}
+```
+
+### Key Design Principle
+
+The eval harness uses **production components directly**:
+- `EmbeddingConfig` from `src/llm/config.py`
+- `EmbeddingGeneratorFactory` from `src/embedding_service/generators/factory.py`
+- Embedded Weaviate for isolated testing
+
+No duplicate configs or clients. The eval is just a thin orchestrator.
+
 ## Future Enhancements (Not Required for Phase 7)
 
 5. **Service list duplication** (scripts/build-images.sh, scripts/deploy-apps.sh)
