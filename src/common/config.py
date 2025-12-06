@@ -1,20 +1,102 @@
 """Base configuration with validation using Pydantic.
 
-Provides utilities for loading configuration from environment variables
+Provides utilities for loading configuration from YAML files and environment variables
 with validation and helpful error messages.
 """
 
 import os
 from pathlib import Path
+from typing import Any, TypeVar
 
+import yaml
 from dotenv import load_dotenv
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.core.errors import ConfigurationError
 
+T = TypeVar("T")
+
 # Load .env file at module import time
 load_dotenv()
+
+
+def load_yaml_config(config_path: str | Path) -> dict[str, Any]:
+    """Load configuration from a YAML file.
+
+    Args:
+        config_path: Path to the YAML configuration file.
+
+    Returns:
+        Dictionary containing all configuration values.
+
+    Raises:
+        ConfigurationError: If file doesn't exist or contains invalid YAML.
+    """
+    path = Path(config_path)
+    if not path.exists():
+        raise ConfigurationError(f"Configuration file not found: {config_path}")
+
+    try:
+        with open(path, encoding="utf-8") as f:
+            config = yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        raise ConfigurationError(f"Invalid YAML in {config_path}: {e}") from e
+
+    if config is None:
+        raise ConfigurationError(f"Configuration file is empty: {config_path}")
+
+    return config
+
+
+def get_nested_value(config: dict[str, Any], *keys: str) -> object:
+    """Get a nested value from a config dictionary.
+
+    Args:
+        config: Configuration dictionary.
+        *keys: Sequence of keys to traverse (e.g., "grpc", "timeout").
+
+    Returns:
+        The value at the nested path.
+
+    Raises:
+        ConfigurationError: If any key in the path is missing.
+    """
+    current = config
+    path = ".".join(keys)
+
+    for key in keys:
+        if not isinstance(current, dict):
+            raise ConfigurationError(f"Expected dict at '{path}' but got {type(current).__name__}")
+        if key not in current:
+            raise ConfigurationError(f"Missing required configuration key: '{path}'")
+        current = current[key]
+
+    return current
+
+
+def get_config_value(config: dict[str, Any], *keys: str, env_var: str | None = None) -> object:
+    """Get a config value with optional environment variable override.
+
+    Environment variables take precedence over YAML values.
+
+    Args:
+        config: Configuration dictionary.
+        *keys: Sequence of keys to traverse in the config dict.
+        env_var: Optional environment variable name that can override the YAML value.
+
+    Returns:
+        The configuration value (from env var if set, otherwise from YAML).
+
+    Raises:
+        ConfigurationError: If the value is not found in either source.
+    """
+    if env_var:
+        env_value = os.getenv(env_var)
+        if env_value is not None:
+            return env_value
+
+    return get_nested_value(config, *keys)
 
 
 class BaseConfig(BaseSettings):

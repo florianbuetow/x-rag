@@ -1,0 +1,33 @@
+service:
+  name: indexer
+  health_port: 8080
+  log_level: INFO
+
+kafka:
+  bootstrap: xrag-kafka:9092
+  topic: document-changes
+  group_id: indexer-group
+  auto_offset_reset: earliest
+
+minio:
+  endpoint: xrag-minio:9000
+  bucket: documents
+  secure: false
+
+weaviate:
+  url: http://xrag-weaviate:8080
+  collection: DocumentChunk
+
+embedding_service:
+  address: embedding-service:50051
+  timeout: 30
+  model: text-embedding-bge-large-en-v1.5
+
+chunking:
+  chunk_size: 500
+  chunk_overlap: 50
+  batch_size: 10
+
+tracing:
+  otlp_endpoint: http://xrag-tempo:4317
+  environment: development
