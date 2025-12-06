@@ -3,7 +3,7 @@ rules:
     languages: [python]
     message: >
       Default parameter values hide configuration errors. Use explicit required parameters
-      and validate at the call site instead.
+      and validate at the call site instead or raise an error when a paramter unexpectedly is missing or not set.
     severity: ERROR
     pattern-either:
       - pattern: |
@@ -21,7 +21,7 @@ rules:
     languages: [python]
     message: >
       Using .get() with a default value hides missing configuration. Access the key
-      directly or use explicit validation instead.
+      directly or use explicit validation instead or raise an error when the value is expected but missing.
     severity: ERROR
     pattern: $DICT.get($KEY, $DEFAULT)
     paths:
