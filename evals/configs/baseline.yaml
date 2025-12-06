@@ -1,0 +1,33 @@
+# Baseline evaluation configuration
+# Uses hash-based embeddings (self-contained, no network calls)
+# Good for testing the evaluation harness itself
+
+name: baseline-v1
+
+# Evaluation dataset
+dataset_path: data/eval/@JasonLiu/video-transcripts/medium-en/qwen2.5-7b-instruct-mlx/dataset.json
+
+# Embedding configuration (uses production EmbeddingConfig.for_hash_based())
+embedding:
+  provider: hash_based
+  dimension: 1024
+
+# Chunking configuration
+chunking:
+  chunk_size: 500
+  chunk_overlap: 50
+
+# Search configuration
+search:
+  mode: hybrid
+  top_k: 10
+  alpha: 0.5
+
+# Index configuration
+index:
+  documents_path: data/raw/@JasonLiu/video-transcripts/medium-en
+  collection: DocumentChunk
+
+# Output
+output_dir: evals/reports
+include_per_sample: false
