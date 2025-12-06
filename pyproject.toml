@@ -278,4 +278,4 @@ skip = ".git,.venv,venv,build,dist,reports,src/proto_gen,*.lock,uv.lock"
 # Note: codespell uses comma-separated without spaces for extensions
 
 # Use external ignore file for maintainability
-ignore-words = "config/codespell-ignore.txt"
+ignore-words = "config/codespell/ignore.txt"
