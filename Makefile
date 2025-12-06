@@ -259,7 +259,7 @@ code-audit: ## Scan dependencies for known vulnerabilities
 
 code-semgrep: ## Run Semgrep static analysis (no default values)
 	@echo "$(BLUE)=== Running Semgrep Static Analysis ===$(NC)"
-	@uv run semgrep --config semgrep/ --error src evals
+	@uv run semgrep --config config/semgrep/ --error src evals
 	@echo ""
 	@echo "$(GREEN)✓ Semgrep checks passed$(NC)"
 	@echo ""
