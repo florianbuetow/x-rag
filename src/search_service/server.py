@@ -113,7 +113,7 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
                 id=source_dict["id"],
                 content=source_dict["content"],
                 score=source_dict["score"],
-                metadata={str(k): str(v) for k, v in source_dict.get("metadata", {}).items()},
+                metadata={str(k): str(v) for k, v in source_dict["metadata"].items()} if "metadata" in source_dict else {},
             )
             for source_dict in result["sources"]
         ]
@@ -122,7 +122,7 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
             "mode": result["metadata"]["mode"],
             "top_k": str(result["metadata"]["top_k"]),
             "namespace": result["metadata"]["namespace"],
-            "cache_hit": str(result["metadata"].get("cache_hit", False)),
+            "cache_hit": str(result["metadata"]["cache_hit"]) if "cache_hit" in result["metadata"] else "False",
             "num_sources": str(result["metadata"]["num_sources"]),
         }
 
@@ -132,7 +132,7 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
         self,
         name: str,
         check_fn: Callable[[], bool] | Callable[[], Awaitable[bool]],
-        is_async: bool = False,
+        is_async: bool,
     ) -> tuple[str, bool]:
         """Check a single dependency's health.
 
@@ -218,7 +218,8 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
 
                 # Build and return response
                 response = self._build_search_response(result)
-                logger.info(f"Search completed: {len(response.sources)} sources, cache_hit={result['metadata'].get('cache_hit', False)}")
+                cache_hit = result["metadata"]["cache_hit"] if "cache_hit" in result["metadata"] else False
+                logger.info(f"Search completed: {len(response.sources)} sources, cache_hit={cache_hit}")
 
             requests_total.labels(method="Search", status="success").inc()
             return response
