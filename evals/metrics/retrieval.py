@@ -71,7 +71,7 @@ class RetrievalMetrics:
 def compute_recall(
     retrieved_ids: list[str],
     relevant_ids: set[str],
-    k: int | None = None,
+    k: int | None,
 ) -> float:
     """Compute Recall@K.
 
@@ -103,7 +103,7 @@ def compute_recall(
 def compute_precision(
     retrieved_ids: list[str],
     relevant_ids: set[str],
-    k: int | None = None,
+    k: int | None,
 ) -> float:
     """Compute Precision@K.
 
@@ -136,7 +136,7 @@ def compute_precision(
 def compute_hit_rate(
     retrieved_ids: list[str],
     relevant_ids: set[str],
-    k: int | None = None,
+    k: int | None,
 ) -> float:
     """Compute Hit Rate@K (Success@K).
 
@@ -201,7 +201,7 @@ def compute_mrr(
 def compute_ndcg(
     retrieved_ids: list[str],
     relevant_ids: set[str],
-    k: int | None = None,
+    k: int | None,
 ) -> float:
     """Compute Normalized Discounted Cumulative Gain (NDCG@K).
 
@@ -254,7 +254,7 @@ def compute_retrieval_metrics(
     retrieved_ids_list: list[list[str]],
     relevant_ids_list: list[set[str]],
     k: int,
-    include_per_sample: bool = False,
+    include_per_sample: bool,
 ) -> RetrievalMetrics:
     """Compute aggregate retrieval metrics across multiple samples.
 
