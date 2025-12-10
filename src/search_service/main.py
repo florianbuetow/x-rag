@@ -60,7 +60,11 @@ class SearchServiceRunner:
         logger.info(f"Starting {self.config.service_name}...")
 
         # Initialize distributed tracing
-        init_tracing(service_name=self.config.service_name)
+        init_tracing(
+            service_name=self.config.service_name,
+            otlp_endpoint=self.config.otlp_endpoint,
+            environment=self.config.environment,
+        )
 
         # Instrument gRPC server for distributed tracing
         GrpcAioInstrumentorServer().instrument()  # type: ignore[no-untyped-call]

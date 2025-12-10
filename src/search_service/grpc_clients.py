@@ -17,7 +17,7 @@ class EmbeddingServiceClient:
     Used by Search Service to embed queries before retrieval.
     """
 
-    def __init__(self, address: str, timeout: float = 30.0) -> None:
+    def __init__(self, address: str, timeout: float) -> None:
         """Initialize the Embedding Service client.
 
         Args:
