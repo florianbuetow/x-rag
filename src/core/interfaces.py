@@ -43,7 +43,7 @@ class Chunker(Protocol):
     """Protocol for splitting text into chunks."""
 
     @abstractmethod
-    def chunk(self, text: str, doc_id: str, metadata: dict[str, Any] | None = None) -> list[Chunk]:
+    def chunk(self, text: str, doc_id: str, metadata: dict[str, Any] | None) -> list[Chunk]:
         """Split text into chunks with deterministic IDs.
 
         Args:
@@ -152,7 +152,7 @@ class IndexClient(Protocol):
         self,
         name: str,
         dimensions: int,
-        distance_metric: Literal["cosine", "l2", "dot"] = "cosine",
+        distance_metric: Literal["cosine", "l2", "dot"],
     ) -> None:
         """Create a new collection/index.
 
@@ -206,8 +206,8 @@ class IndexClient(Protocol):
         self,
         collection: str,
         vector: list[float],
-        top_k: int = 10,
-        filters: dict[str, Any] | None = None,
+        top_k: int,
+        filters: dict[str, Any] | None,
     ) -> list[RetrievedChunk]:
         """Vector similarity search.
 
@@ -228,9 +228,9 @@ class IndexClient(Protocol):
         collection: str,
         query: str,
         vector: list[float],
-        top_k: int = 10,
-        alpha: float = 0.5,
-        filters: dict[str, Any] | None = None,
+        top_k: int,
+        alpha: float,
+        filters: dict[str, Any] | None,
     ) -> list[RetrievedChunk]:
         """Hybrid search combining vector and keyword search.
 
@@ -256,9 +256,9 @@ class Retriever(Protocol):
     def retrieve(
         self,
         query: str,
-        top_k: int = 10,
-        mode: SearchMode = "hybrid",
-        namespace: str = "default",
+        top_k: int,
+        mode: SearchMode,
+        namespace: str,
     ) -> list[CoreDocument]:
         """Retrieve documents relevant to the query.
 
@@ -282,8 +282,8 @@ class GraphRetriever(Protocol):
     def neighbors(
         self,
         doc_ids: list[str],
-        top_k: int = 10,
-        namespace: str = "default",
+        top_k: int,
+        namespace: str,
     ) -> list[CoreDocument]:
         """Find neighboring documents in the graph.
 
@@ -307,7 +307,7 @@ class Reranker(Protocol):
         self,
         query: str,
         documents: list[CoreDocument],
-        top_k: int | None = None,
+        top_k: int | None,
     ) -> list[CoreDocument]:
         """Rerank documents by relevance to query.
 
@@ -361,7 +361,7 @@ class Cache(Protocol):
         ...
 
     @abstractmethod
-    def set(self, key: str, value: object, ttl: int | None = None) -> None:
+    def set(self, key: str, value: object, ttl: int | None) -> None:
         """Set value in cache.
 
         Args:
