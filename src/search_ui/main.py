@@ -56,7 +56,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info(f"Starting {config.service_name}...")
 
     # Initialize distributed tracing
-    init_tracing(service_name=config.service_name)
+    init_tracing(
+        service_name=config.service_name,
+        otlp_endpoint=config.otlp_endpoint,
+        environment=config.environment,
+    )
 
     # Start Prometheus metrics server on separate port
     start_http_server(9091)
@@ -155,6 +159,7 @@ async def search(request: SearchRequest) -> SearchResponse:
                     namespace=request.namespace,
                     top_k=request.top_k,
                     mode=request.mode,
+                    options=None,
                 )
 
             # Convert gRPC response to Pydantic model
