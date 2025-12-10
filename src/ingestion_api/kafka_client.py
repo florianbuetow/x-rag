@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class KafkaClient:
     """Thin wrapper around Kafka producer with lifecycle management."""
 
-    def __init__(self, bootstrap_servers: str, acks: str | int = 1) -> None:
+    def __init__(self, bootstrap_servers: str, acks: str | int) -> None:
         """Initialize Kafka client (not started yet).
 
         Args:
@@ -72,7 +72,8 @@ class KafkaClient:
 
         try:
             await self.producer.send_and_wait(topic, value=message)
-            logger.debug(f"Published to {topic}: {message.get('event_type', 'unknown')}")
+            event_type = message["event_type"] if "event_type" in message else "unknown"
+            logger.debug(f"Published to {topic}: {event_type}")
         except KafkaError as e:
             logger.error(f"Failed to publish to {topic}: {e}")
             raise

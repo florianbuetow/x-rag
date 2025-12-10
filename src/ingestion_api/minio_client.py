@@ -18,7 +18,7 @@ class MinioClient:
         access_key: str,
         secret_key: str,
         bucket: str,
-        secure: bool = False,
+        secure: bool,
     ) -> None:
         """Initialize MinIO client.
 
