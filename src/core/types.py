@@ -44,9 +44,9 @@ class Chunk:
         doc_id: str,
         chunk_index: int,
         content: str,
-        metadata: dict[str, Any] | None = None,
-        start_char: int | None = None,
-        end_char: int | None = None,
+        metadata: dict[str, Any] | None,
+        start_char: int | None,
+        end_char: int | None,
     ) -> "Chunk":
         """Factory method to create a chunk with a deterministic ID.
 
@@ -156,7 +156,7 @@ class RetrievalResult:
         query: str,
         chunks: list[RetrievedChunk],
         latency_ms: float,
-        config_snapshot: dict[str, Any] | None = None,
+        config_snapshot: dict[str, Any] | None,
     ) -> "RetrievalResult":
         """Factory method to create a retrieval result.
 

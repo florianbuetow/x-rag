@@ -28,7 +28,9 @@ class CoreDocument:
         Returns:
             Namespace string (default: "default")
         """
-        return cast(str, self.metadata.get("namespace", "default"))
+        if "namespace" in self.metadata:
+            return cast(str, self.metadata["namespace"])
+        return "default"
 
     @property
     def source(self) -> str | None:
@@ -90,6 +92,6 @@ class CoreDocument:
         return cls(
             id=data["id"],
             content=data["content"],
-            metadata=data.get("metadata", {}),
-            score=data.get("score"),
+            metadata=data["metadata"] if "metadata" in data else {},
+            score=data["score"] if "score" in data else None,
         )
