@@ -63,7 +63,7 @@ class WeaviateRetriever:
     def __init__(
         self,
         weaviate_url: str,
-        collection_name: str = "DocumentChunk",
+        collection_name: str,
     ) -> None:
         """Initialize Weaviate retriever.
 
@@ -182,15 +182,15 @@ class WeaviateRetriever:
 
         # Build metadata
         metadata = {
-            "doc_id": obj.properties.get("doc_id", ""),
-            "chunk_index": obj.properties.get("chunk_index", 0),
-            "namespace": obj.properties.get("namespace", ""),
-            "source": obj.properties.get("source", ""),
-            "title": obj.properties.get("title", ""),
+            "doc_id": obj.properties["doc_id"] if "doc_id" in obj.properties else "",
+            "chunk_index": obj.properties["chunk_index"] if "chunk_index" in obj.properties else 0,
+            "namespace": obj.properties["namespace"] if "namespace" in obj.properties else "",
+            "source": obj.properties["source"] if "source" in obj.properties else "",
+            "title": obj.properties["title"] if "title" in obj.properties else "",
         }
 
         # Add custom metadata if present
-        metadata_json = obj.properties.get("metadata_json", "")
+        metadata_json = obj.properties["metadata_json"] if "metadata_json" in obj.properties else ""
         if metadata_json and isinstance(metadata_json, str):
             try:
                 custom_metadata = json.loads(metadata_json)
@@ -198,7 +198,7 @@ class WeaviateRetriever:
             except json.JSONDecodeError:
                 logger.warning(f"Failed to parse metadata_json for chunk {obj.uuid}")
 
-        content = obj.properties.get("content", "")
+        content = obj.properties["content"] if "content" in obj.properties else ""
         content_str = str(content) if content is not None else ""
 
         return SearchResult(id=str(obj.uuid), content=content_str, score=score, metadata=metadata)
@@ -206,11 +206,11 @@ class WeaviateRetriever:
     def search(
         self,
         query: str,
-        query_embedding: list[float] | None = None,
-        top_k: int = 10,
-        mode: Literal["vector", "bm25", "hybrid"] = "hybrid",
-        alpha: float = 0.5,
-        namespace: str | None = None,
+        query_embedding: list[float] | None,
+        top_k: int,
+        mode: Literal["vector", "bm25", "hybrid"],
+        alpha: float,
+        namespace: str | None,
     ) -> list[SearchResult]:
         """Search for relevant documents.
 

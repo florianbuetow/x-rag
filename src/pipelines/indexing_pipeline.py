@@ -147,7 +147,7 @@ class MinIODocumentLoader:
         endpoint: str,
         access_key: str,
         secret_key: str,
-        secure: bool = False,
+        secure: bool,
     ) -> None:
         """Initialize MinIO document loader.
 
@@ -184,7 +184,8 @@ class MinIODocumentLoader:
             try:
                 data = response.read()
                 document: dict[str, Any] = json.loads(data.decode("utf-8"))
-                logger.debug(f"✓ Loaded document: {document.get('id')}")
+                doc_id_log = document["id"] if "id" in document else "unknown"
+                logger.debug(f"✓ Loaded document: {doc_id_log}")
                 return document
             finally:
                 response.close()
@@ -209,9 +210,9 @@ class HaystackTextCleaner:
 
     def __init__(
         self,
-        remove_empty_lines: bool = True,
-        remove_extra_whitespaces: bool = True,
-        unicode_normalization: Literal["NFC", "NFKC", "NFD", "NFKD"] | None = "NFC",
+        remove_empty_lines: bool,
+        remove_extra_whitespaces: bool,
+        unicode_normalization: Literal["NFC", "NFKC", "NFD", "NFKD"] | None,
     ) -> None:
         """Initialize the Haystack-based text cleaner.
 
@@ -242,7 +243,7 @@ class HaystackTextCleaner:
         # Create a Haystack Document, clean it, extract the content
         doc = Document(content=text)
         result = self._cleaner.run(documents=[doc])
-        cleaned_docs = result.get("documents", [])
+        cleaned_docs = result["documents"] if "documents" in result else []
 
         if not cleaned_docs:
             return ""
@@ -269,8 +270,8 @@ class HaystackTextSplitter:
 
     def __init__(
         self,
-        chunk_size_words: int = 100,
-        chunk_overlap_words: int = 0,
+        chunk_size_words: int,
+        chunk_overlap_words: int,
     ) -> None:
         """Initialize the Haystack-based text splitter.
 
@@ -309,7 +310,7 @@ class HaystackTextSplitter:
         # Create a Haystack Document, split it, extract the contents
         doc = Document(content=text)
         result = self._splitter.run(documents=[doc])
-        split_docs = result.get("documents", [])
+        split_docs = result["documents"] if "documents" in result else []
 
         chunks = [d.content for d in split_docs if d.content]
 
@@ -379,7 +380,6 @@ class IndexingPipeline:
         """
         # Step 1: Load document
         document = self._load_document(bucket, key)
-        doc_id = document.get("id", "unknown")
 
         # Step 2: Extract and clean text
         cleaned_text = self._clean_text(document)
@@ -396,7 +396,8 @@ class IndexingPipeline:
         # Step 6: Store chunks
         self._store_chunks(chunks, embeddings)
 
-        logger.info(f"✓ Processed document {doc_id}: {len(chunks)} chunks created")
+        doc_id_result = document["id"] if "id" in document else "unknown"
+        logger.info(f"✓ Processed document {doc_id_result}: {len(chunks)} chunks created")
         return len(chunks)
 
     def _load_document(self, bucket: str, key: str) -> dict[str, Any]:
@@ -410,7 +411,7 @@ class IndexingPipeline:
             Document dictionary
         """
         logger.info(f"Loading document: {bucket}/{key}")
-        with track_latency(minio_load_duration):
+        with track_latency(minio_load_duration, None):
             return self.loader.load(bucket, key)
 
     def _clean_text(self, document: dict[str, Any]) -> str:
@@ -422,13 +423,14 @@ class IndexingPipeline:
         Returns:
             Cleaned text
         """
-        raw_text = document.get("text", "")
+        raw_text = document["text"] if "text" in document else ""
         if not raw_text:
-            logger.warning(f"Document {document.get('id')} has no text content")
+            doc_id_for_log = document["id"] if "id" in document else "unknown"
+            logger.warning(f"Document {doc_id_for_log} has no text content")
             return ""
 
         logger.debug("Cleaning document text")
-        with track_latency(text_cleaning_duration):
+        with track_latency(text_cleaning_duration, None):
             return self.cleaner.clean(raw_text)
 
     def _split_text(self, text: str) -> list[str]:
@@ -441,7 +443,7 @@ class IndexingPipeline:
             List of text chunks
         """
         logger.debug("Splitting text into chunks")
-        with track_latency(text_splitting_duration):
+        with track_latency(text_splitting_duration, None):
             return self.splitter.split(text)
 
     def _create_chunks(
@@ -458,9 +460,9 @@ class IndexingPipeline:
         Returns:
             List of DocumentChunk objects
         """
-        doc_id = document.get("id", "unknown")
-        namespace = document.get("namespace", "default")
-        metadata = document.get("metadata", {})
+        doc_id = document["id"] if "id" in document else "unknown"
+        namespace = document["namespace"] if "namespace" in document else "default"
+        metadata = document["metadata"] if "metadata" in document else {}
 
         chunks = [
             DocumentChunk(
