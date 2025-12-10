@@ -39,7 +39,7 @@ class HealthChecker:
         self,
         name: str,
         check_func: Callable[[], Awaitable[bool]],
-        critical: bool = True,
+        critical: bool,
     ) -> None:
         """Add a dependency to check.
 
@@ -141,10 +141,15 @@ class HealthChecker:
             "HEALTHY": HealthCheckResponse.HEALTHY,
             "DEGRADED": HealthCheckResponse.DEGRADED,
             "UNHEALTHY": HealthCheckResponse.UNHEALTHY,
+            "UNKNOWN": HealthCheckResponse.UNKNOWN,
         }
 
+        status_str = health_data["status"]
+        if status_str not in status_map:
+            raise ValueError(f"Unknown health status: {status_str}")
+
         return HealthCheckResponse(
-            status=status_map.get(health_data["status"], HealthCheckResponse.UNKNOWN),
+            status=status_map[status_str],
             dependencies=health_data["dependencies"],
             message=health_data["message"],
         )

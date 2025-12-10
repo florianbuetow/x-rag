@@ -46,6 +46,9 @@ def load_yaml_config(config_path: str | Path) -> dict[str, Any]:
     if config is None:
         raise ConfigurationError(f"Configuration file is empty: {config_path}")
 
+    if not isinstance(config, dict):
+        raise ConfigurationError(f"Configuration must be a YAML mapping, got {type(config).__name__}")
+
     return config
 
 
@@ -75,7 +78,7 @@ def get_nested_value(config: dict[str, Any], *keys: str) -> object:
     return current
 
 
-def get_config_value(config: dict[str, Any], *keys: str, env_var: str | None = None) -> object:
+def get_config_value(config: dict[str, Any], *keys: str, env_var: str | None) -> object:
     """Get a config value with optional environment variable override.
 
     Environment variables take precedence over YAML values.
@@ -123,7 +126,7 @@ class BaseConfig(BaseSettings):
     )
 
     @classmethod
-    def from_env(cls, env_file: str = ".env") -> "BaseConfig":
+    def from_env(cls, env_file: str) -> "BaseConfig":
         """Load configuration from environment file.
 
         Args:
@@ -141,7 +144,7 @@ class BaseConfig(BaseSettings):
             raise ConfigurationError(f"Failed to load configuration: {e}") from e
 
 
-def require_env_file(path: str = ".env") -> None:
+def require_env_file(path: str) -> None:
     """Check that .env file exists, guide user if not.
 
     Args:
@@ -165,20 +168,19 @@ def require_env_file(path: str = ".env") -> None:
         raise ConfigurationError(error_msg)
 
 
-def get_env_or_error(key: str, default: str | None = None) -> str:
+def get_env_or_error(key: str) -> str:
     """Get environment variable or raise helpful error.
 
     Args:
         key: Environment variable name
-        default: Default value if not set
 
     Returns:
         Environment variable value
 
     Raises:
-        ConfigurationError: If variable not set and no default
+        ConfigurationError: If variable not set
     """
-    value = os.getenv(key, default)
+    value = os.getenv(key)
     if value is None:
         raise ConfigurationError(
             f"Required environment variable '{key}' is not set.\nAdd it to your .env file or set it in your environment."
@@ -195,6 +197,10 @@ class ServiceConfig(BaseConfig):
     service_name: str = Field(..., description="Service name for logging and metrics")
     log_level: str = Field(default="INFO", description="Logging level")
     port: int = Field(default=8080, description="Service port")
+
+    # OpenTelemetry tracing configuration
+    otlp_endpoint: str | None = Field(default=None, description="OTLP endpoint for tracing (defaults to env var or http://xrag-tempo:4317)")
+    environment: str = Field(default="development", description="Deployment environment (development, staging, production)")
 
     @field_validator("log_level")
     @classmethod

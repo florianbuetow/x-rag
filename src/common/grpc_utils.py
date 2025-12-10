@@ -25,8 +25,8 @@ class GrpcClient:
         self,
         address: str,
         stub_class: type[Any],
-        timeout: int = 30,
-        max_retries: int = 3,
+        timeout: int,
+        max_retries: int,
     ) -> None:
         """Initialize gRPC client.
 
@@ -92,9 +92,9 @@ class GrpcClient:
 
 def create_grpc_server(
     port: int,
-    max_workers: int = 10,
-    enable_reflection: bool = True,
-    service_names: list[str] | None = None,
+    max_workers: int,
+    enable_reflection: bool,
+    service_names: list[str] | None,
 ) -> grpc.Server:
     """Create gRPC server with standard configuration.
 
