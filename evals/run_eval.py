@@ -63,31 +63,40 @@ def create_embedding_generator(config: dict[str, Any]) -> tuple[EmbeddingGenerat
 
     Returns:
         Tuple of (generator, model_name, dimension)
+
+    Raises:
+        ValueError: If embedding.provider is missing or invalid
     """
-    embed_cfg = config.get("embedding", {})
-    provider = embed_cfg.get("provider", "hash_based")
+    embed_cfg = config.get("embedding")
+    if embed_cfg is None:
+        raise ValueError("Missing required config section: 'embedding'. Must specify embedding.provider.")
+
+    provider = embed_cfg.get("provider")
+    if provider is None:
+        raise ValueError("Missing required config: embedding.provider. Must be one of: 'hash_based', 'local', 'openai'")
 
     # Create production EmbeddingConfig using factory methods
     if provider == "hash_based":
-        dimension = embed_cfg.get("dimension", 1024)
+        dimension = embed_cfg["dimension"] if "dimension" in embed_cfg else 1024
         embedding_config = EmbeddingConfig.for_hash_based(dimension=dimension)
         model = "hash-based"
     elif provider == "local":
         base_url = embed_cfg.get("base_url") or os.environ.get("OPENAI_API_BASE")
-        model = embed_cfg.get("model", "text-embedding-bge-large-en-v1.5")
+        model = embed_cfg["model"] if "model" in embed_cfg else "text-embedding-bge-large-en-v1.5"
         embedding_config = EmbeddingConfig.for_local(
             base_url=base_url,
             model=model,
-            api_key=os.environ.get("OPENAI_API_KEY", "local"),
+            api_key=os.environ["OPENAI_API_KEY"] if "OPENAI_API_KEY" in os.environ else "local",
         )
-        dimension = OpenAIEmbeddingGenerator.MODEL_DIMENSIONS.get(model, embed_cfg.get("dimension", 1024))
+        dim_fallback = embed_cfg["dimension"] if "dimension" in embed_cfg else 1024
+        dimension = OpenAIEmbeddingGenerator.MODEL_DIMENSIONS[model] if model in OpenAIEmbeddingGenerator.MODEL_DIMENSIONS else dim_fallback
     elif provider == "openai":
-        model = embed_cfg.get("model", "text-embedding-3-small")
+        model = embed_cfg["model"] if "model" in embed_cfg else "text-embedding-3-small"
         embedding_config = EmbeddingConfig.for_openai(
             api_key=os.environ.get("OPENAI_API_KEY"),
             model=model,
         )
-        dimension = OpenAIEmbeddingGenerator.MODEL_DIMENSIONS.get(model, 1536)
+        dimension = OpenAIEmbeddingGenerator.MODEL_DIMENSIONS[model] if model in OpenAIEmbeddingGenerator.MODEL_DIMENSIONS else 1536
     else:
         raise ValueError(f"Unknown embedding provider: {provider}")
 
@@ -117,7 +126,7 @@ class SyncEmbeddingWrapper:
         """Embed a single text string."""
         return self._get_loop().run_until_complete(self.generator.embed(text, self.model))
 
-    def embed_batch(self, texts: list[str], batch_size: int = 50) -> list[list[float]]:
+    def embed_batch(self, texts: list[str], batch_size: int) -> list[list[float]]:
         """Embed a batch of texts."""
         loop = self._get_loop()
         all_embeddings: list[list[float]] = []
@@ -131,7 +140,7 @@ class SyncEmbeddingWrapper:
 class EmbeddedWeaviateClient:
     """Embedded Weaviate for evaluation - no network required."""
 
-    def __init__(self, collection_name: str = "DocumentChunk") -> None:
+    def __init__(self, collection_name: str) -> None:
         self.collection_name = collection_name
         self.client: weaviate.WeaviateClient | None = None
 
@@ -183,9 +192,9 @@ class EmbeddedWeaviateClient:
                         "content": chunk["content"],
                         "doc_id": chunk["doc_id"],
                         "chunk_index": chunk["chunk_index"],
-                        "namespace": chunk.get("namespace", "default"),
-                        "source": chunk.get("source", ""),
-                        "title": chunk.get("title", ""),
+                        "namespace": chunk["namespace"] if "namespace" in chunk else "default",
+                        "source": chunk["source"] if "source" in chunk else "",
+                        "title": chunk["title"] if "title" in chunk else "",
                     },
                     vector=embedding,
                 )
@@ -198,7 +207,7 @@ class EmbeddedWeaviateClient:
         top_k: int,
         mode: Literal["vector", "bm25", "hybrid"],
         alpha: float,
-        namespace: str | None = None,
+        namespace: str | None,
     ) -> list[dict[str, Any]]:
         """Search for similar chunks."""
         if not self.client:
@@ -217,8 +226,8 @@ class EmbeddedWeaviateClient:
 
         results = []
         for obj in result.objects:
-            doc_id = obj.properties.get("doc_id", "")
-            chunk_index = obj.properties.get("chunk_index", 0)
+            doc_id = obj.properties["doc_id"] if "doc_id" in obj.properties else ""
+            chunk_index = obj.properties["chunk_index"] if "chunk_index" in obj.properties else 0
             chunk_id = f"{doc_id}-chunk-{chunk_index}"
             if mode == "vector":
                 distance = obj.metadata.distance or 0.0
@@ -230,14 +239,14 @@ class EmbeddedWeaviateClient:
                     "chunk_id": chunk_id,
                     "doc_id": doc_id,
                     "chunk_index": chunk_index,
-                    "content": obj.properties.get("content", ""),
+                    "content": obj.properties["content"] if "content" in obj.properties else "",
                     "score": score,
                 }
             )
         return results
 
 
-def load_and_chunk_documents(documents_path: str, chunk_size: int = 500, chunk_overlap: int = 50) -> list[dict[str, Any]]:
+def load_and_chunk_documents(documents_path: str, chunk_size: int, chunk_overlap: int) -> list[dict[str, Any]]:
     """Load documents and split into chunks."""
     docs_path = Path(documents_path)
     if not docs_path.exists():
@@ -278,16 +287,16 @@ def load_and_chunk_documents(documents_path: str, chunk_size: int = 500, chunk_o
 
 def run_evaluation(config: dict[str, Any]) -> EvalRunResult:
     """Run evaluation using production components."""
-    name = config.get("name", "unnamed")
+    name = config["name"] if "name" in config else "unnamed"
     run_id = f"{name}-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}"
     started_at = datetime.now(UTC).isoformat().replace("+00:00", "Z")
     start_time = time.time()
 
     # Extract config sections
     dataset_path = config["dataset_path"]
-    index_cfg = config.get("index", {})
-    search_cfg = config.get("search", {})
-    chunking_cfg = config.get("chunking", {})
+    index_cfg = config["index"] if "index" in config else {}
+    search_cfg = config["search"] if "search" in config else {}
+    chunking_cfg = config["chunking"] if "chunking" in config else {}
 
     logger.info("=" * 60)
     logger.info(f"Evaluation Run: {run_id}")
@@ -295,13 +304,17 @@ def run_evaluation(config: dict[str, Any]) -> EvalRunResult:
     logger.info("")
     logger.info("Configuration:")
     logger.info(f"  Dataset: {dataset_path}")
-    logger.info(f"  Documents: {index_cfg.get('documents_path')}")
+    logger.info(f"  Documents: {index_cfg['documents_path'] if 'documents_path' in index_cfg else None}")
 
     # Create embedding generator using production factory
     generator, model, dimension = create_embedding_generator(config)
     embedding_client = SyncEmbeddingWrapper(generator, model)
-    logger.info(f"  Embeddings: {config.get('embedding', {}).get('provider')} ({model}, dim={dimension})")
-    logger.info(f"  Search: mode={search_cfg.get('mode', 'hybrid')}, top_k={search_cfg.get('top_k', 10)}")
+    embed_cfg_for_log = config["embedding"] if "embedding" in config else {}
+    provider_for_log = embed_cfg_for_log["provider"] if "provider" in embed_cfg_for_log else None
+    logger.info(f"  Embeddings: {provider_for_log} ({model}, dim={dimension})")
+    mode_for_log = search_cfg["mode"] if "mode" in search_cfg else "hybrid"
+    top_k_for_log = search_cfg["top_k"] if "top_k" in search_cfg else 10
+    logger.info(f"  Search: mode={mode_for_log}, top_k={top_k_for_log}")
     logger.info("")
 
     # Load dataset
@@ -310,23 +323,28 @@ def run_evaluation(config: dict[str, Any]) -> EvalRunResult:
     logger.info(f"  Loaded {len(dataset)} QA samples")
 
     # Start embedded Weaviate
-    weaviate_client = EmbeddedWeaviateClient(collection_name=index_cfg.get("collection", "DocumentChunk"))
+    collection_name = index_cfg["collection"] if "collection" in index_cfg else "DocumentChunk"
+    weaviate_client = EmbeddedWeaviateClient(collection_name=collection_name)
     weaviate_client.connect()
     weaviate_client.create_collection(dimension=dimension)
 
     # Load and chunk documents
     logger.info("")
     logger.info("Loading and chunking documents...")
+    documents_path = index_cfg["documents_path"] if "documents_path" in index_cfg else None
+    chunk_size_val = chunking_cfg["chunk_size"] if "chunk_size" in chunking_cfg else 500
+    chunk_overlap_val = chunking_cfg["chunk_overlap"] if "chunk_overlap" in chunking_cfg else 50
     chunks = load_and_chunk_documents(
-        index_cfg.get("documents_path"),
-        chunk_size=chunking_cfg.get("chunk_size", 500),
-        chunk_overlap=chunking_cfg.get("chunk_overlap", 50),
+        documents_path,
+        chunk_size=chunk_size_val,
+        chunk_overlap=chunk_overlap_val,
     )
 
     # Generate embeddings
     logger.info("Generating embeddings for chunks...")
     chunk_texts = [c["content"] for c in chunks]
-    batch_size = config.get("embedding", {}).get("batch_size", 50)
+    embed_cfg_batch = config["embedding"] if "embedding" in config else {}
+    batch_size = embed_cfg_batch["batch_size"] if "batch_size" in embed_cfg_batch else 50
     chunk_embeddings = embedding_client.embed_batch(chunk_texts, batch_size=batch_size)
     logger.info(f"  Generated {len(chunk_embeddings)} embeddings")
 
@@ -342,11 +360,11 @@ def run_evaluation(config: dict[str, Any]) -> EvalRunResult:
     relevant_ids_list: list[set[str]] = []
     per_sample_results: list[dict] = []
 
-    top_k = search_cfg.get("top_k", 10)
-    mode = search_cfg.get("mode", "hybrid")
-    alpha = search_cfg.get("alpha", 0.5)
-    namespace = search_cfg.get("namespace")
-    include_per_sample = config.get("include_per_sample", False)
+    top_k = search_cfg["top_k"] if "top_k" in search_cfg else 10
+    mode = search_cfg["mode"] if "mode" in search_cfg else "hybrid"
+    alpha = search_cfg["alpha"] if "alpha" in search_cfg else 0.5
+    namespace = search_cfg["namespace"] if "namespace" in search_cfg else None
+    include_per_sample = config["include_per_sample"] if "include_per_sample" in config else False
 
     for i, sample in enumerate(dataset.samples):
         if (i + 1) % 50 == 0 or i == 0:
@@ -402,7 +420,9 @@ def run_evaluation(config: dict[str, Any]) -> EvalRunResult:
             "num_chunks": len(chunks),
             "num_documents": len(set(c["doc_id"] for c in chunks)),
             "dataset_version": dataset.version,
-            "embedding_provider": config.get("embedding", {}).get("provider"),
+            "embedding_provider": (
+                config["embedding"]["provider"] if "embedding" in config and "provider" in config["embedding"] else None
+            ),
             "embedding_model": model,
             "embedding_dimension": dimension,
             "weaviate_type": "embedded",
@@ -463,14 +483,16 @@ def main() -> int:
         logger.error(f"Dataset not found: {config['dataset_path']}")
         return 1
 
-    index_cfg = config.get("index", {})
-    if not Path(index_cfg.get("documents_path", "")).exists():
-        logger.error(f"Documents not found: {index_cfg.get('documents_path')}")
+    index_cfg = config["index"] if "index" in config else {}
+    documents_path_val = index_cfg["documents_path"] if "documents_path" in index_cfg else ""
+    if not Path(documents_path_val).exists():
+        logger.error(f"Documents not found: {documents_path_val}")
         return 1
 
     try:
         result = run_evaluation(config)
-        output_path = save_result(result, config.get("output_dir", "evals/reports"))
+        output_dir_val = config["output_dir"] if "output_dir" in config else "evals/reports"
+        output_path = save_result(result, output_dir_val)
         logger.info(f"\nResults saved to: {output_path}")
         return 0
     except Exception as e:

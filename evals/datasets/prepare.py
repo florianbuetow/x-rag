@@ -99,8 +99,8 @@ def load_qa_file(filepath: Path) -> QAFile | None:
         logger.warning(f"Could not load {filepath}: {e}")
         return None
 
-    question = data.get("question", "")
-    answer = data.get("answer", "")
+    question = data["question"] if "question" in data else ""
+    answer = data["answer"] if "answer" in data else ""
 
     if not question:
         logger.warning(f"Empty question in {filepath}")
@@ -149,8 +149,8 @@ def compute_chunk_id(namespace: str, doc_id: str, chunk_index: int) -> str:
 
 def compute_line_range(
     chunk_num: int,
-    lines_per_chunk: int = DEFAULT_LINES_PER_CHUNK,
-    chunk_step: int = DEFAULT_CHUNK_STEP,
+    lines_per_chunk: int,
+    chunk_step: int,
 ) -> tuple[int, int]:
     """Compute line range for a chunk number.
 
@@ -204,9 +204,9 @@ def create_eval_sample(
 
 def prepare_dataset(
     qa_dir: Path,
-    namespace: str = "default",
-    lines_per_chunk: int = DEFAULT_LINES_PER_CHUNK,
-    chunk_step: int = DEFAULT_CHUNK_STEP,
+    namespace: str,
+    lines_per_chunk: int,
+    chunk_step: int,
 ) -> dict:
     """Prepare an EvalDataset from a directory of QA files.
 

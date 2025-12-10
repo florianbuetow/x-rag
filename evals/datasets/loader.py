@@ -50,8 +50,8 @@ class ChunkConfig:
     This matches the chunking parameters used in QA generation.
     """
 
-    lines_per_chunk: int = 100
-    chunk_step: int = 50
+    lines_per_chunk: int
+    chunk_step: int
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
@@ -64,8 +64,8 @@ class ChunkConfig:
     def from_dict(cls, data: dict[str, Any]) -> ChunkConfig:
         """Create from dictionary."""
         return cls(
-            lines_per_chunk=data.get("lines_per_chunk", 100),
-            chunk_step=data.get("chunk_step", 50),
+            lines_per_chunk=data["lines_per_chunk"] if "lines_per_chunk" in data else 100,
+            chunk_step=data["chunk_step"] if "chunk_step" in data else 50,
         )
 
 
@@ -117,14 +117,14 @@ class EvalSample:
         return cls(
             sample_id=data["sample_id"],
             question=data["question"],
-            relevant_chunk_ids=tuple(data.get("relevant_chunk_ids", [])),
-            answer=data.get("answer"),
-            source_file=data.get("source_file"),
-            chunk_num=data.get("chunk_num"),
-            line_start=data.get("line_start"),
-            line_end=data.get("line_end"),
-            chunk_id=data.get("chunk_id"),
-            metadata=data.get("metadata", {}),
+            relevant_chunk_ids=tuple(data["relevant_chunk_ids"] if "relevant_chunk_ids" in data else []),
+            answer=data["answer"] if "answer" in data else None,
+            source_file=data["source_file"] if "source_file" in data else None,
+            chunk_num=data["chunk_num"] if "chunk_num" in data else None,
+            line_start=data["line_start"] if "line_start" in data else None,
+            line_end=data["line_end"] if "line_end" in data else None,
+            chunk_id=data["chunk_id"] if "chunk_id" in data else None,
+            metadata=data["metadata"] if "metadata" in data else {},
         )
 
 
@@ -181,16 +181,16 @@ class EvalDataset:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> EvalDataset:
         """Create from dictionary."""
-        samples = tuple(EvalSample.from_dict(s) for s in data.get("samples", []))
-        chunk_config = ChunkConfig.from_dict(data.get("chunk_config", {}))
-        metadata = data.get("metadata", {})
+        samples = tuple(EvalSample.from_dict(s) for s in (data["samples"] if "samples" in data else []))
+        chunk_config = ChunkConfig.from_dict(data["chunk_config"] if "chunk_config" in data else {})
+        metadata = data["metadata"] if "metadata" in data else {}
         # Remove auto-generated fields from metadata
         metadata.pop("total_samples", None)
 
         return cls(
             name=data["name"],
-            version=data.get("version", "1.0.0"),
-            created_at=data.get("created_at", datetime.utcnow().isoformat() + "Z"),
+            version=data["version"] if "version" in data else "1.0.0",
+            created_at=data["created_at"] if "created_at" in data else datetime.utcnow().isoformat() + "Z",
             chunk_config=chunk_config,
             samples=samples,
             metadata=metadata,
@@ -215,7 +215,7 @@ class EvalDataset:
             metadata=self.metadata,
         )
 
-    def sample(self, n: int, seed: int | None = None) -> EvalDataset:
+    def sample(self, n: int, seed: int | None) -> EvalDataset:
         """Create a new dataset with a random sample of samples.
 
         Args:

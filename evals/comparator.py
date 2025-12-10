@@ -169,7 +169,7 @@ def compare_metrics(
 def compare_runs(
     baseline: EvalRunResult,
     current: EvalRunResult,
-    regression_threshold: float = 5.0,
+    regression_threshold: float,
 ) -> ComparisonResult:
     """Compare two evaluation runs.
 

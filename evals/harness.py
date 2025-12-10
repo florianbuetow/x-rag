@@ -40,7 +40,7 @@ class IndexClient(Protocol):
         collection: str,
         vector: list[float],
         top_k: int,
-        filters: dict[str, Any] | None = None,
+        filters: dict[str, Any] | None,
     ) -> list[dict[str, Any]]:
         """Search for similar vectors."""
         ...
@@ -98,8 +98,8 @@ class EvalRunResult:
             started_at=data["started_at"],
             completed_at=data["completed_at"],
             duration_seconds=data["duration_seconds"],
-            per_sample_results=tuple(data.get("per_sample_results", [])),
-            metadata=data.get("metadata", {}),
+            per_sample_results=tuple(data["per_sample_results"] if "per_sample_results" in data else []),
+            metadata=data["metadata"] if "metadata" in data else {},
         )
 
 
@@ -142,8 +142,8 @@ class RetrievalEvaluator:
         self,
         index_client: IndexClient,
         embedding_client: EmbeddingClient,
-        collection: str = "documents",
-        top_k: int = 10,
+        collection: str,
+        top_k: int,
     ) -> None:
         """Initialize the evaluator.
 
@@ -161,8 +161,8 @@ class RetrievalEvaluator:
     def evaluate(
         self,
         dataset: EvalDataset,
-        run_id: str | None = None,
-        include_per_sample: bool = False,
+        run_id: str | None,
+        include_per_sample: bool,
     ) -> EvalRunResult:
         """Run evaluation on a dataset.
 
@@ -201,7 +201,7 @@ class RetrievalEvaluator:
             )
 
             # Extract chunk IDs from results
-            retrieved_ids = [r.get("chunk_id", r.get("id", "")) for r in results]
+            retrieved_ids = [r["chunk_id"] if "chunk_id" in r else (r["id"] if "id" in r else "") for r in results]
             retrieved_ids_list.append(retrieved_ids)
             relevant_ids_list.append(set(sample.relevant_chunk_ids))
 
