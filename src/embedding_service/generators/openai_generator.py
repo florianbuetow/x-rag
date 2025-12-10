@@ -33,9 +33,9 @@ class OpenAIEmbeddingGenerator(EmbeddingGenerator):
     def __init__(
         self,
         api_key: str,
-        max_retries: int = 3,
-        timeout: int = 30,
-        base_url: str | None = None,
+        max_retries: int,
+        timeout: int,
+        base_url: str | None,
     ) -> None:
         """Initialize OpenAI generator.
 
@@ -81,15 +81,15 @@ class OpenAIEmbeddingGenerator(EmbeddingGenerator):
 
         except RateLimitError as e:
             logger.error(f"OpenAI rate limit exceeded: {e}")
-            raise ServiceUnavailableError("Rate limit exceeded. Please try again later.") from e
+            raise ServiceUnavailableError("OpenAI", "Rate limit exceeded. Please try again later.") from e
 
         except APIError as e:
             logger.error(f"OpenAI API error: {e}")
-            raise ServiceUnavailableError(f"OpenAI API error: {e}") from e
+            raise ServiceUnavailableError("OpenAI", f"API error: {e}") from e
 
         except Exception as e:
             logger.error(f"Unexpected error in embed: {e}")
-            raise ServiceUnavailableError(f"Embedding generation failed: {e}") from e
+            raise ServiceUnavailableError("OpenAI", f"Embedding generation failed: {e}") from e
 
     async def embed_batch(self, texts: list[str], model: str, **options: object) -> list[list[float]]:
         """Generate embeddings for multiple texts (batched for efficiency).
@@ -124,15 +124,15 @@ class OpenAIEmbeddingGenerator(EmbeddingGenerator):
 
         except RateLimitError as e:
             logger.error(f"OpenAI rate limit exceeded: {e}")
-            raise ServiceUnavailableError("Rate limit exceeded. Please try again later.") from e
+            raise ServiceUnavailableError("OpenAI", "Rate limit exceeded. Please try again later.") from e
 
         except APIError as e:
             logger.error(f"OpenAI API error: {e}")
-            raise ServiceUnavailableError(f"OpenAI API error: {e}") from e
+            raise ServiceUnavailableError("OpenAI", f"API error: {e}") from e
 
         except Exception as e:
             logger.error(f"Unexpected error in embed_batch: {e}")
-            raise ServiceUnavailableError(f"Batch embedding generation failed: {e}") from e
+            raise ServiceUnavailableError("OpenAI", f"Batch embedding generation failed: {e}") from e
 
     def get_dimension(self, model: str) -> int:
         """Get embedding dimension for a model.

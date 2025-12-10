@@ -38,7 +38,7 @@ class HashBasedEmbeddingGenerator(EmbeddingGenerator):
         "hash-large": 1536,
     }
 
-    def __init__(self, default_dimension: int = 1536) -> None:
+    def __init__(self, default_dimension: int) -> None:
         """Initialize hash-based generator.
 
         Args:
@@ -94,7 +94,9 @@ class HashBasedEmbeddingGenerator(EmbeddingGenerator):
         Returns:
             Embedding dimension
         """
-        return self.MODEL_DIMENSIONS.get(model, self.default_dimension)
+        if model in self.MODEL_DIMENSIONS:
+            return self.MODEL_DIMENSIONS[model]
+        return self.default_dimension
 
     def _generate_embedding(self, text: str, dimension: int) -> list[float]:
         """Generate deterministic embedding vector from text.
