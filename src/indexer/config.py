@@ -1,5 +1,7 @@
 """Configuration for Indexer service."""
 
+from typing import Literal
+
 from pydantic import Field
 
 from src.common.config import BaseConfig
@@ -93,4 +95,34 @@ class IndexerConfig(BaseConfig):
     health_port: int = Field(
         default=8080,
         description="Health check HTTP server port",
+    )
+
+    # OpenTelemetry tracing configuration
+    otlp_endpoint: str | None = Field(
+        default=None,
+        description="OTLP endpoint for tracing (defaults to env var or http://xrag-tempo:4317)",
+    )
+    environment: str = Field(
+        default="development",
+        description="Deployment environment (development, staging, production)",
+    )
+
+    # Embedding service timeout
+    embedding_service_timeout: float = Field(
+        default=30.0,
+        description="Embedding Service timeout in seconds",
+    )
+
+    # Text cleaner configuration
+    cleaner_remove_empty_lines: bool = Field(
+        default=True,
+        description="Remove empty lines during text cleaning",
+    )
+    cleaner_remove_extra_whitespaces: bool = Field(
+        default=True,
+        description="Remove extra whitespaces during text cleaning",
+    )
+    cleaner_unicode_normalization: Literal["NFC", "NFKC", "NFD", "NFKD"] | None = Field(
+        default="NFC",
+        description="Unicode normalization form (NFC, NFKC, NFD, NFKD)",
     )

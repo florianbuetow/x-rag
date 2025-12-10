@@ -142,7 +142,11 @@ class IndexerService:
         logger.info(f"Starting {self.config.service_name}...")
 
         # Initialize distributed tracing
-        init_tracing(service_name=self.config.service_name)
+        init_tracing(
+            service_name=self.config.service_name,
+            otlp_endpoint=self.config.otlp_endpoint,
+            environment=self.config.environment,
+        )
 
         # Start health check server FIRST for K8s probes
         self.start_health_server()
@@ -176,7 +180,7 @@ class IndexerService:
         # Process events
         try:
             async for event in self.consumer.consume():
-                namespace = event.get("namespace", "default")
+                namespace = event["namespace"] if "namespace" in event else "default"
                 active_documents.inc()
 
                 with processing_duration.labels(namespace=namespace).time():

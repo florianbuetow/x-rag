@@ -45,7 +45,7 @@ class BatchEmbedder:
         self,
         client: GrpcEmbeddingServiceClient,
         model: str,
-        batch_size: int = 32,
+        batch_size: int,
     ) -> None:
         """Initialize batch embedder.
 
@@ -75,8 +75,8 @@ class BatchEmbedder:
 
         # Process in batches
         with (
-            track_latency(embedding_duration),
-            trace_embedding_generation(model=self.model, chunk_count=len(texts)) as embed_span,
+            track_latency(embedding_duration, None),
+            trace_embedding_generation(model=self.model, chunk_count=len(texts), total_tokens=None) as embed_span,
         ):
             for i in range(0, len(texts), self.batch_size):
                 batch = texts[i : i + self.batch_size]
@@ -138,15 +138,15 @@ class WeaviateBatchInserter:
                 "doc_id": chunk.doc_id,
                 "chunk_index": chunk.chunk_index,
                 "namespace": chunk.namespace,
-                "source": chunk.metadata.get("source_file", ""),
-                "title": chunk.metadata.get("title", ""),
+                "source": chunk.metadata["source_file"] if "source_file" in chunk.metadata else "",
+                "title": chunk.metadata["title"] if "title" in chunk.metadata else "",
                 "metadata_json": json.dumps(chunk.metadata),
             }
             objects.append((obj, embedding))
 
         # Batch insert with metrics
         logger.debug(f"Inserting {len(objects)} chunks into Weaviate collection {self.collection_name}")
-        with track_latency(weaviate_insert_duration), collection.batch.dynamic() as batch:
+        with track_latency(weaviate_insert_duration, None), collection.batch.dynamic() as batch:
             for obj, vector in objects:
                 batch.add_object(properties=obj, vector=vector)
 
@@ -173,7 +173,10 @@ class DocumentIndexer:
         self._weaviate_lock = threading.Lock()
 
         # Initialize Embedding Service client
-        self.embedding_client = GrpcEmbeddingServiceClient(address=config.embedding_service_addr)
+        self.embedding_client = GrpcEmbeddingServiceClient(
+            address=config.embedding_service_addr,
+            timeout=config.embedding_service_timeout,
+        )
         self.embedding_client.connect()
 
         # Pipeline components (typed for mypy)
@@ -196,7 +199,11 @@ class DocumentIndexer:
         )
 
         # Text cleaner
-        cleaner = BasicTextCleaner()
+        cleaner = BasicTextCleaner(
+            remove_empty_lines=self.config.cleaner_remove_empty_lines,
+            remove_extra_whitespaces=self.config.cleaner_remove_extra_whitespaces,
+            unicode_normalization=self.config.cleaner_unicode_normalization,
+        )
 
         # Text splitter (convert char-based chunk_size/overlap to word counts)
         chunk_size_words = max(1, self.config.chunk_size // 5)
@@ -310,9 +317,9 @@ class DocumentIndexer:
         Raises:
             Exception: If processing fails
         """
-        event_type = event.get("event_type")
-        document_id = cast(str, event.get("document_id"))
-        namespace = event.get("namespace", "default")
+        event_type = event["event_type"] if "event_type" in event else None
+        document_id = cast(str, event["document_id"])
+        namespace = event["namespace"] if "namespace" in event else "default"
         minio_bucket = cast(str, event.get("minio_bucket"))
         minio_key = cast(str, event.get("minio_key"))
 
@@ -329,7 +336,7 @@ class DocumentIndexer:
 
             # Query for existing chunks with this doc_id (async) with metrics
             with (
-                track_latency(duplicate_check_duration),
+                track_latency(duplicate_check_duration, None),
                 trace_document_processing(document_id, "duplicate_check") as dup_span,
             ):
                 existing = await asyncio.to_thread(
