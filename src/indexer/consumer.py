@@ -27,7 +27,7 @@ class DocumentEventConsumer:
         bootstrap_servers: str,
         topic: str,
         group_id: str,
-        auto_offset_reset: str = "earliest",
+        auto_offset_reset: str,
     ) -> None:
         """Initialize the consumer.
 
