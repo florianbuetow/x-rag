@@ -52,6 +52,9 @@ dependencies = [
     # Utilities
     "python-dotenv>=1.0.0",
     "pyyaml>=6.0.0",
+
+    # Security: Pin transitive dependencies to patched versions
+    "urllib3>=2.6.0",  # Fix GHSA-gm62-xv2j-4w53, GHSA-2xpw-w6gg-jr37
 ]
 
 [project.optional-dependencies]
@@ -75,6 +78,7 @@ dev = [
     "types-protobuf>=5.27.0",
     "types-grpcio",
     "types-grpcio-reflection",
+    "types-PyYAML>=6.0.0",
 ]
 
 [build-system]
@@ -88,8 +92,8 @@ packages = ["src", "evals"]
 line-length = 140
 indent-width = 4
 target-version = "py311"
-# Exclude generated gRPC/protobuf code from all linting
-exclude = ["src/proto_gen/*"]
+# Exclude generated gRPC/protobuf code, notes, and data scripts from all linting
+exclude = ["src/proto_gen/*", "notes/*", "data/*"]
 
 [tool.ruff.lint]
 # Core errors & warnings, Google-style docs, types, bugbear, quotes, imports, naming
@@ -111,6 +115,7 @@ select = [
 ignore = [
   "D107",    # don't require __init__ docstring (class docstring is fine)
   "N802",    # allow non-lowercase function names (needed for gRPC method names)
+  "SIM401",  # conflict with semgrep no-dict-get-with-default rule (explicit > implicit)
 ]
 
 [tool.ruff.lint.mccabe]
@@ -233,7 +238,8 @@ extend_exclude = [
     "proto",
     "data",
     "reports",
-    "src/proto_gen",  # Generated protobuf/gRPC code
+    "notes",              # Reference notes and documentation
+    "src/proto_gen",      # Generated protobuf/gRPC code
 ]
 
 # Ignore Jupyter notebooks (not part of production code)
@@ -260,6 +266,7 @@ json_output = "reports/deptry/deptry.json"
 DEP002 = [
     "weaviate-haystack",   # Optional: for WeaviateDocumentStore (we use custom Weaviate integration)
     "grpcio-tools",        # Build-time only: used by make apps-generate-grpc
+    "urllib3",             # Security: pinned to >=2.6.0 to fix GHSA-gm62-xv2j-4w53, GHSA-2xpw-w6gg-jr37
 ]
 
 # pygount configuration (reference only - pygount uses CLI args, not pyproject.toml)
@@ -271,7 +278,7 @@ check-filenames = true
 check-hidden = false
 
 # Directories to skip
-skip = ".git,.venv,venv,build,dist,reports,src/proto_gen,*.lock,uv.lock"
+skip = ".git,.venv,venv,build,dist,reports,src/proto_gen,notes,*.lock,uv.lock"
 
 # File extensions to check
 # Empty means "all"; explicit is safer
