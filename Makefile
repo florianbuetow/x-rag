@@ -252,7 +252,15 @@ code-spell: ## Check spelling in code and documentation
 
 code-audit: ## Scan dependencies for known vulnerabilities
 	@echo "$(BLUE)=== Scanning Dependencies for Vulnerabilities ===$(NC)"
-	@uv run pip-audit
+	@# Temporary ignore for GHSA-9h52-p55h-vw2f (mcp vulnerability from semgrep pinning mcp==1.16.0)
+	@# TODO: Remove this ignore after 2026-02-01 - semgrep should have released a fix by then
+	@if [ "$$(date +%Y%m%d)" -gt "20260201" ]; then \
+		echo "$(RED)ERROR: Temporary vulnerability ignore (GHSA-9h52-p55h-vw2f) has expired.$(NC)"; \
+		echo "$(RED)Remove --ignore-vuln from Makefile or update semgrep to a version with mcp>=1.23.0$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(YELLOW)Note: Ignoring GHSA-9h52-p55h-vw2f (mcp via semgrep) until 2026-02-01$(NC)"
+	@uv run pip-audit --ignore-vuln GHSA-9h52-p55h-vw2f
 	@echo ""
 	@echo "$(GREEN)✓ No known vulnerabilities found$(NC)"
 	@echo ""
