@@ -53,7 +53,7 @@ def _get_tracer() -> trace.Tracer:
 
 def trace_llm_call(
     model: str,
-    operation: str = "completion",
+    operation: str,
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Decorator for tracing LLM API calls.
 
@@ -138,7 +138,7 @@ def trace_llm_call(
 def trace_embedding_generation(
     model: str,
     chunk_count: int,
-    total_tokens: int | None = None,
+    total_tokens: int | None,
 ) -> Generator[Span, None, None]:
     """Context manager for tracing embedding generation.
 
@@ -182,8 +182,8 @@ def trace_embedding_generation(
 def trace_vector_search(
     index_name: str,
     top_k: int,
-    query_vector_dim: int | None = None,
-    search_mode: str | None = None,
+    query_vector_dim: int | None,
+    search_mode: str | None,
 ) -> Generator[Span, None, None]:
     """Context manager for tracing vector database searches.
 
@@ -229,9 +229,9 @@ def trace_vector_search(
 @contextmanager
 def trace_llm_generation(
     model: str,
-    operation: str = "completion",
-    max_tokens: int | None = None,
-    temperature: float | None = None,
+    operation: str,
+    max_tokens: int | None,
+    temperature: float | None,
 ) -> Generator[Span, None, None]:
     """Context manager for tracing LLM generation calls.
 
@@ -318,8 +318,8 @@ def add_rag_attributes(
     span: Span,
     query: str,
     retrieved_count: int,
-    reranked: bool = False,
-    final_context_tokens: int | None = None,
+    reranked: bool,
+    final_context_tokens: int | None,
 ) -> None:
     """Add RAG-specific attributes to a span.
 
@@ -341,8 +341,8 @@ def add_rag_attributes(
 
 def create_span_from_context(
     name: str,
-    attributes: dict[str, Any] | None = None,
-    kind: SpanKind = SpanKind.INTERNAL,
+    attributes: dict[str, Any] | None,
+    kind: SpanKind,
 ) -> Span:
     """Create a new span as child of the current context.
 

@@ -48,8 +48,8 @@ _tracer_provider: TracerProvider | None = None
 
 def init_tracing(
     service_name: str,
-    otlp_endpoint: str | None = None,
-    environment: str = "development",
+    otlp_endpoint: str | None,
+    environment: str,
 ) -> TracerProvider:
     """Initialize OpenTelemetry tracing.
 

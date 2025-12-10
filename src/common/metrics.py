@@ -77,7 +77,7 @@ class BucketConfig:
 @contextmanager
 def track_latency(
     histogram: Histogram,
-    labels: dict[str, str] | None = None,
+    labels: dict[str, str] | None,
 ) -> Generator[None, None, None]:
     """Context manager to track operation latency with a histogram.
 
