@@ -21,10 +21,10 @@ class OpenAIClient:
     def __init__(
         self,
         api_key: str,
-        model: str = "gpt-4o-mini",
-        max_retries: int = 3,
-        timeout: int = 60,
-        base_url: str | None = None,
+        model: str,
+        max_retries: int,
+        timeout: int,
+        base_url: str | None,
     ) -> None:
         """Initialize OpenAI client.
 
@@ -48,9 +48,9 @@ class OpenAIClient:
     async def generate(
         self,
         prompt: str,
-        max_tokens: int = 500,
-        temperature: float = 0.7,
-        system_message: str | None = None,
+        max_tokens: int,
+        temperature: float,
+        system_message: str | None,
     ) -> str:
         """Generate text using OpenAI chat model.
 
@@ -103,8 +103,8 @@ class OpenAIClient:
         self,
         query: str,
         context: str,
-        max_tokens: int = 500,
-        temperature: float = 0.7,
+        max_tokens: int,
+        temperature: float,
     ) -> str:
         """Generate answer based on context (RAG pattern).
 
@@ -133,6 +133,7 @@ Answer:"""
             prompt=prompt,
             max_tokens=max_tokens,
             temperature=temperature,
+            system_message=None,
         )
 
     async def health_check(self) -> bool:

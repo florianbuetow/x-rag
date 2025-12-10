@@ -36,7 +36,7 @@ class SearchPipeline:
         retriever: WeaviateRetriever,
         embedding_client: EmbeddingServiceClient,
         llm_client: OpenAIClient,
-        max_context_length: int = 4000,
+        max_context_length: int,
     ) -> None:
         """Initialize search pipeline.
 
@@ -54,12 +54,12 @@ class SearchPipeline:
     async def search(
         self,
         query: str,
-        top_k: int = 10,
-        mode: Literal["vector", "bm25", "hybrid"] = "hybrid",
-        alpha: float = 0.5,
-        namespace: str | None = None,
-        openai_max_tokens: int = 500,
-        openai_temperature: float = 0.7,
+        top_k: int,
+        mode: Literal["vector", "bm25", "hybrid"],
+        alpha: float,
+        namespace: str | None,
+        openai_max_tokens: int,
+        openai_temperature: float,
     ) -> dict[str, Any]:
         """Execute RAG search pipeline.
 
@@ -80,8 +80,8 @@ class SearchPipeline:
         if mode in ("vector", "hybrid"):
             logger.debug(f"Generating embedding for query: {query[:50]}...")
             with (
-                track_latency(embedding_duration),
-                trace_embedding_generation("text-embedding-3-small", chunk_count=1) as embed_span,
+                track_latency(embedding_duration, None),
+                trace_embedding_generation("text-embedding-3-small", chunk_count=1, total_tokens=None) as embed_span,
             ):
                 query_embedding = await self.embedding_client.embed(
                     text=query,
@@ -94,7 +94,7 @@ class SearchPipeline:
         logger.info(f"Retrieving documents (mode={mode}, top_k={top_k})")
         query_dim = len(query_embedding) if query_embedding else None
         with (
-            track_latency(retrieval_duration, {"mode": mode}),
+            track_latency(retrieval_duration, {"mode": mode}),  # nosemgrep: xrag.no-dict-get-with-default
             trace_vector_search(
                 index_name="DocumentChunk",
                 top_k=top_k,
@@ -135,7 +135,7 @@ class SearchPipeline:
             logger.info("Generating answer with OpenAI")
             prompt = build_rag_prompt(query=query, context=context)
             with (
-                track_latency(llm_generation_duration),
+                track_latency(llm_generation_duration, None),
                 trace_llm_generation(
                     model=self.llm_client.model,
                     operation="rag_completion",
@@ -147,6 +147,7 @@ class SearchPipeline:
                     prompt=prompt,
                     max_tokens=openai_max_tokens,
                     temperature=openai_temperature,
+                    system_message=None,
                 )
                 llm_span.set_attribute("llm.prompt_length", len(prompt))
                 llm_span.set_attribute("llm.response_length", len(answer))

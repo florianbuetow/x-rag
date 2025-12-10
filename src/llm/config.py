@@ -94,7 +94,7 @@ class LLMConfig(BaseModel):
     def for_openai(
         cls,
         api_key: str,
-        model: str = "gpt-4o-mini",
+        model: str,
         **kwargs: object,
     ) -> "LLMConfig":
         """Create config for OpenAI API."""
@@ -111,7 +111,7 @@ class LLMConfig(BaseModel):
         cls,
         base_url: str,
         model: str,
-        api_key: str = "local",
+        api_key: str,
         **kwargs: object,
     ) -> "LLMConfig":
         """Create config for local LLM (LM Studio, Ollama, etc.)."""
@@ -183,7 +183,7 @@ class EmbeddingConfig(BaseModel):
     def for_openai(
         cls,
         api_key: str,
-        model: str = "text-embedding-3-small",
+        model: str,
         **kwargs: object,
     ) -> "EmbeddingConfig":
         """Create config for OpenAI API."""
@@ -200,7 +200,7 @@ class EmbeddingConfig(BaseModel):
         cls,
         base_url: str,
         model: str,
-        api_key: str = "local",
+        api_key: str,
         **kwargs: object,
     ) -> "EmbeddingConfig":
         """Create config for local embedding server (LM Studio, Ollama, etc.)."""
@@ -215,7 +215,7 @@ class EmbeddingConfig(BaseModel):
     @classmethod
     def for_hash_based(
         cls,
-        dimension: int = 768,
+        dimension: int,
         **kwargs: object,
     ) -> "EmbeddingConfig":
         """Create config for hash-based embeddings (testing only)."""
