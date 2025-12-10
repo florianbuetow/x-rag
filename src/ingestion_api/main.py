@@ -87,7 +87,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info(f"Starting {config.service_name}...")
 
     # Initialize distributed tracing
-    init_tracing(service_name=config.service_name)
+    init_tracing(
+        service_name=config.service_name,
+        otlp_endpoint=config.otlp_endpoint,
+        environment=config.environment,
+    )
 
     # Start Prometheus metrics server
     start_http_server(8080)
@@ -199,7 +203,7 @@ async def ingest_document(request: IngestRequest) -> IngestResponse:
             # Record document size
             document_size_bytes.observe(len(doc_bytes))
 
-            with track_latency(minio_upload_duration):
+            with track_latency(minio_upload_duration, None):
                 minio_client.store_document(object_name, doc_bytes)
 
             # Publish to Kafka
@@ -214,7 +218,7 @@ async def ingest_document(request: IngestRequest) -> IngestResponse:
                 "timestamp": datetime.now(UTC).isoformat(),
             }
 
-            with track_latency(kafka_publish_duration):
+            with track_latency(kafka_publish_duration, None):
                 await kafka_client.publish(config.kafka_topic, event)
 
         # Track success
