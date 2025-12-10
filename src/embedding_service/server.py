@@ -29,7 +29,7 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
     Implements the EmbeddingService gRPC interface defined in embedding.proto.
     """
 
-    def __init__(self, generator: EmbeddingGenerator, default_model: str = "text-embedding-3-small") -> None:
+    def __init__(self, generator: EmbeddingGenerator, default_model: str) -> None:
         """Initialize servicer.
 
         Args:
@@ -72,7 +72,7 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
                 logger.debug(f"Generating embedding for text (model={model})")
                 with (
                     track_latency(backend_duration, {"model": model}),
-                    trace_embedding_generation(model=model, chunk_count=1) as embed_span,
+                    trace_embedding_generation(model=model, chunk_count=1, total_tokens=None) as embed_span,
                 ):
                     embedding = await self.generator.embed(request.text, model, **options)
                     dimension = self.generator.get_dimension(model)
@@ -150,7 +150,7 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
                 logger.debug(f"Generating {num_texts} embeddings in batch (model={model})")
                 with (
                     track_latency(backend_duration, {"model": model}),
-                    trace_embedding_generation(model=model, chunk_count=num_texts) as embed_span,
+                    trace_embedding_generation(model=model, chunk_count=num_texts, total_tokens=None) as embed_span,
                 ):
                     embeddings = await self.generator.embed_batch(list(request.texts), model, **options)
                     dimension = self.generator.get_dimension(model)

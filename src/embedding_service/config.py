@@ -48,7 +48,7 @@ class EmbeddingServiceConfig(ServiceConfig):
         Note: When using a custom base URL (e.g., LM Studio), any non-empty
         key is accepted since local LLM servers don't require real API keys.
         """
-        generator = info.data.get("embedding_generator", "hash_based")
+        generator = info.data["embedding_generator"]
         if generator == "openai" and not v:
             raise ValueError("OpenAI API key required when using 'openai' generator.")
         return v

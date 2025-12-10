@@ -63,22 +63,30 @@ class EmbeddingGeneratorFactory:
     @staticmethod
     def _create_hash_based_generator(**kwargs: object) -> HashBasedEmbeddingGenerator:
         """Create hash-based embedding generator."""
-        default_dimension = cast(int, kwargs.get("default_dimension", 1536))
+        if "default_dimension" not in kwargs:
+            raise ValueError("Hash-based generator requires 'default_dimension' parameter")
+        default_dimension = cast(int, kwargs["default_dimension"])
         logger.info(f"Creating hash-based embedding generator (dimension={default_dimension})")
         return HashBasedEmbeddingGenerator(default_dimension=default_dimension)
 
     @staticmethod
     def _create_openai_generator(**kwargs: object) -> OpenAIEmbeddingGenerator:
         """Create OpenAI embedding generator."""
-        api_key = kwargs.get("api_key")
-        if not api_key:
+        if "api_key" not in kwargs:
             raise ValueError("OpenAI generator requires 'api_key' parameter")
-        max_retries = cast(int, kwargs.get("max_retries", 3))
-        timeout = cast(int, kwargs.get("timeout", 30))
-        base_url = cast(str | None, kwargs.get("base_url"))
+        if "max_retries" not in kwargs:
+            raise ValueError("OpenAI generator requires 'max_retries' parameter")
+        if "timeout" not in kwargs:
+            raise ValueError("OpenAI generator requires 'timeout' parameter")
+        if "base_url" not in kwargs:
+            raise ValueError("OpenAI generator requires 'base_url' parameter")
+        api_key = cast(str, kwargs["api_key"])
+        max_retries = cast(int, kwargs["max_retries"])
+        timeout = cast(int, kwargs["timeout"])
+        base_url = cast(str | None, kwargs["base_url"])
         logger.info(f"Creating OpenAI embedding generator (base_url={base_url or 'default'})")
         return OpenAIEmbeddingGenerator(
-            api_key=cast(str, api_key),
+            api_key=api_key,
             max_retries=max_retries,
             timeout=timeout,
             base_url=base_url,
