@@ -17,7 +17,7 @@ class SearchServiceClient:
     Used by Search UI to forward search requests to the Search Service.
     """
 
-    def __init__(self, address: str, timeout: float = 30.0) -> None:
+    def __init__(self, address: str, timeout: float) -> None:
         """Initialize the Search Service client.
 
         Args:
@@ -69,10 +69,10 @@ class SearchServiceClient:
     async def search(
         self,
         query: str,
-        namespace: str = "default",
-        top_k: int = 5,
-        mode: str = "hybrid",
-        options: dict[str, str] | None = None,
+        namespace: str,
+        top_k: int,
+        mode: str,
+        options: dict[str, str] | None,
     ) -> search_pb2.SearchResponse:
         """Perform RAG search (async).
 
