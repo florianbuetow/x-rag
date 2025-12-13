@@ -55,11 +55,10 @@ class TestWeaviateRetrieverInit:
         assert retriever.collection_name == "TestCollection"
         assert retriever.client is None
 
-    def test_initialization_default_collection(self):
-        """Retriever uses default collection name."""
-        retriever = WeaviateRetriever(weaviate_url="http://localhost:8080")
-
-        assert retriever.collection_name == "DocumentChunk"
+    def test_initialization_requires_collection_name(self):
+        """Retriever requires collection_name parameter."""
+        with pytest.raises(TypeError, match="collection_name"):
+            WeaviateRetriever(weaviate_url="http://localhost:8080")
 
 
 class TestWeaviateRetrieverConnection:
@@ -88,7 +87,10 @@ class TestWeaviateRetrieverConnection:
 
     def test_connect_parses_url_without_protocol(self):
         """connect() handles URL without protocol."""
-        retriever = WeaviateRetriever(weaviate_url="weaviate:8080")
+        retriever = WeaviateRetriever(
+            weaviate_url="weaviate:8080",
+            collection_name="DocumentChunk",
+        )
 
         with patch("src.retrievers.weaviate_retriever.weaviate") as mock_weaviate:
             mock_client = Mock()
@@ -102,7 +104,10 @@ class TestWeaviateRetrieverConnection:
 
     def test_connect_default_port(self):
         """connect() uses default port 8080 when not specified."""
-        retriever = WeaviateRetriever(weaviate_url="http://weaviate")
+        retriever = WeaviateRetriever(
+            weaviate_url="http://weaviate",
+            collection_name="DocumentChunk",
+        )
 
         with patch("src.retrievers.weaviate_retriever.weaviate") as mock_weaviate:
             mock_client = Mock()
@@ -179,7 +184,14 @@ class TestWeaviateRetrieverSearch:
     def test_search_not_connected_raises(self, retriever):
         """search() before connect() raises RuntimeError."""
         with pytest.raises(RuntimeError) as exc_info:
-            retriever.search(query="test", query_embedding=[0.1, 0.2])
+            retriever.search(
+                query="test",
+                query_embedding=[0.1, 0.2],
+                top_k=10,
+                mode="vector",
+                alpha=0.5,
+                namespace=None,
+            )
 
         assert "Client not connected" in str(exc_info.value)
 
@@ -188,7 +200,14 @@ class TestWeaviateRetrieverSearch:
         retriever.client = Mock()
 
         with pytest.raises(ValueError) as exc_info:
-            retriever.search(query="test", mode="vector")
+            retriever.search(
+                query="test",
+                query_embedding=None,
+                top_k=10,
+                mode="vector",
+                alpha=0.5,
+                namespace=None,
+            )
 
         assert "query_embedding required" in str(exc_info.value)
 
@@ -197,7 +216,14 @@ class TestWeaviateRetrieverSearch:
         retriever.client = Mock()
 
         with pytest.raises(ValueError) as exc_info:
-            retriever.search(query="test", mode="hybrid")
+            retriever.search(
+                query="test",
+                query_embedding=None,
+                top_k=10,
+                mode="hybrid",
+                alpha=0.5,
+                namespace=None,
+            )
 
         assert "query_embedding required" in str(exc_info.value)
 
@@ -209,7 +235,14 @@ class TestWeaviateRetrieverSearch:
         retriever.client = Mock()
         retriever.client.collections.get.return_value = mock_collection
 
-        results = retriever.search(query="test query", mode="bm25")
+        results = retriever.search(
+            query="test query",
+            query_embedding=None,
+            top_k=10,
+            mode="bm25",
+            alpha=0.5,
+            namespace=None,
+        )
 
         assert len(results) == 1
         mock_collection.query.bm25.assert_called_once()
@@ -221,7 +254,14 @@ class TestWeaviateRetrieverSearch:
         retriever.client.collections.get.return_value = mock_collection
 
         with pytest.raises(ValueError) as exc_info:
-            retriever.search(query="test", query_embedding=[0.1], mode="invalid")
+            retriever.search(
+                query="test",
+                query_embedding=[0.1],
+                top_k=10,
+                mode="invalid",
+                alpha=0.5,
+                namespace=None,
+            )
 
         assert "Invalid search mode" in str(exc_info.value)
 
@@ -237,8 +277,10 @@ class TestWeaviateRetrieverSearch:
         results = retriever.search(
             query="test",
             query_embedding=query_embedding,
-            mode="vector",
             top_k=10,
+            mode="vector",
+            alpha=0.5,
+            namespace=None,
         )
 
         assert len(results) == 1
@@ -255,7 +297,14 @@ class TestWeaviateRetrieverSearch:
         retriever.client = Mock()
         retriever.client.collections.get.return_value = mock_collection
 
-        results = retriever.search(query="search terms", mode="bm25", top_k=5)
+        results = retriever.search(
+            query="search terms",
+            query_embedding=None,
+            top_k=5,
+            mode="bm25",
+            alpha=0.5,
+            namespace=None,
+        )
 
         assert len(results) == 1
         call_kwargs = mock_collection.query.bm25.call_args[1]
@@ -274,8 +323,10 @@ class TestWeaviateRetrieverSearch:
         results = retriever.search(
             query="test query",
             query_embedding=query_embedding,
+            top_k=10,
             mode="hybrid",
             alpha=0.7,
+            namespace=None,
         )
 
         assert len(results) == 1
@@ -299,7 +350,10 @@ class TestWeaviateRetrieverSearch:
 
             retriever.search(
                 query="test",
+                query_embedding=None,
+                top_k=10,
                 mode="bm25",
+                alpha=0.5,
                 namespace="custom-namespace",
             )
 
@@ -315,7 +369,14 @@ class TestWeaviateRetrieverSearch:
         retriever.client = Mock()
         retriever.client.collections.get.return_value = mock_collection
 
-        results = retriever.search(query="test", mode="bm25")
+        results = retriever.search(
+            query="test",
+            query_embedding=None,
+            top_k=10,
+            mode="bm25",
+            alpha=0.5,
+            namespace=None,
+        )
 
         assert len(results) == 1
         result = results[0]
@@ -337,7 +398,10 @@ class TestWeaviateRetrieverSearch:
         results = retriever.search(
             query="test",
             query_embedding=[0.1, 0.2],
+            top_k=10,
             mode="vector",
+            alpha=0.5,
+            namespace=None,
         )
 
         # Score = 1 / (1 + distance) = 1 / 1.1 ≈ 0.909
@@ -353,7 +417,14 @@ class TestWeaviateRetrieverSearch:
         retriever.client = Mock()
         retriever.client.collections.get.return_value = mock_collection
 
-        results = retriever.search(query="test", mode="bm25")
+        results = retriever.search(
+            query="test",
+            query_embedding=None,
+            top_k=10,
+            mode="bm25",
+            alpha=0.5,
+            namespace=None,
+        )
 
         assert results[0].metadata["custom_field"] == "custom_value"
 
@@ -368,7 +439,14 @@ class TestWeaviateRetrieverSearch:
         retriever.client.collections.get.return_value = mock_collection
 
         # Should not raise, just log warning
-        results = retriever.search(query="test", mode="bm25")
+        results = retriever.search(
+            query="test",
+            query_embedding=None,
+            top_k=10,
+            mode="bm25",
+            alpha=0.5,
+            namespace=None,
+        )
         assert len(results) == 1
 
     def test_search_respects_top_k(self, retriever, mock_weaviate_result):
@@ -379,7 +457,14 @@ class TestWeaviateRetrieverSearch:
         retriever.client = Mock()
         retriever.client.collections.get.return_value = mock_collection
 
-        retriever.search(query="test", mode="bm25", top_k=25)
+        retriever.search(
+            query="test",
+            query_embedding=None,
+            top_k=25,
+            mode="bm25",
+            alpha=0.5,
+            namespace=None,
+        )
 
         call_kwargs = mock_collection.query.bm25.call_args[1]
         assert call_kwargs["limit"] == 25
@@ -393,7 +478,14 @@ class TestWeaviateRetrieverSearch:
         retriever.client.collections.get.return_value = mock_collection
 
         with pytest.raises(RuntimeError) as exc_info:
-            retriever.search(query="test", mode="bm25")
+            retriever.search(
+                query="test",
+                query_embedding=None,
+                top_k=10,
+                mode="bm25",
+                alpha=0.5,
+                namespace=None,
+            )
 
         assert "Connection lost" in str(exc_info.value)
 

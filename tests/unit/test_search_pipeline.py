@@ -21,6 +21,7 @@ class TestSearchPipelineInit:
             retriever=mock_retriever,
             embedding_client=mock_embedding_client,
             llm_client=mock_llm_client,
+            max_context_length=4000,
         )
 
         assert pipeline.retriever is mock_retriever
@@ -42,19 +43,18 @@ class TestSearchPipelineInit:
 
         assert pipeline.max_context_length == 8000
 
-    def test_initialization_default_max_context_length(self):
-        """Pipeline uses default max_context_length."""
+    def test_initialization_requires_max_context_length(self):
+        """Pipeline requires max_context_length parameter."""
         mock_retriever = Mock()
         mock_embedding_client = AsyncMock()
         mock_llm_client = AsyncMock()
 
-        pipeline = SearchPipeline(
-            retriever=mock_retriever,
-            embedding_client=mock_embedding_client,
-            llm_client=mock_llm_client,
-        )
-
-        assert pipeline.max_context_length == 4000
+        with pytest.raises(TypeError, match="max_context_length"):
+            SearchPipeline(
+                retriever=mock_retriever,
+                embedding_client=mock_embedding_client,
+                llm_client=mock_llm_client,
+            )
 
 
 class TestSearchPipelineSearch:
@@ -88,6 +88,7 @@ class TestSearchPipelineSearch:
             retriever=mock_retriever,
             embedding_client=mock_embedding_client,
             llm_client=mock_llm_client,
+            max_context_length=4000,
         )
 
     @pytest.fixture
@@ -113,7 +114,15 @@ class TestSearchPipelineSearch:
         """Vector mode calls embedding client."""
         pipeline.retriever.search.return_value = sample_search_results
 
-        await pipeline.search(query="test query", mode="vector")
+        await pipeline.search(
+            query="test query",
+            top_k=10,
+            mode="vector",
+            alpha=0.5,
+            namespace=None,
+            openai_max_tokens=500,
+            openai_temperature=0.7,
+        )
 
         mock_embedding_client.embed.assert_called_once()
         call_kwargs = mock_embedding_client.embed.call_args[1]
@@ -124,7 +133,15 @@ class TestSearchPipelineSearch:
         """Hybrid mode calls embedding client."""
         pipeline.retriever.search.return_value = sample_search_results
 
-        await pipeline.search(query="test query", mode="hybrid")
+        await pipeline.search(
+            query="test query",
+            top_k=10,
+            mode="hybrid",
+            alpha=0.5,
+            namespace=None,
+            openai_max_tokens=500,
+            openai_temperature=0.7,
+        )
 
         mock_embedding_client.embed.assert_called_once()
 
@@ -133,7 +150,15 @@ class TestSearchPipelineSearch:
         """BM25 mode skips embedding generation."""
         pipeline.retriever.search.return_value = sample_search_results
 
-        await pipeline.search(query="test query", mode="bm25")
+        await pipeline.search(
+            query="test query",
+            top_k=10,
+            mode="bm25",
+            alpha=0.5,
+            namespace=None,
+            openai_max_tokens=500,
+            openai_temperature=0.7,
+        )
 
         mock_embedding_client.embed.assert_not_called()
 
@@ -148,6 +173,8 @@ class TestSearchPipelineSearch:
             mode="hybrid",
             alpha=0.7,
             namespace="test-ns",
+            openai_max_tokens=500,
+            openai_temperature=0.7,
         )
 
         mock_retriever.search.assert_called_once()
@@ -163,7 +190,15 @@ class TestSearchPipelineSearch:
         """No retrieved documents returns appropriate response."""
         pipeline.retriever.search.return_value = []
 
-        result = await pipeline.search(query="test query")
+        result = await pipeline.search(
+            query="test query",
+            top_k=10,
+            mode="hybrid",
+            alpha=0.5,
+            namespace=None,
+            openai_max_tokens=500,
+            openai_temperature=0.7,
+        )
 
         assert "sources" in result
         assert result["sources"] == []
@@ -176,7 +211,15 @@ class TestSearchPipelineSearch:
         """LLM called with query and context."""
         pipeline.retriever.search.return_value = sample_search_results
 
-        result = await pipeline.search(query="test query")
+        result = await pipeline.search(
+            query="test query",
+            top_k=10,
+            mode="hybrid",
+            alpha=0.5,
+            namespace=None,
+            openai_max_tokens=500,
+            openai_temperature=0.7,
+        )
 
         mock_llm_client.generate.assert_called_once()
         assert result["answer"] == "This is the generated answer."
@@ -188,6 +231,10 @@ class TestSearchPipelineSearch:
 
         await pipeline.search(
             query="test query",
+            top_k=10,
+            mode="hybrid",
+            alpha=0.5,
+            namespace=None,
             openai_max_tokens=200,
             openai_temperature=0.3,
         )
@@ -203,9 +250,12 @@ class TestSearchPipelineSearch:
 
         result = await pipeline.search(
             query="test query",
-            mode="hybrid",
             top_k=10,
+            mode="hybrid",
+            alpha=0.5,
             namespace="my-namespace",
+            openai_max_tokens=500,
+            openai_temperature=0.7,
         )
 
         assert "answer" in result
@@ -221,7 +271,15 @@ class TestSearchPipelineSearch:
         """Sources are converted to dictionaries."""
         pipeline.retriever.search.return_value = sample_search_results
 
-        result = await pipeline.search(query="test query")
+        result = await pipeline.search(
+            query="test query",
+            top_k=10,
+            mode="hybrid",
+            alpha=0.5,
+            namespace=None,
+            openai_max_tokens=500,
+            openai_temperature=0.7,
+        )
 
         assert len(result["sources"]) == 2
         source = result["sources"][0]
@@ -234,7 +292,15 @@ class TestSearchPipelineSearch:
         """Default namespace is 'default' when not specified."""
         pipeline.retriever.search.return_value = sample_search_results
 
-        result = await pipeline.search(query="test query")
+        result = await pipeline.search(
+            query="test query",
+            top_k=10,
+            mode="hybrid",
+            alpha=0.5,
+            namespace=None,
+            openai_max_tokens=500,
+            openai_temperature=0.7,
+        )
 
         assert result["metadata"]["namespace"] == "default"
 
@@ -310,6 +376,7 @@ class TestSearchPipelineCleanup:
             retriever=Mock(),
             embedding_client=AsyncMock(),
             llm_client=AsyncMock(),
+            max_context_length=4000,
         )
 
         # Should not raise
