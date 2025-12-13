@@ -30,7 +30,7 @@ class TestMetricsRecording:
         )
 
         # Sleep for 50ms (0.05s) - should fall in bucket 0.05 or 0.1
-        with track_latency(histogram):
+        with track_latency(histogram, labels=None):
             time.sleep(0.05)
 
         # Verify observation was recorded
@@ -57,15 +57,15 @@ class TestMetricsRecording:
         )
 
         # Record a very fast operation (~5ms)
-        with track_latency(histogram):
+        with track_latency(histogram, labels=None):
             time.sleep(0.005)
 
         # Record a medium operation (~50ms)
-        with track_latency(histogram):
+        with track_latency(histogram, labels=None):
             time.sleep(0.05)
 
         # Record a slower operation (~200ms)
-        with track_latency(histogram):
+        with track_latency(histogram, labels=None):
             time.sleep(0.2)
 
         # Verify total count
@@ -96,7 +96,7 @@ class TestMetricsRecording:
         # Record multiple operations with known durations
         durations = [0.01, 0.02, 0.03]  # 10ms, 20ms, 30ms
         for d in durations:
-            with track_latency(histogram):
+            with track_latency(histogram, labels=None):
                 time.sleep(d)
 
         # Verify count
@@ -145,7 +145,7 @@ class TestMetricsRecording:
             registry=fresh_registry,
         )
 
-        with track_latency(histogram):
+        with track_latency(histogram, labels=None):
             pass  # Minimal work
 
         # Verify SLOW bucket boundaries exist
@@ -162,7 +162,7 @@ class TestMetricsRecording:
             registry=fresh_registry,
         )
 
-        with track_latency(histogram):
+        with track_latency(histogram, labels=None):
             pass  # Should be < 5ms
 
         # Verify recorded in smallest bucket (0.005s = 5ms)
@@ -179,7 +179,7 @@ class TestMetricsRecording:
             registry=fresh_registry,
         )
 
-        with pytest.raises(ValueError), track_latency(histogram):
+        with pytest.raises(ValueError), track_latency(histogram, labels=None):
             time.sleep(0.02)
             raise ValueError("Test error")
 
@@ -248,7 +248,7 @@ class TestPrometheusExposition:
             registry=fresh_registry,
         )
 
-        with track_latency(histogram):
+        with track_latency(histogram, labels=None):
             pass
 
         # Verify all required metric components exist
@@ -266,7 +266,7 @@ class TestPrometheusExposition:
         )
 
         # Record a value that should be in middle bucket
-        with track_latency(histogram):
+        with track_latency(histogram, labels=None):
             time.sleep(0.2)  # ~200ms
 
         bucket_0_1 = fresh_registry.get_sample_value("test_cumulative_seconds_bucket", {"le": "0.1"})

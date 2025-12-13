@@ -139,7 +139,7 @@ class TestTraceEmbeddingGeneration:
         tracer, span = mock_tracer
         mock_get_tracer.return_value = tracer
 
-        with trace_embedding_generation("text-embedding-3-small", chunk_count=10) as yielded:
+        with trace_embedding_generation("text-embedding-3-small", chunk_count=10, total_tokens=None) as yielded:
             assert yielded is span
 
     @patch("src.common.tracing_utils._get_tracer")
@@ -148,7 +148,7 @@ class TestTraceEmbeddingGeneration:
         tracer, span = mock_tracer
         mock_get_tracer.return_value = tracer
 
-        with trace_embedding_generation("text-embedding-3-small", chunk_count=10):
+        with trace_embedding_generation("text-embedding-3-small", chunk_count=10, total_tokens=None):
             pass
 
         span.set_attribute.assert_any_call("embedding.model", "text-embedding-3-small")
@@ -171,7 +171,7 @@ class TestTraceEmbeddingGeneration:
         tracer, span = mock_tracer
         mock_get_tracer.return_value = tracer
 
-        with pytest.raises(ValueError), trace_embedding_generation("model", chunk_count=5):
+        with pytest.raises(ValueError), trace_embedding_generation("model", chunk_count=5, total_tokens=None):
             raise ValueError("Test error")
 
         span.set_status.assert_called()
@@ -187,7 +187,7 @@ class TestTraceVectorSearch:
         tracer, span = mock_tracer
         mock_get_tracer.return_value = tracer
 
-        with trace_vector_search("documents", top_k=10) as yielded:
+        with trace_vector_search("documents", top_k=10, query_vector_dim=None, search_mode=None) as yielded:
             assert yielded is span
 
     @patch("src.common.tracing_utils._get_tracer")
@@ -196,7 +196,7 @@ class TestTraceVectorSearch:
         tracer, span = mock_tracer
         mock_get_tracer.return_value = tracer
 
-        with trace_vector_search("documents", top_k=10):
+        with trace_vector_search("documents", top_k=10, query_vector_dim=None, search_mode=None):
             pass
 
         span.set_attribute.assert_any_call("vector_search.index", "documents")
@@ -208,7 +208,7 @@ class TestTraceVectorSearch:
         tracer, span = mock_tracer
         mock_get_tracer.return_value = tracer
 
-        with trace_vector_search("documents", top_k=10, query_vector_dim=1536):
+        with trace_vector_search("documents", top_k=10, query_vector_dim=1536, search_mode=None):
             pass
 
         span.set_attribute.assert_any_call("vector_search.query_dimensions", 1536)
@@ -219,7 +219,7 @@ class TestTraceVectorSearch:
         tracer, span = mock_tracer
         mock_get_tracer.return_value = tracer
 
-        with trace_vector_search("documents", top_k=10, search_mode="hybrid"):
+        with trace_vector_search("documents", top_k=10, query_vector_dim=None, search_mode="hybrid"):
             pass
 
         span.set_attribute.assert_any_call("vector_search.mode", "hybrid")
@@ -286,6 +286,8 @@ class TestAddRagAttributes:
             mock_span,
             query="What is machine learning?",
             retrieved_count=5,
+            reranked=False,
+            final_context_tokens=None,
         )
 
         mock_span.set_attribute.assert_any_call("rag.query_length", 25)
@@ -301,6 +303,7 @@ class TestAddRagAttributes:
             query="test",
             retrieved_count=5,
             reranked=True,
+            final_context_tokens=None,
         )
 
         mock_span.set_attribute.assert_any_call("rag.reranked", True)
@@ -313,6 +316,7 @@ class TestAddRagAttributes:
             mock_span,
             query="test",
             retrieved_count=5,
+            reranked=False,
             final_context_tokens=2500,
         )
 
@@ -326,6 +330,8 @@ class TestAddRagAttributes:
             mock_span,
             query="test",
             retrieved_count=5,
+            reranked=False,
+            final_context_tokens=None,
         )
 
         # Check that context_tokens was NOT set

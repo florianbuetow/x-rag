@@ -141,7 +141,7 @@ class TestTrackLatencyContextManager:
             registry=registry,
         )
 
-        with track_latency(histogram):
+        with track_latency(histogram, labels=None):
             pass  # Minimal work
 
         # Check that something was observed
@@ -170,7 +170,7 @@ class TestTrackLatencyContextManager:
             registry=registry,
         )
 
-        with pytest.raises(ValueError, match="Test error"), track_latency(histogram):
+        with pytest.raises(ValueError, match="Test error"), track_latency(histogram, labels=None):
             raise ValueError("Test error")
 
     def test_track_latency_records_even_on_exception(self, registry):
@@ -181,7 +181,7 @@ class TestTrackLatencyContextManager:
             registry=registry,
         )
 
-        with pytest.raises(ValueError), track_latency(histogram):
+        with pytest.raises(ValueError), track_latency(histogram, labels=None):
             raise ValueError("Error")
 
         # Duration should have been recorded despite exception
@@ -199,7 +199,7 @@ class TestTrackLatencyContextManager:
             registry=registry,
         )
 
-        with track_latency(histogram):
+        with track_latency(histogram, labels=None):
             time.sleep(0.05)  # Sleep 50ms
 
         # Check that the recorded value is in the expected range
@@ -219,7 +219,7 @@ class TestTrackLatencyContextManager:
             registry=registry,
         )
 
-        with track_latency(histogram):
+        with track_latency(histogram, labels=None):
             pass
 
         count = registry.get_sample_value("test_no_labels_duration_seconds_count")
@@ -234,7 +234,7 @@ class TestTrackLatencyContextManager:
         )
 
         for _ in range(3):
-            with track_latency(histogram):
+            with track_latency(histogram, labels=None):
                 pass
 
         count = registry.get_sample_value("test_multi_duration_seconds_count")
