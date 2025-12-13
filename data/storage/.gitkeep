@@ -1,0 +1,12 @@
+# Local Kubernetes Storage Directory
+
+This folder stores persistent volume claim (PVC) data for the local Kind cluster.
+
+Contents (not tracked in git):
+- Weaviate vector database data
+- MinIO object storage data
+- Redis cache data
+- Kafka message broker data
+
+These directories are created automatically when running `make cluster-start`
+and are excluded from version control via .gitignore.
