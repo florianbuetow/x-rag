@@ -392,7 +392,7 @@ class TestSearchServiceClient:
     @pytest.mark.asyncio
     async def test_client_connect(self):
         """Test client connection."""
-        client = SearchServiceClient(address="localhost:50052")
+        client = SearchServiceClient(address="localhost:50052", timeout=30.0)
 
         with patch("grpc.aio.insecure_channel") as mock_channel:
             mock_stub_class = MagicMock()
@@ -413,7 +413,7 @@ class TestSearchServiceClient:
     @pytest.mark.asyncio
     async def test_client_close(self):
         """Test client close."""
-        client = SearchServiceClient(address="localhost:50052")
+        client = SearchServiceClient(address="localhost:50052", timeout=30.0)
 
         # Mock channel
         mock_channel = AsyncMock()
@@ -430,7 +430,7 @@ class TestSearchServiceClient:
     @pytest.mark.asyncio
     async def test_client_context_manager(self):
         """Test client as async context manager."""
-        client = SearchServiceClient(address="localhost:50052")
+        client = SearchServiceClient(address="localhost:50052", timeout=30.0)
 
         with (
             patch.object(client, "connect", new_callable=AsyncMock) as mock_connect,
@@ -446,7 +446,7 @@ class TestSearchServiceClient:
     @pytest.mark.asyncio
     async def test_search_success(self):
         """Test successful search request."""
-        client = SearchServiceClient(address="localhost:50052")
+        client = SearchServiceClient(address="localhost:50052", timeout=30.0)
 
         # Mock stub
         mock_stub = MagicMock()
@@ -464,6 +464,7 @@ class TestSearchServiceClient:
             namespace="default",
             top_k=5,
             mode="hybrid",
+            options=None,
         )
 
         # Verify response
@@ -481,7 +482,7 @@ class TestSearchServiceClient:
     @pytest.mark.asyncio
     async def test_search_with_options(self):
         """Test search with additional options."""
-        client = SearchServiceClient(address="localhost:50052")
+        client = SearchServiceClient(address="localhost:50052", timeout=30.0)
 
         mock_stub = MagicMock()
         mock_stub.Search = AsyncMock(return_value=search_pb2.SearchResponse(answer="", sources=[], metadata={}))
@@ -489,6 +490,9 @@ class TestSearchServiceClient:
 
         await client.search(
             query="test",
+            namespace="default",
+            top_k=5,
+            mode="hybrid",
             options={"cache": "true", "explain": "true"},
         )
 
@@ -500,15 +504,15 @@ class TestSearchServiceClient:
     @pytest.mark.asyncio
     async def test_search_not_connected(self):
         """Test search when client not connected."""
-        client = SearchServiceClient(address="localhost:50052")
+        client = SearchServiceClient(address="localhost:50052", timeout=30.0)
 
         with pytest.raises(RuntimeError, match="Client not connected"):
-            await client.search(query="test")
+            await client.search(query="test", namespace="default", top_k=5, mode="hybrid", options=None)
 
     @pytest.mark.asyncio
     async def test_search_grpc_error(self):
         """Test search when gRPC error occurs."""
-        client = SearchServiceClient(address="localhost:50052")
+        client = SearchServiceClient(address="localhost:50052", timeout=30.0)
 
         # Mock stub with error - create a real exception
         class MockRpcError(grpc.RpcError, Exception):
@@ -523,12 +527,12 @@ class TestSearchServiceClient:
         client.stub = mock_stub
 
         with pytest.raises(grpc.RpcError):
-            await client.search(query="test")
+            await client.search(query="test", namespace="default", top_k=5, mode="hybrid", options=None)
 
     @pytest.mark.asyncio
     async def test_health_check_success(self):
         """Test successful health check."""
-        client = SearchServiceClient(address="localhost:50052")
+        client = SearchServiceClient(address="localhost:50052", timeout=30.0)
 
         # Mock stub
         mock_stub = MagicMock()
@@ -545,7 +549,7 @@ class TestSearchServiceClient:
     @pytest.mark.asyncio
     async def test_health_check_unhealthy(self):
         """Test health check when service is unhealthy."""
-        client = SearchServiceClient(address="localhost:50052")
+        client = SearchServiceClient(address="localhost:50052", timeout=30.0)
 
         mock_stub = MagicMock()
         mock_response = common_pb2.HealthCheckResponse(status=common_pb2.HealthCheckResponse.UNHEALTHY)
@@ -558,7 +562,7 @@ class TestSearchServiceClient:
     @pytest.mark.asyncio
     async def test_health_check_not_connected(self):
         """Test health check when client not connected."""
-        client = SearchServiceClient(address="localhost:50052")
+        client = SearchServiceClient(address="localhost:50052", timeout=30.0)
 
         result = await client.health_check()
         assert result is False
@@ -566,7 +570,7 @@ class TestSearchServiceClient:
     @pytest.mark.asyncio
     async def test_health_check_grpc_error(self):
         """Test health check when gRPC error occurs."""
-        client = SearchServiceClient(address="localhost:50052")
+        client = SearchServiceClient(address="localhost:50052", timeout=30.0)
 
         # Create a real RpcError exception
         class MockRpcError(grpc.RpcError, Exception):
