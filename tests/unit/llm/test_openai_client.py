@@ -20,9 +20,15 @@ class TestOpenAIClientInit:
     """Tests for OpenAIClient initialization."""
 
     @patch("src.llm.openai_client.AsyncOpenAI")
-    def test_init_creates_client_with_defaults(self, mock_async_openai):
-        """Tests that __init__ creates client with default parameters."""
-        client = OpenAIClient(api_key="test-key")
+    def test_init_creates_client(self, mock_async_openai):
+        """Tests that __init__ creates client with all parameters."""
+        client = OpenAIClient(
+            api_key="test-key",
+            model="gpt-4o-mini",
+            max_retries=3,
+            timeout=60,
+            base_url=None,
+        )
 
         mock_async_openai.assert_called_once_with(
             api_key="test-key",
@@ -35,14 +41,26 @@ class TestOpenAIClientInit:
     @patch("src.llm.openai_client.AsyncOpenAI")
     def test_init_creates_client_with_custom_model(self, mock_async_openai):
         """Tests that __init__ respects custom model parameter."""
-        client = OpenAIClient(api_key="test-key", model="gpt-4")
+        client = OpenAIClient(
+            api_key="test-key",
+            model="gpt-4",
+            max_retries=3,
+            timeout=60,
+            base_url=None,
+        )
 
         assert client.model == "gpt-4"
 
     @patch("src.llm.openai_client.AsyncOpenAI")
     def test_init_creates_client_with_custom_retries(self, mock_async_openai):
         """Tests that __init__ respects custom max_retries parameter."""
-        OpenAIClient(api_key="test-key", max_retries=5)
+        OpenAIClient(
+            api_key="test-key",
+            model="gpt-4o-mini",
+            max_retries=5,
+            timeout=60,
+            base_url=None,
+        )
 
         mock_async_openai.assert_called_once_with(
             api_key="test-key",
@@ -54,7 +72,13 @@ class TestOpenAIClientInit:
     @patch("src.llm.openai_client.AsyncOpenAI")
     def test_init_creates_client_with_custom_timeout(self, mock_async_openai):
         """Tests that __init__ respects custom timeout parameter."""
-        OpenAIClient(api_key="test-key", timeout=120)
+        OpenAIClient(
+            api_key="test-key",
+            model="gpt-4o-mini",
+            max_retries=3,
+            timeout=120,
+            base_url=None,
+        )
 
         mock_async_openai.assert_called_once_with(
             api_key="test-key",
@@ -73,7 +97,13 @@ class TestOpenAIClientGenerate:
         with patch("src.llm.openai_client.AsyncOpenAI") as mock_async_openai:
             mock_openai_instance = MagicMock()
             mock_async_openai.return_value = mock_openai_instance
-            client = OpenAIClient(api_key="test-key")
+            client = OpenAIClient(
+                api_key="test-key",
+                model="gpt-4o-mini",
+                max_retries=3,
+                timeout=60,
+                base_url=None,
+            )
             client.client = mock_openai_instance
             yield client
 
@@ -86,7 +116,7 @@ class TestOpenAIClientGenerate:
 
         mock_client.client.chat.completions.create = AsyncMock(return_value=mock_response)
 
-        result = await mock_client.generate("What is Python?")
+        result = await mock_client.generate("What is Python?", max_tokens=500, temperature=0.7, system_message=None)
 
         assert result == "Generated answer"
 
@@ -99,7 +129,7 @@ class TestOpenAIClientGenerate:
 
         mock_client.client.chat.completions.create = AsyncMock(return_value=mock_response)
 
-        await mock_client.generate("Test prompt")
+        await mock_client.generate("Test prompt", max_tokens=500, temperature=0.7, system_message=None)
 
         mock_client.client.chat.completions.create.assert_called_once()
         call_kwargs = mock_client.client.chat.completions.create.call_args[1]
@@ -116,7 +146,7 @@ class TestOpenAIClientGenerate:
 
         mock_client.client.chat.completions.create = AsyncMock(return_value=mock_response)
 
-        await mock_client.generate("User question", system_message="You are helpful.")
+        await mock_client.generate("User question", max_tokens=500, temperature=0.7, system_message="You are helpful.")
 
         call_kwargs = mock_client.client.chat.completions.create.call_args[1]
         messages = call_kwargs["messages"]
@@ -134,7 +164,7 @@ class TestOpenAIClientGenerate:
 
         mock_client.client.chat.completions.create = AsyncMock(return_value=mock_response)
 
-        await mock_client.generate("Prompt", max_tokens=100)
+        await mock_client.generate("Prompt", max_tokens=100, temperature=0.7, system_message=None)
 
         call_kwargs = mock_client.client.chat.completions.create.call_args[1]
         assert call_kwargs["max_tokens"] == 100
@@ -148,7 +178,7 @@ class TestOpenAIClientGenerate:
 
         mock_client.client.chat.completions.create = AsyncMock(return_value=mock_response)
 
-        await mock_client.generate("Prompt", temperature=0.0)
+        await mock_client.generate("Prompt", max_tokens=500, temperature=0.0, system_message=None)
 
         call_kwargs = mock_client.client.chat.completions.create.call_args[1]
         assert call_kwargs["temperature"] == 0.0
@@ -162,7 +192,7 @@ class TestOpenAIClientGenerate:
 
         mock_client.client.chat.completions.create = AsyncMock(return_value=mock_response)
 
-        result = await mock_client.generate("Prompt")
+        result = await mock_client.generate("Prompt", max_tokens=500, temperature=0.7, system_message=None)
 
         assert result == ""
 
@@ -172,7 +202,7 @@ class TestOpenAIClientGenerate:
         mock_client.client.chat.completions.create = AsyncMock(side_effect=OpenAIError("API Error"))
 
         with pytest.raises(OpenAIError):
-            await mock_client.generate("Prompt")
+            await mock_client.generate("Prompt", max_tokens=500, temperature=0.7, system_message=None)
 
 
 class TestOpenAIClientGenerateWithContext:
@@ -184,7 +214,13 @@ class TestOpenAIClientGenerateWithContext:
         with patch("src.llm.openai_client.AsyncOpenAI") as mock_async_openai:
             mock_openai_instance = MagicMock()
             mock_async_openai.return_value = mock_openai_instance
-            client = OpenAIClient(api_key="test-key")
+            client = OpenAIClient(
+                api_key="test-key",
+                model="gpt-4o-mini",
+                max_retries=3,
+                timeout=60,
+                base_url=None,
+            )
             client.client = mock_openai_instance
             yield client
 
@@ -197,7 +233,12 @@ class TestOpenAIClientGenerateWithContext:
 
         mock_client.client.chat.completions.create = AsyncMock(return_value=mock_response)
 
-        result = await mock_client.generate_with_context(query="What is Python?", context="Python is a programming language.")
+        result = await mock_client.generate_with_context(
+            query="What is Python?",
+            context="Python is a programming language.",
+            max_tokens=500,
+            temperature=0.7,
+        )
 
         assert result == "Answer based on context"
 
@@ -219,7 +260,7 @@ class TestOpenAIClientGenerateWithContext:
 
         mock_client.client.chat.completions.create = AsyncMock(return_value=mock_response)
 
-        await mock_client.generate_with_context(query="Question", context="Context", max_tokens=200)
+        await mock_client.generate_with_context(query="Question", context="Context", max_tokens=200, temperature=0.7)
 
         call_kwargs = mock_client.client.chat.completions.create.call_args[1]
         assert call_kwargs["max_tokens"] == 200
@@ -233,7 +274,7 @@ class TestOpenAIClientGenerateWithContext:
 
         mock_client.client.chat.completions.create = AsyncMock(return_value=mock_response)
 
-        await mock_client.generate_with_context(query="Question", context="Context", temperature=0.5)
+        await mock_client.generate_with_context(query="Question", context="Context", max_tokens=500, temperature=0.5)
 
         call_kwargs = mock_client.client.chat.completions.create.call_args[1]
         assert call_kwargs["temperature"] == 0.5
@@ -248,7 +289,13 @@ class TestOpenAIClientHealthCheck:
         with patch("src.llm.openai_client.AsyncOpenAI") as mock_async_openai:
             mock_openai_instance = MagicMock()
             mock_async_openai.return_value = mock_openai_instance
-            client = OpenAIClient(api_key="test-key")
+            client = OpenAIClient(
+                api_key="test-key",
+                model="gpt-4o-mini",
+                max_retries=3,
+                timeout=60,
+                base_url=None,
+            )
             client.client = mock_openai_instance
             yield client
 
@@ -305,7 +352,13 @@ class TestOpenAIClientClose:
             mock_openai_instance = MagicMock()
             mock_openai_instance.close = AsyncMock()
             mock_async_openai.return_value = mock_openai_instance
-            client = OpenAIClient(api_key="test-key")
+            client = OpenAIClient(
+                api_key="test-key",
+                model="gpt-4o-mini",
+                max_retries=3,
+                timeout=60,
+                base_url=None,
+            )
             client.client = mock_openai_instance
             yield client
 
