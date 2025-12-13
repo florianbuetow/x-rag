@@ -125,6 +125,23 @@ make code-format
 
 **Configuration:** Ruff is configured in `pyproject.toml` with Google-style docstring conventions, line length of 140 characters, and Python 3.11+ target version.
 
+### Pre-commit Hooks
+
+This project uses [pre-commit](https://pre-commit.com/) to automatically run `make ci` before each commit, ensuring code quality checks pass before changes are committed.
+
+```bash
+# Install the pre-commit hook (one-time setup)
+uv run pre-commit install
+
+# Run manually on all files
+uv run pre-commit run --all-files
+
+# Skip temporarily (use sparingly)
+git commit --no-verify
+```
+
+The hook runs the full CI suite (`make ci`) which includes style checks, type checking, security scans, and tests.
+
 ### Security Checks
 
 Run security analysis with Bandit to detect common security issues:
