@@ -30,6 +30,7 @@ class TestMinioClientInit:
             access_key="minioadmin",
             secret_key="minioadmin",
             bucket="test-bucket",
+            secure=False,
         )
 
         mock_minio_class.assert_called_once_with(
@@ -52,6 +53,7 @@ class TestMinioClientInit:
             access_key="admin",
             secret_key="secret",
             bucket="bucket",
+            secure=False,
         )
 
         # First positional arg should be clean endpoint
@@ -70,6 +72,7 @@ class TestMinioClientInit:
             access_key="admin",
             secret_key="secret",
             bucket="bucket",
+            secure=True,
         )
 
         call_args = mock_minio_class.call_args
@@ -105,6 +108,7 @@ class TestMinioClientInit:
             access_key="admin",
             secret_key="secret",
             bucket="new-bucket",
+            secure=False,
         )
 
         mock_client.bucket_exists.assert_called_once_with("new-bucket")
@@ -126,6 +130,7 @@ class TestMinioClientEnsureBucket:
             access_key="admin",
             secret_key="secret",
             bucket="new-bucket",
+            secure=False,
         )
 
         mock_client.make_bucket.assert_called_once_with("new-bucket")
@@ -142,6 +147,7 @@ class TestMinioClientEnsureBucket:
             access_key="admin",
             secret_key="secret",
             bucket="existing-bucket",
+            secure=False,
         )
 
         mock_client.make_bucket.assert_not_called()
@@ -166,6 +172,7 @@ class TestMinioClientEnsureBucket:
                 access_key="admin",
                 secret_key="secret",
                 bucket="bucket",
+                secure=False,
             )
 
 
@@ -185,6 +192,7 @@ class TestMinioClientStoreDocument:
                 access_key="admin",
                 secret_key="secret",
                 bucket="test-bucket",
+                secure=False,
             )
             yield minio_client
 
@@ -264,6 +272,7 @@ class TestMinioClientHealthCheck:
                 access_key="admin",
                 secret_key="secret",
                 bucket="test-bucket",
+                secure=False,
             )
             yield minio_client
 

@@ -17,6 +17,7 @@ class TestDocumentEventConsumerInit:
             bootstrap_servers="localhost:9092",
             topic="document-changes",
             group_id="test-group",
+            auto_offset_reset="earliest",
         )
 
         assert consumer.bootstrap_servers == "localhost:9092"
@@ -41,6 +42,7 @@ class TestDocumentEventConsumerInit:
             bootstrap_servers="localhost:9092",
             topic="test",
             group_id="group",
+            auto_offset_reset="earliest",
         )
 
         assert consumer._running is False
@@ -57,6 +59,7 @@ class TestConsumerLifecycle:
             bootstrap_servers="localhost:9092",
             topic="document-changes",
             group_id="test-group",
+            auto_offset_reset="earliest",
         )
 
     @pytest.mark.asyncio
@@ -157,6 +160,7 @@ class TestConsumerConsume:
             bootstrap_servers="localhost:9092",
             topic="document-changes",
             group_id="test-group",
+            auto_offset_reset="earliest",
         )
 
     @pytest.mark.asyncio
@@ -260,6 +264,7 @@ class TestConsumerHealthCheck:
             bootstrap_servers="localhost:9092",
             topic="document-changes",
             group_id="test-group",
+            auto_offset_reset="earliest",
         )
 
     @pytest.mark.asyncio

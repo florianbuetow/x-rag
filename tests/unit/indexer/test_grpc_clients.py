@@ -23,7 +23,7 @@ class TestIndexerEmbeddingServiceClientInit:
 
     def test_init_sets_address(self):
         """Tests that __init__ sets address."""
-        client = EmbeddingServiceClient(address="localhost:50051")
+        client = EmbeddingServiceClient(address="localhost:50051", timeout=30.0)
 
         assert client.address == "localhost:50051"
 
@@ -33,21 +33,20 @@ class TestIndexerEmbeddingServiceClientInit:
 
         assert client.timeout == 60.0
 
-    def test_init_uses_default_timeout(self):
-        """Tests that __init__ uses default timeout of 30.0."""
-        client = EmbeddingServiceClient(address="localhost:50051")
-
-        assert client.timeout == 30.0
+    def test_init_requires_timeout(self):
+        """Tests that __init__ requires timeout parameter."""
+        with pytest.raises(TypeError, match="timeout"):
+            EmbeddingServiceClient(address="localhost:50051")
 
     def test_init_channel_is_none(self):
         """Tests that __init__ sets channel to None."""
-        client = EmbeddingServiceClient(address="localhost:50051")
+        client = EmbeddingServiceClient(address="localhost:50051", timeout=30.0)
 
         assert client.channel is None
 
     def test_init_stub_is_none(self):
         """Tests that __init__ sets stub to None."""
-        client = EmbeddingServiceClient(address="localhost:50051")
+        client = EmbeddingServiceClient(address="localhost:50051", timeout=30.0)
 
         assert client.stub is None
 
@@ -63,7 +62,7 @@ class TestIndexerEmbeddingServiceClientContextManager:
         mock_channel.return_value = mock_channel_instance
         mock_stub_class.return_value = MagicMock()
 
-        client = EmbeddingServiceClient(address="localhost:50051")
+        client = EmbeddingServiceClient(address="localhost:50051", timeout=30.0)
 
         result = client.__enter__()
 
@@ -75,7 +74,7 @@ class TestIndexerEmbeddingServiceClientContextManager:
         """Tests that __exit__ calls close."""
         mock_channel = MagicMock()
 
-        client = EmbeddingServiceClient(address="localhost:50051")
+        client = EmbeddingServiceClient(address="localhost:50051", timeout=30.0)
         client.channel = mock_channel
         client.stub = MagicMock()
 
@@ -94,7 +93,7 @@ class TestIndexerEmbeddingServiceClientConnect:
         mock_channel_instance = MagicMock()
         mock_channel.return_value = mock_channel_instance
 
-        client = EmbeddingServiceClient(address="localhost:50051")
+        client = EmbeddingServiceClient(address="localhost:50051", timeout=30.0)
         client.connect()
 
         mock_channel.assert_called_once()
@@ -109,7 +108,7 @@ class TestIndexerEmbeddingServiceClientConnect:
         mock_stub = MagicMock()
         mock_stub_class.return_value = mock_stub
 
-        client = EmbeddingServiceClient(address="localhost:50051")
+        client = EmbeddingServiceClient(address="localhost:50051", timeout=30.0)
         client.connect()
 
         mock_stub_class.assert_called_once_with(mock_channel_instance)
@@ -121,7 +120,7 @@ class TestIndexerEmbeddingServiceClientConnect:
         """Tests that connect applies correct channel options."""
         mock_channel.return_value = MagicMock()
 
-        client = EmbeddingServiceClient(address="localhost:50051")
+        client = EmbeddingServiceClient(address="localhost:50051", timeout=30.0)
         client.connect()
 
         call_args = mock_channel.call_args
@@ -138,7 +137,7 @@ class TestIndexerEmbeddingServiceClientClose:
         """Tests that close closes the channel."""
         mock_channel = MagicMock()
 
-        client = EmbeddingServiceClient(address="localhost:50051")
+        client = EmbeddingServiceClient(address="localhost:50051", timeout=30.0)
         client.channel = mock_channel
         client.stub = MagicMock()
 
@@ -150,7 +149,7 @@ class TestIndexerEmbeddingServiceClientClose:
         """Tests that close sets channel to None."""
         mock_channel = MagicMock()
 
-        client = EmbeddingServiceClient(address="localhost:50051")
+        client = EmbeddingServiceClient(address="localhost:50051", timeout=30.0)
         client.channel = mock_channel
         client.stub = MagicMock()
 
@@ -161,7 +160,7 @@ class TestIndexerEmbeddingServiceClientClose:
 
     def test_close_handles_no_channel(self):
         """Tests that close handles None channel gracefully."""
-        client = EmbeddingServiceClient(address="localhost:50051")
+        client = EmbeddingServiceClient(address="localhost:50051", timeout=30.0)
         client.channel = None
 
         # Should not raise
@@ -174,7 +173,7 @@ class TestIndexerEmbeddingServiceClientEmbed:
     @pytest.fixture
     def client(self):
         """Create client with mocked stub."""
-        client = EmbeddingServiceClient(address="localhost:50051")
+        client = EmbeddingServiceClient(address="localhost:50051", timeout=30.0)
         client.stub = MagicMock()
         return client
 
@@ -190,7 +189,7 @@ class TestIndexerEmbeddingServiceClientEmbed:
 
     def test_embed_raises_when_not_connected(self):
         """Tests that embed raises RuntimeError when not connected."""
-        client = EmbeddingServiceClient(address="localhost:50051")
+        client = EmbeddingServiceClient(address="localhost:50051", timeout=30.0)
         client.stub = None
 
         with pytest.raises(RuntimeError) as exc_info:
@@ -233,7 +232,7 @@ class TestIndexerEmbeddingServiceClientEmbedBatch:
     @pytest.fixture
     def client(self):
         """Create client with mocked stub."""
-        client = EmbeddingServiceClient(address="localhost:50051")
+        client = EmbeddingServiceClient(address="localhost:50051", timeout=30.0)
         client.stub = MagicMock()
         return client
 
@@ -252,7 +251,7 @@ class TestIndexerEmbeddingServiceClientEmbedBatch:
 
     def test_embed_batch_raises_when_not_connected(self):
         """Tests that embed_batch raises RuntimeError when not connected."""
-        client = EmbeddingServiceClient(address="localhost:50051")
+        client = EmbeddingServiceClient(address="localhost:50051", timeout=30.0)
         client.stub = None
 
         with pytest.raises(RuntimeError) as exc_info:
@@ -282,7 +281,7 @@ class TestIndexerEmbeddingServiceClientHealthCheck:
     @pytest.fixture
     def client(self):
         """Create client with mocked stub."""
-        client = EmbeddingServiceClient(address="localhost:50051")
+        client = EmbeddingServiceClient(address="localhost:50051", timeout=30.0)
         client.stub = MagicMock()
         return client
 
@@ -300,7 +299,7 @@ class TestIndexerEmbeddingServiceClientHealthCheck:
 
     def test_health_check_returns_false_when_not_connected(self):
         """Tests that health_check returns False when not connected."""
-        client = EmbeddingServiceClient(address="localhost:50051")
+        client = EmbeddingServiceClient(address="localhost:50051", timeout=30.0)
         client.stub = None
 
         result = client.health_check()
