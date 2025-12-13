@@ -36,14 +36,14 @@ class TestGrpcClient:
         assert client.channel is None
         assert client.stub is None
 
-    def test_init_uses_default_values(self):
-        """Tests that __init__ uses default values for timeout and max_retries."""
+    def test_init_requires_timeout_and_max_retries(self):
+        """Tests that __init__ requires timeout and max_retries parameters."""
+        import pytest
+
         mock_stub_class = MagicMock()
 
-        client = GrpcClient(address="localhost:50051", stub_class=mock_stub_class)
-
-        assert client.timeout == 30
-        assert client.max_retries == 3
+        with pytest.raises(TypeError):
+            GrpcClient(address="localhost:50051", stub_class=mock_stub_class)
 
     @patch("src.common.grpc_utils.grpc.insecure_channel")
     def test_enter_creates_channel_and_stub(self, mock_insecure_channel):
@@ -54,7 +54,12 @@ class TestGrpcClient:
         mock_stub = MagicMock()
         mock_stub_class.return_value = mock_stub
 
-        client = GrpcClient(address="localhost:50051", stub_class=mock_stub_class)
+        client = GrpcClient(
+            address="localhost:50051",
+            stub_class=mock_stub_class,
+            timeout=30,
+            max_retries=3,
+        )
 
         result = client.__enter__()
 
@@ -68,7 +73,12 @@ class TestGrpcClient:
     def test_enter_applies_channel_options(self, mock_insecure_channel):
         """Tests that __enter__ applies correct channel options."""
         mock_stub_class = MagicMock()
-        client = GrpcClient(address="localhost:50051", stub_class=mock_stub_class)
+        client = GrpcClient(
+            address="localhost:50051",
+            stub_class=mock_stub_class,
+            timeout=30,
+            max_retries=3,
+        )
 
         client.__enter__()
 
@@ -85,7 +95,12 @@ class TestGrpcClient:
         mock_channel = MagicMock()
         mock_stub_class = MagicMock()
 
-        client = GrpcClient(address="localhost:50051", stub_class=mock_stub_class)
+        client = GrpcClient(
+            address="localhost:50051",
+            stub_class=mock_stub_class,
+            timeout=30,
+            max_retries=3,
+        )
         client.channel = mock_channel
 
         client.__exit__(None, None, None)
@@ -95,7 +110,12 @@ class TestGrpcClient:
     def test_exit_handles_no_channel(self):
         """Tests that __exit__ handles case when channel is None."""
         mock_stub_class = MagicMock()
-        client = GrpcClient(address="localhost:50051", stub_class=mock_stub_class)
+        client = GrpcClient(
+            address="localhost:50051",
+            stub_class=mock_stub_class,
+            timeout=30,
+            max_retries=3,
+        )
         client.channel = None
 
         # Should not raise
@@ -108,7 +128,12 @@ class TestGrpcClient:
         mock_insecure_channel.return_value = mock_channel
         mock_stub_class = MagicMock()
 
-        with GrpcClient(address="localhost:50051", stub_class=mock_stub_class) as client:
+        with GrpcClient(
+            address="localhost:50051",
+            stub_class=mock_stub_class,
+            timeout=30,
+            max_retries=3,
+        ) as client:
             assert client.channel is not None
             assert client.stub is not None
 
@@ -120,7 +145,12 @@ class TestGrpcClient:
         mock_method = MagicMock()
         mock_stub.Embed = mock_method
 
-        client = GrpcClient(address="localhost:50051", stub_class=MagicMock())
+        client = GrpcClient(
+            address="localhost:50051",
+            stub_class=MagicMock(),
+            timeout=30,
+            max_retries=3,
+        )
         client.stub = mock_stub
 
         with client.call_with_retry("Embed") as method:
@@ -143,7 +173,12 @@ class TestGrpcClient:
 
         mock_stub.Embed = mock_method
 
-        client = GrpcClient(address="localhost:50051", stub_class=MagicMock(), max_retries=3)
+        client = GrpcClient(
+            address="localhost:50051",
+            stub_class=MagicMock(),
+            timeout=30,
+            max_retries=3,
+        )
         client.stub = mock_stub
 
         # Note: The current implementation yields the method, doesn't handle retries internally
@@ -164,7 +199,12 @@ class TestGrpcClient:
 
         mock_stub.Embed.side_effect = MockRpcError()
 
-        client = GrpcClient(address="localhost:50051", stub_class=MagicMock(), max_retries=2)
+        client = GrpcClient(
+            address="localhost:50051",
+            stub_class=MagicMock(),
+            timeout=30,
+            max_retries=2,
+        )
         client.stub = mock_stub
 
         # The generator yields the method; actual retry logic depends on how it's used
@@ -185,7 +225,7 @@ class TestCreateGrpcServer:
         mock_server = MagicMock()
         mock_grpc_server.return_value = mock_server
 
-        result = create_grpc_server(port=50051)
+        result = create_grpc_server(port=50051, max_workers=10, enable_reflection=False, service_names=None)
 
         assert result == mock_server
         mock_executor_class.assert_called_once_with(max_workers=10)
@@ -200,7 +240,7 @@ class TestCreateGrpcServer:
         mock_server = MagicMock()
         mock_grpc_server.return_value = mock_server
 
-        create_grpc_server(port=50052, max_workers=20)
+        create_grpc_server(port=50052, max_workers=20, enable_reflection=False, service_names=None)
 
         mock_executor_class.assert_called_once_with(max_workers=20)
 
@@ -215,7 +255,7 @@ class TestCreateGrpcServer:
         mock_grpc_server.return_value = mock_server
 
         service_names = ["xrag.embedding.EmbeddingService"]
-        create_grpc_server(port=50051, enable_reflection=True, service_names=service_names)
+        create_grpc_server(port=50051, max_workers=10, enable_reflection=True, service_names=service_names)
 
         mock_enable_reflection.assert_called_once_with(service_names, mock_server)
 
@@ -229,7 +269,7 @@ class TestCreateGrpcServer:
         mock_server = MagicMock()
         mock_grpc_server.return_value = mock_server
 
-        create_grpc_server(port=50051, enable_reflection=False, service_names=["service"])
+        create_grpc_server(port=50051, max_workers=10, enable_reflection=False, service_names=["service"])
 
         mock_enable_reflection.assert_not_called()
 
@@ -243,7 +283,7 @@ class TestCreateGrpcServer:
         mock_server = MagicMock()
         mock_grpc_server.return_value = mock_server
 
-        create_grpc_server(port=50051, enable_reflection=True, service_names=None)
+        create_grpc_server(port=50051, max_workers=10, enable_reflection=True, service_names=None)
 
         mock_enable_reflection.assert_not_called()
 
@@ -256,7 +296,7 @@ class TestCreateGrpcServer:
         mock_server = MagicMock()
         mock_grpc_server.return_value = mock_server
 
-        create_grpc_server(port=50051)
+        create_grpc_server(port=50051, max_workers=10, enable_reflection=False, service_names=None)
 
         call_args = mock_grpc_server.call_args
         options = dict(call_args[1]["options"])
