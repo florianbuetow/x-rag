@@ -42,7 +42,7 @@ class TestInitTracing:
         mock_exporter: MagicMock,
     ):
         """Tests that init_tracing returns a TracerProvider."""
-        result = tracing.init_tracing(service_name="test-service")
+        result = tracing.init_tracing(service_name="test-service", otlp_endpoint=None, environment="test")
 
         assert isinstance(result, TracerProvider)
 
@@ -54,7 +54,7 @@ class TestInitTracing:
         mock_exporter: MagicMock,
     ):
         """Tests that init_tracing sets the global tracer provider."""
-        tracing.init_tracing(service_name="test-service")
+        tracing.init_tracing(service_name="test-service", otlp_endpoint=None, environment="test")
 
         assert tracing._tracer_provider is not None
 
@@ -66,7 +66,7 @@ class TestInitTracing:
         mock_exporter: MagicMock,
     ):
         """Tests that init_tracing uses default endpoint when not specified."""
-        tracing.init_tracing(service_name="test-service")
+        tracing.init_tracing(service_name="test-service", otlp_endpoint=None, environment="test")
 
         mock_exporter.assert_called_once()
         call_kwargs = mock_exporter.call_args[1]
@@ -84,6 +84,7 @@ class TestInitTracing:
         tracing.init_tracing(
             service_name="test-service",
             otlp_endpoint=custom_endpoint,
+            environment="test",
         )
 
         mock_exporter.assert_called_once()
@@ -102,7 +103,7 @@ class TestInitTracing:
         env_endpoint = "http://env-tempo:4317"
         monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", env_endpoint)
 
-        tracing.init_tracing(service_name="test-service")
+        tracing.init_tracing(service_name="test-service", otlp_endpoint=None, environment="test")
 
         mock_exporter.assert_called_once()
         call_kwargs = mock_exporter.call_args[1]
@@ -116,7 +117,7 @@ class TestInitTracing:
         mock_exporter: MagicMock,
     ):
         """Tests that init_tracing configures BatchSpanProcessor."""
-        tracing.init_tracing(service_name="test-service")
+        tracing.init_tracing(service_name="test-service", otlp_endpoint=None, environment="test")
 
         mock_batch_processor.assert_called_once()
         call_kwargs = mock_batch_processor.call_args[1]
@@ -133,8 +134,8 @@ class TestInitTracing:
         caplog: pytest.LogCaptureFixture,
     ):
         """Tests that init_tracing warns if called twice."""
-        tracing.init_tracing(service_name="test-service")
-        tracing.init_tracing(service_name="test-service-2")
+        tracing.init_tracing(service_name="test-service", otlp_endpoint=None, environment="test")
+        tracing.init_tracing(service_name="test-service-2", otlp_endpoint=None, environment="test")
 
         assert "already initialized" in caplog.text
 
@@ -146,8 +147,8 @@ class TestInitTracing:
         mock_exporter: MagicMock,
     ):
         """Tests that init_tracing returns existing provider if called twice."""
-        first_provider = tracing.init_tracing(service_name="test-service")
-        second_provider = tracing.init_tracing(service_name="test-service-2")
+        first_provider = tracing.init_tracing(service_name="test-service", otlp_endpoint=None, environment="test")
+        second_provider = tracing.init_tracing(service_name="test-service-2", otlp_endpoint=None, environment="test")
 
         assert first_provider is second_provider
 
@@ -182,7 +183,7 @@ class TestShutdownTracing:
         mock_exporter: MagicMock,
     ):
         """Tests that shutdown_tracing clears the global provider."""
-        tracing.init_tracing(service_name="test-service")
+        tracing.init_tracing(service_name="test-service", otlp_endpoint=None, environment="test")
         assert tracing._tracer_provider is not None
 
         tracing.shutdown_tracing()
@@ -212,7 +213,7 @@ class TestShutdownTracing:
         import logging
 
         caplog.set_level(logging.INFO)
-        tracing.init_tracing(service_name="test-service")
+        tracing.init_tracing(service_name="test-service", otlp_endpoint=None, environment="test")
         tracing.shutdown_tracing()
 
         assert "shutdown complete" in caplog.text.lower()
@@ -235,7 +236,7 @@ class TestGetCurrentTraceId:
         mock_exporter: MagicMock,
     ):
         """Tests that get_current_trace_id returns hex string when span is active."""
-        tracing.init_tracing(service_name="test-service")
+        tracing.init_tracing(service_name="test-service", otlp_endpoint=None, environment="test")
         tracer = tracing.get_tracer("test")
 
         with tracer.start_as_current_span("test-span"):
@@ -264,7 +265,7 @@ class TestIsTracingEnabled:
         mock_exporter: MagicMock,
     ):
         """Tests that is_tracing_enabled returns True after init."""
-        tracing.init_tracing(service_name="test-service")
+        tracing.init_tracing(service_name="test-service", otlp_endpoint=None, environment="test")
 
         result = tracing.is_tracing_enabled()
 
@@ -278,7 +279,7 @@ class TestIsTracingEnabled:
         mock_exporter: MagicMock,
     ):
         """Tests that is_tracing_enabled returns False after shutdown."""
-        tracing.init_tracing(service_name="test-service")
+        tracing.init_tracing(service_name="test-service", otlp_endpoint=None, environment="test")
         tracing.shutdown_tracing()
 
         result = tracing.is_tracing_enabled()
