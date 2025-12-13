@@ -117,7 +117,7 @@ class TestLLMConfigFactoryMethods:
 
     def test_for_openai(self):
         """Tests for_openai factory method."""
-        config = LLMConfig.for_openai(api_key="sk-test123")
+        config = LLMConfig.for_openai(api_key="sk-test123", model="gpt-4o-mini")
 
         assert config.provider == LLMProvider.OPENAI
         assert config.api_key == "sk-test123"
@@ -134,6 +134,7 @@ class TestLLMConfigFactoryMethods:
         """Tests for_openai with additional kwargs."""
         config = LLMConfig.for_openai(
             api_key="sk-test",
+            model="gpt-4o-mini",
             max_tokens=1000,
             temperature=0.5,
         )
@@ -146,6 +147,7 @@ class TestLLMConfigFactoryMethods:
         config = LLMConfig.for_local(
             base_url="http://localhost:1234/v1",
             model="qwen2.5-7b",
+            api_key="local",
         )
 
         assert config.provider == LLMProvider.LOCAL
@@ -172,6 +174,7 @@ class TestLLMConfigProperties:
         config = LLMConfig.for_local(
             base_url="http://localhost:1234/v1",
             model="model",
+            api_key="local",
         )
 
         assert config.is_local is True
@@ -188,7 +191,7 @@ class TestLLMConfigProperties:
 
     def test_is_local_with_openai_no_base_url(self):
         """Tests is_local returns False for OpenAI without base_url."""
-        config = LLMConfig.for_openai(api_key="sk-test")
+        config = LLMConfig.for_openai(api_key="sk-test", model="gpt-4o-mini")
 
         assert config.is_local is False
 
@@ -237,7 +240,7 @@ class TestEmbeddingConfigFactoryMethods:
 
     def test_for_openai(self):
         """Tests for_openai factory method."""
-        config = EmbeddingConfig.for_openai(api_key="sk-test123")
+        config = EmbeddingConfig.for_openai(api_key="sk-test123", model="text-embedding-3-small")
 
         assert config.provider == EmbeddingProvider.OPENAI
         assert config.api_key == "sk-test123"
@@ -258,6 +261,7 @@ class TestEmbeddingConfigFactoryMethods:
         config = EmbeddingConfig.for_local(
             base_url="http://localhost:1234/v1",
             model="bge-large-en-v1.5",
+            api_key="local",
         )
 
         assert config.provider == EmbeddingProvider.LOCAL
@@ -267,7 +271,7 @@ class TestEmbeddingConfigFactoryMethods:
 
     def test_for_hash_based(self):
         """Tests for_hash_based factory method."""
-        config = EmbeddingConfig.for_hash_based()
+        config = EmbeddingConfig.for_hash_based(dimension=768)
 
         assert config.provider == EmbeddingProvider.HASH_BASED
         assert config.model == "hash-based"
@@ -288,19 +292,20 @@ class TestEmbeddingConfigProperties:
         config = EmbeddingConfig.for_local(
             base_url="http://localhost:1234/v1",
             model="model",
+            api_key="local",
         )
 
         assert config.is_local is True
 
     def test_is_local_with_hash_based(self):
         """Tests is_local returns True for HASH_BASED provider."""
-        config = EmbeddingConfig.for_hash_based()
+        config = EmbeddingConfig.for_hash_based(dimension=768)
 
         assert config.is_local is True
 
     def test_is_local_with_openai(self):
         """Tests is_local returns False for OpenAI provider."""
-        config = EmbeddingConfig.for_openai(api_key="sk-test")
+        config = EmbeddingConfig.for_openai(api_key="sk-test", model="text-embedding-3-small")
 
         assert config.is_local is False
 
@@ -318,6 +323,6 @@ class TestEmbeddingConfigProperties:
 
     def test_requires_api_key_hash_based(self):
         """Tests requires_api_key returns False for HASH_BASED."""
-        config = EmbeddingConfig.for_hash_based()
+        config = EmbeddingConfig.for_hash_based(dimension=768)
 
         assert config.requires_api_key is False

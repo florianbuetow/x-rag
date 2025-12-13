@@ -43,6 +43,7 @@ class TestCreateLLMClient:
         config = LLMConfig.for_local(
             base_url="http://localhost:1234/v1",
             model="qwen2.5-7b",
+            api_key="local",
         )
 
         result = create_llm_client(config)
