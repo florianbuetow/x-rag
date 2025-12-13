@@ -170,9 +170,7 @@ async def test_to_grpc_response_unhealthy():
 
 @pytest.mark.asyncio
 async def test_to_grpc_response_unknown_status():
-    """Test conversion to gRPC HealthCheckResponse for unknown status."""
-    from src.proto_gen.common_pb2 import HealthCheckResponse
-
+    """Test conversion to gRPC HealthCheckResponse raises error for unknown status."""
     checker = HealthChecker()
 
     # Manually create health data with unknown status
@@ -181,9 +179,9 @@ async def test_to_grpc_response_unknown_status():
         "dependencies": {},
         "message": "Test",
     }
-    grpc_response = checker.to_grpc_response(health_data)
 
-    assert grpc_response.status == HealthCheckResponse.UNKNOWN
+    with pytest.raises(ValueError, match="Unknown health status"):
+        checker.to_grpc_response(health_data)
 
 
 # Tests for check_weaviate function

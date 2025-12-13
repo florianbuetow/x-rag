@@ -66,7 +66,11 @@ class TestBasicTextCleaner:
 
     def test_clean_text_strips_whitespace(self):
         """Test that cleaner strips leading/trailing whitespace."""
-        cleaner = BasicTextCleaner()
+        cleaner = BasicTextCleaner(
+            remove_empty_lines=True,
+            remove_extra_whitespaces=True,
+            unicode_normalization="NFC",
+        )
 
         text = "  Test content  \n  "
         cleaned = cleaner.clean(text)
@@ -75,7 +79,11 @@ class TestBasicTextCleaner:
 
     def test_clean_text_removes_empty_lines(self):
         """Test that cleaner removes empty lines and normalizes to single line."""
-        cleaner = BasicTextCleaner()
+        cleaner = BasicTextCleaner(
+            remove_empty_lines=True,
+            remove_extra_whitespaces=True,
+            unicode_normalization="NFC",
+        )
 
         text = "Line 1\n\n\nLine 2\n\nLine 3"
         cleaned = cleaner.clean(text)
@@ -85,7 +93,11 @@ class TestBasicTextCleaner:
 
     def test_clean_text_normalizes_whitespace(self):
         """Test that cleaner normalizes internal whitespace to single line."""
-        cleaner = BasicTextCleaner()
+        cleaner = BasicTextCleaner(
+            remove_empty_lines=True,
+            remove_extra_whitespaces=True,
+            unicode_normalization="NFC",
+        )
 
         text = "Line 1  \nLine 2\t\n  Line 3"
         cleaned = cleaner.clean(text)
@@ -95,7 +107,11 @@ class TestBasicTextCleaner:
 
     def test_clean_empty_text(self):
         """Test cleaning empty text."""
-        cleaner = BasicTextCleaner()
+        cleaner = BasicTextCleaner(
+            remove_empty_lines=True,
+            remove_extra_whitespaces=True,
+            unicode_normalization="NFC",
+        )
 
         cleaned = cleaner.clean("")
 
@@ -111,7 +127,7 @@ class TestWordBasedTextSplitter:
 
     def test_split_short_text(self):
         """Test that short text is not split."""
-        splitter = WordBasedTextSplitter(chunk_size_words=10)
+        splitter = WordBasedTextSplitter(chunk_size_words=10, chunk_overlap_words=0)
 
         text = "This is a short text"
         chunks = splitter.split(text)
@@ -121,7 +137,7 @@ class TestWordBasedTextSplitter:
 
     def test_split_long_text(self):
         """Test that long text is split into chunks."""
-        splitter = WordBasedTextSplitter(chunk_size_words=5)
+        splitter = WordBasedTextSplitter(chunk_size_words=5, chunk_overlap_words=0)
 
         # 15 words -> should create 3 chunks
         text = "word1 word2 word3 word4 word5 word6 word7 word8 word9 word10 word11 word12 word13 word14 word15"
@@ -134,7 +150,7 @@ class TestWordBasedTextSplitter:
 
     def test_split_uneven_chunks(self):
         """Test that uneven text is split correctly."""
-        splitter = WordBasedTextSplitter(chunk_size_words=5)
+        splitter = WordBasedTextSplitter(chunk_size_words=5, chunk_overlap_words=0)
 
         # 12 words -> should create 3 chunks (5, 5, 2)
         text = "one two three four five six seven eight nine ten eleven twelve"
@@ -148,10 +164,10 @@ class TestWordBasedTextSplitter:
     def test_invalid_chunk_size(self):
         """Test that invalid chunk size raises error."""
         with pytest.raises(ValueError, match="chunk_size_words must be positive"):
-            WordBasedTextSplitter(chunk_size_words=0)
+            WordBasedTextSplitter(chunk_size_words=0, chunk_overlap_words=0)
 
         with pytest.raises(ValueError, match="chunk_size_words must be positive"):
-            WordBasedTextSplitter(chunk_size_words=-1)
+            WordBasedTextSplitter(chunk_size_words=-1, chunk_overlap_words=0)
 
     def test_split_with_overlap(self):
         """Test splitting with word overlap (new Haystack feature)."""
@@ -210,6 +226,7 @@ class TestMinIODocumentLoader:
             endpoint="localhost:9000",
             access_key="minioadmin",
             secret_key="minioadmin123",
+            secure=False,
         )
         document = loader.load(bucket="test-bucket", key="test-key")
 
@@ -230,6 +247,7 @@ class TestMinIODocumentLoader:
             endpoint="localhost:9000",
             access_key="minioadmin",
             secret_key="minioadmin123",
+            secure=False,
         )
 
         with pytest.raises(Exception, match="Connection error"):
