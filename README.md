@@ -312,6 +312,7 @@ x-rag/
 - **`scripts/`** — Shell scripts for cluster management and deployment
 - **`tests/`** — Unit and integration tests (use `make test` or `make ci`)
 - **`reports/`** — Generated test coverage reports (created by `make init`)
+- **`data/storage/`** — Local Kind cluster persistent volumes for Weaviate, MinIO, Redis, and Kafka (created by `make cluster-start`, contents gitignored)
 - **`docs/`** — Additional documentation and guides
 
 For quick start guide, see [docs/QUICKSTART.md](docs/QUICKSTART.md). For architecture details, see [docs/SYSTEM-DIAGRAM.md](docs/SYSTEM-DIAGRAM.md). For advanced Kind and pod access operations, see [docs/KIND-ACCESS-CHEAT-SHEET.md](docs/KIND-ACCESS-CHEAT-SHEET.md).
