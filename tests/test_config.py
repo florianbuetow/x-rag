@@ -133,13 +133,12 @@ def test_get_env_or_error_returns_value(monkeypatch):
     assert result == "test-value"
 
 
-def test_get_env_or_error_returns_default(monkeypatch):
-    """Test get_env_or_error returns default when env not set."""
+def test_get_env_or_error_raises_when_not_set(monkeypatch):
+    """Test get_env_or_error raises ConfigurationError when env not set."""
     monkeypatch.delenv("NONEXISTENT_VAR", raising=False)
 
-    result = get_env_or_error("NONEXISTENT_VAR", default="default-value")
-
-    assert result == "default-value"
+    with pytest.raises(ConfigurationError):
+        get_env_or_error("NONEXISTENT_VAR")
 
 
 def test_get_env_or_error_raises_when_missing(monkeypatch):

@@ -74,8 +74,8 @@ class TestServiceUnavailableError:
         assert issubclass(ServiceUnavailableError, XRagError)
 
     def test_service_unavailable_error_with_service_name_only(self):
-        """Tests ServiceUnavailableError with only service name."""
-        error = ServiceUnavailableError("Weaviate")
+        """Tests ServiceUnavailableError with service name and empty details."""
+        error = ServiceUnavailableError("Weaviate", details="")
 
         assert error.service_name == "Weaviate"
         assert error.details == ""
@@ -101,7 +101,7 @@ class TestServiceUnavailableError:
     def test_service_unavailable_error_can_be_caught_as_xrag_error(self):
         """Tests that ServiceUnavailableError can be caught as XRagError."""
         with pytest.raises(XRagError) as exc_info:
-            raise ServiceUnavailableError("TestService")
+            raise ServiceUnavailableError("TestService", details="")
 
         assert exc_info.value.service_name == "TestService"
 
@@ -115,7 +115,7 @@ class TestDocumentNotFoundError:
 
     def test_document_not_found_error_with_default_namespace(self):
         """Tests DocumentNotFoundError with default namespace."""
-        error = DocumentNotFoundError("doc-123")
+        error = DocumentNotFoundError("doc-123", namespace="default")
 
         assert error.doc_id == "doc-123"
         assert error.namespace == "default"
@@ -139,7 +139,7 @@ class TestDocumentNotFoundError:
     def test_document_not_found_error_can_be_caught_as_xrag_error(self):
         """Tests that DocumentNotFoundError can be caught as XRagError."""
         with pytest.raises(XRagError) as exc_info:
-            raise DocumentNotFoundError("doc-id")
+            raise DocumentNotFoundError("doc-id", namespace="default")
 
         assert exc_info.value.doc_id == "doc-id"
 
@@ -249,8 +249,8 @@ class TestErrorHierarchy:
         """Tests that all errors can be caught with single except XRagError."""
         errors = [
             ConfigurationError("config"),
-            ServiceUnavailableError("service"),
-            DocumentNotFoundError("doc"),
+            ServiceUnavailableError("service", details=""),
+            DocumentNotFoundError("doc", namespace="default"),
             EmbeddingError("embed"),
             SearchError("search"),
             IngestionError("ingest"),
