@@ -21,7 +21,7 @@ class TestKafkaClientInit:
 
     def test_init_sets_bootstrap_servers(self):
         """Tests that __init__ sets bootstrap_servers."""
-        client = KafkaClient(bootstrap_servers="localhost:9092")
+        client = KafkaClient(bootstrap_servers="localhost:9092", acks=1)
 
         assert client.bootstrap_servers == "localhost:9092"
 
@@ -45,15 +45,14 @@ class TestKafkaClientInit:
 
     def test_init_producer_is_none(self):
         """Tests that __init__ sets producer to None."""
-        client = KafkaClient(bootstrap_servers="localhost:9092")
+        client = KafkaClient(bootstrap_servers="localhost:9092", acks=1)
 
         assert client.producer is None
 
-    def test_init_default_acks(self):
-        """Tests that __init__ uses default acks=1."""
-        client = KafkaClient(bootstrap_servers="localhost:9092")
-
-        assert client.acks == 1
+    def test_init_requires_acks(self):
+        """Tests that __init__ requires acks parameter."""
+        with pytest.raises(TypeError, match="acks"):
+            KafkaClient(bootstrap_servers="localhost:9092")
 
 
 class TestKafkaClientStart:
@@ -67,7 +66,7 @@ class TestKafkaClientStart:
         mock_producer.start = AsyncMock()
         mock_producer_class.return_value = mock_producer
 
-        client = KafkaClient(bootstrap_servers="localhost:9092")
+        client = KafkaClient(bootstrap_servers="localhost:9092", acks=1)
         await client.start()
 
         mock_producer_class.assert_called_once()
@@ -98,7 +97,7 @@ class TestKafkaClientStart:
         mock_producer.start = AsyncMock(side_effect=KafkaError("Connection failed"))
         mock_producer_class.return_value = mock_producer
 
-        client = KafkaClient(bootstrap_servers="localhost:9092")
+        client = KafkaClient(bootstrap_servers="localhost:9092", acks=1)
 
         with pytest.raises(KafkaError):
             await client.start()
@@ -113,7 +112,7 @@ class TestKafkaClientStop:
         mock_producer = MagicMock()
         mock_producer.stop = AsyncMock()
 
-        client = KafkaClient(bootstrap_servers="localhost:9092")
+        client = KafkaClient(bootstrap_servers="localhost:9092", acks=1)
         client.producer = mock_producer
 
         await client.stop()
@@ -123,7 +122,7 @@ class TestKafkaClientStop:
     @pytest.mark.asyncio
     async def test_stop_handles_no_producer(self):
         """Tests that stop handles None producer gracefully."""
-        client = KafkaClient(bootstrap_servers="localhost:9092")
+        client = KafkaClient(bootstrap_servers="localhost:9092", acks=1)
         client.producer = None
 
         # Should not raise
@@ -139,7 +138,7 @@ class TestKafkaClientPublish:
         mock_producer = MagicMock()
         mock_producer.send_and_wait = AsyncMock()
 
-        client = KafkaClient(bootstrap_servers="localhost:9092")
+        client = KafkaClient(bootstrap_servers="localhost:9092", acks=1)
         client.producer = mock_producer
 
         message = {"event_type": "document_created", "doc_id": "123"}
@@ -150,7 +149,7 @@ class TestKafkaClientPublish:
     @pytest.mark.asyncio
     async def test_publish_raises_when_not_started(self):
         """Tests that publish raises RuntimeError when producer not started."""
-        client = KafkaClient(bootstrap_servers="localhost:9092")
+        client = KafkaClient(bootstrap_servers="localhost:9092", acks=1)
         client.producer = None
 
         with pytest.raises(RuntimeError) as exc_info:
@@ -164,7 +163,7 @@ class TestKafkaClientPublish:
         mock_producer = MagicMock()
         mock_producer.send_and_wait = AsyncMock(side_effect=KafkaError("Publish failed"))
 
-        client = KafkaClient(bootstrap_servers="localhost:9092")
+        client = KafkaClient(bootstrap_servers="localhost:9092", acks=1)
         client.producer = mock_producer
 
         with pytest.raises(KafkaError):
@@ -179,7 +178,7 @@ class TestKafkaClientHealthCheck:
         """Tests that health_check returns True when producer is set."""
         mock_producer = MagicMock()
 
-        client = KafkaClient(bootstrap_servers="localhost:9092")
+        client = KafkaClient(bootstrap_servers="localhost:9092", acks=1)
         client.producer = mock_producer
 
         result = await client.health_check()
@@ -189,7 +188,7 @@ class TestKafkaClientHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_returns_false_when_no_producer(self):
         """Tests that health_check returns False when producer is None."""
-        client = KafkaClient(bootstrap_servers="localhost:9092")
+        client = KafkaClient(bootstrap_servers="localhost:9092", acks=1)
         client.producer = None
 
         result = await client.health_check()
@@ -199,7 +198,7 @@ class TestKafkaClientHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_returns_false_on_exception(self):
         """Tests that health_check returns False on exception."""
-        client = KafkaClient(bootstrap_servers="localhost:9092")
+        client = KafkaClient(bootstrap_servers="localhost:9092", acks=1)
         # Simulate a property access that raises
         client.producer = MagicMock()
 
