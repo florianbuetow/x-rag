@@ -1,1 +1,26 @@
-Reports directory for test coverage and other reports
+# Reports Directory
+
+This directory contains generated reports from CI checks.
+
+## Subdirectories
+
+| Directory  | Description                    | Command                     |
+|------------|--------------------------------|-----------------------------|
+| coverage/  | Test coverage reports          | make test, make ci          |
+| security/  | Bandit security scan reports   | make code-security, make ci |
+| deptry/    | Dependency hygiene reports     | make code-deptry, make ci   |
+
+## Top-level Files
+
+| File           | Description      | Command         |
+|----------------|------------------|-----------------|
+| code-stats.txt | Code statistics  | make code-stats |
+
+## Configuration
+
+All report settings are in pyproject.toml:
+- [tool.coverage.*]  - Coverage report paths and settings
+- [tool.bandit]      - Security scan targets and severity
+- [tool.deptry]      - Dependency check rules and ignores
+
+All reports are gitignored except .gitkeep files.
