@@ -127,7 +127,7 @@ make code-format
 
 ### Pre-commit Hooks
 
-This project uses [pre-commit](https://pre-commit.com/) to automatically run `make ci` before each commit, ensuring code quality checks pass before changes are committed.
+This project uses [pre-commit](https://pre-commit.com/) to automatically run `make ci-quiet` before each commit, ensuring code quality checks pass before changes are committed.
 
 ```bash
 # Install the pre-commit hook (one-time setup)
@@ -140,7 +140,7 @@ uv run pre-commit run --all-files
 git commit --no-verify
 ```
 
-The hook runs the full CI suite (`make ci`) which includes style checks, type checking, security scans, and tests.
+The hook runs the full CI suite (`make ci-quiet`) which includes style checks, type checking, security scans, and tests. Output is suppressed for passing checks; full output is shown only on failures.
 
 ### Security Checks
 
