@@ -33,7 +33,7 @@ class TestEmbeddingServicerInit:
 
     def test_initialization_creates_health_checker(self, mock_embedding_generator):
         """Servicer creates HealthChecker on init."""
-        servicer = EmbeddingServicer(generator=mock_embedding_generator)
+        servicer = EmbeddingServicer(generator=mock_embedding_generator, default_model="text-embedding-3-small")
 
         assert servicer.health_checker is not None
 
@@ -156,7 +156,7 @@ class TestEmbedMethod:
         mock_async_grpc_context,
     ):
         """ServiceUnavailableError returns UNAVAILABLE."""
-        servicer.generator.embed.side_effect = ServiceUnavailableError("API rate limited")
+        servicer.generator.embed.side_effect = ServiceUnavailableError("API", details="rate limited")
 
         request = embedding_pb2.EmbedRequest(text="test text")
 
@@ -164,7 +164,7 @@ class TestEmbedMethod:
             await servicer.Embed(request, mock_async_grpc_context)
 
         assert exc_info.value.code() == grpc.StatusCode.UNAVAILABLE
-        assert "API rate limited" in exc_info.value.details()
+        assert "rate limited" in exc_info.value.details()
 
     @pytest.mark.asyncio
     async def test_embed_value_error(
@@ -339,7 +339,7 @@ class TestEmbedBatchMethod:
         mock_async_grpc_context,
     ):
         """ServiceUnavailableError returns UNAVAILABLE."""
-        servicer.generator.embed_batch.side_effect = ServiceUnavailableError("Rate limited")
+        servicer.generator.embed_batch.side_effect = ServiceUnavailableError("API", details="Rate limited")
 
         request = embedding_pb2.EmbedBatchRequest(texts=["text"])
 

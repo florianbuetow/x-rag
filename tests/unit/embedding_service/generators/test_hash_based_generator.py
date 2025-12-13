@@ -22,11 +22,10 @@ class TestHashBasedEmbeddingGeneratorInit:
 
         assert generator.default_dimension == 768
 
-    def test_init_uses_default_dimension_value(self):
-        """Tests that __init__ uses 1536 as default dimension."""
-        generator = HashBasedEmbeddingGenerator()
-
-        assert generator.default_dimension == 1536
+    def test_init_requires_default_dimension(self):
+        """Tests that __init__ requires default_dimension parameter."""
+        with pytest.raises(TypeError, match="default_dimension"):
+            HashBasedEmbeddingGenerator()
 
 
 class TestHashBasedEmbeddingGeneratorEmbed:

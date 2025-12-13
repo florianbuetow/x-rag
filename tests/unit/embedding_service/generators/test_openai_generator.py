@@ -22,7 +22,12 @@ class TestOpenAIEmbeddingGeneratorInit:
     @patch("src.embedding_service.generators.openai_generator.AsyncOpenAI")
     def test_init_creates_client(self, mock_async_openai):
         """Tests that __init__ creates AsyncOpenAI client."""
-        OpenAIEmbeddingGenerator(api_key="test-key")
+        OpenAIEmbeddingGenerator(
+            api_key="test-key",
+            max_retries=3,
+            timeout=30,
+            base_url=None,
+        )
 
         mock_async_openai.assert_called_once_with(
             api_key="test-key",
@@ -34,7 +39,12 @@ class TestOpenAIEmbeddingGeneratorInit:
     @patch("src.embedding_service.generators.openai_generator.AsyncOpenAI")
     def test_init_with_custom_retries(self, mock_async_openai):
         """Tests that __init__ respects max_retries parameter."""
-        OpenAIEmbeddingGenerator(api_key="test-key", max_retries=5)
+        OpenAIEmbeddingGenerator(
+            api_key="test-key",
+            max_retries=5,
+            timeout=30,
+            base_url=None,
+        )
 
         mock_async_openai.assert_called_once_with(
             api_key="test-key",
@@ -46,7 +56,12 @@ class TestOpenAIEmbeddingGeneratorInit:
     @patch("src.embedding_service.generators.openai_generator.AsyncOpenAI")
     def test_init_with_custom_timeout(self, mock_async_openai):
         """Tests that __init__ respects timeout parameter."""
-        OpenAIEmbeddingGenerator(api_key="test-key", timeout=60)
+        OpenAIEmbeddingGenerator(
+            api_key="test-key",
+            max_retries=3,
+            timeout=60,
+            base_url=None,
+        )
 
         mock_async_openai.assert_called_once_with(
             api_key="test-key",
@@ -58,7 +73,12 @@ class TestOpenAIEmbeddingGeneratorInit:
     @patch("src.embedding_service.generators.openai_generator.AsyncOpenAI")
     def test_init_stores_max_retries(self, mock_async_openai):
         """Tests that __init__ stores max_retries as attribute."""
-        generator = OpenAIEmbeddingGenerator(api_key="test-key", max_retries=7)
+        generator = OpenAIEmbeddingGenerator(
+            api_key="test-key",
+            max_retries=7,
+            timeout=30,
+            base_url=None,
+        )
 
         assert generator.max_retries == 7
 
@@ -72,7 +92,12 @@ class TestOpenAIEmbeddingGeneratorEmbed:
         with patch("src.embedding_service.generators.openai_generator.AsyncOpenAI") as mock_async_openai:
             mock_client = MagicMock()
             mock_async_openai.return_value = mock_client
-            gen = OpenAIEmbeddingGenerator(api_key="test-key")
+            gen = OpenAIEmbeddingGenerator(
+                api_key="test-key",
+                max_retries=3,
+                timeout=30,
+                base_url=None,
+            )
             gen.client = mock_client
             yield gen
 
@@ -151,7 +176,12 @@ class TestOpenAIEmbeddingGeneratorEmbedBatch:
         with patch("src.embedding_service.generators.openai_generator.AsyncOpenAI") as mock_async_openai:
             mock_client = MagicMock()
             mock_async_openai.return_value = mock_client
-            gen = OpenAIEmbeddingGenerator(api_key="test-key")
+            gen = OpenAIEmbeddingGenerator(
+                api_key="test-key",
+                max_retries=3,
+                timeout=30,
+                base_url=None,
+            )
             gen.client = mock_client
             yield gen
 
@@ -235,7 +265,12 @@ class TestOpenAIEmbeddingGeneratorGetDimension:
     def generator(self):
         """Create generator with mocked client."""
         with patch("src.embedding_service.generators.openai_generator.AsyncOpenAI"):
-            yield OpenAIEmbeddingGenerator(api_key="test-key")
+            yield OpenAIEmbeddingGenerator(
+                api_key="test-key",
+                max_retries=3,
+                timeout=30,
+                base_url=None,
+            )
 
     def test_get_dimension_text_embedding_3_small(self, generator):
         """Tests dimension for text-embedding-3-small."""

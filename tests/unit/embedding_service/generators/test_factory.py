@@ -22,7 +22,7 @@ class TestEmbeddingGeneratorFactoryCreateGenerator:
 
     def test_create_hash_based_generator(self):
         """Tests that create_generator creates HashBasedEmbeddingGenerator."""
-        generator = EmbeddingGeneratorFactory.create_generator("hash_based")
+        generator = EmbeddingGeneratorFactory.create_generator("hash_based", default_dimension=1536)
 
         assert isinstance(generator, HashBasedEmbeddingGenerator)
 
@@ -33,18 +33,17 @@ class TestEmbeddingGeneratorFactoryCreateGenerator:
         assert isinstance(generator, HashBasedEmbeddingGenerator)
         assert generator.default_dimension == 768
 
-    def test_create_hash_based_generator_default_dimension(self):
-        """Tests that create_generator uses default dimension for HashBasedEmbeddingGenerator."""
-        generator = EmbeddingGeneratorFactory.create_generator("hash_based")
-
-        assert generator.default_dimension == 1536
+    def test_create_hash_based_generator_requires_dimension(self):
+        """Tests that create_generator requires default_dimension for HashBasedEmbeddingGenerator."""
+        with pytest.raises(ValueError, match="default_dimension"):
+            EmbeddingGeneratorFactory.create_generator("hash_based")
 
     @patch("src.embedding_service.generators.factory.OpenAIEmbeddingGenerator")
     def test_create_openai_generator(self, mock_openai_generator):
         """Tests that create_generator creates OpenAIEmbeddingGenerator."""
         mock_instance = mock_openai_generator.return_value
 
-        generator = EmbeddingGeneratorFactory.create_generator("openai", api_key="test-key")
+        generator = EmbeddingGeneratorFactory.create_generator("openai", api_key="test-key", max_retries=3, timeout=30, base_url=None)
 
         mock_openai_generator.assert_called_once_with(api_key="test-key", max_retries=3, timeout=30, base_url=None)
         assert generator == mock_instance
@@ -54,7 +53,7 @@ class TestEmbeddingGeneratorFactoryCreateGenerator:
         """Tests that create_generator passes max_retries to OpenAIEmbeddingGenerator."""
         mock_instance = mock_openai_generator.return_value
 
-        generator = EmbeddingGeneratorFactory.create_generator("openai", api_key="test-key", max_retries=5)
+        generator = EmbeddingGeneratorFactory.create_generator("openai", api_key="test-key", max_retries=5, timeout=30, base_url=None)
 
         mock_openai_generator.assert_called_once_with(api_key="test-key", max_retries=5, timeout=30, base_url=None)
         assert generator == mock_instance
@@ -64,7 +63,7 @@ class TestEmbeddingGeneratorFactoryCreateGenerator:
         """Tests that create_generator passes timeout to OpenAIEmbeddingGenerator."""
         mock_instance = mock_openai_generator.return_value
 
-        generator = EmbeddingGeneratorFactory.create_generator("openai", api_key="test-key", timeout=60)
+        generator = EmbeddingGeneratorFactory.create_generator("openai", api_key="test-key", max_retries=3, timeout=60, base_url=None)
 
         mock_openai_generator.assert_called_once_with(api_key="test-key", max_retries=3, timeout=60, base_url=None)
         assert generator == mock_instance
@@ -127,6 +126,7 @@ class TestEmbeddingGeneratorFactoryCreateFromConfig:
         config = EmbeddingConfig.for_local(
             base_url="http://localhost:1234/v1",
             model="bge-large-en-v1.5",
+            api_key="local",
         )
 
         generator = EmbeddingGeneratorFactory.create_from_config(config)
