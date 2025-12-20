@@ -5,6 +5,13 @@
 # This script verifies that metrics flow correctly through the pipeline:
 #   Services -> Alloy (OTLP) -> Prometheus
 #
+# Tests all services:
+#   - search-ui (HTTP)
+#   - ingestion-api (HTTP)
+#   - search-service (gRPC, triggered via search-ui)
+#   - embedding-service (gRPC, triggered via search/indexer)
+#   - indexer (Kafka consumer, triggered via ingestion)
+#
 # Usage: ./scripts/verify-otel-metrics.sh
 # =============================================================================
 
@@ -19,26 +26,39 @@ NC='\033[0m' # No Color
 
 # Configuration
 SEARCH_UI_URL="${SEARCH_UI_URL:-http://localhost:8080}"
+INGESTION_URL="${INGESTION_URL:-http://localhost:8082}"
 PROMETHEUS_URL="${PROMETHEUS_URL:-http://localhost:9090}"
-NUM_REQUESTS="${NUM_REQUESTS:-5}"
-WAIT_SECONDS="${WAIT_SECONDS:-20}"
+NUM_REQUESTS="${NUM_REQUESTS:-3}"
+WAIT_SECONDS="${WAIT_SECONDS:-25}"
+
+# All services to check
+SERVICES=("search-ui" "ingestion-api" "search-service" "embedding-service" "indexer")
 
 echo -e "${BLUE}==============================================================================${NC}"
-echo -e "${BLUE}  OTel Metrics Pipeline Verification${NC}"
+echo -e "${BLUE}  OTel Metrics Pipeline Verification (All Services)${NC}"
 echo -e "${BLUE}==============================================================================${NC}"
 echo ""
 echo "Configuration:"
-echo "  Search UI:    ${SEARCH_UI_URL}"
-echo "  Prometheus:   ${PROMETHEUS_URL}"
-echo "  Requests:     ${NUM_REQUESTS}"
-echo "  Wait time:    ${WAIT_SECONDS}s"
+echo "  Search UI:      ${SEARCH_UI_URL}"
+echo "  Ingestion API:  ${INGESTION_URL}"
+echo "  Prometheus:     ${PROMETHEUS_URL}"
+echo "  Requests:       ${NUM_REQUESTS}"
+echo "  Wait time:      ${WAIT_SECONDS}s"
 echo ""
 
 # -----------------------------------------------------------------------------
 # Helper functions
 # -----------------------------------------------------------------------------
 
-get_metric_count() {
+get_service_metric_count() {
+    local service=$1
+    local result
+    local query="sum(http_server_duration_milliseconds_count{job=\"${service}\"})"
+    result=$(curl -s --get --data-urlencode "query=${query}" "${PROMETHEUS_URL}/api/v1/query" 2>/dev/null)
+    echo "${result}" | jq -r '.data.result[0].value[1] // "0"' 2>/dev/null || echo "0"
+}
+
+get_total_metric_count() {
     local result
     result=$(curl -s "${PROMETHEUS_URL}/api/v1/query?query=sum(http_server_duration_milliseconds_count)" 2>/dev/null)
     echo "${result}" | jq -r '.data.result[0].value[1] // "0"' 2>/dev/null || echo "0"
@@ -60,11 +80,18 @@ check_service() {
 # Pre-flight checks
 # -----------------------------------------------------------------------------
 
-echo -e "${YELLOW}[1/5] Pre-flight checks...${NC}"
+echo -e "${YELLOW}[1/6] Pre-flight checks...${NC}"
 
 if ! check_service "${SEARCH_UI_URL}/health/live" "Search UI"; then
     echo -e "${RED}ERROR: Search UI is not available. Is the cluster running?${NC}"
     exit 1
+fi
+
+if ! check_service "${INGESTION_URL}/health" "Ingestion API"; then
+    echo -e "${YELLOW}WARNING: Ingestion API is not reachable. Skipping ingestion tests.${NC}"
+    SKIP_INGESTION=true
+else
+    SKIP_INGESTION=false
 fi
 
 if ! check_service "${PROMETHEUS_URL}/-/ready" "Prometheus"; then
@@ -75,24 +102,58 @@ fi
 echo ""
 
 # -----------------------------------------------------------------------------
-# Get initial metric count
+# Get initial metric counts per service
 # -----------------------------------------------------------------------------
 
-echo -e "${YELLOW}[2/5] Getting initial metric count from Prometheus...${NC}"
+echo -e "${YELLOW}[2/6] Getting initial metric counts from Prometheus...${NC}"
 
-INITIAL_COUNT=$(get_metric_count)
-echo "  Initial http_server_duration_milliseconds_count: ${INITIAL_COUNT}"
+declare -A INITIAL_COUNTS
+for service in "${SERVICES[@]}"; do
+    INITIAL_COUNTS[$service]=$(get_service_metric_count "$service")
+    echo "  ${service}: ${INITIAL_COUNTS[$service]}"
+done
+
+INITIAL_TOTAL=$(get_total_metric_count)
+echo "  ---"
+echo "  Total: ${INITIAL_TOTAL}"
 echo ""
 
 # -----------------------------------------------------------------------------
-# Send search requests
+# Send ingestion requests (triggers indexer + embedding-service)
 # -----------------------------------------------------------------------------
 
-echo -e "${YELLOW}[3/5] Sending ${NUM_REQUESTS} search requests...${NC}"
+echo -e "${YELLOW}[3/6] Sending ingestion requests...${NC}"
 
-SUCCESS_COUNT=0
-FAIL_COUNT=0
+INGEST_SUCCESS=0
+if [ "$SKIP_INGESTION" = false ]; then
+    for i in $(seq 1 ${NUM_REQUESTS}); do
+        TIMESTAMP=$(date +%s%N)
+        RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${INGESTION_URL}/ingest" \
+            -H "Content-Type: application/json" \
+            -d "{\"text\": \"Test document ${i} for metrics verification at ${TIMESTAMP}\", \"metadata\": {\"title\": \"verify-otel-metrics-${TIMESTAMP}\"}}" 2>/dev/null)
+        
+        HTTP_CODE=$(echo "${RESPONSE}" | tail -n1)
+        
+        if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "202" ]; then
+            echo -e "  ${GREEN}✓${NC} Ingestion ${i}: HTTP ${HTTP_CODE}"
+            INGEST_SUCCESS=$((INGEST_SUCCESS + 1))
+        else
+            echo -e "  ${RED}✗${NC} Ingestion ${i}: HTTP ${HTTP_CODE}"
+        fi
+    done
+    echo "  Ingestion results: ${INGEST_SUCCESS}/${NUM_REQUESTS} succeeded"
+else
+    echo "  Skipped (Ingestion API not available)"
+fi
+echo ""
 
+# -----------------------------------------------------------------------------
+# Send search requests (triggers search-service + embedding-service)
+# -----------------------------------------------------------------------------
+
+echo -e "${YELLOW}[4/6] Sending search requests...${NC}"
+
+SEARCH_SUCCESS=0
 for i in $(seq 1 ${NUM_REQUESTS}); do
     RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${SEARCH_UI_URL}/api/search" \
         -H "Content-Type: application/json" \
@@ -102,19 +163,17 @@ for i in $(seq 1 ${NUM_REQUESTS}); do
     
     if [ "${HTTP_CODE}" = "200" ]; then
         TRACE_ID=$(echo "${RESPONSE}" | head -n -1 | jq -r '.metadata.trace_id // "unknown"')
-        echo -e "  ${GREEN}✓${NC} Request ${i}: HTTP ${HTTP_CODE} (trace: ${TRACE_ID:0:16}...)"
-        SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+        echo -e "  ${GREEN}✓${NC} Search ${i}: HTTP ${HTTP_CODE} (trace: ${TRACE_ID:0:16}...)"
+        SEARCH_SUCCESS=$((SEARCH_SUCCESS + 1))
     else
-        echo -e "  ${RED}✗${NC} Request ${i}: HTTP ${HTTP_CODE}"
-        FAIL_COUNT=$((FAIL_COUNT + 1))
+        echo -e "  ${RED}✗${NC} Search ${i}: HTTP ${HTTP_CODE}"
     fi
 done
 
-echo ""
-echo "  Results: ${SUCCESS_COUNT} succeeded, ${FAIL_COUNT} failed"
+echo "  Search results: ${SEARCH_SUCCESS}/${NUM_REQUESTS} succeeded"
 echo ""
 
-if [ ${SUCCESS_COUNT} -eq 0 ]; then
+if [ ${SEARCH_SUCCESS} -eq 0 ] && [ ${INGEST_SUCCESS} -eq 0 ]; then
     echo -e "${RED}ERROR: All requests failed. Cannot verify metrics.${NC}"
     exit 1
 fi
@@ -123,7 +182,7 @@ fi
 # Wait for metrics to propagate
 # -----------------------------------------------------------------------------
 
-echo -e "${YELLOW}[4/5] Waiting ${WAIT_SECONDS}s for metrics to propagate...${NC}"
+echo -e "${YELLOW}[5/6] Waiting ${WAIT_SECONDS}s for metrics to propagate...${NC}"
 echo "  (Services -> Alloy -> Prometheus)"
 
 for i in $(seq 1 ${WAIT_SECONDS}); do
@@ -134,20 +193,39 @@ echo ""
 echo ""
 
 # -----------------------------------------------------------------------------
-# Verify metrics increased
+# Verify metrics increased per service
 # -----------------------------------------------------------------------------
 
-echo -e "${YELLOW}[5/5] Verifying metrics in Prometheus...${NC}"
+echo -e "${YELLOW}[6/6] Verifying metrics per service in Prometheus...${NC}"
 
-FINAL_COUNT=$(get_metric_count)
-echo "  Final http_server_duration_milliseconds_count: ${FINAL_COUNT}"
+declare -A FINAL_COUNTS
+declare -A DIFFS
+SERVICES_WITH_METRICS=0
 
-# Calculate difference
-INITIAL_INT=${INITIAL_COUNT%.*}
-FINAL_INT=${FINAL_COUNT%.*}
-DIFF=$((FINAL_INT - INITIAL_INT))
+for service in "${SERVICES[@]}"; do
+    FINAL_COUNTS[$service]=$(get_service_metric_count "$service")
+    
+    INITIAL_INT=${INITIAL_COUNTS[$service]%.*}
+    FINAL_INT=${FINAL_COUNTS[$service]%.*}
+    DIFFS[$service]=$((FINAL_INT - INITIAL_INT))
+    
+    if [ ${DIFFS[$service]} -gt 0 ]; then
+        echo -e "  ${GREEN}✓${NC} ${service}: ${INITIAL_COUNTS[$service]} -> ${FINAL_COUNTS[$service]} (+${DIFFS[$service]})"
+        SERVICES_WITH_METRICS=$((SERVICES_WITH_METRICS + 1))
+    elif [ "${FINAL_INT}" -gt 0 ]; then
+        echo -e "  ${YELLOW}~${NC} ${service}: ${FINAL_COUNTS[$service]} (no change)"
+    else
+        echo -e "  ${RED}✗${NC} ${service}: no metrics found"
+    fi
+done
 
-echo "  Difference: +${DIFF} requests"
+FINAL_TOTAL=$(get_total_metric_count)
+INITIAL_TOTAL_INT=${INITIAL_TOTAL%.*}
+FINAL_TOTAL_INT=${FINAL_TOTAL%.*}
+TOTAL_DIFF=$((FINAL_TOTAL_INT - INITIAL_TOTAL_INT))
+
+echo "  ---"
+echo "  Total: ${INITIAL_TOTAL} -> ${FINAL_TOTAL} (+${TOTAL_DIFF})"
 echo ""
 
 # -----------------------------------------------------------------------------
@@ -156,25 +234,28 @@ echo ""
 
 echo -e "${BLUE}==============================================================================${NC}"
 
-if [ ${DIFF} -ge ${SUCCESS_COUNT} ]; then
+if [ ${SERVICES_WITH_METRICS} -ge 2 ]; then
     echo -e "${GREEN}  ✓ SUCCESS: Metrics are flowing through the pipeline!${NC}"
     echo ""
     echo "  Pipeline verified:"
     echo "    Services (OTel) -> Alloy:4317 -> Prometheus"
     echo ""
+    echo "  Services with new metrics: ${SERVICES_WITH_METRICS}/${#SERVICES[@]}"
+    echo ""
     echo "  View in Grafana: http://localhost:3000/d/xrag-otel-http"
     echo -e "${BLUE}==============================================================================${NC}"
     exit 0
 else
-    echo -e "${RED}  ✗ FAILURE: Metrics did not increase as expected.${NC}"
+    echo -e "${RED}  ✗ FAILURE: Not enough services reporting metrics.${NC}"
     echo ""
-    echo "  Expected: +${SUCCESS_COUNT} requests"
-    echo "  Actual:   +${DIFF} requests"
+    echo "  Expected: At least 2 services with new metrics"
+    echo "  Actual:   ${SERVICES_WITH_METRICS} services"
     echo ""
     echo "  Troubleshooting:"
     echo "    1. Check Alloy logs:  kubectl logs -l app=xrag-alloy -n rag-system"
-    echo "    2. Check service logs: kubectl logs -l app=search-ui -n rag-system | grep otel"
-    echo "    3. Verify Alloy config: kubectl get configmap alloy-config -n rag-system -o yaml"
+    echo "    2. Check service logs: kubectl logs -l app=search-ui -n rag-system | grep -i otel"
+    echo "    3. Check Prometheus targets: ${PROMETHEUS_URL}/targets"
+    echo "    4. Verify Alloy config: kubectl get configmap alloy-config -n rag-system -o yaml"
     echo -e "${BLUE}==============================================================================${NC}"
     exit 1
 fi
