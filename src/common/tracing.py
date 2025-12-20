@@ -30,6 +30,8 @@ from typing import TYPE_CHECKING
 from opentelemetry import trace
 from opentelemetry.baggage.propagation import W3CBaggagePropagator
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from opentelemetry.propagate import set_global_textmap
 from opentelemetry.propagators.composite import CompositePropagator
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
@@ -44,6 +46,8 @@ logger = logging.getLogger(__name__)
 
 # Global singleton for TracerProvider
 _tracer_provider: TracerProvider | None = None
+_httpx_instrumented = False
+_openai_instrumented = False
 
 
 def init_tracing(
@@ -120,6 +124,20 @@ def init_tracing(
             ]
         )
     )
+
+    # Instrument HTTP clients (httpx) for trace propagation
+    global _httpx_instrumented
+    if not _httpx_instrumented:
+        HTTPXClientInstrumentor().instrument()
+        _httpx_instrumented = True
+        logger.debug("HTTPX client instrumented for tracing")
+
+    # Instrument OpenAI client for LLM call tracing
+    global _openai_instrumented
+    if not _openai_instrumented:
+        OpenAIInstrumentor().instrument()
+        _openai_instrumented = True
+        logger.debug("OpenAI client instrumented for tracing")
 
     logger.info(f"Tracing initialized for {service_name}, exporting to {endpoint}")
 

@@ -362,3 +362,138 @@ def create_span_from_context(
         for key, value in attributes.items():
             span.set_attribute(key, value)
     return span
+
+
+@contextmanager
+def trace_storage_operation(
+    operation: str,
+    bucket: str,
+    key: str | None,
+) -> Generator[Span, None, None]:
+    """Context manager for tracing object storage operations (MinIO/S3).
+
+    Args:
+        operation: Operation type (e.g., "upload", "download", "delete")
+        bucket: Bucket name
+        key: Object key/path
+
+    Yields:
+        Active span for adding additional attributes
+
+    Example:
+        with trace_storage_operation("upload", "documents", "doc123.json") as span:
+            minio_client.store_document(key, data)
+            span.set_attribute("storage.bytes", len(data))
+    """
+    tracer = _get_tracer()
+    with tracer.start_as_current_span(
+        f"storage.{operation}",
+        kind=SpanKind.CLIENT,
+    ) as span:
+        span.set_attribute("storage.system", "minio")
+        span.set_attribute("storage.operation", operation)
+        span.set_attribute("storage.bucket", bucket)
+        if key is not None:
+            span.set_attribute("storage.key", key)
+
+        start_time = time.perf_counter()
+        try:
+            yield span
+            span.set_status(Status(StatusCode.OK))
+        except Exception as e:
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.record_exception(e)
+            raise
+        finally:
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            span.set_attribute("storage.duration_ms", duration_ms)
+
+
+@contextmanager
+def trace_messaging_operation(
+    operation: str,
+    topic: str,
+    message_id: str | None,
+) -> Generator[Span, None, None]:
+    """Context manager for tracing message queue operations (Kafka).
+
+    Args:
+        operation: Operation type (e.g., "publish", "consume")
+        topic: Topic name
+        message_id: Optional message/event ID
+
+    Yields:
+        Active span for adding additional attributes
+
+    Example:
+        with trace_messaging_operation("publish", "document-changes", doc_id) as span:
+            await kafka_client.publish(topic, event)
+            span.set_attribute("messaging.payload_size", len(event))
+    """
+    tracer = _get_tracer()
+    span_kind = SpanKind.PRODUCER if operation == "publish" else SpanKind.CONSUMER
+    with tracer.start_as_current_span(
+        f"messaging.{operation}",
+        kind=span_kind,
+    ) as span:
+        span.set_attribute("messaging.system", "kafka")
+        span.set_attribute("messaging.operation", operation)
+        span.set_attribute("messaging.destination", topic)
+        if message_id is not None:
+            span.set_attribute("messaging.message_id", message_id)
+
+        start_time = time.perf_counter()
+        try:
+            yield span
+            span.set_status(Status(StatusCode.OK))
+        except Exception as e:
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.record_exception(e)
+            raise
+        finally:
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            span.set_attribute("messaging.duration_ms", duration_ms)
+
+
+@contextmanager
+def trace_database_operation(
+    operation: str,
+    database: str,
+    collection: str | None,
+) -> Generator[Span, None, None]:
+    """Context manager for tracing database operations (Weaviate, Redis).
+
+    Args:
+        operation: Operation type (e.g., "insert", "query", "delete")
+        database: Database system name (e.g., "weaviate", "redis")
+        collection: Collection/table name
+
+    Yields:
+        Active span for adding additional attributes
+
+    Example:
+        with trace_database_operation("insert", "weaviate", "DocumentChunk") as span:
+            client.collections.get("DocumentChunk").data.insert(data)
+            span.set_attribute("db.record_count", len(data))
+    """
+    tracer = _get_tracer()
+    with tracer.start_as_current_span(
+        f"db.{operation}",
+        kind=SpanKind.CLIENT,
+    ) as span:
+        span.set_attribute("db.system", database)
+        span.set_attribute("db.operation", operation)
+        if collection is not None:
+            span.set_attribute("db.collection.name", collection)
+
+        start_time = time.perf_counter()
+        try:
+            yield span
+            span.set_status(Status(StatusCode.OK))
+        except Exception as e:
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.record_exception(e)
+            raise
+        finally:
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            span.set_attribute("db.duration_ms", duration_ms)

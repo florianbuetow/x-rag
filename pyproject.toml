@@ -48,6 +48,7 @@ dependencies = [
     "opentelemetry-instrumentation-grpc>=0.41b0",
     "opentelemetry-instrumentation-httpx>=0.41b0",
     "opentelemetry-instrumentation-logging>=0.41b0",
+    "opentelemetry-instrumentation-openai>=0.40.0",
 
     # Utilities
     "python-dotenv>=1.0.0",

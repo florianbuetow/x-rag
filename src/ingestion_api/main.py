@@ -19,6 +19,7 @@ from src.common.health import HealthChecker
 from src.common.metrics import track_latency
 from src.common.otel_metrics import init_otel_metrics, shutdown_otel_metrics
 from src.common.tracing import init_tracing, shutdown_tracing
+from src.common.tracing_utils import trace_messaging_operation, trace_storage_operation
 from src.ingestion_api.config import IngestionAPIConfig
 from src.ingestion_api.kafka_client import KafkaClient
 from src.ingestion_api.metrics import (
@@ -207,8 +208,12 @@ async def ingest_document(request: IngestRequest) -> IngestResponse:
             # Record document size
             document_size_bytes.observe(len(doc_bytes))
 
-            with track_latency(minio_upload_duration, None):
+            with (
+                track_latency(minio_upload_duration, None),
+                trace_storage_operation("upload", config.minio_bucket, object_name) as storage_span,
+            ):
                 minio_client.store_document(object_name, doc_bytes)
+                storage_span.set_attribute("storage.bytes", len(doc_bytes))
 
             # Publish to Kafka
             if kafka_client is None:
@@ -222,8 +227,12 @@ async def ingest_document(request: IngestRequest) -> IngestResponse:
                 "timestamp": datetime.now(UTC).isoformat(),
             }
 
-            with track_latency(kafka_publish_duration, None):
+            with (
+                track_latency(kafka_publish_duration, None),
+                trace_messaging_operation("publish", config.kafka_topic, document_id) as msg_span,
+            ):
                 await kafka_client.publish(config.kafka_topic, event)
+                msg_span.set_attribute("messaging.payload_size", len(json.dumps(event)))
 
         # Track success
         requests_total.labels(status="success", namespace=request.namespace).inc()

@@ -9,8 +9,13 @@ from typing import Any
 
 import grpc
 from grpc_reflection.v1alpha import reflection
+from opentelemetry.instrumentation.grpc import GrpcInstrumentorClient
 
 logger = logging.getLogger(__name__)
+
+# Instrument gRPC client for distributed tracing
+_grpc_client_instrumentor = GrpcInstrumentorClient()
+_grpc_client_instrumentor.instrument()
 
 
 class GrpcClient:

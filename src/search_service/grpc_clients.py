@@ -4,10 +4,15 @@ import logging
 from types import TracebackType
 
 import grpc
+from opentelemetry.instrumentation.grpc import GrpcAioInstrumentorClient
 
 from src.proto_gen import common_pb2, embedding_pb2, embedding_pb2_grpc
 
 logger = logging.getLogger(__name__)
+
+# Instrument gRPC client for distributed tracing
+_grpc_client_instrumentor = GrpcAioInstrumentorClient()
+_grpc_client_instrumentor.instrument()
 
 
 class EmbeddingServiceClient:

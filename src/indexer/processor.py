@@ -16,7 +16,11 @@ from weaviate import WeaviateClient
 from weaviate.classes.init import AdditionalConfig, Timeout
 
 from src.common.metrics import track_latency
-from src.common.tracing_utils import trace_document_processing, trace_embedding_generation
+from src.common.tracing_utils import (
+    trace_database_operation,
+    trace_document_processing,
+    trace_embedding_generation,
+)
 from src.indexer.config import IndexerConfig
 from src.indexer.grpc_clients import EmbeddingServiceClient as GrpcEmbeddingServiceClient
 from src.indexer.metrics import (
@@ -145,11 +149,16 @@ class WeaviateBatchInserter:
             }
             objects.append((obj, embedding))
 
-        # Batch insert with metrics
+        # Batch insert with metrics and tracing
         logger.debug(f"Inserting {len(objects)} chunks into Weaviate collection {self.collection_name}")
-        with track_latency(weaviate_insert_duration, None), collection.batch.dynamic() as batch:
+        with (
+            track_latency(weaviate_insert_duration, None),
+            trace_database_operation("insert", "weaviate", self.collection_name) as db_span,
+            collection.batch.dynamic() as batch,
+        ):
             for obj, vector in objects:
                 batch.add_object(properties=obj, vector=vector)
+            db_span.set_attribute("db.record_count", len(objects))
 
 
 class DocumentIndexer:

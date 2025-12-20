@@ -20,6 +20,7 @@ from haystack.components.preprocessors import DocumentCleaner, DocumentSplitter
 from minio import Minio
 
 from src.common.metrics import track_latency
+from src.common.tracing_utils import trace_storage_operation
 from src.indexer.metrics import (
     minio_load_duration,
     text_cleaning_duration,
@@ -178,22 +179,24 @@ class MinIODocumentLoader:
         Raises:
             Exception: If document cannot be loaded
         """
-        try:
-            logger.debug(f"Loading document from MinIO: {bucket}/{key}")
-            response = self.client.get_object(bucket, key)
+        with trace_storage_operation("download", bucket, key) as storage_span:
             try:
-                data = response.read()
-                document: dict[str, Any] = json.loads(data.decode("utf-8"))
-                doc_id_log = document["id"] if "id" in document else "unknown"
-                logger.debug(f"✓ Loaded document: {doc_id_log}")
-                return document
-            finally:
-                response.close()
-                response.release_conn()
+                logger.debug(f"Loading document from MinIO: {bucket}/{key}")
+                response = self.client.get_object(bucket, key)
+                try:
+                    data = response.read()
+                    storage_span.set_attribute("storage.bytes", len(data))
+                    document: dict[str, Any] = json.loads(data.decode("utf-8"))
+                    doc_id_log = document["id"] if "id" in document else "unknown"
+                    logger.debug(f"✓ Loaded document: {doc_id_log}")
+                    return document
+                finally:
+                    response.close()
+                    response.release_conn()
 
-        except Exception as e:
-            logger.error(f"Failed to load document {bucket}/{key}: {e}")
-            raise
+            except Exception as e:
+                logger.error(f"Failed to load document {bucket}/{key}: {e}")
+                raise
 
 
 class HaystackTextCleaner:
