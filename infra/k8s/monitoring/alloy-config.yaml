@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-config
+  namespace: rag-system
+data:
+  config.alloy: |
+    // =============================================================================
+    // Grafana Alloy Configuration for X-RAG
+    // =============================================================================
+    // Receives OTLP metrics and traces from services
+    // - Metrics -> Prometheus (via remote_write)
+    // - Traces -> Tempo (via OTLP)
+    
+    // -----------------------------------------------------------------------------
+    // OTLP Receiver - receives metrics and traces from services
+    // -----------------------------------------------------------------------------
+    otelcol.receiver.otlp "default" {
+      grpc {
+        endpoint = "0.0.0.0:4317"
+      }
+      http {
+        endpoint = "0.0.0.0:4318"
+      }
+      output {
+        metrics = [otelcol.processor.batch.metrics.input]
+        traces  = [otelcol.processor.batch.traces.input]
+      }
+    }
+    
+    // -----------------------------------------------------------------------------
+    // Batch Processor for Metrics
+    // -----------------------------------------------------------------------------
+    otelcol.processor.batch "metrics" {
+      timeout = "5s"
+      send_batch_size = 1000
+      output {
+        metrics = [otelcol.exporter.prometheus.default.input]
+      }
+    }
+    
+    // -----------------------------------------------------------------------------
+    // Batch Processor for Traces
+    // -----------------------------------------------------------------------------
+    otelcol.processor.batch "traces" {
+      timeout = "5s"
+      send_batch_size = 500
+      output {
+        traces = [otelcol.exporter.otlp.tempo.input]
+      }
+    }
+    
+    // -----------------------------------------------------------------------------
+    // Prometheus Exporter - converts OTLP to Prometheus format
+    // -----------------------------------------------------------------------------
+    otelcol.exporter.prometheus "default" {
+      forward_to = [prometheus.remote_write.prom.receiver]
+    }
+    
+    // -----------------------------------------------------------------------------
+    // Remote Write - sends metrics to Prometheus
+    // -----------------------------------------------------------------------------
+    prometheus.remote_write "prom" {
+      endpoint {
+        url = "http://xrag-prometheus:9090/api/v1/write"
+      }
+    }
+    
+    // -----------------------------------------------------------------------------
+    // OTLP Exporter - sends traces to Tempo
+    // -----------------------------------------------------------------------------
+    otelcol.exporter.otlp "tempo" {
+      client {
+        endpoint = "xrag-tempo:4317"
+        tls {
+          insecure = true
+        }
+      }
+    }
+    
+    // -----------------------------------------------------------------------------
+    // Logging - for debugging
+    // -----------------------------------------------------------------------------
+    logging {
+      level = "info"
+      format = "logfmt"
+    }

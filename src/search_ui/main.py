@@ -1,6 +1,7 @@
 """Search UI - FastAPI application."""
 
 import logging
+import os
 import sys
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -12,10 +13,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from prometheus_client import start_http_server
 
 from src.common.health import HealthChecker
 from src.common.metrics import track_latency
+from src.common.otel_metrics import init_otel_metrics, shutdown_otel_metrics
 from src.common.tracing import get_current_trace_id, init_tracing, shutdown_tracing
 from src.search_ui.config import SearchUIConfig
 from src.search_ui.grpc_clients import SearchServiceClient
@@ -62,9 +63,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         environment=config.environment,
     )
 
-    # Start Prometheus metrics server on separate port
-    start_http_server(9091)
-    logger.info("Prometheus metrics available at http://0.0.0.0:9091/metrics")
+    # Initialize OpenTelemetry metrics export to Grafana Alloy
+    init_otel_metrics(
+        service_name=config.service_name,
+        service_version=os.getenv("SERVICE_VERSION", "0.1.0"),
+    )
 
     # Initialize Search Service client
     logger.info("Initializing Search Service client...")
@@ -88,6 +91,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Shutdown
     logger.info("Shutting down...")
+    shutdown_otel_metrics()
     shutdown_tracing()
     if search_client:
         await search_client.close()

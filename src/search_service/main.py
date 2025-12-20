@@ -6,14 +6,15 @@ Weaviate retrieval, embedding generation, and OpenAI answer generation.
 
 import asyncio
 import logging
+import os
 import signal
 import sys
 from types import FrameType
 
 import grpc
 from opentelemetry.instrumentation.grpc import GrpcAioInstrumentorServer
-from prometheus_client import start_http_server
 
+from src.common.otel_metrics import init_otel_metrics, shutdown_otel_metrics
 from src.common.tracing import init_tracing, shutdown_tracing
 from src.llm.factory import create_llm_client
 from src.llm.openai_client import OpenAIClient
@@ -66,13 +67,14 @@ class SearchServiceRunner:
             environment=self.config.environment,
         )
 
+        # Initialize OpenTelemetry metrics export to Grafana Alloy
+        init_otel_metrics(
+            service_name=self.config.service_name,
+            service_version=os.getenv("SERVICE_VERSION", "0.1.0"),
+        )
+
         # Instrument gRPC server for distributed tracing
         GrpcAioInstrumentorServer().instrument()  # type: ignore[no-untyped-call]
-
-        # Start Prometheus metrics server
-        metrics_port = 8080
-        start_http_server(metrics_port)
-        logger.info(f"Prometheus metrics available at http://0.0.0.0:{metrics_port}/metrics")
 
         # Initialize components
         logger.info("Initializing components...")
@@ -156,7 +158,8 @@ class SearchServiceRunner:
         """Stop the gRPC server gracefully."""
         logger.info("Shutting down server...")
 
-        # Shutdown tracing
+        # Shutdown OTel metrics and tracing
+        shutdown_otel_metrics()
         shutdown_tracing()
 
         # Stop gRPC server

@@ -370,14 +370,15 @@ class TestDocumentIndexer:
         # Verify connection was made
         assert client == mock_weaviate_client
         assert indexer.weaviate_client == mock_weaviate_client
-        mock_weaviate_connect.assert_called_once_with(
-            http_host="weaviate",
-            http_port=8080,
-            http_secure=False,
-            grpc_host="weaviate",
-            grpc_port=50051,
-            grpc_secure=False,
-        )
+        mock_weaviate_connect.assert_called_once()
+        call_kwargs = mock_weaviate_connect.call_args.kwargs
+        assert call_kwargs["http_host"] == "weaviate"
+        assert call_kwargs["http_port"] == 8080
+        assert call_kwargs["http_secure"] is False
+        assert call_kwargs["grpc_host"] == "weaviate"
+        assert call_kwargs["grpc_port"] == 50051
+        assert call_kwargs["grpc_secure"] is False
+        assert "additional_config" in call_kwargs
 
         # Second call should not reconnect
         client2 = indexer._get_weaviate_client()
@@ -526,14 +527,15 @@ class TestDocumentIndexer:
         assert client == mock_weaviate_client
 
         # Verify default port 8080 is used
-        mock_weaviate_connect.assert_called_once_with(
-            http_host="weaviate",
-            http_port=8080,
-            http_secure=False,
-            grpc_host="weaviate",
-            grpc_port=50051,
-            grpc_secure=False,
-        )
+        mock_weaviate_connect.assert_called_once()
+        call_kwargs = mock_weaviate_connect.call_args.kwargs
+        assert call_kwargs["http_host"] == "weaviate"
+        assert call_kwargs["http_port"] == 8080
+        assert call_kwargs["http_secure"] is False
+        assert call_kwargs["grpc_host"] == "weaviate"
+        assert call_kwargs["grpc_port"] == 50051
+        assert call_kwargs["grpc_secure"] is False
+        assert "additional_config" in call_kwargs
 
     @patch("src.indexer.processor.weaviate.connect_to_custom")
     @patch("src.indexer.processor.GrpcEmbeddingServiceClient")

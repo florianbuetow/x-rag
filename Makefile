@@ -286,6 +286,10 @@ test-integration: ## Run integration tests (requires running cluster)
 	@uv run pytest tests/integration/ -v -s
 	@echo ""
 
+verify-otel: ## Verify OTel metrics pipeline (Services -> Alloy -> Prometheus)
+	@./scripts/verify-otel-metrics.sh
+	@echo ""
+
 test-coverage: init ## Run unit tests with coverage report and threshold check
 	@echo "$(BLUE)=== Running Unit Tests with Coverage ===$(NC)"
 	@uv run pytest tests/ -v --ignore=tests/integration \

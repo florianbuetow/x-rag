@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import weaviate
 from weaviate import WeaviateClient
+from weaviate.classes.init import AdditionalConfig, Timeout
 from weaviate.classes.query import Filter
 
 if TYPE_CHECKING:
@@ -92,7 +93,7 @@ class WeaviateRetriever:
             host = url
             port = 8080
 
-        # Connect
+        # Connect with extended timeout for gRPC init
         self.client = weaviate.connect_to_custom(
             http_host=host,
             http_port=port,
@@ -100,6 +101,9 @@ class WeaviateRetriever:
             grpc_host=host,
             grpc_port=50051,
             grpc_secure=False,
+            additional_config=AdditionalConfig(
+                timeout=Timeout(init=30, query=60, insert=120),
+            ),
         )
         logger.info(f"✓ Connected to Weaviate at {host}:{port}")
 

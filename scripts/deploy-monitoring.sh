@@ -12,7 +12,7 @@ echo "=============================================="
 
 # Deploy Prometheus
 echo ""
-echo "[1/5] Deploying Prometheus..."
+echo "[1/6] Deploying Prometheus..."
 kubectl apply -f "${PROJECT_ROOT}/infra/k8s/monitoring/prometheus.yaml" -n ${NAMESPACE}
 echo "Waiting for Prometheus to be ready..."
 kubectl wait --for=condition=Ready pod -l app=xrag-prometheus -n ${NAMESPACE} --timeout=120s
@@ -20,7 +20,7 @@ echo "Prometheus ready"
 
 # Deploy Tempo (distributed tracing)
 echo ""
-echo "[2/5] Deploying Tempo..."
+echo "[2/6] Deploying Tempo..."
 kubectl apply -f "${PROJECT_ROOT}/infra/k8s/monitoring/tempo.yaml" -n ${NAMESPACE}
 echo "Waiting for Tempo to be ready..."
 kubectl wait --for=condition=Ready pod -l app=xrag-tempo -n ${NAMESPACE} --timeout=120s
@@ -28,7 +28,7 @@ echo "Tempo ready"
 
 # Deploy Grafana provisioning ConfigMaps
 echo ""
-echo "[3/5] Setting up Grafana provisioning..."
+echo "[3/6] Setting up Grafana provisioning..."
 kubectl apply -f "${PROJECT_ROOT}/infra/k8s/monitoring/grafana-provisioning.yaml" -n ${NAMESPACE}
 echo "Grafana provisioning ConfigMaps created"
 
@@ -50,15 +50,24 @@ fi
 
 # Deploy Grafana
 echo ""
-echo "[4/5] Deploying Grafana..."
+echo "[4/6] Deploying Grafana..."
 kubectl apply -f "${PROJECT_ROOT}/infra/k8s/monitoring/grafana.yaml" -n ${NAMESPACE}
 echo "Waiting for Grafana to be ready..."
 kubectl wait --for=condition=Ready pod -l app=xrag-grafana -n ${NAMESPACE} --timeout=120s
 echo "Grafana ready"
 
+# Deploy Grafana Alloy (OpenTelemetry collector)
+echo ""
+echo "[5/6] Deploying Grafana Alloy..."
+kubectl apply -f "${PROJECT_ROOT}/infra/k8s/monitoring/alloy-config.yaml" -n ${NAMESPACE}
+kubectl apply -f "${PROJECT_ROOT}/infra/k8s/monitoring/alloy.yaml" -n ${NAMESPACE}
+echo "Waiting for Alloy to be ready..."
+kubectl wait --for=condition=Ready pod -l app=xrag-alloy -n ${NAMESPACE} --timeout=120s
+echo "Grafana Alloy ready"
+
 # Deploy Kubernetes Dashboard
 echo ""
-echo "[5/5] Deploying Kubernetes Dashboard..."
+echo "[6/6] Deploying Kubernetes Dashboard..."
 kubectl apply -f "${PROJECT_ROOT}/infra/k8s/monitoring/dashboard.yaml"
 echo "Waiting for Dashboard to be ready..."
 kubectl wait --for=condition=Ready pod -l k8s-app=kubernetes-dashboard -n kubernetes-dashboard --timeout=120s 2>/dev/null || true
@@ -73,6 +82,7 @@ echo "Access points:"
 echo "  Prometheus:     http://localhost:9090"
 echo "  Tempo:          http://localhost:3200 (traces)"
 echo "  Grafana:        http://localhost:3000 (admin/admin)"
+echo "  Alloy:          http://localhost:12345 (OTLP receiver)"
 echo "  K8s Dashboard:  https://localhost:8443 (token required)"
 echo ""
 echo "Grafana dashboards are auto-provisioned in the 'X-RAG' folder."

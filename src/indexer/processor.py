@@ -13,6 +13,7 @@ from typing import Any, cast
 
 import weaviate
 from weaviate import WeaviateClient
+from weaviate.classes.init import AdditionalConfig, Timeout
 
 from src.common.metrics import track_latency
 from src.common.tracing_utils import trace_document_processing, trace_embedding_generation
@@ -286,7 +287,7 @@ class DocumentIndexer:
                 host = url
                 port = 8080
 
-            # Connect (only one thread will reach here)
+            # Connect with extended timeout for gRPC init (only one thread will reach here)
             self.weaviate_client = weaviate.connect_to_custom(
                 http_host=host,
                 http_port=port,
@@ -294,6 +295,9 @@ class DocumentIndexer:
                 grpc_host=host,
                 grpc_port=50051,
                 grpc_secure=False,
+                additional_config=AdditionalConfig(
+                    timeout=Timeout(init=30, query=60, insert=120),
+                ),
             )
             logger.info(f"✓ Connected to Weaviate at {host}:{port}")
             return self.weaviate_client

@@ -7,6 +7,7 @@ and stores them in Weaviate for retrieval.
 import asyncio
 import contextlib
 import logging
+import os
 import signal
 import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -14,8 +15,7 @@ from threading import Thread
 from types import FrameType
 from typing import cast
 
-from prometheus_client import start_http_server
-
+from src.common.otel_metrics import init_otel_metrics, shutdown_otel_metrics
 from src.common.tracing import init_tracing, shutdown_tracing
 from src.indexer.config import IndexerConfig
 from src.indexer.consumer import DocumentEventConsumer
@@ -148,13 +148,14 @@ class IndexerService:
             environment=self.config.environment,
         )
 
+        # Initialize OpenTelemetry metrics export to Grafana Alloy
+        init_otel_metrics(
+            service_name=self.config.service_name,
+            service_version=os.getenv("SERVICE_VERSION", "0.1.0"),
+        )
+
         # Start health check server FIRST for K8s probes
         self.start_health_server()
-
-        # Start Prometheus metrics server
-        metrics_port = 8081  # Different from health port
-        start_http_server(metrics_port)
-        logger.info(f"Prometheus metrics available at http://0.0.0.0:{metrics_port}/metrics")
 
         # Initialize consumer
         self.consumer = DocumentEventConsumer(
@@ -207,7 +208,8 @@ class IndexerService:
         """Shutdown the service gracefully."""
         logger.info("Shutting down indexer service...")
 
-        # Shutdown tracing
+        # Shutdown OTel metrics and tracing
+        shutdown_otel_metrics()
         shutdown_tracing()
 
         if self.consumer:
