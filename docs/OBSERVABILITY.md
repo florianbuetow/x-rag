@@ -228,26 +228,24 @@ Metrics are numerical measurements collected over time. They answer questions li
 │                           METRICS PIPELINE                                   │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│  APPLICATION LAYER                                                          │
-│  ─────────────────                                                          │
+│  APPLICATION LAYER (Push via OTLP)                                          │
+│  ─────────────────────────────────                                          │
 │                                                                             │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
 │  │  search-ui   │  │search-service│  │embed-service │  │   indexer    │   │
-│  │   :9091      │  │   :8080      │  │   :8080      │  │   :8081      │   │
 │  │              │  │              │  │              │  │              │   │
 │  │ ┌──────────┐ │  │ ┌──────────┐ │  │ ┌──────────┐ │  │ ┌──────────┐ │   │
-│  │ │Histogram │ │  │ │Histogram │ │  │ │Histogram │ │  │ │Histogram │ │   │
-│  │ │Counter   │ │  │ │Counter   │ │  │ │Counter   │ │  │ │Counter   │ │   │
-│  │ │Gauge     │ │  │ │Gauge     │ │  │ │Gauge     │ │  │ │Gauge     │ │   │
-│  │ └──────────┘ │  │ └──────────┘ │  │ └──────────┘ │  │ └──────────┘ │   │
+│  │ │OTel Meter│ │  │ │OTel Meter│ │  │ │OTel Meter│ │  │ │OTel Meter│ │   │
+│  │ │Provider  │ │  │ │Provider  │ │  │ │Provider  │ │  │ │Provider  │ │   │
+│  │ └────┬─────┘ │  │ └────┬─────┘ │  │ └────┬─────┘ │  │ └────┬─────┘ │   │
 │  │      │       │  │      │       │  │      │       │  │      │       │   │
 │  │      ▼       │  │      ▼       │  │      ▼       │  │      ▼       │   │
-│  │  /metrics    │  │  /metrics    │  │  /metrics    │  │  /metrics    │   │
+│  │ OTLPExporter │  │ OTLPExporter │  │ OTLPExporter │  │ OTLPExporter │   │
 │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘   │
 │         │                 │                 │                 │            │
 │         └─────────────────┴─────────────────┴─────────────────┘            │
 │                                    │                                        │
-│                                    │ HTTP scrape (every 30s)                │
+│                                    │ OTLP/gRPC (port 4317)                  │
 │                                    ▼                                        │
 │  COLLECTION LAYER                                                           │
 │  ────────────────                                                           │
@@ -256,10 +254,13 @@ Metrics are numerical measurements collected over time. They answer questions li
 │  │                        Grafana Alloy                                 │   │
 │  │                                                                      │   │
 │  │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────┐  │   │
-│  │  │ prometheus.     │  │ prometheus.     │  │ prometheus.         │  │   │
-│  │  │ scrape          │  │ scrape          │  │ scrape              │  │   │
-│  │  │ (services)      │  │ (kubelet)       │  │ (kube-state-metrics)│  │   │
+│  │  │ otelcol.        │  │ prometheus.     │  │ prometheus.         │  │   │
+│  │  │ receiver.otlp   │  │ scrape          │  │ scrape              │  │   │
+│  │  │ (app metrics)   │  │ (kubelet)       │  │ (kube-state-metrics)│  │   │
 │  │  └────────┬────────┘  └────────┬────────┘  └──────────┬──────────┘  │   │
+│  │           │                    │                      │              │   │
+│  │           ▼                    │                      │              │   │
+│  │  otelcol.exporter.prometheus   │                      │              │   │
 │  │           │                    │                      │              │   │
 │  │           └────────────────────┴──────────────────────┘              │   │
 │  │                                │                                     │   │
@@ -283,6 +284,12 @@ Metrics are numerical measurements collected over time. They answer questions li
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+**How metrics flow:**
+
+1. **Application metrics** → Services use OpenTelemetry SDK to push metrics via OTLP to Alloy (port 4317). Alloy converts OTLP to Prometheus format and remote-writes to Prometheus.
+
+2. **System metrics** → Alloy scrapes kubelet `/metrics/resource`, `/metrics/cadvisor`, and kube-state-metrics, then remote-writes to Prometheus.
 
 ### Metric Types
 
