@@ -85,3 +85,218 @@ data:
       level = "info"
       format = "logfmt"
     }
+    
+    // =============================================================================
+    // KUBERNETES POD SYSTEM METRICS
+    // =============================================================================
+    //
+    // We collect pod metrics from THREE different sources because each provides
+    // unique data that the others don't:
+    //
+    // 1. KUBELET /metrics/resource (lightweight, real-time)
+    //    - Basic CPU and memory usage per container
+    //    - Minimal overhead, fast scraping (30s interval)
+    //    - Metrics: container_cpu_usage_seconds_total, container_memory_working_set_bytes
+    //
+    // 2. KUBELET /metrics/cadvisor (comprehensive runtime metrics)
+    //    - Network I/O (bytes, packets, errors per interface)
+    //    - Disk/Filesystem I/O (reads, writes, usage)
+    //    - Detailed memory breakdown (cache, RSS, swap)
+    //    - CPU throttling metrics
+    //    - Resource limits from container spec
+    //    - Higher overhead, slower scraping (60s interval)
+    //
+    // 3. KUBE-STATE-METRICS (Kubernetes API object state)
+    //    - Resource requests and limits (what was REQUESTED vs cAdvisor's actual LIMIT)
+    //    - Pod status, phase, conditions
+    //    - Container restart counts
+    //    - Deployment replica counts
+    //    - NOT runtime metrics - reflects K8s API state
+    //
+    // Together these enable queries like:
+    //   - "Pods using more memory than requested" (kube-state + cadvisor)
+    //   - "Containers being CPU throttled" (cadvisor)
+    //   - "Network throughput per pod" (cadvisor)
+    //   - "Pods in CrashLoopBackOff" (kube-state-metrics)
+    //
+    // =============================================================================
+    
+    // =============================================================================
+    // Source 1: Kubelet /metrics/resource (Basic CPU/Memory)
+    // =============================================================================
+    
+    // -----------------------------------------------------------------------------
+    // Kubernetes Node Discovery
+    // -----------------------------------------------------------------------------
+    discovery.kubernetes "nodes" {
+      role = "node"
+    }
+    
+    // -----------------------------------------------------------------------------
+    // Relabel node targets to kubelet /metrics/resource endpoint
+    // -----------------------------------------------------------------------------
+    discovery.relabel "kubelet" {
+      targets = discovery.kubernetes.nodes.targets
+      
+      rule {
+        source_labels = ["__address__"]
+        regex         = "(.+):(.+)"
+        target_label  = "__address__"
+        replacement   = "$1:10250"
+      }
+      
+      rule {
+        target_label = "__scheme__"
+        replacement  = "https"
+      }
+      
+      rule {
+        target_label = "__metrics_path__"
+        replacement  = "/metrics/resource"
+      }
+      
+      rule {
+        source_labels = ["__meta_kubernetes_node_name"]
+        target_label  = "node"
+      }
+    }
+    
+    // -----------------------------------------------------------------------------
+    // Scrape kubelet /metrics/resource endpoint
+    // -----------------------------------------------------------------------------
+    prometheus.scrape "kubelet_resource" {
+      targets         = discovery.relabel.kubelet.output
+      job_name        = "kubelet-resource"
+      scheme          = "https"
+      scrape_interval = "30s"
+      scrape_timeout  = "10s"
+      
+      bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+      
+      tls_config {
+        insecure_skip_verify = true
+      }
+      
+      forward_to = [prometheus.remote_write.prom.receiver]
+    }
+    
+    // =============================================================================
+    // Source 2: Kubelet /metrics/cadvisor (Network, Disk, Detailed Memory)
+    // =============================================================================
+    
+    // -----------------------------------------------------------------------------
+    // Relabel node targets to kubelet /metrics/cadvisor endpoint
+    // -----------------------------------------------------------------------------
+    discovery.relabel "cadvisor" {
+      targets = discovery.kubernetes.nodes.targets
+      
+      rule {
+        source_labels = ["__address__"]
+        regex         = "(.+):(.+)"
+        target_label  = "__address__"
+        replacement   = "$1:10250"
+      }
+      
+      rule {
+        target_label = "__scheme__"
+        replacement  = "https"
+      }
+      
+      rule {
+        target_label = "__metrics_path__"
+        replacement  = "/metrics/cadvisor"
+      }
+      
+      rule {
+        source_labels = ["__meta_kubernetes_node_name"]
+        target_label  = "node"
+      }
+    }
+    
+    // -----------------------------------------------------------------------------
+    // Scrape kubelet /metrics/cadvisor endpoint
+    // -----------------------------------------------------------------------------
+    prometheus.scrape "cadvisor" {
+      targets         = discovery.relabel.cadvisor.output
+      job_name        = "cadvisor"
+      scheme          = "https"
+      scrape_interval = "60s"
+      scrape_timeout  = "15s"
+      
+      bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+      
+      tls_config {
+        insecure_skip_verify = true
+      }
+      
+      forward_to = [prometheus.relabel.cadvisor_filter.receiver]
+    }
+    
+    // -----------------------------------------------------------------------------
+    // Filter cAdvisor metrics to reduce cardinality
+    // Keep only essential metrics for pod monitoring
+    // -----------------------------------------------------------------------------
+    prometheus.relabel "cadvisor_filter" {
+      rule {
+        source_labels = ["__name__"]
+        regex         = "container_(cpu_usage_seconds_total|cpu_cfs_throttled_seconds_total|memory_working_set_bytes|memory_usage_bytes|memory_cache|memory_rss|network_receive_bytes_total|network_transmit_bytes_total|network_receive_packets_total|network_transmit_packets_total|network_receive_errors_total|network_transmit_errors_total|fs_usage_bytes|fs_limit_bytes|fs_reads_bytes_total|fs_writes_bytes_total|spec_memory_limit_bytes|spec_cpu_quota|spec_cpu_period)"
+        action        = "keep"
+      }
+      
+      // Drop metrics for pause containers (infrastructure containers)
+      // But keep network metrics which have empty container label
+      rule {
+        source_labels = ["container"]
+        regex         = "POD"
+        action        = "drop"
+      }
+      
+      // Drop empty container labels EXCEPT for network metrics
+      // (network metrics are reported at pod level with container="")
+      rule {
+        source_labels = ["__name__", "container"]
+        regex         = "container_(cpu|memory|fs|spec).*;^$"
+        action        = "drop"
+      }
+      
+      // Drop node-level aggregates (id="/")
+      rule {
+        source_labels = ["id"]
+        regex         = "/"
+        action        = "drop"
+      }
+      
+      forward_to = [prometheus.remote_write.prom.receiver]
+    }
+    
+    // =============================================================================
+    // Source 3: kube-state-metrics (K8s API Object State)
+    // =============================================================================
+    
+    // -----------------------------------------------------------------------------
+    // Scrape kube-state-metrics service
+    // -----------------------------------------------------------------------------
+    prometheus.scrape "kube_state_metrics" {
+      targets = [
+        {"__address__" = "kube-state-metrics.rag-system.svc.cluster.local:8080"},
+      ]
+      job_name        = "kube-state-metrics"
+      scrape_interval = "30s"
+      scrape_timeout  = "10s"
+      
+      forward_to = [prometheus.relabel.kube_state_filter.receiver]
+    }
+    
+    // -----------------------------------------------------------------------------
+    // Filter kube-state-metrics to essential pod/deployment metrics
+    // -----------------------------------------------------------------------------
+    prometheus.relabel "kube_state_filter" {
+      // Keep pod, container, deployment, node, and resource metrics
+      rule {
+        source_labels = ["__name__"]
+        regex         = "kube_(pod_status_phase|pod_status_ready|pod_status_scheduled|pod_container_status_restarts_total|pod_container_status_running|pod_container_status_waiting|pod_container_status_terminated|pod_container_resource_requests|pod_container_resource_limits|pod_info|pod_created|pod_start_time|deployment_status_replicas|deployment_status_replicas_available|deployment_status_replicas_unavailable|deployment_spec_replicas|statefulset_status_replicas|statefulset_status_replicas_ready|node_status_condition|node_status_allocatable|node_info|namespace_status_phase)"
+        action        = "keep"
+      }
+      
+      forward_to = [prometheus.remote_write.prom.receiver]
+    }

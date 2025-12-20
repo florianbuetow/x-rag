@@ -37,6 +37,7 @@ spec:
       labels:
         app: xrag-alloy
     spec:
+      serviceAccountName: alloy
       containers:
         - name: alloy
           image: grafana/alloy:v1.4.2
