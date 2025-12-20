@@ -14,7 +14,7 @@ from opentelemetry.instrumentation.grpc import GrpcInstrumentorClient
 logger = logging.getLogger(__name__)
 
 # Instrument gRPC client for distributed tracing
-_grpc_client_instrumentor = GrpcInstrumentorClient()
+_grpc_client_instrumentor = GrpcInstrumentorClient()  # type: ignore[no-untyped-call]
 _grpc_client_instrumentor.instrument()
 
 
