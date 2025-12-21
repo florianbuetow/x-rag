@@ -7,39 +7,23 @@ REGISTRY="localhost:5000"
 
 cd "${PROJECT_ROOT}"
 
-echo "Building Docker images and pushing to ${REGISTRY}..."
+echo "Building Docker images..."
 echo ""
 
-# List of services to build
-SERVICES=(
-    "embedding-service"
-    "ingestion-api"
-    "indexer"
-    "search-service"
-    "search-ui"
-)
+# Get list of services from central script
+SERVICES=($(${SCRIPT_DIR}/list-services.sh))
 
 for service in "${SERVICES[@]}"; do
-    echo "=== Building ${service} ==="
-
     dockerfile="infra/docker/Dockerfile.${service}"
     image_name="${REGISTRY}/${service}:latest"
 
-    if [ ! -f "${dockerfile}" ]; then
-        echo "  ⚠️  Dockerfile not found: ${dockerfile}"
-        echo "  Skipping..."
-        echo ""
-        continue
-    fi
+    echo "=== Building ${service} ==="
 
     echo "  Building ${image_name}..."
     docker build --no-cache -t "${image_name}" -f "${dockerfile}" . --quiet
 
-    echo "  Pushing ${image_name}..."
-    docker push "${image_name}" --quiet
-
-    echo "  ✓ ${service} built and pushed"
+    echo "  ✓ ${service} built"
     echo ""
 done
 
-echo "✓ All images built and pushed successfully"
+echo "✓ All images built successfully"

@@ -1,0 +1,22 @@
+# Ingestion Configuration
+# Defines per-dataset chunking strategies and ingestion parameters
+
+# Global defaults (inherited by all datasets)
+defaults:
+  chunking:
+    chunk_method: lines
+    chunk_size: 100      # For 'lines' method: number of lines per chunk
+    chunk_overlap: 50    # For 'lines' method: number of overlapping lines
+
+# Per-dataset configurations
+datasets:
+  nutritionfacts.org:
+    description: "Video transcripts and articles from NutritionFacts.org"
+    input_path: data/input/nutritionfacts.org
+    namespace: nutritionfacts
+
+    # Chunking strategy for this dataset
+    chunking:
+      chunk_method: lines
+      chunk_size: 100
+      chunk_overlap: 50

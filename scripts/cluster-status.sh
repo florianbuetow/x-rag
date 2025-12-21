@@ -1,8 +1,15 @@
 #!/bin/bash
 set -euo pipefail
 
-NAMESPACE="rag-system"
-CLUSTER_NAME="xrag-k8"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="${SCRIPT_DIR}/.."
+HELPERS="${SCRIPT_DIR}/cluster_helper_functions.sh"
+
+# Source helper functions
+. "${HELPERS}"
+
+NAMESPACE="${NAMESPACE:-rag-system}"
+CLUSTER_NAME="${CLUSTER_NAME:-xrag-k8}"
 
 # Color codes
 RED='\033[0;31m'
@@ -21,7 +28,7 @@ echo ""
 
 # Check Docker
 echo -e "${BLUE}[1/8] Docker Daemon${NC}"
-if docker info &>/dev/null; then
+if docker_running; then
     echo -e "  ${check_mark} Docker daemon running"
     docker_version=$(docker version --format '{{.Server.Version}}')
     echo -e "  Version: ${docker_version}"
@@ -33,27 +40,26 @@ echo ""
 
 # Check Kind Cluster
 echo -e "${BLUE}[2/8] Kind Cluster${NC}"
-if kind get clusters 2>/dev/null | grep -q "^${CLUSTER_NAME}$"; then
+if cluster_exists; then
     echo -e "  ${check_mark} Cluster '${CLUSTER_NAME}' exists"
 
     # Check cluster health
-    if kubectl cluster-info --context "kind-${CLUSTER_NAME}" &>/dev/null; then
-        echo -e "  ${check_mark} Cluster is healthy"
+    if cluster_running; then
+        echo -e "  ${check_mark} Cluster is running"
         nodes=$(kubectl get nodes --no-headers 2>/dev/null | wc -l | tr -d ' ')
         echo -e "  Nodes: ${nodes}"
     else
-        echo -e "  ${cross_mark} Cluster is unhealthy"
+        echo -e "  ${cross_mark} Cluster is not running"
     fi
 else
     echo -e "  ${cross_mark} Cluster '${CLUSTER_NAME}' not found"
-    echo -e "  Run: make cluster-start"
     exit 1
 fi
 echo ""
 
 # Check Registry
 echo -e "${BLUE}[3/8] Container Registry${NC}"
-if docker ps --format '{{.Names}}' | grep -q "^xrag-k8-kind-registry$"; then
+if registry_running; then
     echo -e "  ${check_mark} Registry running at localhost:5000"
 else
     echo -e "  ${cross_mark} Registry not running"
@@ -62,7 +68,7 @@ echo ""
 
 # Check Namespace and Pods
 echo -e "${BLUE}[4/8] Kubernetes Pods${NC}"
-if kubectl get namespace ${NAMESPACE} &>/dev/null; then
+if namespace_exists; then
     echo -e "  ${check_mark} Namespace '${NAMESPACE}' exists"
     echo ""
 
@@ -95,7 +101,7 @@ echo ""
 
 # Test Weaviate
 echo -e "${BLUE}[5/8] Weaviate (Vector Database)${NC}"
-if curl -s -f http://localhost:8081/v1/.well-known/ready &>/dev/null; then
+if weaviate_ready; then
     echo -e "  ${check_mark} Weaviate is ready"
     echo -e "  URL: http://localhost:8081"
 
@@ -111,52 +117,37 @@ echo ""
 
 # Test Redis
 echo -e "${BLUE}[6/8] Redis (Cache)${NC}"
-if kubectl exec -n ${NAMESPACE} xrag-redis-0 -- redis-cli ping &>/dev/null; then
-    redis_response=$(kubectl exec -n ${NAMESPACE} xrag-redis-0 -- redis-cli ping 2>/dev/null || echo "")
-    if [[ "$redis_response" == "PONG" ]]; then
-        echo -e "  ${check_mark} Redis is responding"
-        echo -e "  Internal: xrag-redis:6379"
-    else
-        echo -e "  ${cross_mark} Redis not responding"
-    fi
+if redis_ready; then
+    echo -e "  ${check_mark} Redis is responding"
+    echo -e "  Internal: xrag-redis:6379"
 else
-    echo -e "  ${cross_mark} Redis pod not accessible"
+    echo -e "  ${cross_mark} Redis not responding"
 fi
 echo ""
 
 # Test Kafka
 echo -e "${BLUE}[7/8] Kafka (Message Queue)${NC}"
-if kubectl get pod xrag-kafka-0 -n ${NAMESPACE} &>/dev/null; then
-    kafka_ready=$(kubectl get pod xrag-kafka-0 -n ${NAMESPACE} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)
-    if [[ "$kafka_ready" == "True" ]]; then
-        echo -e "  ${check_mark} Kafka is ready"
-        echo -e "  Internal: xrag-kafka:9092"
-    else
-        echo -e "  ${cross_mark} Kafka not ready"
-    fi
+if kafka_ready; then
+    echo -e "  ${check_mark} Kafka is ready"
+    echo -e "  Internal: xrag-kafka:9092"
 else
-    echo -e "  ${cross_mark} Kafka pod not found"
+    echo -e "  ${cross_mark} Kafka not ready"
 fi
 echo ""
 
 # Test MinIO
 echo -e "${BLUE}[8/8] MinIO (Object Storage)${NC}"
-if kubectl get pod xrag-minio-0 -n ${NAMESPACE} &>/dev/null; then
-    minio_ready=$(kubectl get pod xrag-minio-0 -n ${NAMESPACE} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)
-    if [[ "$minio_ready" == "True" ]]; then
-        echo -e "  ${check_mark} MinIO is ready"
-        echo -e "  Internal: xrag-minio:9000"
-    else
-        echo -e "  ${cross_mark} MinIO not ready"
-    fi
+if minio_ready; then
+    echo -e "  ${check_mark} MinIO is ready"
+    echo -e "  Internal: xrag-minio:9000"
 else
-    echo -e "  ${cross_mark} MinIO pod not found"
+    echo -e "  ${cross_mark} MinIO not ready"
 fi
 echo ""
 
 # Test Prometheus
 echo -e "${BLUE}[Monitoring] Prometheus${NC}"
-if curl -s -f http://localhost:9090/-/healthy &>/dev/null; then
+if prometheus_ready; then
     echo -e "  ${check_mark} Prometheus is healthy"
     echo -e "  URL: http://localhost:9090"
 
@@ -172,7 +163,7 @@ echo ""
 
 # Test Grafana
 echo -e "${BLUE}[Monitoring] Grafana${NC}"
-if curl -s -f http://localhost:3000 &>/dev/null; then
+if grafana_ready; then
     echo -e "  ${check_mark} Grafana is accessible"
     echo -e "  URL: http://localhost:3000 (admin/admin)"
 
@@ -188,27 +179,22 @@ echo ""
 
 # Test Kubernetes Dashboard
 echo -e "${BLUE}[Monitoring] Kubernetes Dashboard${NC}"
-if kubectl get pod -n kubernetes-dashboard -l k8s-app=kubernetes-dashboard &>/dev/null; then
-    dashboard_ready=$(kubectl get pod -n kubernetes-dashboard -l k8s-app=kubernetes-dashboard -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)
-    if [[ "$dashboard_ready" == "True" ]]; then
-        echo -e "  ${check_mark} Dashboard is running"
-        echo -e "  URL: https://localhost:8443"
-    else
-        echo -e "  ${cross_mark} Dashboard not ready"
-    fi
+if dashboard_ready; then
+    echo -e "  ${check_mark} Dashboard is running"
+    echo -e "  URL: https://localhost:8443"
 else
-    echo -e "  ${cross_mark} Dashboard not deployed"
+    echo -e "  ${cross_mark} Dashboard not ready"
 fi
 echo ""
 
 # Test Search UI
 echo -e "${BLUE}[Application] Search UI${NC}"
-if curl -s -f http://localhost:8080/health/live &>/dev/null; then
+if search_ui_ready; then
     echo -e "  ${check_mark} Search UI is accessible"
     echo -e "  URL: http://localhost:8080"
 
-    # Check if ready
-    if curl -s -f http://localhost:8080/health/ready &>/dev/null; then
+    # Check if fully ready
+    if search_ui_fully_ready; then
         echo -e "  Status: Ready"
     fi
 else
@@ -218,13 +204,13 @@ echo ""
 
 # Test Ingestion API
 echo -e "${BLUE}[Application] Ingestion API${NC}"
-if curl -s -f http://localhost:8082/health/live &>/dev/null; then
+if ingestion_api_ready; then
     echo -e "  ${check_mark} Ingestion API is accessible"
     echo -e "  URL: http://localhost:8082"
     echo -e "  Docs: http://localhost:8082/docs"
 
-    # Check if ready
-    if curl -s -f http://localhost:8082/health/ready &>/dev/null; then
+    # Check if fully ready
+    if ingestion_api_fully_ready; then
         echo -e "  Status: Ready"
     fi
 else

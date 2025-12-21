@@ -51,9 +51,9 @@ setup.log
 # Temporary files
 tmp/
 
-# Data directories
-data/storage/*
-!data/storage/.gitkeep
+# Data and notes directories (entire folders excluded)
+data/
+notes/
 
 # Environment
 .env
@@ -107,4 +107,3 @@ logs/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
-data/raw/

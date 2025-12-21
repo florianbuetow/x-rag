@@ -2,12 +2,12 @@
 
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, ValidationError
 
-from src.common.config import BaseConfig
+from src.common.config import KafkaConfig, MinIOConfig, ServiceConfig, WeaviateConfig
 
 
-class IndexerConfig(BaseConfig):
+class IndexerConfig(ServiceConfig):
     """Configuration for Indexer service.
 
     Loads configuration from environment variables.
@@ -126,3 +126,77 @@ class IndexerConfig(BaseConfig):
         default="NFC",
         description="Unicode normalization form (NFC, NFKC, NFD, NFKD)",
     )
+
+    # Getter methods for composed configs
+
+    def get_kafka_config(self) -> KafkaConfig:
+        """Get Kafka configuration as a validated model.
+
+        Returns:
+            KafkaConfig instance with validated Kafka settings
+        """
+        return KafkaConfig(
+            kafka_bootstrap=self.kafka_bootstrap,
+            kafka_topic=self.kafka_topic,
+            kafka_group_id=self.kafka_group_id,
+            kafka_auto_offset_reset=self.kafka_auto_offset_reset,
+        )
+
+    def get_minio_config(self) -> MinIOConfig:
+        """Get MinIO configuration as a validated model.
+
+        Returns:
+            MinIOConfig instance with validated MinIO settings
+        """
+        return MinIOConfig(
+            minio_endpoint=self.minio_endpoint,
+            minio_access_key=self.minio_access_key,
+            minio_secret_key=self.minio_secret_key,
+            minio_bucket=self.minio_bucket,
+            minio_secure=self.minio_secure,
+        )
+
+    def get_weaviate_config(self) -> WeaviateConfig:
+        """Get Weaviate configuration as a validated model.
+
+        Returns:
+            WeaviateConfig instance with validated Weaviate settings
+        """
+        return WeaviateConfig(
+            weaviate_url=self.weaviate_url,
+            weaviate_timeout=30,  # Use default since not in IndexerConfig
+            weaviate_collection=self.weaviate_class,
+        )
+
+    def _validate_cross_fields(self, errors: list[str], warnings: list[str]) -> None:
+        """Validate cross-field dependencies and composed configs.
+
+        Args:
+            errors: List to append validation errors to
+            warnings: List to append validation warnings to
+        """
+        # Validate composed configs
+        try:
+            self.get_kafka_config()
+        except ValidationError as e:
+            errors.extend(f"Kafka config: {err}" for err in e.errors())
+
+        try:
+            self.get_minio_config()
+        except ValidationError as e:
+            errors.extend(f"MinIO config: {err}" for err in e.errors())
+
+        try:
+            self.get_weaviate_config()
+        except ValidationError as e:
+            errors.extend(f"Weaviate config: {err}" for err in e.errors())
+
+        # Validate chunk configuration
+        if self.chunk_overlap >= self.chunk_size:
+            errors.append(f"chunk_overlap ({self.chunk_overlap}) must be less than chunk_size ({self.chunk_size})")
+
+        if self.batch_size <= 0:
+            errors.append(f"batch_size must be positive, got {self.batch_size}")
+
+        if self.embedding_service_timeout <= 0:
+            errors.append(f"embedding_service_timeout must be positive, got {self.embedding_service_timeout}")

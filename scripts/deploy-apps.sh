@@ -4,21 +4,38 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${SCRIPT_DIR}/.."
 NAMESPACE="rag-system"
+REGISTRY="localhost:5000"
 
 cd "${PROJECT_ROOT}"
 
-echo "Deploying application services to namespace: ${NAMESPACE}..."
+echo "=============================================="
+echo "  Deploying Application Services"
+echo "=============================================="
 echo ""
 
-# List of services to deploy
-SERVICES=(
-    "embedding-service"
-    "ingestion-api"
-    "indexer"
-    "search-service"
-    "search-ui"
-)
+# Get list of services from central script
+SERVICES=($(${SCRIPT_DIR}/list-services.sh))
 
+# Optional validation with helpful warning
+echo "Validating images..."
+for service in "${SERVICES[@]}"; do
+    image_name="${REGISTRY}/${service}:latest"
+
+    if ! docker image inspect "${image_name}" > /dev/null 2>&1; then
+        echo "  ⚠️  Warning: Image not found locally: ${image_name}"
+        echo "  This may fail if not registered with registry."
+        echo "  Run 'make apps-register' to register images first."
+        echo ""
+    else
+        echo "  ✓ Found ${image_name}"
+    fi
+done
+
+echo ""
+echo "Deploying Kubernetes manifests..."
+echo ""
+
+# Deploy to Kubernetes
 for service in "${SERVICES[@]}"; do
     manifest_dir="infra/k8s/${service}"
 
@@ -50,6 +67,8 @@ for service in "${SERVICES[@]}"; do
 done
 
 echo ""
-echo "✓ Application services deployed successfully"
+echo "=============================================="
+echo "  Deployment Complete!"
+echo "=============================================="
 echo ""
 echo "Run 'make cluster-status' to check service health"

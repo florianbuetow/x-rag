@@ -36,10 +36,6 @@ from pathlib import Path
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
 
-# Constants matching data/generate-qa-pairs.sh
-DEFAULT_LINES_PER_CHUNK = 100
-DEFAULT_CHUNK_STEP = 50
-
 
 @dataclass
 class QAFile:
@@ -263,6 +259,10 @@ def prepare_dataset(
 
 def main() -> int:
     """Main entry point."""
+    # Default chunking parameters (matching loader.py defaults)
+    default_lines_per_chunk = 100
+    default_chunk_step = 50
+
     parser = argparse.ArgumentParser(description="Prepare evaluation dataset from QA JSON files")
     parser.add_argument(
         "--qa-dir",
@@ -285,14 +285,14 @@ def main() -> int:
     parser.add_argument(
         "--lines-per-chunk",
         type=int,
-        default=DEFAULT_LINES_PER_CHUNK,
-        help=f"Lines per chunk (default: {DEFAULT_LINES_PER_CHUNK})",
+        default=default_lines_per_chunk,
+        help=f"Lines per chunk (default: {default_lines_per_chunk})",
     )
     parser.add_argument(
         "--chunk-step",
         type=int,
-        default=DEFAULT_CHUNK_STEP,
-        help=f"Chunk step (default: {DEFAULT_CHUNK_STEP})",
+        default=default_chunk_step,
+        help=f"Chunk step (default: {default_chunk_step})",
     )
 
     args = parser.parse_args()

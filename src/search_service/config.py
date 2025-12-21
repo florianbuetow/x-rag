@@ -1,8 +1,8 @@
 """Configuration for Search Service."""
 
-from pydantic import Field, field_validator
+from pydantic import Field, ValidationError, field_validator
 
-from src.common.config import ServiceConfig
+from src.common.config import OpenAIConfig, RedisConfig, ServiceConfig, WeaviateConfig
 from src.llm.config import LLMConfig, LLMProvider
 
 
@@ -105,23 +105,106 @@ class SearchServiceConfig(ServiceConfig):
             raise ValueError(f"default_top_k too large (max 100), got {v}")
         return v
 
+    # Getter methods for composed configs
+
+    def get_weaviate_config(self) -> WeaviateConfig:
+        """Get Weaviate configuration as a validated model.
+
+        Returns:
+            WeaviateConfig instance with validated Weaviate settings
+        """
+        return WeaviateConfig(
+            weaviate_url=self.weaviate_url,
+            weaviate_timeout=self.weaviate_timeout,
+            weaviate_collection=self.weaviate_collection,
+        )
+
+    def get_redis_config(self) -> RedisConfig | None:
+        """Get Redis configuration if enabled.
+
+        Returns:
+            RedisConfig instance if caching is enabled, None otherwise
+        """
+        # Check if we have redis_url field (for backward compatibility)
+        redis_url = getattr(self, "redis_url", None)
+        enable_cache = getattr(self, "enable_cache", True)
+        cache_ttl = getattr(self, "cache_ttl", 3600)
+
+        if not enable_cache or not redis_url:
+            return None
+
+        return RedisConfig(
+            redis_url=redis_url,
+            cache_ttl=cache_ttl,
+            enable_cache=enable_cache,
+        )
+
+    def get_openai_config(self) -> OpenAIConfig:
+        """Get OpenAI configuration as a validated model.
+
+        Returns:
+            OpenAIConfig instance with validated OpenAI settings
+        """
+        return OpenAIConfig(
+            openai_api_key=self.openai_api_key,
+            openai_api_base=self.openai_api_base,
+            openai_model=self.openai_model,
+            openai_max_tokens=self.openai_max_tokens,
+            openai_temperature=self.openai_temperature,
+            openai_max_retries=self.openai_max_retries,
+            openai_timeout=self.openai_timeout,
+        )
+
     def get_llm_config(self) -> LLMConfig:
         """Create LLMConfig from service configuration.
 
         Automatically detects provider type based on base_url presence.
+        Uses OpenAI config internally for consistency.
 
         Returns:
             LLMConfig instance for creating LLM client
         """
-        provider = LLMProvider.LOCAL if self.openai_api_base else LLMProvider.OPENAI
+        openai_config = self.get_openai_config()
+        provider = LLMProvider.LOCAL if openai_config.openai_api_base else LLMProvider.OPENAI
 
         return LLMConfig(
             provider=provider,
-            api_key=self.openai_api_key,
-            base_url=self.openai_api_base,
-            model=self.openai_model,
-            max_tokens=self.openai_max_tokens,
-            temperature=self.openai_temperature,
-            max_retries=self.openai_max_retries,
-            timeout=self.openai_timeout,
+            api_key=openai_config.openai_api_key,
+            base_url=openai_config.openai_api_base,
+            model=openai_config.openai_model,
+            max_tokens=openai_config.openai_max_tokens,
+            temperature=openai_config.openai_temperature,
+            max_retries=openai_config.openai_max_retries,
+            timeout=openai_config.openai_timeout,
         )
+
+    def _validate_cross_fields(self, errors: list[str], warnings: list[str]) -> None:
+        """Validate cross-field dependencies and composed configs.
+
+        Args:
+            errors: List to append validation errors to
+            warnings: List to append validation warnings to
+        """
+        # Validate composed configs
+        try:
+            self.get_weaviate_config()
+        except ValidationError as e:
+            errors.extend(f"Weaviate config: {err}" for err in e.errors())
+
+        try:
+            self.get_openai_config()
+        except ValidationError as e:
+            errors.extend(f"OpenAI config: {err}" for err in e.errors())
+
+        # Validate Redis config if cache is enabled
+        redis_url = getattr(self, "redis_url", None)
+        enable_cache = getattr(self, "enable_cache", True)
+        if enable_cache and redis_url:
+            try:
+                redis_config = self.get_redis_config()
+                if redis_config is None:
+                    errors.append("Redis config is None but cache is enabled")
+            except ValidationError as e:
+                errors.extend(f"Redis config: {err}" for err in e.errors())
+        elif enable_cache and not redis_url:
+            warnings.append("Cache is enabled but redis_url is not set")

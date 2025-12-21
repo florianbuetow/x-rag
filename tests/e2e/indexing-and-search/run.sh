@@ -309,10 +309,20 @@ phase_setup() {
 
         # Create cluster and registry first
         log INFO "Creating Kind cluster..."
-        make .setup-cluster
+        cd "$PROJECT_ROOT"
+        . scripts/cluster_helper_functions.sh || true
+        if cluster_running; then
+            log INFO "Cluster already exists, skipping creation"
+        else
+            ./scripts/create-cluster.sh
+        fi
 
         log INFO "Setting up container registry..."
-        make .setup-registry
+        if registry_running; then
+            log INFO "Registry already running, skipping setup"
+        else
+            ./scripts/setup-registry.sh
+        fi
 
         # Now build and push images (registry exists now)
         log INFO "Building Docker images (this may take a few minutes)..."
@@ -320,10 +330,18 @@ phase_setup() {
 
         # Deploy infrastructure and monitoring
         log INFO "Deploying infrastructure..."
-        make .deploy-infrastructure
+        if infrastructure_exists; then
+            log INFO "Infrastructure already deployed, skipping"
+        else
+            ./scripts/deploy-infrastructure.sh
+        fi
 
         log INFO "Deploying monitoring..."
-        make .deploy-monitoring
+        if monitoring_exists; then
+            log INFO "Monitoring already deployed, skipping"
+        else
+            ./scripts/deploy-monitoring.sh
+        fi
 
         # Deploy applications
         log INFO "Deploying applications..."

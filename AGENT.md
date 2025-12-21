@@ -83,6 +83,17 @@ Copy `.env.example` to `.env` and add `OPENAI_API_KEY`
 - **ALWAYS** use `make` targets
 - Example: Use `make check`, NOT `./scripts/check-prerequisites.sh`
 
+### Opening Files and Folders
+- When the user says "open [file|folder]", use the `open` command
+- Example: `open /path/to/folder` or `open /path/to/file.txt`
+- This opens the file/folder in Finder (macOS) or the default application
+
+### Working with Symlinks in Data Folder
+- The `data/` folder contains symlinks to external data sources
+- **ALWAYS** use `find -L` to follow symlinks when searching in data/
+- Example: `find -L /path/to/data -name "*.json"` (NOT `find /path/to/data -name "*.json"`)
+- Without `-L`, find will not traverse into symlinked directories
+
 ### Makefile Conventions
 When editing the Makefile:
 - **ALWAYS** end every target with `@echo ""` for visual separation in terminal output
@@ -170,6 +181,11 @@ This guide covers:
 - During code reviews
 - When refactoring existing code
 - When unsure about architectural decisions
+
+### Logging Best Practices
+For guidance on choosing appropriate log levels (ERROR, WARN, INFO, DEBUG), see [docs/LOGGING-GUIDE.md](docs/LOGGING-GUIDE.md).
+
+**Key principle:** ERROR logs should be reserved for program-level failures requiring local action. Use WARN for operation-level failures and INFO for routine events.
 
 ### Future Tooling (Not Yet Implemented)
 

@@ -1,0 +1,54 @@
+# Evaluation Configuration
+# Per-dataset evaluation settings with multiple configuration variants
+
+# Global defaults (inherited by all datasets and configs)
+defaults:
+  embedding:
+    provider: hash_based
+    dimension: 1024
+    batch_size: 50
+
+  search:
+    mode: hybrid
+    top_k: 10
+    alpha: 0.5
+
+  output:
+    reports_dir: evals/reports
+    include_per_sample: false
+
+# Per-dataset configurations
+datasets:
+  nutritionfacts.org:
+    input_path: data/input/nutritionfacts.org
+    qa_output_base: data/output/nutritionfacts.org
+    eval_output_base: data/eval/nutritionfacts.org
+    description: "Evaluation dataset for NutritionFacts.org content"
+    namespace: nutritionfacts
+    collection: DocumentChunk
+
+    # Chunking config reference - loaded from config/ingestion_config.yaml
+    chunking_config_ref: nutritionfacts.org
+
+    # Multiple evaluation configurations (different embedding models, search strategies, etc.)
+    configs:
+      - slug: hash-based
+        description: "Hash-based embeddings (baseline, no network)"
+        embedding:
+          provider: hash_based
+          dimension: 1024
+
+      - slug: local-bge
+        description: "Local BGE embeddings via LM Studio"
+        embedding:
+          provider: local
+          model: text-embedding-bge-large-en-v1.5
+          base_url: http://localhost:1234/v1
+          batch_size: 50
+
+      - slug: openai-small
+        description: "OpenAI text-embedding-3-small"
+        embedding:
+          provider: openai
+          model: text-embedding-3-small
+          batch_size: 50

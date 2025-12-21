@@ -55,7 +55,9 @@ dependencies = [
     "pyyaml>=6.0.0",
 
     # Security: Pin transitive dependencies to patched versions
-    "urllib3>=2.6.0",  # Fix GHSA-gm62-xv2j-4w53, GHSA-2xpw-w6gg-jr37
+    "urllib3>=2.6.0", # Fix GHSA-gm62-xv2j-4w53, GHSA-2xpw-w6gg-jr37
+    "filelock>=3.20.1",
+    "autogen-ext[openai]>=0.7.5",
 ]
 
 [project.optional-dependencies]
@@ -269,6 +271,8 @@ DEP002 = [
     "weaviate-haystack",   # Optional: for WeaviateDocumentStore (we use custom Weaviate integration)
     "grpcio-tools",        # Build-time only: used by make apps-generate-grpc
     "urllib3",             # Security: pinned to >=2.6.0 to fix GHSA-gm62-xv2j-4w53, GHSA-2xpw-w6gg-jr37
+    "filelock",            # Security: pinned to >=3.20.1 to fix GHSA-w853-jp5j-5j7f
+    "autogen-ext",         # Agent framework: for future QA generation and agent-based eval workflows
 ]
 
 # pygount configuration (reference only - pygount uses CLI args, not pyproject.toml)

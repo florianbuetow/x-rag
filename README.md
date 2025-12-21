@@ -299,7 +299,6 @@ x-rag/
 │   └── coverage/          # HTML and XML coverage reports
 ├── data/                   # Persistent data
 │   └── storage/           # Kind cluster persistent volumes (gitignored)
-├── .setup/                 # Setup checkpoints (gitignored)
 ├── Makefile               # Main developer interface
 ├── pyproject.toml         # Python dependencies and tool configuration
 └── README.md              # This file

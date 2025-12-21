@@ -10,7 +10,7 @@ from typing import Any, TypeVar
 
 import yaml
 from dotenv import load_dotenv
-from pydantic import Field, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.core.errors import ConfigurationError
@@ -143,6 +143,50 @@ class BaseConfig(BaseSettings):
         except Exception as e:
             raise ConfigurationError(f"Failed to load configuration: {e}") from e
 
+    def validate_config(self) -> dict[str, Any]:
+        """Validate the entire configuration object.
+
+        Returns:
+            Dictionary with validation results:
+            {
+                "valid": bool,
+                "errors": list[str],
+                "warnings": list[str]
+            }
+        """
+        errors: list[str] = []
+        warnings: list[str] = []
+
+        try:
+            # Pydantic validation happens at instantiation
+            # This method can perform additional cross-field validation
+            self._validate_cross_fields(errors, warnings)
+        except ValidationError as e:
+            errors.extend(str(err) for err in e.errors())
+
+        return {
+            "valid": len(errors) == 0,
+            "errors": errors,
+            "warnings": warnings,
+        }
+
+    def _validate_cross_fields(self, errors: list[str], warnings: list[str]) -> None:
+        """Override in subclasses for cross-field validation.
+
+        Args:
+            errors: List to append validation errors to
+            warnings: List to append validation warnings to
+        """
+        pass
+
+    def get_config_dict(self) -> dict[str, Any]:
+        """Get all configuration as a dictionary.
+
+        Returns:
+            Dictionary of all configuration values
+        """
+        return self.model_dump()
+
 
 def require_env_file(path: str) -> None:
     """Check that .env file exists, guide user if not.
@@ -213,11 +257,19 @@ class ServiceConfig(BaseConfig):
         return v_upper
 
 
-class WeaviateConfig(BaseConfig):
-    """Weaviate connection configuration."""
+# Standalone Pydantic models for composition (not BaseSettings)
+# These are used as building blocks in service configs
+
+
+class WeaviateConfig(BaseModel):
+    """Weaviate connection configuration.
+
+    This is a standalone Pydantic model used for composition in service configs.
+    """
 
     weaviate_url: str = Field(default="http://weaviate:8080", description="Weaviate URL")
-    weaviate_timeout: int = Field(default=30, description="Request timeout in seconds")
+    weaviate_timeout: int = Field(default=30, ge=1, description="Request timeout in seconds")
+    weaviate_collection: str = Field(default="DocumentChunk", description="Weaviate collection name")
 
     @field_validator("weaviate_url")
     @classmethod
@@ -228,11 +280,15 @@ class WeaviateConfig(BaseConfig):
         return v.rstrip("/")
 
 
-class RedisConfig(BaseConfig):
-    """Redis connection configuration."""
+class RedisConfig(BaseModel):
+    """Redis connection configuration.
+
+    This is a standalone Pydantic model used for composition in service configs.
+    """
 
     redis_url: str = Field(default="redis://redis:6379", description="Redis URL")
-    cache_ttl: int = Field(default=3600, description="Default cache TTL in seconds")
+    cache_ttl: int = Field(default=3600, ge=0, description="Default cache TTL in seconds")
+    enable_cache: bool = Field(default=True, description="Whether caching is enabled")
 
     @field_validator("redis_url")
     @classmethod
@@ -243,26 +299,283 @@ class RedisConfig(BaseConfig):
         return v
 
 
-class KafkaConfig(BaseConfig):
-    """Kafka connection configuration."""
+class KafkaConfig(BaseModel):
+    """Kafka connection configuration.
+
+    This is a standalone Pydantic model used for composition in service configs.
+    """
 
     kafka_bootstrap: str = Field(default="kafka:9092", description="Kafka bootstrap servers")
     kafka_topic: str = Field(default="document-changes", description="Kafka topic for document changes")
+    kafka_group_id: str | None = Field(default=None, description="Kafka consumer group ID (optional)")
+    kafka_acks: str = Field(default="1", description="Kafka acknowledgment setting (0, 1, or 'all')")
+    kafka_auto_offset_reset: str = Field(default="earliest", description="Kafka auto offset reset (earliest/latest)")
+
+    @field_validator("kafka_acks")
+    @classmethod
+    def validate_acks(cls, v: str) -> str:
+        """Validate acks value."""
+        valid_acks = ["0", "1", "all"]
+        if v not in valid_acks:
+            raise ValueError(f"Invalid kafka_acks '{v}'. Must be one of: {', '.join(valid_acks)}")
+        return v
+
+    @field_validator("kafka_auto_offset_reset")
+    @classmethod
+    def validate_auto_offset_reset(cls, v: str) -> str:
+        """Validate auto_offset_reset value."""
+        valid_values = ["earliest", "latest"]
+        if v not in valid_values:
+            raise ValueError(f"Invalid kafka_auto_offset_reset '{v}'. Must be one of: {', '.join(valid_values)}")
+        return v
 
 
-class OpenAIConfig(BaseConfig):
-    """OpenAI API configuration."""
+class OpenAIConfig(BaseModel):
+    """OpenAI API configuration.
 
-    openai_api_key: str = Field(..., description="OpenAI API key")
-    openai_embedding_model: str = Field(default="text-embedding-3-small", description="Embedding model")
-    openai_chat_model: str = Field(default="gpt-4", description="Chat model")
+    This is a standalone Pydantic model used for composition in service configs.
+    Supports both OpenAI API and OpenAI-compatible local servers (LM Studio, etc.).
+    """
+
+    openai_api_key: str = Field(..., description="OpenAI API key (any non-empty value for local LLMs)")
+    openai_api_base: str | None = Field(default=None, description="OpenAI API base URL for compatible APIs (e.g., LM Studio)")
+    openai_model: str = Field(default="gpt-4o-mini", description="OpenAI model name")
+    openai_max_tokens: int = Field(default=500, ge=1, le=32000, description="Maximum tokens in response")
+    openai_temperature: float = Field(default=0.7, ge=0.0, le=2.0, description="Sampling temperature (0.0-2.0)")
+    openai_max_retries: int = Field(default=3, ge=0, description="Maximum retry attempts")
+    openai_timeout: int = Field(default=60, ge=1, description="Request timeout in seconds")
 
     @field_validator("openai_api_key")
     @classmethod
     def validate_api_key(cls, v: str) -> str:
-        """Validate API key format."""
-        if not v or v == "sk-your-key-here":
-            raise ValueError("OpenAI API key not configured. Set OPENAI_API_KEY in your .env file with your actual API key.")
-        if not v.startswith("sk-"):
-            raise ValueError("Invalid OpenAI API key format. Should start with 'sk-'")
+        """Validate API key format.
+
+        Note: When using a custom base URL (e.g., LM Studio), any non-empty
+        key is accepted since local LLM servers don't require real API keys.
+        The actual OpenAI API will reject invalid keys if used.
+        """
+        if not v:
+            raise ValueError("OpenAI API key not configured. Set OPENAI_API_KEY in your .env file.")
+        # For local LLMs and testing, any non-empty key is valid
+        # The OpenAI API itself will validate the key format when actually used
         return v
+
+    @field_validator("openai_api_base")
+    @classmethod
+    def validate_base_url(cls, v: str | None) -> str | None:
+        """Validate and normalize base URL."""
+        if v is None or v == "":
+            return None
+        if not v.startswith(("http://", "https://")):
+            raise ValueError(f"Invalid base URL '{v}'. Must start with http:// or https://")
+        return v.rstrip("/")
+
+
+class MinIOConfig(BaseModel):
+    """MinIO storage configuration.
+
+    This is a standalone Pydantic model used for composition in service configs.
+    """
+
+    minio_endpoint: str = Field(..., description="MinIO endpoint")
+    minio_access_key: str = Field(..., description="MinIO access key")
+    minio_secret_key: str = Field(..., description="MinIO secret key")
+    minio_bucket: str = Field(default="documents", description="MinIO bucket name")
+    minio_secure: bool = Field(default=False, description="Use HTTPS for MinIO")
+
+    @field_validator("minio_endpoint")
+    @classmethod
+    def validate_endpoint(cls, v: str) -> str:
+        """Validate and normalize endpoint format."""
+        # Normalize endpoint
+        if v.startswith(("http://", "https://")):
+            return v.rstrip("/")
+        # Assume http:// if no scheme
+        return f"http://{v}".rstrip("/")
+
+
+# YAML/JSON Configuration
+
+
+class Config:
+    """Configuration class for YAML/JSON dataset config files.
+
+    Auto-detects format from file extension and loads the config file.
+    Stores config internally as dict.
+
+    Example:
+        config = Config("config/ingestion_config.yaml")
+        value = config.get_dataset_value("nutritionfacts.org", "chunking", "chunk_size")
+    """
+
+    def __init__(self, config_path: str | Path) -> None:
+        """Initialize Config and load from file.
+
+        Args:
+            config_path: Path to YAML or JSON config file
+
+        Raises:
+            ConfigurationError: If file doesn't exist or has invalid format
+        """
+        self._config_path = Path(config_path)
+
+        if not self._config_path.exists():
+            raise ConfigurationError(f"Configuration file not found: {config_path}")
+
+        suffix = self._config_path.suffix.lower()
+        if suffix == ".json":
+            self._data = self._load_from_json()
+        elif suffix in [".yaml", ".yml"]:
+            self._data = self._load_from_yaml()
+        else:
+            raise ConfigurationError(f"Unsupported config file format: {suffix}. Must be .json, .yaml, or .yml")
+
+        self._defaults = self._data.get("defaults", {})  # nosemgrep: xrag.no-dict-get-with-default
+        self._datasets = self._data.get("datasets", {})  # nosemgrep: xrag.no-dict-get-with-default
+
+    def _load_from_yaml(self) -> dict[str, Any]:
+        """Load configuration from YAML file.
+
+        Returns:
+            Configuration dictionary
+
+        Raises:
+            ConfigurationError: If YAML is invalid
+        """
+        try:
+            with self._config_path.open("r", encoding="utf-8") as f:
+                config_data = yaml.safe_load(f)
+        except yaml.YAMLError as e:
+            raise ConfigurationError(f"Invalid YAML in {self._config_path}: {e}") from e
+
+        if config_data is None:
+            raise ConfigurationError(f"Configuration file is empty: {self._config_path}")
+
+        if not isinstance(config_data, dict):
+            raise ConfigurationError(f"Configuration must be a YAML mapping, got {type(config_data).__name__}")
+
+        return config_data
+
+    def _load_from_json(self) -> dict[str, Any]:
+        """Load configuration from JSON file.
+
+        Returns:
+            Configuration dictionary
+
+        Raises:
+            ConfigurationError: If JSON is invalid
+        """
+        import json
+
+        try:
+            with self._config_path.open("r", encoding="utf-8") as f:
+                config_data = json.load(f)
+        except json.JSONDecodeError as e:
+            raise ConfigurationError(f"Invalid JSON in {self._config_path}: {e}") from e
+
+        if not isinstance(config_data, dict):
+            raise ConfigurationError(f"Configuration must be a JSON object, got {type(config_data).__name__}")
+
+        return config_data
+
+    def get_datasets(self) -> list[str]:
+        """Get list of all dataset names."""
+        return list(self._datasets.keys())
+
+    def has_dataset(self, dataset_name: str) -> bool:
+        """Check if dataset exists."""
+        return dataset_name in self._datasets
+
+    def get_dataset_value(self, dataset_name: str, *keys: str, config_slug: str | None = None) -> Any:  # noqa: C901, ANN401  # nosemgrep: xrag.no-default-parameter-values
+        """Get a value from dataset config with defaults merging.
+
+        Args:
+            dataset_name: Dataset name
+            *keys: Nested keys to traverse
+            config_slug: Optional config variant slug
+
+        Returns:
+            Configuration value
+
+        Raises:
+            ConfigurationError: If dataset not found or key path invalid
+        """
+        if not self.has_dataset(dataset_name):
+            available = ", ".join(self.get_datasets()) if self.get_datasets() else "none"
+            raise ConfigurationError(f"Dataset '{dataset_name}' not found in {self._config_path}. Available: {available}")
+
+        merged = dict(self._defaults)
+        dataset = self._datasets[dataset_name]
+        for key, value in dataset.items():
+            if key != "configs":
+                merged[key] = value  # noqa: PERF403
+
+        if config_slug:
+            configs = dataset.get("configs", [])  # nosemgrep: xrag.no-dict-get-with-default
+            variant = None
+            for cfg in configs:
+                if cfg.get("slug") == config_slug:
+                    variant = cfg
+                    break
+            if variant is None:
+                available_slugs = [cfg.get("slug") for cfg in configs] if configs else []
+                raise ConfigurationError(
+                    f"Config slug '{config_slug}' not found for dataset '{dataset_name}'. "
+                    f"Available: {', '.join(available_slugs) if available_slugs else 'none'}"
+                )
+            for key, value in variant.items():
+                if key not in ["slug", "description"]:
+                    merged[key] = value  # noqa: PERF403
+
+        current = merged
+        for key in keys:
+            if not isinstance(current, dict):
+                path = ".".join(keys)
+                raise ConfigurationError(f"Cannot access '{key}' in '{path}' - expected dict, got {type(current).__name__}")
+            if key not in current:
+                path = ".".join(keys)
+                raise ConfigurationError(f"Key '{path}' not found for dataset '{dataset_name}' in {self._config_path}")
+            current = current[key]
+
+        return current
+
+    def get_dataset_config(  # nosemgrep: xrag.no-default-parameter-values
+        self, dataset_name: str, config_slug: str | None = None
+    ) -> dict[str, Any]:
+        """Get complete merged configuration for a dataset.
+
+        Args:
+            dataset_name: Dataset name
+            config_slug: Optional config variant slug
+
+        Returns:
+            Complete merged configuration dictionary
+        """
+        if not self.has_dataset(dataset_name):
+            available = ", ".join(self.get_datasets()) if self.get_datasets() else "none"
+            raise ConfigurationError(f"Dataset '{dataset_name}' not found in {self._config_path}. Available: {available}")
+
+        merged = dict(self._defaults)
+        dataset = self._datasets[dataset_name]
+        for key, value in dataset.items():
+            if key != "configs":
+                merged[key] = value  # noqa: PERF403
+
+        if config_slug:
+            configs = dataset.get("configs", [])  # nosemgrep: xrag.no-dict-get-with-default
+            variant = None
+            for cfg in configs:
+                if cfg.get("slug") == config_slug:
+                    variant = cfg
+                    break
+            if variant is None:
+                available_slugs = [cfg.get("slug") for cfg in configs] if configs else []
+                raise ConfigurationError(
+                    f"Config slug '{config_slug}' not found for dataset '{dataset_name}'. "
+                    f"Available: {', '.join(available_slugs) if available_slugs else 'none'}"
+                )
+            for key, value in variant.items():
+                if key not in ["slug", "description"]:
+                    merged[key] = value  # noqa: PERF403
+
+        return merged

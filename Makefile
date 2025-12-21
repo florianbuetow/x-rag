@@ -5,8 +5,8 @@
 
 .PHONY: help check init cluster-init
 .PHONY: cluster-start cluster-stop cluster-status cluster-clean cluster-reset cluster-destroy
-.PHONY: apps-generate-grpc apps-build apps-deploy
-.PHONY: test test-integration test-coverage test-e2e
+.PHONY: apps-generate-grpc apps-build apps-register apps-deploy apps-recycle apps-destroy
+.PHONY: test test-integration-config test-integration test-coverage test-e2e
 .PHONY: code-style code-format code-typecheck code-security code-deptry code-stats code-spell code-audit code-semgrep
 .PHONY: ci ci-quiet
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
@@ -22,7 +22,8 @@ CLUSTER_NAME := xrag-k8
 NAMESPACE := rag-system
 REGISTRY_NAME := xrag-k8-kind-registry
 REGISTRY_PORT := 5000
-SETUP_DIR := .setup
+REGISTRY := localhost:5000
+HELPERS := scripts/cluster_helper_functions.sh
 
 # Color codes for output
 RED := \033[0;31m
@@ -57,7 +58,6 @@ init: ## Initialize local development environment
 	@mkdir -p reports/coverage
 	@mkdir -p reports/security
 	@mkdir -p data/storage
-	@mkdir -p .setup
 	@echo "Installing Python dependencies..."
 	@uv sync --all-extras
 	@echo ""
@@ -78,12 +78,74 @@ cluster-init: init check ## Build Docker images and prepare for deployment
 cluster-start: ## Start the cluster and all services
 	@echo "$(BLUE)=== Starting X-RAG Platform ===$(NC)"
 	@echo ""
-	@mkdir -p $(SETUP_DIR)
-	@$(MAKE) .setup-cluster
-	@$(MAKE) .setup-registry
-	@$(MAKE) .deploy-infrastructure
-	@$(MAKE) .deploy-monitoring
+	@. $(HELPERS) && if ! docker_running; then \
+		echo "$(RED)ERROR: Docker daemon is not running$(NC)"; \
+		echo "$(YELLOW)Please start Docker and try again$(NC)"; \
+		exit 1; \
+	fi
+	@. $(HELPERS) && if ! docker_healthy; then \
+		echo "$(RED)ERROR: Docker is experiencing I/O errors and is unhealthy$(NC)"; \
+		echo "$(YELLOW)Please restart Docker:$(NC)"; \
+		echo "  - Docker Desktop: Quit and restart the application"; \
+		echo "  - Docker Engine (systemd): sudo systemctl restart docker"; \
+		echo "  - Colima: colima stop && colima start"; \
+		echo "  - After restart, wait for Docker to be fully running and try again"; \
+		exit 1; \
+	fi
+	@. $(HELPERS) && if cluster_running; then \
+		echo "$(GREEN)[SKIP]$(NC) Cluster already exists"; \
+	else \
+		echo "$(YELLOW)[CREATE]$(NC) Setting up Kind cluster..."; \
+		./scripts/create-cluster.sh; \
+	fi
+	@. $(HELPERS) && if registry_running; then \
+		echo "$(GREEN)[SKIP]$(NC) Registry already running"; \
+	else \
+		echo "$(YELLOW)[CREATE]$(NC) Setting up container registry..."; \
+		./scripts/setup-registry.sh; \
+	fi
+	@. $(HELPERS) && { \
+		if infrastructure_exists; then \
+			echo "$(GREEN)[SKIP]$(NC) Infrastructure already deployed"; \
+			INFRA_DEPLOYED=0; \
+		else \
+			echo "$(YELLOW)[DEPLOY]$(NC) Deploying infrastructure services..."; \
+			./scripts/deploy-infrastructure.sh; \
+			INFRA_DEPLOYED=1; \
+		fi; \
+		if monitoring_exists; then \
+			echo "$(GREEN)[SKIP]$(NC) Monitoring already deployed"; \
+			MONITORING_DEPLOYED=0; \
+		else \
+			echo "$(YELLOW)[DEPLOY]$(NC) Deploying monitoring stack..."; \
+			./scripts/deploy-monitoring.sh; \
+			MONITORING_DEPLOYED=1; \
+		fi; \
+		if [ "$$INFRA_DEPLOYED" -eq 1 ]; then \
+			echo ""; \
+			echo "$(BLUE)=== Verifying Infrastructure Services ===$(NC)"; \
+			if ! wait_for_infrastructure 60; then \
+				echo "$(RED)ERROR: Infrastructure services failed to become ready within 60s$(NC)"; \
+				exit 1; \
+			fi; \
+		fi; \
+		if [ "$$MONITORING_DEPLOYED" -eq 1 ]; then \
+			echo ""; \
+			echo "$(BLUE)=== Verifying Monitoring Services ===$(NC)"; \
+			if ! wait_for_monitoring 60; then \
+				echo "$(RED)ERROR: Monitoring services failed to become ready within 60s$(NC)"; \
+				exit 1; \
+			fi; \
+		fi; \
+	}
+	@$(MAKE) apps-register
 	@$(MAKE) apps-deploy
+	@echo ""
+	@echo "$(BLUE)=== Verifying Application Services ===$(NC)"
+	@. $(HELPERS) && if ! wait_for_apps 60; then \
+		echo "$(RED)ERROR: Application services failed to become ready within 60s$(NC)"; \
+		exit 1; \
+	fi
 	@echo ""
 	@echo "$(GREEN)===== X-RAG Platform Started! =====$(NC)"
 	@echo ""
@@ -98,10 +160,21 @@ cluster-start: ## Start the cluster and all services
 	@echo ""
 
 cluster-stop: ## Shutdown the cluster
-	@echo "$(YELLOW)Shutting down cluster...$(NC)"
-	@kind delete cluster --name $(CLUSTER_NAME) 2>/dev/null || true
-	@docker rm -f $(REGISTRY_NAME) 2>/dev/null || true
-	@echo "$(GREEN)Cluster stopped$(NC)"
+	@. $(HELPERS) && if ! docker_running; then \
+		echo "$(RED)ERROR: Docker daemon is not running$(NC)"; \
+		echo "$(YELLOW)Please start Docker and try again$(NC)"; \
+		exit 1; \
+	fi
+	@. $(HELPERS) && if ! docker_healthy; then \
+		echo "$(RED)ERROR: Docker is experiencing I/O errors and is unhealthy$(NC)"; \
+		echo "$(YELLOW)Please restart Docker:$(NC)"; \
+		echo "  - Docker Desktop: Quit and restart the application"; \
+		echo "  - Docker Engine (systemd): sudo systemctl restart docker"; \
+		echo "  - Colima: colima stop && colima start"; \
+		echo "  - After restart, wait for Docker to be fully running and try again"; \
+		exit 1; \
+	fi
+	@./scripts/cluster-stop.sh
 	@echo ""
 
 cluster-status: ## Display current system status and test all service connectivity
@@ -110,43 +183,82 @@ cluster-status: ## Display current system status and test all service connectivi
 
 cluster-clean: ## Delete cluster, registry, and all data
 	@echo "$(YELLOW)Deleting cluster and all data...$(NC)"
+	@. $(HELPERS) && if ! docker_running; then \
+		echo "$(RED)ERROR: Docker daemon is not running$(NC)"; \
+		echo "$(YELLOW)Please start Docker and try again$(NC)"; \
+		exit 1; \
+	fi
+	@. $(HELPERS) && if ! docker_healthy; then \
+		echo "$(RED)ERROR: Docker is experiencing I/O errors and is unhealthy$(NC)"; \
+		echo "$(YELLOW)Please restart Docker:$(NC)"; \
+		echo "  - Docker Desktop: Quit and restart the application"; \
+		echo "  - Docker Engine (systemd): sudo systemctl restart docker"; \
+		echo "  - Colima: colima stop && colima start"; \
+		echo "  - After restart, wait for Docker to be fully running and try again"; \
+		exit 1; \
+	fi
 	@kind delete cluster --name $(CLUSTER_NAME) 2>/dev/null || true
 	@docker rm -f $(REGISTRY_NAME) 2>/dev/null || true
-	@rm -rf $(SETUP_DIR)
 	@rm -rf data/storage/*
 	@echo "$(GREEN)Cleanup complete$(NC)"
 	@echo ""
 
-cluster-reset: ## Reset all pods and data (keeps cluster running, deletes all state)
-	@echo "$(YELLOW)WARNING: Deleting all pod data and restarting services$(NC)"
+cluster-reset: ## Reset workloads and data (requires running cluster, preserves cluster/registry)
 	@echo "$(BLUE)=== Resetting X-RAG Platform ===$(NC)"
+	@. $(HELPERS) && if ! docker_running; then \
+		echo "$(RED)ERROR: Docker daemon is not running$(NC)"; \
+		echo "$(YELLOW)Please start Docker and try again$(NC)"; \
+		exit 1; \
+	fi
+	@. $(HELPERS) && if ! docker_healthy; then \
+		echo "$(RED)ERROR: Docker is experiencing I/O errors and is unhealthy$(NC)"; \
+		echo "$(YELLOW)Please restart Docker:$(NC)"; \
+		echo "  - Docker Desktop: Quit and restart the application"; \
+		echo "  - Docker Engine (systemd): sudo systemctl restart docker"; \
+		echo "  - Colima: colima stop && colima start"; \
+		echo "  - After restart, wait for Docker to be fully running and try again"; \
+		exit 1; \
+	fi
+	@. $(HELPERS) && if ! cluster_running; then \
+		echo "$(RED)ERROR: Cluster is not running$(NC)"; \
+		echo "$(YELLOW)Run 'make cluster-start' first$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(YELLOW)WARNING: Deleting all pod data and restarting services$(NC)"
 	@echo ""
-	@echo "$(YELLOW)[1/6] Deleting all workloads...$(NC)"
+	@echo "$(YELLOW)[1/5] Deleting all workloads...$(NC)"
 	@kubectl delete deployments --all -n $(NAMESPACE) --ignore-not-found
 	@kubectl delete statefulsets --all -n $(NAMESPACE) --ignore-not-found
 	@kubectl delete jobs --all -n $(NAMESPACE) --ignore-not-found
 	@echo "$(GREEN)✓ All workloads deleted$(NC)"
 	@echo ""
-	@echo "$(YELLOW)[2/6] Deleting all services and configmaps...$(NC)"
+	@echo "$(YELLOW)[2/5] Deleting all services and configmaps...$(NC)"
 	@kubectl delete services --all -n $(NAMESPACE) --ignore-not-found
 	@kubectl delete configmaps --all -n $(NAMESPACE) --ignore-not-found
 	@echo "$(GREEN)✓ All services and configs deleted$(NC)"
 	@echo ""
-	@echo "$(YELLOW)[3/6] Deleting all persistent volume claims...$(NC)"
+	@echo "$(YELLOW)[3/5] Deleting all persistent volume claims...$(NC)"
 	@kubectl delete pvc --all -n $(NAMESPACE) --ignore-not-found
 	@echo "$(GREEN)✓ All data deleted$(NC)"
 	@echo ""
-	@echo "$(YELLOW)[4/6] Clearing deployment checkpoints...$(NC)"
-	@rm -f $(SETUP_DIR)/infrastructure.done $(SETUP_DIR)/monitoring.done
-	@echo "$(GREEN)✓ Checkpoints cleared$(NC)"
-	@echo ""
-	@echo "$(YELLOW)[5/6] Waiting for cleanup to complete...$(NC)"
+	@echo "$(YELLOW)[4/5] Waiting for cleanup to complete...$(NC)"
 	@sleep 5
 	@echo "$(GREEN)✓ Cleanup complete$(NC)"
 	@echo ""
-	@echo "$(YELLOW)[6/6] Redeploying all services...$(NC)"
-	@$(MAKE) .deploy-infrastructure
-	@$(MAKE) .deploy-monitoring
+	@echo "$(YELLOW)[5/5] Redeploying all services...$(NC)"
+	@. $(HELPERS) && if infrastructure_exists; then \
+		echo "$(GREEN)[SKIP]$(NC) Infrastructure already deployed"; \
+	else \
+		echo "$(YELLOW)[DEPLOY]$(NC) Deploying infrastructure services..."; \
+		./scripts/deploy-infrastructure.sh; \
+	fi
+	@. $(HELPERS) && if monitoring_exists; then \
+		echo "$(GREEN)[SKIP]$(NC) Monitoring already deployed"; \
+	else \
+		echo "$(YELLOW)[DEPLOY]$(NC) Deploying monitoring stack..."; \
+		./scripts/deploy-monitoring.sh; \
+	fi
+	@$(MAKE) apps-register
 	@$(MAKE) apps-deploy
 	@echo ""
 	@echo "$(GREEN)===== Reset Complete! =====$(NC)"
@@ -155,20 +267,10 @@ cluster-reset: ## Reset all pods and data (keeps cluster running, deletes all st
 	@echo "Run 'make cluster-status' to verify all services are running."
 	@echo ""
 
-cluster-destroy: cluster-stop ## Stop cluster and delete all xrag-* Docker images
-	@echo "$(YELLOW)Deleting project Docker images...$(NC)"
-	@for img in $$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "xrag-"); do \
-		echo "  Deleting $$img"; \
-		docker rmi -f $$img 2>/dev/null || true; \
-	done
-	@echo "  Deleting registry:2"; docker rmi -f registry:2 2>/dev/null || true
-	@echo "  Deleting kindest/node"; docker rmi -f kindest/node 2>/dev/null || true
-	@for img in $$(grep -rh "image:" infra/k8s/ | grep -v "^#" | awk '{print $$NF}' | sort -u); do \
-		echo "  Deleting $$img"; \
-		docker rmi -f $$img 2>/dev/null || true; \
-	done
-	@rm -rf $(SETUP_DIR)
-	@echo "$(GREEN)All project images deleted$(NC)"
+cluster-destroy: cluster-stop ## Stop cluster and delete project Docker images
+	@$(MAKE) apps-destroy
+	@./scripts/cluster-destroy-images.sh
+	@echo "$(YELLOW)Note: Third-party images (redis, kafka, weaviate, etc.) were NOT deleted$(NC)"
 	@echo ""
 
 ##@ Application Build & Deploy
@@ -178,14 +280,33 @@ apps-generate-grpc: ## Generate Python gRPC code from protocol buffers
 	@./scripts/generate-grpc.sh
 	@echo ""
 
-apps-build: ## Build all Docker images and push to local registry
+apps-build: ## Build Docker images locally
 	@echo "$(BLUE)=== Building Docker Images ===$(NC)"
 	@./scripts/build-images.sh
 	@echo ""
 
-apps-deploy: ## Deploy application services to cluster
+apps-register: ## Register Docker images with local registry
+	@echo "$(BLUE)=== Registering Images with Registry ===$(NC)"
+	@./scripts/register-images.sh
+	@echo ""
+
+apps-deploy: ## Deploy application services to cluster (manifests only, does not register images)
 	@echo "$(BLUE)=== Deploying Applications ===$(NC)"
 	@./scripts/deploy-apps.sh
+	@echo ""
+
+apps-recycle: ## Build + register + deploy (full cycle)
+	@echo "$(BLUE)=== Recycling Applications (Full Cycle) ===$(NC)"
+	@echo ""
+	@$(MAKE) apps-build
+	@$(MAKE) apps-register
+	@$(MAKE) apps-deploy
+	@echo ""
+	@echo "$(GREEN)✓ Applications recycled$(NC)"
+	@echo ""
+
+apps-destroy: ## Delete all built app Docker images
+	@./scripts/apps-destroy.sh
 	@echo ""
 
 ##@ Code Quality & Validation
@@ -280,13 +401,18 @@ test: ## Run unit tests only (fast, no cluster required)
 	@uv run pytest tests/ -v --ignore=tests/integration
 	@echo ""
 
+test-integration-config: ## Run config-related integration tests (verifies config classes and YAML files)
+	@echo "$(BLUE)=== Running Config Integration Tests ===$(NC)"
+	@uv run pytest tests/integration/test_config_integration.py tests/integration/test_config_files_integration.py -v
+	@echo ""
+
 test-integration: ## Run integration tests (requires running cluster)
 	@echo "$(BLUE)=== Running Integration Tests ===$(NC)"
 	@echo "$(YELLOW)Note: Requires running cluster (make cluster-start)$(NC)"
 	@uv run pytest tests/integration/ -v -s
 	@echo ""
 
-verify-otel: ## Verify OTel metrics pipeline (Services -> Alloy -> Prometheus)
+test-integration-otel:: ## Verify OTel metrics pipeline (Services -> Alloy -> Prometheus)
 	@./scripts/verify-otel-metrics.sh
 	@echo ""
 
@@ -523,39 +649,4 @@ eval: ## Run evaluation (CONFIG=path, default: evals/configs/production.yaml)
 	@echo ""
 
 # Internal targets (prefixed with . to hide from help)
-
-.setup-cluster:
-	@if [ -f $(SETUP_DIR)/cluster.done ]; then \
-		echo "$(GREEN)[SKIP]$(NC) Cluster already exists"; \
-	else \
-		echo "$(YELLOW)[CREATE]$(NC) Setting up Kind cluster..."; \
-		./scripts/create-cluster.sh; \
-		touch $(SETUP_DIR)/cluster.done; \
-	fi
-
-.setup-registry:
-	@if [ -f $(SETUP_DIR)/registry.done ]; then \
-		echo "$(GREEN)[SKIP]$(NC) Registry already running"; \
-	else \
-		echo "$(YELLOW)[CREATE]$(NC) Setting up container registry..."; \
-		./scripts/setup-registry.sh; \
-		touch $(SETUP_DIR)/registry.done; \
-	fi
-
-.deploy-infrastructure:
-	@if [ -f $(SETUP_DIR)/infrastructure.done ]; then \
-		echo "$(GREEN)[SKIP]$(NC) Infrastructure already deployed"; \
-	else \
-		echo "$(YELLOW)[DEPLOY]$(NC) Deploying infrastructure services..."; \
-		./scripts/deploy-infrastructure.sh; \
-		touch $(SETUP_DIR)/infrastructure.done; \
-	fi
-
-.deploy-monitoring:
-	@if [ -f $(SETUP_DIR)/monitoring.done ]; then \
-		echo "$(GREEN)[SKIP]$(NC) Monitoring already deployed"; \
-	else \
-		echo "$(YELLOW)[DEPLOY]$(NC) Deploying monitoring stack..."; \
-		./scripts/deploy-monitoring.sh; \
-		touch $(SETUP_DIR)/monitoring.done; \
-	fi
+# Note: Checkpoint logic removed - all checks now use helper functions directly
