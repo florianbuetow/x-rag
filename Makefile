@@ -24,6 +24,10 @@ REGISTRY_NAME := xrag-k8-kind-registry
 REGISTRY_PORT := 5000
 SETUP_DIR := .setup
 
+# Load .env file if it exists (for OBSERVABILITY_ENABLED, etc.)
+-include .env
+export OBSERVABILITY_ENABLED ?= true
+
 # Color codes for output
 RED := \033[0;31m
 GREEN := \033[0;32m
@@ -91,8 +95,12 @@ cluster-start: ## Start the cluster and all services
 	@echo "  Search UI:     http://localhost:8080"
 	@echo "  Ingestion API: http://localhost:8082"
 	@echo "  Weaviate:      http://localhost:8081/v1/.well-known/ready"
-	@echo "  Grafana:       http://localhost:3000 (admin/admin)"
-	@echo "  Prometheus:    http://localhost:9090"
+	@if [ "$(OBSERVABILITY_ENABLED)" = "true" ]; then \
+		echo "  Grafana:       http://localhost:3000 (admin/admin)"; \
+		echo "  Prometheus:    http://localhost:9090"; \
+	else \
+		echo "  Observability: $(YELLOW)Disabled$(NC)"; \
+	fi
 	@echo "  Redis:         localhost:6379"
 	@echo "  Kafka:         localhost:9092"
 	@echo ""
@@ -552,7 +560,9 @@ eval: ## Run evaluation (CONFIG=path, default: evals/configs/production.yaml)
 	fi
 
 .deploy-monitoring:
-	@if [ -f $(SETUP_DIR)/monitoring.done ]; then \
+	@if [ "$(OBSERVABILITY_ENABLED)" != "true" ]; then \
+		echo "$(YELLOW)[SKIP]$(NC) Observability disabled (OBSERVABILITY_ENABLED=false)"; \
+	elif [ -f $(SETUP_DIR)/monitoring.done ]; then \
 		echo "$(GREEN)[SKIP]$(NC) Monitoring already deployed"; \
 	else \
 		echo "$(YELLOW)[DEPLOY]$(NC) Deploying monitoring stack..."; \

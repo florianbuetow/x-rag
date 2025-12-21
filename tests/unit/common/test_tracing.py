@@ -18,8 +18,11 @@ from src.common import tracing
 
 
 @pytest.fixture(autouse=True)
-def reset_tracing_state():
+def reset_tracing_state(monkeypatch):
     """Reset global tracing state before and after each test."""
+    # Ensure tracing is enabled by default for tests (unless overridden)
+    monkeypatch.setenv("OTEL_METRICS_ENABLED", "true")
+
     # Reset before test
     tracing._tracer_provider = None
 
@@ -33,6 +36,15 @@ def reset_tracing_state():
 
 class TestInitTracing:
     """Tests for init_tracing function."""
+
+    def test_init_tracing_returns_none_when_disabled(self, monkeypatch):
+        """Tests that init_tracing returns None when OTEL_METRICS_ENABLED=false."""
+        monkeypatch.setenv("OTEL_METRICS_ENABLED", "false")
+
+        result = tracing.init_tracing(service_name="test-service", otlp_endpoint=None, environment="test")
+
+        assert result is None
+        assert tracing._tracer_provider is None
 
     @patch("src.common.tracing.OTLPSpanExporter")
     @patch("src.common.tracing.BatchSpanProcessor")

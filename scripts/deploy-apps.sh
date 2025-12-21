@@ -21,7 +21,14 @@ fi
 : "${OPENAI_EMBEDDING_MODEL:=text-embedding-3-small}"
 : "${OPENAI_API_KEY:=sk-your-key-here}"
 
-export OPENAI_API_BASE OPENAI_MODEL OPENAI_EMBEDDING_MODEL OPENAI_API_KEY
+# Derive OTEL_METRICS_ENABLED from OBSERVABILITY_ENABLED
+if [[ "${OBSERVABILITY_ENABLED:-true}" == "false" ]]; then
+    OTEL_METRICS_ENABLED="false"
+else
+    OTEL_METRICS_ENABLED="true"
+fi
+
+export OPENAI_API_BASE OPENAI_MODEL OPENAI_EMBEDDING_MODEL OPENAI_API_KEY OTEL_METRICS_ENABLED
 
 echo "Deploying application services to namespace: ${NAMESPACE}..."
 echo ""
@@ -49,7 +56,7 @@ for service in "${SERVICES[@]}"; do
 
     # Apply manifests with environment variable substitution
     for manifest in "${manifest_dir}"/*.yaml; do
-        envsubst '${OPENAI_API_BASE} ${OPENAI_MODEL} ${OPENAI_EMBEDDING_MODEL} ${OPENAI_API_KEY}' < "${manifest}" | kubectl apply -n "${NAMESPACE}" -f -
+        envsubst '${OPENAI_API_BASE} ${OPENAI_MODEL} ${OPENAI_EMBEDDING_MODEL} ${OPENAI_API_KEY} ${OTEL_METRICS_ENABLED}' < "${manifest}" | kubectl apply -n "${NAMESPACE}" -f -
     done
 
     echo "  ✓ ${service} manifests applied"

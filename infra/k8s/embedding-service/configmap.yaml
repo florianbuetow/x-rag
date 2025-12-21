@@ -27,4 +27,5 @@ data:
 
   # Distributed tracing (OpenTelemetry)
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy.monitoring.svc.cluster.local:4317"
+  OTEL_METRICS_ENABLED: "${OTEL_METRICS_ENABLED}"
   ENVIRONMENT: "development"

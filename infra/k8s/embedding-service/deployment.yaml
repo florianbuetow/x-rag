@@ -101,6 +101,18 @@ spec:
                   name: embedding-service-config
                   key: OPENAI_TIMEOUT
 
+            # OpenTelemetry settings
+            - name: OTEL_METRICS_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: embedding-service-config
+                  key: OTEL_METRICS_ENABLED
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: embedding-service-config
+                  key: OTEL_EXPORTER_OTLP_ENDPOINT
+
             # Load from Secret
             - name: OPENAI_API_KEY
               valueFrom:

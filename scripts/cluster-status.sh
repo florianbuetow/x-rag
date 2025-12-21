@@ -5,6 +5,20 @@ NAMESPACE="rag-system"
 MONITORING_NAMESPACE="monitoring"
 CLUSTER_NAME="xrag-k8"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="${SCRIPT_DIR}/.."
+
+# Load environment variables from .env if it exists
+if [ -f "${PROJECT_ROOT}/.env" ]; then
+    set -a
+    # shellcheck disable=SC1091
+    source "${PROJECT_ROOT}/.env"
+    set +a
+fi
+
+# Default to true if not set
+: "${OBSERVABILITY_ENABLED:=true}"
+
 # Color codes
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -155,82 +169,88 @@ else
 fi
 echo ""
 
-# Check Monitoring Namespace and Pods
-echo -e "${BLUE}[Monitoring] Pods (${MONITORING_NAMESPACE})${NC}"
-if kubectl get namespace ${MONITORING_NAMESPACE} &>/dev/null; then
-    echo -e "  ${check_mark} Namespace '${MONITORING_NAMESPACE}' exists"
+# Check Monitoring Namespace and Pods (skip if observability disabled)
+if [[ "${OBSERVABILITY_ENABLED}" == "true" ]]; then
+    echo -e "${BLUE}[Monitoring] Pods (${MONITORING_NAMESPACE})${NC}"
+    if kubectl get namespace ${MONITORING_NAMESPACE} &>/dev/null; then
+        echo -e "  ${check_mark} Namespace '${MONITORING_NAMESPACE}' exists"
+        echo ""
+
+        # Get pod status
+        mon_pod_status=$(kubectl get pods -n ${MONITORING_NAMESPACE} --no-headers 2>/dev/null || echo "")
+
+        if [ -z "$mon_pod_status" ]; then
+            echo -e "  ${cross_mark} No pods found"
+        else
+            echo "  Pod Status:"
+            echo "$mon_pod_status" | while read line; do
+                pod_name=$(echo $line | awk '{print $1}')
+                ready=$(echo $line | awk '{print $2}')
+                status=$(echo $line | awk '{print $3}')
+
+                if [[ "$ready" == "1/1" ]] && [[ "$status" == "Running" ]]; then
+                    echo -e "    ${check_mark} ${pod_name}"
+                else
+                    echo -e "    ${cross_mark} ${pod_name} (${status}, ${ready})"
+                fi
+            done
+        fi
+    else
+        echo -e "  ${cross_mark} Namespace '${MONITORING_NAMESPACE}' not found"
+    fi
     echo ""
 
-    # Get pod status
-    mon_pod_status=$(kubectl get pods -n ${MONITORING_NAMESPACE} --no-headers 2>/dev/null || echo "")
+    # Test Prometheus
+    echo -e "${BLUE}[Monitoring] Prometheus${NC}"
+    if curl -s -f http://localhost:9090/-/healthy &>/dev/null; then
+        echo -e "  ${check_mark} Prometheus is healthy"
+        echo -e "  URL: http://localhost:9090"
 
-    if [ -z "$mon_pod_status" ]; then
-        echo -e "  ${cross_mark} No pods found"
+        # Get version via curl
+        prom_version=$(curl -s http://localhost:9090/api/v1/status/buildinfo 2>/dev/null | grep -o '"version":"[^"]*"' | cut -d'"' -f4)
+        if [ -n "$prom_version" ]; then
+            echo -e "  Version: ${prom_version}"
+        fi
     else
-        echo "  Pod Status:"
-        echo "$mon_pod_status" | while read line; do
-            pod_name=$(echo $line | awk '{print $1}')
-            ready=$(echo $line | awk '{print $2}')
-            status=$(echo $line | awk '{print $3}')
-
-            if [[ "$ready" == "1/1" ]] && [[ "$status" == "Running" ]]; then
-                echo -e "    ${check_mark} ${pod_name}"
-            else
-                echo -e "    ${cross_mark} ${pod_name} (${status}, ${ready})"
-            fi
-        done
+        echo -e "  ${cross_mark} Prometheus not accessible"
     fi
-else
-    echo -e "  ${cross_mark} Namespace '${MONITORING_NAMESPACE}' not found"
-fi
-echo ""
+    echo ""
 
-# Test Prometheus
-echo -e "${BLUE}[Monitoring] Prometheus${NC}"
-if curl -s -f http://localhost:9090/-/healthy &>/dev/null; then
-    echo -e "  ${check_mark} Prometheus is healthy"
-    echo -e "  URL: http://localhost:9090"
+    # Test Grafana
+    echo -e "${BLUE}[Monitoring] Grafana${NC}"
+    if curl -s -f http://localhost:3000 &>/dev/null; then
+        echo -e "  ${check_mark} Grafana is accessible"
+        echo -e "  URL: http://localhost:3000 (admin/admin)"
 
-    # Get version via curl
-    prom_version=$(curl -s http://localhost:9090/api/v1/status/buildinfo 2>/dev/null | grep -o '"version":"[^"]*"' | cut -d'"' -f4)
-    if [ -n "$prom_version" ]; then
-        echo -e "  Version: ${prom_version}"
-    fi
-else
-    echo -e "  ${cross_mark} Prometheus not accessible"
-fi
-echo ""
-
-# Test Grafana
-echo -e "${BLUE}[Monitoring] Grafana${NC}"
-if curl -s -f http://localhost:3000 &>/dev/null; then
-    echo -e "  ${check_mark} Grafana is accessible"
-    echo -e "  URL: http://localhost:3000 (admin/admin)"
-
-    # Get version via curl
-    grafana_version=$(curl -s http://localhost:3000/api/health 2>/dev/null | grep version | awk -F'"' '{print $4}')
-    if [ -n "$grafana_version" ]; then
-        echo -e "  Version: ${grafana_version}"
-    fi
-else
-    echo -e "  ${cross_mark} Grafana not accessible"
-fi
-echo ""
-
-# Test Kubernetes Dashboard
-echo -e "${BLUE}[Monitoring] Kubernetes Dashboard${NC}"
-if kubectl get pod -n kubernetes-dashboard -l k8s-app=kubernetes-dashboard &>/dev/null; then
-    dashboard_ready=$(kubectl get pod -n kubernetes-dashboard -l k8s-app=kubernetes-dashboard -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)
-    if [[ "$dashboard_ready" == "True" ]]; then
-        echo -e "  ${check_mark} Dashboard is running"
-        echo -e "  URL: https://localhost:8443"
+        # Get version via curl
+        grafana_version=$(curl -s http://localhost:3000/api/health 2>/dev/null | grep version | awk -F'"' '{print $4}')
+        if [ -n "$grafana_version" ]; then
+            echo -e "  Version: ${grafana_version}"
+        fi
     else
-        echo -e "  ${cross_mark} Dashboard not ready"
+        echo -e "  ${cross_mark} Grafana not accessible"
     fi
+    echo ""
+
+    # Test Kubernetes Dashboard
+    echo -e "${BLUE}[Monitoring] Kubernetes Dashboard${NC}"
+    if kubectl get pod -n kubernetes-dashboard -l k8s-app=kubernetes-dashboard &>/dev/null; then
+        dashboard_ready=$(kubectl get pod -n kubernetes-dashboard -l k8s-app=kubernetes-dashboard -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)
+        if [[ "$dashboard_ready" == "True" ]]; then
+            echo -e "  ${check_mark} Dashboard is running"
+            echo -e "  URL: https://localhost:8443"
+        else
+            echo -e "  ${cross_mark} Dashboard not ready"
+        fi
+    else
+        echo -e "  ${cross_mark} Dashboard not deployed"
+    fi
+    echo ""
 else
-    echo -e "  ${cross_mark} Dashboard not deployed"
+    echo -e "${BLUE}[Monitoring] Observability Stack${NC}"
+    echo -e "  ${YELLOW}DISABLED${NC} (OBSERVABILITY_ENABLED=false)"
+    echo ""
 fi
-echo ""
 
 # Test Search UI
 echo -e "${BLUE}[Application] Search UI${NC}"
@@ -275,9 +295,14 @@ running_pods=$(kubectl get pods -n ${NAMESPACE} --no-headers 2>/dev/null | { gre
 completed_pods=$(kubectl get pods -n ${NAMESPACE} --no-headers 2>/dev/null | { grep "0/1.*Completed" || true; } | wc -l | tr -d ' ')
 ready_pods=$((running_pods + completed_pods))
 
-# Count ready pods in monitoring namespace
-mon_total_pods=$(kubectl get pods -n ${MONITORING_NAMESPACE} --no-headers 2>/dev/null | wc -l | tr -d ' ')
-mon_running_pods=$(kubectl get pods -n ${MONITORING_NAMESPACE} --no-headers 2>/dev/null | { grep "1/1.*Running" || true; } | wc -l | tr -d ' ')
+# Count ready pods in monitoring namespace (only if enabled)
+if [[ "${OBSERVABILITY_ENABLED}" == "true" ]]; then
+    mon_total_pods=$(kubectl get pods -n ${MONITORING_NAMESPACE} --no-headers 2>/dev/null | wc -l | tr -d ' ')
+    mon_running_pods=$(kubectl get pods -n ${MONITORING_NAMESPACE} --no-headers 2>/dev/null | { grep "1/1.*Running" || true; } | wc -l | tr -d ' ')
+else
+    mon_total_pods=0
+    mon_running_pods=0
+fi
 
 if [ "$total_pods" -gt 0 ]; then
     echo -e "  rag-system Pods: ${ready_pods}/${total_pods} ready"
@@ -285,10 +310,14 @@ else
     echo -e "  rag-system Pods: No pods deployed"
 fi
 
-if [ "$mon_total_pods" -gt 0 ]; then
-    echo -e "  monitoring Pods: ${mon_running_pods}/${mon_total_pods} ready"
+if [[ "${OBSERVABILITY_ENABLED}" == "true" ]]; then
+    if [ "$mon_total_pods" -gt 0 ]; then
+        echo -e "  monitoring Pods: ${mon_running_pods}/${mon_total_pods} ready"
+    else
+        echo -e "  monitoring Pods: No pods deployed"
+    fi
 else
-    echo -e "  monitoring Pods: No pods deployed"
+    echo -e "  monitoring Pods: ${YELLOW}Disabled${NC}"
 fi
 
 # Overall status

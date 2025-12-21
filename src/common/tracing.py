@@ -54,7 +54,7 @@ def init_tracing(
     service_name: str,
     otlp_endpoint: str | None,
     environment: str,
-) -> TracerProvider:
+) -> TracerProvider | None:
     """Initialize OpenTelemetry tracing.
 
     Configures the global TracerProvider with OTLP export to Tempo.
@@ -66,13 +66,21 @@ def init_tracing(
                        env var or http://tempo.monitoring.svc.cluster.local:4317
         environment: Deployment environment tag (development, staging, production)
 
+    Environment variables:
+        OTEL_METRICS_ENABLED: Set to "false" to disable tracing (default: true)
+
     Returns:
-        Configured TracerProvider
+        Configured TracerProvider, or None if tracing is disabled
 
     Raises:
         RuntimeError: If tracing is already initialized
     """
     global _tracer_provider
+
+    enabled = os.getenv("OTEL_METRICS_ENABLED", "true").lower() == "true"
+    if not enabled:
+        logger.info("Tracing disabled via OTEL_METRICS_ENABLED=false")
+        return None
 
     if _tracer_provider is not None:
         logger.warning("Tracing already initialized, returning existing provider")

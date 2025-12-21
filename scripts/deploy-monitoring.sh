@@ -6,6 +6,18 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${SCRIPT_DIR}/.."
 DASHBOARDS_DIR="${PROJECT_ROOT}/infra/k8s/monitoring/grafana-dashboards"
 
+# Check if observability is disabled
+if [[ "${OBSERVABILITY_ENABLED:-true}" == "false" ]]; then
+    echo "=============================================="
+    echo "  Observability Stack DISABLED"
+    echo "=============================================="
+    echo ""
+    echo "Skipping deployment of monitoring namespace."
+    echo "Set OBSERVABILITY_ENABLED=true in .env to enable."
+    echo ""
+    exit 0
+fi
+
 echo "=============================================="
 echo "  Deploying Monitoring Stack"
 echo "=============================================="
