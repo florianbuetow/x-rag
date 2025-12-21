@@ -283,6 +283,11 @@ code-semgrep: ## Run Semgrep static analysis (no default values)
 
 ##@ Testing
 
+generate-load: ## Generate load for metrics dashboards (usage: make generate-load N=100 DELAY=0.1)
+	@echo "$(BLUE)=== Generating Load for Metrics ===$(NC)"
+	@./scripts/generate-load.sh $(or $(N),50) $(or $(DELAY),0.2)
+	@echo ""
+
 test: ## Run unit tests only (fast, no cluster required)
 	@echo "$(BLUE)=== Running Unit Tests ===$(NC)"
 	@uv run pytest tests/ -v --ignore=tests/integration
