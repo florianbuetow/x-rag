@@ -174,19 +174,21 @@ class TestConsumerConsume:
 
     @pytest.mark.asyncio
     async def test_consume_yields_events(self, consumer):
-        """consume() yields event dictionaries from messages."""
+        """consume() yields event dictionaries and trace context from messages."""
         with patch("src.indexer.consumer.AIOKafkaConsumer") as mock_kafka:
-            # Create mock messages
+            # Create mock messages with headers for trace context
             mock_messages = [
                 Mock(
                     value={"event_type": "created", "document_id": "doc1"},
                     partition=0,
                     offset=0,
+                    headers=[("traceparent", b"00-1234-5678-01")],
                 ),
                 Mock(
                     value={"event_type": "updated", "document_id": "doc2"},
                     partition=0,
                     offset=1,
+                    headers=None,  # Test message without headers
                 ),
             ]
 
@@ -202,7 +204,7 @@ class TestConsumerConsume:
             await consumer.start()
 
             events = []
-            async for event in consumer.consume():
+            async for event, _trace_ctx in consumer.consume():
                 events.append(event)
                 if len(events) >= 2:
                     break

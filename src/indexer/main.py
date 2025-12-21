@@ -15,6 +15,8 @@ from threading import Thread
 from types import FrameType
 from typing import cast
 
+from opentelemetry import context, trace
+
 from src.common.otel_metrics import init_otel_metrics, shutdown_otel_metrics
 from src.common.tracing import init_tracing, shutdown_tracing
 from src.indexer.config import IndexerConfig
@@ -180,23 +182,39 @@ class IndexerService:
 
         # Process events
         try:
-            async for event in self.consumer.consume():
+            async for event, trace_ctx in self.consumer.consume():
                 namespace = event["namespace"] if "namespace" in event else "default"
                 active_documents.inc()
 
-                with processing_duration.labels(namespace=namespace).time():
-                    try:
-                        result = await self.indexer.process_event(event)
-                        documents_processed_total.labels(status="success", namespace=namespace).inc()
-                        # Record chunks created if available
-                        if result and "chunks_created" in result:
-                            chunks_created_total.labels(namespace=namespace).inc(result["chunks_created"])
-                    except Exception as e:
-                        logger.error(f"Failed to process event: {e}", exc_info=True)
-                        documents_processed_total.labels(status="error", namespace=namespace).inc()
-                        errors_total.labels(stage="processing", error_type=type(e).__name__).inc()
-                    finally:
-                        active_documents.dec()
+                # Attach trace context from Kafka message to link with producer span
+                ctx = trace_ctx if trace_ctx else context.get_current()
+                tracer = trace.get_tracer(__name__)
+
+                with tracer.start_as_current_span(
+                    "indexer.process_document",
+                    context=ctx,
+                    kind=trace.SpanKind.CONSUMER,
+                ) as span:
+                    span.set_attribute("messaging.system", "kafka")
+                    span.set_attribute("messaging.operation", "consume")
+                    span.set_attribute("document.id", event.get("document_id", "unknown"))
+                    span.set_attribute("document.namespace", namespace)
+
+                    with processing_duration.labels(namespace=namespace).time():
+                        try:
+                            result = await self.indexer.process_event(event)
+                            documents_processed_total.labels(status="success", namespace=namespace).inc()
+                            # Record chunks created if available
+                            if result and "chunks_created" in result:
+                                chunks_created_total.labels(namespace=namespace).inc(result["chunks_created"])
+                                span.set_attribute("document.chunks_created", result["chunks_created"])
+                        except Exception as e:
+                            logger.error(f"Failed to process event: {e}", exc_info=True)
+                            documents_processed_total.labels(status="error", namespace=namespace).inc()
+                            errors_total.labels(stage="processing", error_type=type(e).__name__).inc()
+                            span.record_exception(e)
+                        finally:
+                            active_documents.dec()
 
         except asyncio.CancelledError:
             logger.info("Indexer task cancelled")

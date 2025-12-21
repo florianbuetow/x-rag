@@ -134,7 +134,7 @@ class TestKafkaClientPublish:
 
     @pytest.mark.asyncio
     async def test_publish_sends_message(self):
-        """Tests that publish sends message to topic."""
+        """Tests that publish sends message to topic with trace headers."""
         mock_producer = MagicMock()
         mock_producer.send_and_wait = AsyncMock()
 
@@ -144,7 +144,11 @@ class TestKafkaClientPublish:
         message = {"event_type": "document_created", "doc_id": "123"}
         await client.publish("test-topic", message)
 
-        mock_producer.send_and_wait.assert_called_once_with("test-topic", value=message)
+        # Verify send_and_wait was called with topic, value, and headers
+        mock_producer.send_and_wait.assert_called_once()
+        call_kwargs = mock_producer.send_and_wait.call_args[1]
+        assert call_kwargs["value"] == message
+        assert "headers" in call_kwargs  # Trace context headers injected
 
     @pytest.mark.asyncio
     async def test_publish_raises_when_not_started(self):

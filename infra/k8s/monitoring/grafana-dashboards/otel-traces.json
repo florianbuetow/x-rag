@@ -23,10 +23,27 @@
       "targets": [
         {
           "datasource": {"type": "tempo", "uid": "tempo"},
-          "queryType": "nativeSearch",
-          "serviceName": "${service:raw}",
+          "queryType": "traceqlSearch",
           "limit": 50,
-          "refId": "A"
+          "refId": "A",
+          "filters": [
+            {
+              "id": "service-name",
+              "tag": "service.name",
+              "operator": "=",
+              "scope": "resource",
+              "value": ["${service:raw}"],
+              "valueType": "string"
+            },
+            {
+              "id": "span-name",
+              "tag": "name",
+              "operator": "=",
+              "scope": "span",
+              "value": ["${traceName:raw}"],
+              "valueType": "string"
+            }
+          ]
         }
       ],
       "title": "Recent Traces",
@@ -306,19 +323,40 @@
   "templating": {
     "list": [
       {
-        "current": {"selected": false, "text": "", "value": ""},
+        "current": {"selected": true, "text": "All", "value": "$__all"},
         "hide": 0,
+        "includeAll": true,
         "label": "Service",
+        "multi": false,
         "name": "service",
         "options": [
-          {"selected": true, "text": "", "value": ""},
-          {"selected": false, "text": "search-ui", "value": "search-ui"},
-          {"selected": false, "text": "search-service", "value": "search-service"},
+          {"selected": true, "text": "All", "value": "$__all"},
           {"selected": false, "text": "embedding-service", "value": "embedding-service"},
           {"selected": false, "text": "indexer", "value": "indexer"},
-          {"selected": false, "text": "ingestion-api", "value": "ingestion-api"}
+          {"selected": false, "text": "ingestion-api", "value": "ingestion-api"},
+          {"selected": false, "text": "search-service", "value": "search-service"},
+          {"selected": false, "text": "search-ui", "value": "search-ui"}
         ],
-        "query": "",
+        "query": "embedding-service,indexer,ingestion-api,search-service,search-ui",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {"selected": true, "text": "All", "value": "$__all"},
+        "hide": 0,
+        "includeAll": true,
+        "label": "Trace Name",
+        "multi": false,
+        "name": "traceName",
+        "options": [
+          {"selected": true, "text": "All", "value": "$__all"},
+          {"selected": false, "text": "GET", "value": "GET"},
+          {"selected": false, "text": "POST", "value": "POST"},
+          {"selected": false, "text": "EmbedBatch", "value": "EmbedBatch"},
+          {"selected": false, "text": "Search", "value": "Search"}
+        ],
+        "query": "GET,POST,EmbedBatch,Search",
+        "skipUrlSync": false,
         "type": "custom"
       }
     ]
