@@ -7,6 +7,22 @@ NAMESPACE="rag-system"
 
 cd "${PROJECT_ROOT}"
 
+# Load environment variables from .env if it exists
+if [ -f ".env" ]; then
+    set -a
+    # shellcheck disable=SC1091
+    source .env
+    set +a
+fi
+
+# Set defaults for required variables
+: "${OPENAI_API_BASE:=https://api.openai.com/v1}"
+: "${OPENAI_MODEL:=gpt-4o-mini}"
+: "${OPENAI_EMBEDDING_MODEL:=text-embedding-3-small}"
+: "${OPENAI_API_KEY:=sk-your-key-here}"
+
+export OPENAI_API_BASE OPENAI_MODEL OPENAI_EMBEDDING_MODEL OPENAI_API_KEY
+
 echo "Deploying application services to namespace: ${NAMESPACE}..."
 echo ""
 
@@ -31,8 +47,10 @@ for service in "${SERVICES[@]}"; do
 
     echo "=== Deploying ${service} ==="
 
-    # Apply manifests
-    kubectl apply -f "${manifest_dir}/" -n "${NAMESPACE}"
+    # Apply manifests with environment variable substitution
+    for manifest in "${manifest_dir}"/*.yaml; do
+        envsubst '${OPENAI_API_BASE} ${OPENAI_MODEL} ${OPENAI_EMBEDDING_MODEL} ${OPENAI_API_KEY}' < "${manifest}" | kubectl apply -n "${NAMESPACE}" -f -
+    done
 
     echo "  ✓ ${service} manifests applied"
     echo ""
