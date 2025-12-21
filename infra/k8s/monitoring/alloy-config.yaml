@@ -292,11 +292,12 @@ data:
     }
     
     // =============================================================================
-    // SECTION 6: LOGGING CONFIGURATION
+    // SECTION 6: ALLOY INTERNAL LOGGING
     // =============================================================================
     //
-    // Configures Alloy's own logging output (not application logs).
+    // Configures Alloy's own logging output to stdout (NOT application log collection).
     // Useful for debugging Alloy itself when pipelines aren't working.
+    // For application log collection and shipping to Loki, see Section 9.
     //
     // Log levels (in order of verbosity):
     // - error: Only critical errors
