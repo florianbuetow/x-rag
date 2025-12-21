@@ -4,9 +4,7 @@ These tests verify that metric modules can be imported and metrics
 are properly created with the OTel SDK.
 """
 
-import pytest
-
-from src.common.metrics import HISTOGRAM_BUCKETS, OperationType, get_buckets
+from src.common.metrics import OperationType, get_buckets
 
 
 class TestBucketConfig:

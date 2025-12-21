@@ -184,7 +184,7 @@ def shutdown_otel_metrics() -> None:
 @contextmanager
 def track_latency(
     histogram: Histogram,
-    attributes: dict[str, str] | None = None,
+    attributes: dict[str, str],
 ) -> Generator[None, None, None]:
     """Context manager to track operation latency with a histogram.
 
@@ -208,4 +208,4 @@ def track_latency(
         yield
     finally:
         duration = time.perf_counter() - start_time
-        histogram.record(duration, attributes or {})
+        histogram.record(duration, attributes)

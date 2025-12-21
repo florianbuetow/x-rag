@@ -85,21 +85,21 @@ def _ensure_metrics() -> None:
 def record_request_duration(duration_seconds: float, operation: str) -> None:
     """Record request duration."""
     _ensure_metrics()
-    assert _request_duration is not None
+    assert _request_duration is not None  # nosec B101
     _request_duration.record(duration_seconds, {"operation": operation})
 
 
 def record_grpc_call_duration(duration_seconds: float, method: str) -> None:
     """Record gRPC call duration."""
     _ensure_metrics()
-    assert _grpc_call_duration is not None
+    assert _grpc_call_duration is not None  # nosec B101
     _grpc_call_duration.record(duration_seconds, {"method": method})
 
 
 def record_sources_returned(count: int) -> None:
     """Record number of sources returned."""
     _ensure_metrics()
-    assert _sources_returned is not None
+    assert _sources_returned is not None  # nosec B101
     _sources_returned.record(count)
 
 
@@ -111,14 +111,14 @@ def record_sources_returned(count: int) -> None:
 def inc_requests_total(status: str, mode: str) -> None:
     """Increment requests counter."""
     _ensure_metrics()
-    assert _requests_total is not None
+    assert _requests_total is not None  # nosec B101
     _requests_total.add(1, {"status": status, "mode": mode})
 
 
 def inc_errors_total(operation: str, error_type: str) -> None:
     """Increment error counter."""
     _ensure_metrics()
-    assert _errors_total is not None
+    assert _errors_total is not None  # nosec B101
     _errors_total.add(1, {"operation": operation, "error_type": error_type})
 
 
@@ -130,14 +130,14 @@ def inc_errors_total(operation: str, error_type: str) -> None:
 def inc_active_requests() -> None:
     """Increment active requests gauge."""
     _ensure_metrics()
-    assert _active_requests is not None
+    assert _active_requests is not None  # nosec B101
     _active_requests.add(1)
 
 
 def dec_active_requests() -> None:
     """Decrement active requests gauge."""
     _ensure_metrics()
-    assert _active_requests is not None
+    assert _active_requests is not None  # nosec B101
     _active_requests.add(-1)
 
 
@@ -149,12 +149,12 @@ def dec_active_requests() -> None:
 def get_request_duration() -> Histogram:
     """Get the request duration histogram for use with track_latency."""
     _ensure_metrics()
-    assert _request_duration is not None
+    assert _request_duration is not None  # nosec B101
     return _request_duration
 
 
 def get_grpc_call_duration() -> Histogram:
     """Get the gRPC call duration histogram for use with track_latency."""
     _ensure_metrics()
-    assert _grpc_call_duration is not None
+    assert _grpc_call_duration is not None  # nosec B101
     return _grpc_call_duration

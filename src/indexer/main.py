@@ -199,7 +199,8 @@ class IndexerService:
                 ) as span:
                     span.set_attribute("messaging.system", "kafka")
                     span.set_attribute("messaging.operation", "consume")
-                    span.set_attribute("document.id", event.get("document_id", "unknown"))
+                    doc_id = event["document_id"] if "document_id" in event else "unknown"
+                    span.set_attribute("document.id", doc_id)
                     span.set_attribute("document.namespace", namespace)
 
                     with track_latency(get_processing_duration(), {"namespace": namespace}):

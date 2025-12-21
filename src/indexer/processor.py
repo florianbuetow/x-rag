@@ -78,7 +78,7 @@ class BatchEmbedder:
         all_embeddings = []
 
         # Process in batches
-        with track_latency(get_embedding_duration(), None):
+        with track_latency(get_embedding_duration(), {}):
             for i in range(0, len(texts), self.batch_size):
                 batch = texts[i : i + self.batch_size]
                 logger.debug(f"Generating embeddings for batch {i // self.batch_size + 1} ({len(batch)} texts)")
@@ -146,7 +146,7 @@ class WeaviateBatchInserter:
         # Batch insert with metrics and tracing
         logger.debug(f"Inserting {len(objects)} chunks into Weaviate collection {self.collection_name}")
         with (
-            track_latency(get_weaviate_insert_duration(), None),
+            track_latency(get_weaviate_insert_duration(), {}),
             trace_database_operation("insert", "weaviate", self.collection_name) as db_span,
             collection.batch.dynamic() as batch,
         ):
@@ -343,7 +343,7 @@ class DocumentIndexer:
 
             # Query for existing chunks with this doc_id (async) with metrics
             with (
-                track_latency(get_duplicate_check_duration(), None),
+                track_latency(get_duplicate_check_duration(), {}),
                 trace_document_processing(document_id, "duplicate_check") as dup_span,
             ):
                 existing = await asyncio.to_thread(

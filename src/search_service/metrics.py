@@ -98,7 +98,7 @@ def record_request_duration(duration_seconds: float, method: str) -> None:
         method: The gRPC method name (e.g., "Search", "HealthCheck")
     """
     _ensure_metrics()
-    assert _request_duration is not None
+    assert _request_duration is not None  # nosec B101
     _request_duration.record(duration_seconds, {"method": method})
 
 
@@ -109,7 +109,7 @@ def record_embedding_duration(duration_seconds: float) -> None:
         duration_seconds: Duration in seconds
     """
     _ensure_metrics()
-    assert _embedding_duration is not None
+    assert _embedding_duration is not None  # nosec B101
     _embedding_duration.record(duration_seconds)
 
 
@@ -121,7 +121,7 @@ def record_retrieval_duration(duration_seconds: float, mode: str) -> None:
         mode: Search mode (vector, bm25, hybrid)
     """
     _ensure_metrics()
-    assert _retrieval_duration is not None
+    assert _retrieval_duration is not None  # nosec B101
     _retrieval_duration.record(duration_seconds, {"mode": mode})
 
 
@@ -132,7 +132,7 @@ def record_llm_generation_duration(duration_seconds: float) -> None:
         duration_seconds: Duration in seconds
     """
     _ensure_metrics()
-    assert _llm_generation_duration is not None
+    assert _llm_generation_duration is not None  # nosec B101
     _llm_generation_duration.record(duration_seconds)
 
 
@@ -149,7 +149,7 @@ def inc_requests_total(method: str, status: str) -> None:
         status: Request status ("success" or "error")
     """
     _ensure_metrics()
-    assert _requests_total is not None
+    assert _requests_total is not None  # nosec B101
     _requests_total.add(1, {"method": method, "status": status})
 
 
@@ -161,7 +161,7 @@ def inc_errors_total(method: str, error_type: str) -> None:
         error_type: The exception type name
     """
     _ensure_metrics()
-    assert _errors_total is not None
+    assert _errors_total is not None  # nosec B101
     _errors_total.add(1, {"method": method, "error_type": error_type})
 
 
@@ -177,7 +177,7 @@ def inc_active_requests(method: str) -> None:
         method: The gRPC method name
     """
     _ensure_metrics()
-    assert _active_requests is not None
+    assert _active_requests is not None  # nosec B101
     _active_requests.add(1, {"method": method})
 
 
@@ -188,7 +188,7 @@ def dec_active_requests(method: str) -> None:
         method: The gRPC method name
     """
     _ensure_metrics()
-    assert _active_requests is not None
+    assert _active_requests is not None  # nosec B101
     _active_requests.add(-1, {"method": method})
 
 
@@ -200,26 +200,26 @@ def dec_active_requests(method: str) -> None:
 def get_request_duration() -> Histogram:
     """Get the request duration histogram for use with track_latency."""
     _ensure_metrics()
-    assert _request_duration is not None
+    assert _request_duration is not None  # nosec B101
     return _request_duration
 
 
 def get_embedding_duration() -> Histogram:
     """Get the embedding duration histogram for use with track_latency."""
     _ensure_metrics()
-    assert _embedding_duration is not None
+    assert _embedding_duration is not None  # nosec B101
     return _embedding_duration
 
 
 def get_retrieval_duration() -> Histogram:
     """Get the retrieval duration histogram for use with track_latency."""
     _ensure_metrics()
-    assert _retrieval_duration is not None
+    assert _retrieval_duration is not None  # nosec B101
     return _retrieval_duration
 
 
 def get_llm_generation_duration() -> Histogram:
     """Get the LLM generation duration histogram for use with track_latency."""
     _ensure_metrics()
-    assert _llm_generation_duration is not None
+    assert _llm_generation_duration is not None  # nosec B101
     return _llm_generation_duration

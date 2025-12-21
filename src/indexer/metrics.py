@@ -144,56 +144,56 @@ def _ensure_metrics() -> None:
 def record_processing_duration(duration_seconds: float, namespace: str) -> None:
     """Record document processing duration."""
     _ensure_metrics()
-    assert _processing_duration is not None
+    assert _processing_duration is not None  # nosec B101
     _processing_duration.record(duration_seconds, {"namespace": namespace})
 
 
 def record_kafka_poll_duration(duration_seconds: float) -> None:
     """Record Kafka poll duration."""
     _ensure_metrics()
-    assert _kafka_poll_duration is not None
+    assert _kafka_poll_duration is not None  # nosec B101
     _kafka_poll_duration.record(duration_seconds)
 
 
 def record_minio_load_duration(duration_seconds: float) -> None:
     """Record MinIO load duration."""
     _ensure_metrics()
-    assert _minio_load_duration is not None
+    assert _minio_load_duration is not None  # nosec B101
     _minio_load_duration.record(duration_seconds)
 
 
 def record_text_cleaning_duration(duration_seconds: float) -> None:
     """Record text cleaning duration."""
     _ensure_metrics()
-    assert _text_cleaning_duration is not None
+    assert _text_cleaning_duration is not None  # nosec B101
     _text_cleaning_duration.record(duration_seconds)
 
 
 def record_text_splitting_duration(duration_seconds: float) -> None:
     """Record text splitting duration."""
     _ensure_metrics()
-    assert _text_splitting_duration is not None
+    assert _text_splitting_duration is not None  # nosec B101
     _text_splitting_duration.record(duration_seconds)
 
 
 def record_embedding_duration(duration_seconds: float) -> None:
     """Record embedding generation duration."""
     _ensure_metrics()
-    assert _embedding_duration is not None
+    assert _embedding_duration is not None  # nosec B101
     _embedding_duration.record(duration_seconds)
 
 
 def record_weaviate_insert_duration(duration_seconds: float) -> None:
     """Record Weaviate insert duration."""
     _ensure_metrics()
-    assert _weaviate_insert_duration is not None
+    assert _weaviate_insert_duration is not None  # nosec B101
     _weaviate_insert_duration.record(duration_seconds)
 
 
 def record_duplicate_check_duration(duration_seconds: float) -> None:
     """Record duplicate check duration."""
     _ensure_metrics()
-    assert _duplicate_check_duration is not None
+    assert _duplicate_check_duration is not None  # nosec B101
     _duplicate_check_duration.record(duration_seconds)
 
 
@@ -205,28 +205,28 @@ def record_duplicate_check_duration(duration_seconds: float) -> None:
 def inc_documents_processed_total(status: str, namespace: str) -> None:
     """Increment documents processed counter."""
     _ensure_metrics()
-    assert _documents_processed_total is not None
+    assert _documents_processed_total is not None  # nosec B101
     _documents_processed_total.add(1, {"status": status, "namespace": namespace})
 
 
-def inc_chunks_created_total(namespace: str, count: int = 1) -> None:
+def inc_chunks_created_total(namespace: str, count: int) -> None:
     """Increment chunks created counter."""
     _ensure_metrics()
-    assert _chunks_created_total is not None
+    assert _chunks_created_total is not None  # nosec B101
     _chunks_created_total.add(count, {"namespace": namespace})
 
 
 def inc_kafka_messages_total(topic: str) -> None:
     """Increment Kafka messages counter."""
     _ensure_metrics()
-    assert _kafka_messages_total is not None
+    assert _kafka_messages_total is not None  # nosec B101
     _kafka_messages_total.add(1, {"topic": topic})
 
 
 def inc_errors_total(stage: str, error_type: str) -> None:
     """Increment error counter."""
     _ensure_metrics()
-    assert _errors_total is not None
+    assert _errors_total is not None  # nosec B101
     _errors_total.add(1, {"stage": stage, "error_type": error_type})
 
 
@@ -238,14 +238,14 @@ def inc_errors_total(stage: str, error_type: str) -> None:
 def inc_active_documents() -> None:
     """Increment active documents gauge."""
     _ensure_metrics()
-    assert _active_documents is not None
+    assert _active_documents is not None  # nosec B101
     _active_documents.add(1)
 
 
 def dec_active_documents() -> None:
     """Decrement active documents gauge."""
     _ensure_metrics()
-    assert _active_documents is not None
+    assert _active_documents is not None  # nosec B101
     _active_documents.add(-1)
 
 
@@ -256,7 +256,7 @@ def set_kafka_lag(partition: str, lag: int) -> None:
     For accurate lag tracking, you should track the delta.
     """
     _ensure_metrics()
-    assert _kafka_lag is not None
+    assert _kafka_lag is not None  # nosec B101
     _kafka_lag.add(lag, {"partition": partition})
 
 
@@ -268,54 +268,54 @@ def set_kafka_lag(partition: str, lag: int) -> None:
 def get_processing_duration() -> Histogram:
     """Get the processing duration histogram for use with track_latency."""
     _ensure_metrics()
-    assert _processing_duration is not None
+    assert _processing_duration is not None  # nosec B101
     return _processing_duration
 
 
 def get_kafka_poll_duration() -> Histogram:
     """Get the Kafka poll duration histogram for use with track_latency."""
     _ensure_metrics()
-    assert _kafka_poll_duration is not None
+    assert _kafka_poll_duration is not None  # nosec B101
     return _kafka_poll_duration
 
 
 def get_minio_load_duration() -> Histogram:
     """Get the MinIO load duration histogram for use with track_latency."""
     _ensure_metrics()
-    assert _minio_load_duration is not None
+    assert _minio_load_duration is not None  # nosec B101
     return _minio_load_duration
 
 
 def get_text_cleaning_duration() -> Histogram:
     """Get the text cleaning duration histogram for use with track_latency."""
     _ensure_metrics()
-    assert _text_cleaning_duration is not None
+    assert _text_cleaning_duration is not None  # nosec B101
     return _text_cleaning_duration
 
 
 def get_text_splitting_duration() -> Histogram:
     """Get the text splitting duration histogram for use with track_latency."""
     _ensure_metrics()
-    assert _text_splitting_duration is not None
+    assert _text_splitting_duration is not None  # nosec B101
     return _text_splitting_duration
 
 
 def get_embedding_duration() -> Histogram:
     """Get the embedding duration histogram for use with track_latency."""
     _ensure_metrics()
-    assert _embedding_duration is not None
+    assert _embedding_duration is not None  # nosec B101
     return _embedding_duration
 
 
 def get_weaviate_insert_duration() -> Histogram:
     """Get the Weaviate insert duration histogram for use with track_latency."""
     _ensure_metrics()
-    assert _weaviate_insert_duration is not None
+    assert _weaviate_insert_duration is not None  # nosec B101
     return _weaviate_insert_duration
 
 
 def get_duplicate_check_duration() -> Histogram:
     """Get the duplicate check duration histogram for use with track_latency."""
     _ensure_metrics()
-    assert _duplicate_check_duration is not None
+    assert _duplicate_check_duration is not None  # nosec B101
     return _duplicate_check_duration

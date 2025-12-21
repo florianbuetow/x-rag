@@ -98,7 +98,7 @@ def record_request_duration(duration_seconds: float, method: str) -> None:
         method: The gRPC method name (e.g., "Embed", "EmbedBatch")
     """
     _ensure_metrics()
-    assert _request_duration is not None
+    assert _request_duration is not None  # nosec B101
     _request_duration.record(duration_seconds, {"method": method})
 
 
@@ -110,7 +110,7 @@ def record_backend_duration(duration_seconds: float, model: str) -> None:
         model: The model name
     """
     _ensure_metrics()
-    assert _backend_duration is not None
+    assert _backend_duration is not None  # nosec B101
     _backend_duration.record(duration_seconds, {"model": model})
 
 
@@ -121,7 +121,7 @@ def record_batch_size(size: int) -> None:
         size: Number of texts in the batch
     """
     _ensure_metrics()
-    assert _batch_size is not None
+    assert _batch_size is not None  # nosec B101
     _batch_size.record(size)
 
 
@@ -138,11 +138,11 @@ def inc_requests_total(method: str, status: str) -> None:
         status: Request status ("success" or "error")
     """
     _ensure_metrics()
-    assert _requests_total is not None
+    assert _requests_total is not None  # nosec B101
     _requests_total.add(1, {"method": method, "status": status})
 
 
-def inc_embeddings_total(model: str, count: int = 1) -> None:
+def inc_embeddings_total(model: str, count: int) -> None:
     """Increment embeddings generated counter.
 
     Args:
@@ -150,7 +150,7 @@ def inc_embeddings_total(model: str, count: int = 1) -> None:
         count: Number of embeddings generated
     """
     _ensure_metrics()
-    assert _embeddings_total is not None
+    assert _embeddings_total is not None  # nosec B101
     _embeddings_total.add(count, {"model": model})
 
 
@@ -162,7 +162,7 @@ def inc_errors_total(method: str, error_type: str) -> None:
         error_type: The exception type name
     """
     _ensure_metrics()
-    assert _errors_total is not None
+    assert _errors_total is not None  # nosec B101
     _errors_total.add(1, {"method": method, "error_type": error_type})
 
 
@@ -178,7 +178,7 @@ def inc_active_requests(method: str) -> None:
         method: The gRPC method name
     """
     _ensure_metrics()
-    assert _active_requests is not None
+    assert _active_requests is not None  # nosec B101
     _active_requests.add(1, {"method": method})
 
 
@@ -189,7 +189,7 @@ def dec_active_requests(method: str) -> None:
         method: The gRPC method name
     """
     _ensure_metrics()
-    assert _active_requests is not None
+    assert _active_requests is not None  # nosec B101
     _active_requests.add(-1, {"method": method})
 
 
@@ -201,12 +201,12 @@ def dec_active_requests(method: str) -> None:
 def get_request_duration() -> Histogram:
     """Get the request duration histogram for use with track_latency."""
     _ensure_metrics()
-    assert _request_duration is not None
+    assert _request_duration is not None  # nosec B101
     return _request_duration
 
 
 def get_backend_duration() -> Histogram:
     """Get the backend duration histogram for use with track_latency."""
     _ensure_metrics()
-    assert _backend_duration is not None
+    assert _backend_duration is not None  # nosec B101
     return _backend_duration

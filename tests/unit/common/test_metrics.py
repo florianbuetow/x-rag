@@ -7,7 +7,7 @@ Tests cover:
 """
 
 import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -136,17 +136,15 @@ class TestTrackLatencyContextManager:
         """Tests that track_latency propagates exceptions."""
         mock_histogram = MagicMock()
 
-        with pytest.raises(ValueError, match="Test error"):
-            with track_latency(mock_histogram, {}):
-                raise ValueError("Test error")
+        with pytest.raises(ValueError, match="Test error"), track_latency(mock_histogram, {}):
+            raise ValueError("Test error")
 
     def test_track_latency_records_even_on_exception(self):
         """Tests that track_latency records duration even when exception occurs."""
         mock_histogram = MagicMock()
 
-        with pytest.raises(ValueError):
-            with track_latency(mock_histogram, {}):
-                raise ValueError("Error")
+        with pytest.raises(ValueError), track_latency(mock_histogram, {}):
+            raise ValueError("Error")
 
         # Duration should have been recorded despite exception
         mock_histogram.record.assert_called_once()
@@ -163,11 +161,11 @@ class TestTrackLatencyContextManager:
         # Should be approximately 0.05 seconds (with tolerance)
         assert 0.04 < duration < 0.15
 
-    def test_track_latency_none_attributes(self):
-        """Tests that track_latency works with None attributes."""
+    def test_track_latency_empty_attributes(self):
+        """Tests that track_latency works with empty attributes."""
         mock_histogram = MagicMock()
 
-        with track_latency(mock_histogram, None):
+        with track_latency(mock_histogram, {}):
             pass
 
         call_args = mock_histogram.record.call_args

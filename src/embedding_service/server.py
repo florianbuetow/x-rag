@@ -75,7 +75,7 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
                     dimension = self.generator.get_dimension(model)
 
                 # Record embedding generated
-                inc_embeddings_total(model)
+                inc_embeddings_total(model, 1)
 
             inc_requests_total("Embed", "success")
             return embedding_pb2.EmbedResponse(

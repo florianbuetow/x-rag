@@ -414,7 +414,7 @@ class IndexingPipeline:
             Document dictionary
         """
         logger.info(f"Loading document: {bucket}/{key}")
-        with track_latency(get_minio_load_duration(), None):
+        with track_latency(get_minio_load_duration(), {}):
             return self.loader.load(bucket, key)
 
     def _clean_text(self, document: dict[str, Any]) -> str:
@@ -433,7 +433,7 @@ class IndexingPipeline:
             return ""
 
         logger.debug("Cleaning document text")
-        with track_latency(get_text_cleaning_duration(), None):
+        with track_latency(get_text_cleaning_duration(), {}):
             return self.cleaner.clean(raw_text)
 
     def _split_text(self, text: str) -> list[str]:
@@ -446,7 +446,7 @@ class IndexingPipeline:
             List of text chunks
         """
         logger.debug("Splitting text into chunks")
-        with track_latency(get_text_splitting_duration(), None):
+        with track_latency(get_text_splitting_duration(), {}):
             return self.splitter.split(text)
 
     def _create_chunks(

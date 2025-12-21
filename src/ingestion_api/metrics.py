@@ -93,28 +93,28 @@ def _ensure_metrics() -> None:
 def record_request_duration(duration_seconds: float, operation: str) -> None:
     """Record request duration."""
     _ensure_metrics()
-    assert _request_duration is not None
+    assert _request_duration is not None  # nosec B101
     _request_duration.record(duration_seconds, {"operation": operation})
 
 
 def record_minio_upload_duration(duration_seconds: float) -> None:
     """Record MinIO upload duration."""
     _ensure_metrics()
-    assert _minio_upload_duration is not None
+    assert _minio_upload_duration is not None  # nosec B101
     _minio_upload_duration.record(duration_seconds)
 
 
 def record_kafka_publish_duration(duration_seconds: float) -> None:
     """Record Kafka publish duration."""
     _ensure_metrics()
-    assert _kafka_publish_duration is not None
+    assert _kafka_publish_duration is not None  # nosec B101
     _kafka_publish_duration.record(duration_seconds)
 
 
 def record_document_size_bytes(size_bytes: int) -> None:
     """Record document size."""
     _ensure_metrics()
-    assert _document_size_bytes is not None
+    assert _document_size_bytes is not None  # nosec B101
     _document_size_bytes.record(size_bytes)
 
 
@@ -126,14 +126,14 @@ def record_document_size_bytes(size_bytes: int) -> None:
 def inc_requests_total(status: str, namespace: str) -> None:
     """Increment requests counter."""
     _ensure_metrics()
-    assert _requests_total is not None
+    assert _requests_total is not None  # nosec B101
     _requests_total.add(1, {"status": status, "namespace": namespace})
 
 
 def inc_errors_total(operation: str, error_type: str) -> None:
     """Increment error counter."""
     _ensure_metrics()
-    assert _errors_total is not None
+    assert _errors_total is not None  # nosec B101
     _errors_total.add(1, {"operation": operation, "error_type": error_type})
 
 
@@ -145,14 +145,14 @@ def inc_errors_total(operation: str, error_type: str) -> None:
 def inc_active_requests() -> None:
     """Increment active requests gauge."""
     _ensure_metrics()
-    assert _active_requests is not None
+    assert _active_requests is not None  # nosec B101
     _active_requests.add(1)
 
 
 def dec_active_requests() -> None:
     """Decrement active requests gauge."""
     _ensure_metrics()
-    assert _active_requests is not None
+    assert _active_requests is not None  # nosec B101
     _active_requests.add(-1)
 
 
@@ -164,19 +164,19 @@ def dec_active_requests() -> None:
 def get_request_duration() -> Histogram:
     """Get the request duration histogram for use with track_latency."""
     _ensure_metrics()
-    assert _request_duration is not None
+    assert _request_duration is not None  # nosec B101
     return _request_duration
 
 
 def get_minio_upload_duration() -> Histogram:
     """Get the MinIO upload duration histogram for use with track_latency."""
     _ensure_metrics()
-    assert _minio_upload_duration is not None
+    assert _minio_upload_duration is not None  # nosec B101
     return _minio_upload_duration
 
 
 def get_kafka_publish_duration() -> Histogram:
     """Get the Kafka publish duration histogram for use with track_latency."""
     _ensure_metrics()
-    assert _kafka_publish_duration is not None
+    assert _kafka_publish_duration is not None  # nosec B101
     return _kafka_publish_duration
