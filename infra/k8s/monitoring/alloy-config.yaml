@@ -153,6 +153,37 @@ data:
     // - timeout expires (e.g., every 5 seconds)
     // - send_batch_size is reached (e.g., 1000 metrics)
     //
+    // -----------------------------------------------------------------------------
+    // SAMPLING OPTIONS FOR OTLP METRICS (to reduce volume/load):
+    // -----------------------------------------------------------------------------
+    //
+    // OPTION 1: Increase batch size and timeout (reduces write frequency)
+    //   timeout = "15s"           // Wait longer before flushing (default: 5s)
+    //   send_batch_size = 5000    // Accumulate more data points (default: 1000)
+    //
+    // OPTION 2: Add a filter processor to drop specific metrics
+    //   // Insert between receiver and batch processor:
+    //   // otelcol.processor.filter "metrics_filter" {
+    //   //   error_mode = "ignore"
+    //   //   metrics {
+    //   //     // Drop verbose histogram metrics
+    //   //     metric = ["name == \"http_request_duration_seconds\""]
+    //   //     // Or drop by attribute
+    //   //     datapoint = ["attributes[\"http.route\"] == \"/health\""]
+    //   //   }
+    //   //   output {
+    //   //     metrics = [otelcol.processor.batch.metrics.input]
+    //   //   }
+    //   // }
+    //
+    // OPTION 3: Add probabilistic sampling (keep X% of data points)
+    //   // otelcol.processor.probabilistic_sampler "metrics_sampler" {
+    //   //   sampling_percentage = 50.0  // Keep 50% of metrics
+    //   //   output {
+    //   //     metrics = [otelcol.processor.batch.metrics.input]
+    //   //   }
+    //   // }
+    //
     // =============================================================================
     
     // Batch processor for metrics
@@ -180,6 +211,55 @@ data:
     // Traces have different characteristics:
     // - Lower volume than metrics (one trace per request vs many metrics)
     // - More latency-sensitive (users want to see traces quickly)
+    //
+    // -----------------------------------------------------------------------------
+    // SAMPLING OPTIONS FOR OTLP TRACES (to reduce volume/load):
+    // -----------------------------------------------------------------------------
+    //
+    // OPTION 1: Probabilistic sampling (random sampling)
+    //   // Insert between receiver and batch processor:
+    //   // otelcol.processor.probabilistic_sampler "traces_sampler" {
+    //   //   sampling_percentage = 20.0  // Keep 20% of traces randomly
+    //   //   output {
+    //   //     traces = [otelcol.processor.batch.traces.input]
+    //   //   }
+    //   // }
+    //
+    // OPTION 2: Tail-based sampling (sample based on trace attributes)
+    //   // More intelligent sampling - keeps errors, samples healthy traces
+    //   // otelcol.processor.tail_sampling "traces_tail_sampler" {
+    //   //   decision_wait = "10s"  // Wait for complete trace before deciding
+    //   //   policies = [
+    //   //     // Always keep traces with errors
+    //   //     {
+    //   //       name = "keep-errors"
+    //   //       type = "status_code"
+    //   //       status_code { status_codes = ["ERROR"] }
+    //   //     },
+    //   //     // Always keep slow traces (latency > 1s)
+    //   //     {
+    //   //       name = "keep-slow"
+    //   //       type = "latency"
+    //   //       latency { threshold_ms = 1000 }
+    //   //     },
+    //   //     // Sample healthy traces at 10%
+    //   //     {
+    //   //       name = "sample-healthy"
+    //   //       type = "probabilistic"
+    //   //       probabilistic { sampling_percentage = 10 }
+    //   //     },
+    //   //   ]
+    //   //   output {
+    //   //     traces = [otelcol.processor.batch.traces.input]
+    //   //   }
+    //   // }
+    //
+    // OPTION 3: Head sampling in applications (most efficient)
+    //   // Configure in application's OpenTelemetry SDK:
+    //   // OTEL_TRACES_SAMPLER=parentbased_traceidratio
+    //   // OTEL_TRACES_SAMPLER_ARG=0.1  // Sample 10% of traces
+    //
+    // -----------------------------------------------------------------------------
     otelcol.processor.batch "traces" {
       // Same 5 second timeout as metrics
       timeout = "5s"
@@ -395,6 +475,40 @@ data:
     // - container_memory_working_set_bytes: Current memory usage (most useful)
     //
     // These are the same metrics you see with `kubectl top pods`.
+    //
+    // -----------------------------------------------------------------------------
+    // SAMPLING OPTIONS FOR PROMETHEUS SCRAPES (to reduce volume/load):
+    // -----------------------------------------------------------------------------
+    //
+    // OPTION 1: Increase scrape_interval (reduces scrape frequency)
+    //   scrape_interval = "60s"   // Scrape every 60s instead of 30s (halves volume)
+    //   scrape_interval = "120s"  // Scrape every 2 minutes (quarters volume)
+    //
+    // OPTION 2: Use prometheus.relabel to drop metrics by name
+    //   // Add a rule to prometheus.relabel block:
+    //   // rule {
+    //   //   source_labels = ["__name__"]
+    //   //   regex = "container_.*_seconds_total"  // Drop timing histograms
+    //   //   action = "drop"
+    //   // }
+    //
+    // OPTION 3: Drop high-cardinality labels before remote_write
+    //   // rule {
+    //   //   regex = "pod_uid|container_id"  // Remove unique IDs
+    //   //   action = "labeldrop"
+    //   // }
+    //
+    // OPTION 4: Keep only specific namespaces
+    //   // rule {
+    //   //   source_labels = ["namespace"]
+    //   //   regex = "rag-system|monitoring"  // Only keep these namespaces
+    //   //   action = "keep"
+    //   // }
+    //
+    // OPTION 5: Sample metrics probabilistically (via recording rules)
+    //   // This is done in Prometheus, not Alloy. Create a recording rule:
+    //   // - record: sampled:container_cpu_usage_seconds_total
+    //   //   expr: container_cpu_usage_seconds_total * (random() < 0.5)
     //
     // =============================================================================
     
@@ -1099,6 +1213,93 @@ data:
     //         │
     //         ▼
     //   Loki (storage and query)
+    //
+    // -----------------------------------------------------------------------------
+    // SAMPLING OPTIONS FOR LOGS (to reduce volume/load):
+    // -----------------------------------------------------------------------------
+    //
+    // OPTION 1: Probabilistic sampling (keep X% of logs)
+    //   // Add to loki.process block:
+    //   // stage.sampling {
+    //   //   rate = 0.25                      // Keep 25% of logs, drop 75%
+    //   //   drop_counter_reason = "sampling" // Metric label for dropped logs
+    //   // }
+    //
+    // OPTION 2: Rate limiting with token bucket
+    //   // stage.limit {
+    //   //   rate  = 100   // Max 100 lines per second
+    //   //   burst = 200   // Allow bursts up to 200 lines
+    //   //   drop  = true  // Drop excess (vs backpressure)
+    //   // }
+    //
+    // OPTION 3: Rate limiting per label (e.g., per namespace)
+    //   // stage.limit {
+    //   //   rate  = 50
+    //   //   burst = 100
+    //   //   drop  = true
+    //   //   by_label_name = "namespace"      // Each namespace gets its own limit
+    //   //   max_distinct_labels = 100        // Track up to 100 unique namespaces
+    //   // }
+    //
+    // OPTION 4: Drop logs by content (regex match)
+    //   // stage.drop {
+    //   //   expression = ".*health.*check.*" // Drop health check logs
+    //   //   drop_counter_reason = "health_check"
+    //   // }
+    //
+    // OPTION 5: Drop logs by extracted value
+    //   // stage.drop {
+    //   //   source = "level"                 // Use extracted "level" field
+    //   //   value  = "debug"                 // Drop all debug logs
+    //   // }
+    //
+    // OPTION 6: Drop logs by size or age
+    //   // stage.drop {
+    //   //   longer_than = "10KB"             // Drop logs over 10KB
+    //   // }
+    //   // stage.drop {
+    //   //   older_than = "1h"                // Drop logs older than 1 hour
+    //   // }
+    //
+    // OPTION 7: Conditional processing with LogQL selector
+    //   // stage.match {
+    //   //   selector = "{namespace=\"kube-system\"}"
+    //   //   action   = "drop"                // Drop all kube-system logs
+    //   // }
+    //   // stage.match {
+    //   //   selector = "{level=\"debug\"}"
+    //   //   action   = "drop"                // Drop debug logs using LogQL
+    //   // }
+    //
+    // OPTION 8: Keep only specific log levels (whitelist)
+    //   // stage.match {
+    //   //   selector = "{level=~\"warn|error|fatal\"}"
+    //   //   action   = "keep"                // Only keep warn/error/fatal
+    //   //   // Nested stages applied only to matched logs
+    //   // }
+    //
+    // OPTION 9: Drop high-cardinality labels
+    //   // stage.label_drop {
+    //   //   values = ["pod_uid", "container_id"]  // Remove unique IDs
+    //   // }
+    //
+    // OPTION 10: Keep only essential labels
+    //   // stage.label_keep {
+    //   //   values = ["namespace", "pod", "container", "level"]
+    //   // }
+    //
+    // OPTION 11: Discovery-level filtering (before log collection)
+    //   // In discovery.relabel "pod_logs" block:
+    //   // rule {
+    //   //   source_labels = ["__meta_kubernetes_namespace"]
+    //   //   regex = "kube-system|kube-public"  // Drop noisy namespaces
+    //   //   action = "drop"
+    //   // }
+    //   // rule {
+    //   //   source_labels = ["__meta_kubernetes_pod_label_app"]
+    //   //   regex = "fluent-bit|promtail"      // Skip log collectors themselves
+    //   //   action = "drop"
+    //   // }
     //
     // =============================================================================
     
