@@ -10,11 +10,7 @@ import logging
 from typing import Any, Literal
 
 from src.common.metrics import track_latency
-from src.common.tracing_utils import (
-    trace_embedding_generation,
-    trace_llm_generation,
-    trace_vector_search,
-)
+from src.common.tracing_utils import trace_vector_search
 from src.llm.openai_client import OpenAIClient
 from src.pipelines.prompt_templates import build_no_results_response, build_rag_prompt
 from src.retrievers.weaviate_retriever import SearchResult, WeaviateRetriever
@@ -79,15 +75,11 @@ class SearchPipeline:
         query_embedding: list[float] | None = None
         if mode in ("vector", "hybrid"):
             logger.debug(f"Generating embedding for query: {query[:50]}...")
-            with (
-                track_latency(embedding_duration, None),
-                trace_embedding_generation("text-embedding-3-small", chunk_count=1, total_tokens=None) as embed_span,
-            ):
+            with track_latency(embedding_duration, None):
                 query_embedding = await self.embedding_client.embed(
                     text=query,
                     model="text-embedding-3-small",
                 )
-                embed_span.set_attribute("embedding.dimensions", len(query_embedding))
             logger.debug(f"Generated embedding (dim={len(query_embedding)})")
 
         # Step 2: Retrieve relevant documents
@@ -134,23 +126,13 @@ class SearchPipeline:
             # Step 4: Generate answer using LLM
             logger.info("Generating answer with OpenAI")
             prompt = build_rag_prompt(query=query, context=context)
-            with (
-                track_latency(llm_generation_duration, None),
-                trace_llm_generation(
-                    model=self.llm_client.model,
-                    operation="rag_completion",
-                    max_tokens=openai_max_tokens,
-                    temperature=openai_temperature,
-                ) as llm_span,
-            ):
+            with track_latency(llm_generation_duration, None):
                 answer = await self.llm_client.generate(
                     prompt=prompt,
                     max_tokens=openai_max_tokens,
                     temperature=openai_temperature,
                     system_message=None,
                 )
-                llm_span.set_attribute("llm.prompt_length", len(prompt))
-                llm_span.set_attribute("llm.response_length", len(answer))
 
             # Build response
             sources_list: list[dict[str, Any]] = [r.to_dict() for r in results]

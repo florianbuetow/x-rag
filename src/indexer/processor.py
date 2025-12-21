@@ -19,7 +19,6 @@ from src.common.metrics import track_latency
 from src.common.tracing_utils import (
     trace_database_operation,
     trace_document_processing,
-    trace_embedding_generation,
 )
 from src.indexer.config import IndexerConfig
 from src.indexer.grpc_clients import EmbeddingServiceClient as GrpcEmbeddingServiceClient
@@ -79,10 +78,7 @@ class BatchEmbedder:
         all_embeddings = []
 
         # Process in batches
-        with (
-            track_latency(embedding_duration, None),
-            trace_embedding_generation(model=self.model, chunk_count=len(texts), total_tokens=None) as embed_span,
-        ):
+        with track_latency(embedding_duration, None):
             for i in range(0, len(texts), self.batch_size):
                 batch = texts[i : i + self.batch_size]
                 logger.debug(f"Generating embeddings for batch {i // self.batch_size + 1} ({len(batch)} texts)")
@@ -92,8 +88,6 @@ class BatchEmbedder:
                     model=self.model,
                 )
                 all_embeddings.extend(embeddings)
-
-            embed_span.set_attribute("embedding.batch_count", (len(texts) + self.batch_size - 1) // self.batch_size)
 
         return all_embeddings
 
