@@ -300,3 +300,92 @@ data:
       
       forward_to = [prometheus.remote_write.prom.receiver]
     }
+    
+    // =============================================================================
+    // INFRASTRUCTURE SERVICE METRICS
+    // =============================================================================
+    //
+    // Scrape metrics from infrastructure services: Redis, Kafka, MinIO
+    // These provide internal service health and performance data beyond what
+    // cAdvisor/kube-state-metrics provide.
+    //
+    // =============================================================================
+    
+    // -----------------------------------------------------------------------------
+    // Redis Exporter (sidecar in redis pod)
+    // Metrics: commands, memory, connections, keyspace, persistence
+    // -----------------------------------------------------------------------------
+    prometheus.scrape "redis_exporter" {
+      targets = [
+        {"__address__" = "xrag-redis.rag-system.svc.cluster.local:9121"},
+      ]
+      job_name        = "redis"
+      scrape_interval = "30s"
+      scrape_timeout  = "10s"
+      
+      forward_to = [prometheus.relabel.redis_filter.receiver]
+    }
+    
+    prometheus.relabel "redis_filter" {
+      // Keep essential Redis metrics, drop verbose/rarely-used ones
+      rule {
+        source_labels = ["__name__"]
+        regex         = "redis_(up|uptime_in_seconds|connected_clients|blocked_clients|commands_total|commands_duration_seconds_total|memory_used_bytes|memory_max_bytes|memory_used_rss_bytes|mem_fragmentation_ratio|db_keys|db_keys_expiring|expired_keys_total|evicted_keys_total|keyspace_hits_total|keyspace_misses_total|connected_slaves|instantaneous_ops_per_sec|instantaneous_input_kbps|instantaneous_output_kbps|rejected_connections_total|rdb_last_save_timestamp_seconds|rdb_changes_since_last_save|aof_rewrite_in_progress|slowlog_length|net_input_bytes_total|net_output_bytes_total|loading_dump_file)"
+        action        = "keep"
+      }
+      
+      forward_to = [prometheus.remote_write.prom.receiver]
+    }
+    
+    // -----------------------------------------------------------------------------
+    // Kafka Exporter (separate deployment)
+    // Metrics: consumer lag, topic partitions, broker info, offsets
+    // -----------------------------------------------------------------------------
+    prometheus.scrape "kafka_exporter" {
+      targets = [
+        {"__address__" = "kafka-exporter.rag-system.svc.cluster.local:9308"},
+      ]
+      job_name        = "kafka"
+      scrape_interval = "30s"
+      scrape_timeout  = "10s"
+      
+      forward_to = [prometheus.relabel.kafka_filter.receiver]
+    }
+    
+    prometheus.relabel "kafka_filter" {
+      // Keep essential Kafka metrics
+      rule {
+        source_labels = ["__name__"]
+        regex         = "kafka_(brokers|broker_info|topic_partitions|topic_partition_current_offset|topic_partition_oldest_offset|topic_partition_leader|topic_partition_replicas|topic_partition_in_sync_replica|topic_partition_under_replicated_partition|consumergroup_current_offset|consumergroup_lag|consumergroup_members|exporter_build_info)"
+        action        = "keep"
+      }
+      
+      forward_to = [prometheus.remote_write.prom.receiver]
+    }
+    
+    // -----------------------------------------------------------------------------
+    // MinIO Native Metrics Endpoint
+    // Metrics: S3 requests, traffic, bucket usage, operations
+    // -----------------------------------------------------------------------------
+    prometheus.scrape "minio" {
+      targets = [
+        {"__address__" = "xrag-minio.rag-system.svc.cluster.local:9000"},
+      ]
+      job_name        = "minio"
+      metrics_path    = "/minio/v2/metrics/cluster"
+      scrape_interval = "30s"
+      scrape_timeout  = "10s"
+      
+      forward_to = [prometheus.relabel.minio_filter.receiver]
+    }
+    
+    prometheus.relabel "minio_filter" {
+      // Keep essential MinIO metrics
+      rule {
+        source_labels = ["__name__"]
+        regex         = "minio_(s3_requests_total|s3_requests_errors_total|s3_requests_waiting_total|s3_requests_incoming_total|s3_requests_rejected_auth_total|s3_requests_rejected_header_total|s3_requests_rejected_invalid_total|s3_requests_4xx_errors_total|s3_requests_5xx_errors_total|s3_traffic_received_bytes|s3_traffic_sent_bytes|s3_requests_ttfb_seconds_distribution|bucket_usage_object_total|bucket_usage_total_bytes|node_drive_total_bytes|node_drive_used_bytes|node_drive_free_bytes|cluster_capacity_usable_total_bytes|cluster_capacity_usable_free_bytes|cluster_health_status|node_process_uptime_seconds|inter_node_traffic_received_bytes|inter_node_traffic_sent_bytes|software_version_info)"
+        action        = "keep"
+      }
+      
+      forward_to = [prometheus.remote_write.prom.receiver]
+    }

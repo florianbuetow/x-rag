@@ -3,11 +3,16 @@ kind: Service
 metadata:
   name: xrag-redis
   namespace: rag-system
+  labels:
+    app: xrag-redis
 spec:
   type: NodePort
   ports:
     - port: 6379
       nodePort: 30079
+      name: redis
+    - port: 9121
+      name: metrics
   selector:
     app: xrag-redis
 ---
@@ -26,6 +31,9 @@ spec:
     metadata:
       labels:
         app: xrag-redis
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9121"
     spec:
       containers:
         - name: redis
@@ -42,6 +50,21 @@ spec:
             limits:
               cpu: "500m"
               memory: "512Mi"
+        - name: redis-exporter
+          image: oliver006/redis_exporter:v1.66.0
+          ports:
+            - containerPort: 9121
+              name: metrics
+          env:
+            - name: REDIS_ADDR
+              value: "redis://localhost:6379"
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
   volumeClaimTemplates:
     - metadata:
         name: data

@@ -95,7 +95,7 @@ Distributed tracing tracks a request as it flows through multiple services. Each
 │  │  └───────────────────────────────────────────────────────────────┘  │   │
 │  │  ┌───────────────────────────────────────────────────────────────┐  │   │
 │  │  │ OTLPSpanExporter (gRPC)                                       │  │   │
-│  │  │  • Endpoint: xrag-alloy:4317                                  │  │   │
+│  │  │  • Endpoint: alloy.monitoring:4317                            │  │   │
 │  │  │  • Protocol: OTLP/gRPC                                        │  │   │
 │  │  └───────────────────────────────────────────────────────────────┘  │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
@@ -124,7 +124,7 @@ Distributed tracing tracks a request as it flows through multiple services. Each
 │  │  • Receives spans via OTLP                                          │   │
 │  │  • Correlates spans by trace_id                                     │   │
 │  │  • Builds trace tree from parent_span_id                            │   │
-│  │  • Query API: http://xrag-tempo:3200                                │   │
+│  │  • Query API: http://tempo.monitoring:3200                          │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -279,7 +279,7 @@ Metrics are numerical measurements collected over time. They answer questions li
 │  │  • TSDB (Time Series Database)                                      │   │
 │  │  • 15-day retention (configurable)                                  │   │
 │  │  • PromQL query engine                                              │   │
-│  │  • API: http://xrag-prometheus:9090                                 │   │
+│  │  • API: http://prometheus.monitoring:9090                           │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -368,6 +368,168 @@ Metrics are numerical measurements collected over time. They answer questions li
 - `src/common/metrics.py` - Shared metric utilities
 - `infra/k8s/monitoring/alloy-config.yaml` - Scrape configuration
 - `infra/k8s/monitoring/prometheus.yaml` - Prometheus deployment
+
+### Infrastructure Service Metrics
+
+In addition to application metrics, X-RAG collects metrics from infrastructure services (Redis, Kafka, MinIO) via dedicated exporters. These provide internal service health and performance data beyond what cAdvisor/kube-state-metrics provide.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    INFRASTRUCTURE METRICS PIPELINE                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌──────────────────┐   ┌──────────────────┐   ┌──────────────────┐        │
+│  │      Redis       │   │      Kafka       │   │      MinIO       │        │
+│  │                  │   │                  │   │                  │        │
+│  │ ┌──────────────┐ │   │                  │   │ Native metrics   │        │
+│  │ │redis-exporter│ │   │                  │   │ endpoint         │        │
+│  │ │  (sidecar)   │ │   │                  │   │                  │        │
+│  │ └──────┬───────┘ │   │                  │   │                  │        │
+│  │        │ :9121   │   │                  │   │        :9000     │        │
+│  └────────┼─────────┘   └────────┬─────────┘   └────────┬─────────┘        │
+│           │                      │                      │                   │
+│           │             ┌────────┴────────┐             │                   │
+│           │             │  kafka-exporter │             │                   │
+│           │             │  (standalone)   │             │                   │
+│           │             │      :9308      │             │                   │
+│           │             └────────┬────────┘             │                   │
+│           │                      │                      │                   │
+│           └──────────────────────┼──────────────────────┘                   │
+│                                  │                                          │
+│                                  ▼                                          │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │                        Grafana Alloy                                  │  │
+│  │                                                                       │  │
+│  │  prometheus.scrape "redis_exporter"   ──┐                            │  │
+│  │  prometheus.scrape "kafka_exporter"   ──┼──► prometheus.remote_write │  │
+│  │  prometheus.scrape "minio"            ──┘                            │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                  │                                          │
+│                                  ▼                                          │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │                        Prometheus                                     │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Redis Metrics (redis-exporter)
+
+The `oliver006/redis_exporter` runs as a sidecar in the Redis pod, scraping Redis INFO commands and exposing them as Prometheus metrics.
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `redis_up` | Gauge | Redis availability (1=up, 0=down) |
+| `redis_uptime_in_seconds` | Gauge | Server uptime |
+| `redis_connected_clients` | Gauge | Number of connected clients |
+| `redis_blocked_clients` | Gauge | Clients blocked on BLPOP/BRPOP |
+| `redis_memory_used_bytes` | Gauge | Total memory used by Redis |
+| `redis_memory_max_bytes` | Gauge | Max memory limit (maxmemory config) |
+| `redis_mem_fragmentation_ratio` | Gauge | Memory fragmentation (>1.5 = fragmented) |
+| `redis_keyspace_hits_total` | Counter | Successful key lookups |
+| `redis_keyspace_misses_total` | Counter | Failed key lookups |
+| `redis_commands_total` | Counter | Commands processed by type |
+| `redis_expired_keys_total` | Counter | Keys expired by TTL |
+| `redis_evicted_keys_total` | Counter | Keys evicted due to maxmemory |
+| `redis_db_keys` | Gauge | Number of keys per database |
+
+**Key PromQL queries:**
+
+```promql
+# Cache hit rate
+redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total)
+
+# Commands per second
+rate(redis_commands_total[5m])
+
+# Memory usage percentage
+redis_memory_used_bytes / redis_memory_max_bytes
+```
+
+#### Kafka Metrics (kafka-exporter)
+
+The `danielqsj/kafka-exporter` runs as a standalone deployment, connecting to Kafka brokers and exposing cluster-wide metrics.
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `kafka_brokers` | Gauge | Number of active brokers |
+| `kafka_broker_info` | Gauge | Broker metadata (address, ID) |
+| `kafka_topic_partitions` | Gauge | Partition count per topic |
+| `kafka_topic_partition_current_offset` | Gauge | Latest offset per partition |
+| `kafka_topic_partition_oldest_offset` | Gauge | Earliest offset per partition |
+| `kafka_topic_partition_replicas` | Gauge | Replica count per partition |
+| `kafka_topic_partition_in_sync_replica` | Gauge | In-sync replicas per partition |
+| `kafka_topic_partition_under_replicated_partition` | Gauge | Under-replicated partitions |
+| `kafka_consumergroup_current_offset` | Gauge | Consumer group offset per partition |
+| `kafka_consumergroup_lag` | Gauge | Consumer lag (messages behind) |
+| `kafka_consumergroup_members` | Gauge | Members per consumer group |
+
+**Key PromQL queries:**
+
+```promql
+# Total consumer lag across all groups
+sum(kafka_consumergroup_lag)
+
+# Consumer lag by group and topic
+sum by (consumergroup, topic) (kafka_consumergroup_lag)
+
+# Messages produced per second
+sum by (topic) (rate(kafka_topic_partition_current_offset[5m]))
+
+# Under-replicated partitions (should be 0)
+sum(kafka_topic_partition_under_replicated_partition)
+```
+
+#### MinIO Metrics (native endpoint)
+
+MinIO exposes Prometheus metrics natively at `/minio/v2/metrics/cluster`. Authentication is disabled via `MINIO_PROMETHEUS_AUTH_TYPE=public`.
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `minio_s3_requests_total` | Counter | Total S3 API requests by operation |
+| `minio_s3_requests_errors_total` | Counter | Failed S3 requests |
+| `minio_s3_requests_4xx_errors_total` | Counter | Client errors (4xx) |
+| `minio_s3_requests_5xx_errors_total` | Counter | Server errors (5xx) |
+| `minio_s3_traffic_received_bytes` | Counter | Bytes uploaded |
+| `minio_s3_traffic_sent_bytes` | Counter | Bytes downloaded |
+| `minio_s3_requests_ttfb_seconds_distribution` | Histogram | Time to first byte |
+| `minio_bucket_usage_total_bytes` | Gauge | Storage used per bucket |
+| `minio_bucket_usage_object_total` | Gauge | Object count per bucket |
+| `minio_node_drive_total_bytes` | Gauge | Total disk capacity |
+| `minio_node_drive_used_bytes` | Gauge | Disk space used |
+| `minio_node_drive_free_bytes` | Gauge | Disk space available |
+| `minio_cluster_capacity_usable_free_bytes` | Gauge | Cluster-wide free space |
+| `minio_cluster_health_status` | Gauge | Cluster health (1=healthy) |
+| `minio_node_process_uptime_seconds` | Gauge | Node uptime |
+
+**Key PromQL queries:**
+
+```promql
+# S3 request rate by API
+sum by (api) (rate(minio_s3_requests_total[5m]))
+
+# Error rate
+sum(rate(minio_s3_requests_errors_total[5m])) / sum(rate(minio_s3_requests_total[5m]))
+
+# Disk usage percentage
+sum(minio_node_drive_used_bytes) / sum(minio_node_drive_total_bytes)
+
+# Upload/download throughput
+rate(minio_s3_traffic_received_bytes[5m])  # Upload
+rate(minio_s3_traffic_sent_bytes[5m])      # Download
+```
+
+#### Infrastructure Dashboards
+
+Grafana includes pre-built dashboards for infrastructure monitoring:
+
+| Dashboard | UID | Key Panels |
+|-----------|-----|------------|
+| **Redis** | `redis-dashboard` | Memory usage, hit rate, commands/sec, connections, fragmentation |
+| **Kafka** | `kafka-dashboard` | Consumer lag, broker count, topic partitions, message throughput |
+| **MinIO** | `minio-dashboard` | S3 requests, error rate, traffic, bucket sizes, disk usage |
+
+Access at: http://localhost:3000 → Browse → X-RAG folder
 
 ---
 
@@ -471,7 +633,7 @@ Logs are timestamped text records of events. They provide detailed context about
 │  │  │ Storage                                                      │    │   │
 │  │  │  • Chunks: compressed log data                               │    │   │
 │  │  │  • Index: label → chunk mappings                             │    │   │
-│  │  │  • Query API: http://xrag-loki:3100                          │    │   │
+│  │  │  • Query API: http://loki.monitoring:3100                    │    │   │
 │  │  └─────────────────────────────────────────────────────────────┘    │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                             │
