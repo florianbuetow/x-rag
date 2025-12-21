@@ -23,13 +23,14 @@ from src.common.tracing_utils import trace_messaging_operation, trace_storage_op
 from src.ingestion_api.config import IngestionAPIConfig
 from src.ingestion_api.kafka_client import KafkaClient
 from src.ingestion_api.metrics import (
-    active_requests,
-    document_size_bytes,
-    errors_total,
-    kafka_publish_duration,
-    minio_upload_duration,
-    request_duration,
-    requests_total,
+    dec_active_requests,
+    get_kafka_publish_duration,
+    get_minio_upload_duration,
+    get_request_duration,
+    inc_active_requests,
+    inc_errors_total,
+    inc_requests_total,
+    record_document_size_bytes,
 )
 from src.ingestion_api.minio_client import MinioClient
 
@@ -184,9 +185,9 @@ async def ingest_document(request: IngestRequest) -> IngestResponse:
     Raises:
         HTTPException: If ingestion fails
     """
-    active_requests.inc()
+    inc_active_requests()
     try:
-        with track_latency(request_duration, {"operation": "ingest"}):
+        with track_latency(get_request_duration(), {"operation": "ingest"}):
             # Generate unique ID
             document_id = str(uuid4())
 
@@ -206,10 +207,10 @@ async def ingest_document(request: IngestRequest) -> IngestResponse:
             doc_bytes = json.dumps(document, indent=2).encode("utf-8")
 
             # Record document size
-            document_size_bytes.observe(len(doc_bytes))
+            record_document_size_bytes(len(doc_bytes))
 
             with (
-                track_latency(minio_upload_duration, None),
+                track_latency(get_minio_upload_duration(), {}),
                 trace_storage_operation("upload", config.minio_bucket, object_name) as storage_span,
             ):
                 minio_client.store_document(object_name, doc_bytes)
@@ -228,14 +229,14 @@ async def ingest_document(request: IngestRequest) -> IngestResponse:
             }
 
             with (
-                track_latency(kafka_publish_duration, None),
+                track_latency(get_kafka_publish_duration(), {}),
                 trace_messaging_operation("publish", config.kafka_topic, document_id) as msg_span,
             ):
                 await kafka_client.publish(config.kafka_topic, event)
                 msg_span.set_attribute("messaging.payload_size", len(json.dumps(event)))
 
         # Track success
-        requests_total.labels(status="success", namespace=request.namespace).inc()
+        inc_requests_total("success", request.namespace)
 
         logger.info(f"Ingested document {document_id} ({len(doc_bytes)} bytes)")
 
@@ -248,12 +249,12 @@ async def ingest_document(request: IngestRequest) -> IngestResponse:
         )
 
     except HTTPException:
-        requests_total.labels(status="error", namespace=request.namespace).inc()
+        inc_requests_total("error", request.namespace)
         raise
 
     except Exception as e:
-        requests_total.labels(status="error", namespace=request.namespace).inc()
-        errors_total.labels(operation="ingest", error_type=type(e).__name__).inc()
+        inc_requests_total("error", request.namespace)
+        inc_errors_total("ingest", type(e).__name__)
         logger.error(f"Ingestion failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -261,7 +262,7 @@ async def ingest_document(request: IngestRequest) -> IngestResponse:
         ) from e
 
     finally:
-        active_requests.dec()
+        dec_active_requests()
 
 
 @app.get("/health")

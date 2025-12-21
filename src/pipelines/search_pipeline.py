@@ -15,7 +15,11 @@ from src.llm.openai_client import OpenAIClient
 from src.pipelines.prompt_templates import build_no_results_response, build_rag_prompt
 from src.retrievers.weaviate_retriever import SearchResult, WeaviateRetriever
 from src.search_service.grpc_clients import EmbeddingServiceClient
-from src.search_service.metrics import embedding_duration, llm_generation_duration, retrieval_duration
+from src.search_service.metrics import (
+    get_embedding_duration,
+    get_llm_generation_duration,
+    get_retrieval_duration,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +79,7 @@ class SearchPipeline:
         query_embedding: list[float] | None = None
         if mode in ("vector", "hybrid"):
             logger.debug(f"Generating embedding for query: {query[:50]}...")
-            with track_latency(embedding_duration, None):
+            with track_latency(get_embedding_duration(), {}):
                 query_embedding = await self.embedding_client.embed(
                     text=query,
                     model="text-embedding-3-small",
@@ -86,7 +90,7 @@ class SearchPipeline:
         logger.info(f"Retrieving documents (mode={mode}, top_k={top_k})")
         query_dim = len(query_embedding) if query_embedding else None
         with (
-            track_latency(retrieval_duration, {"mode": mode}),  # nosemgrep: xrag.no-dict-get-with-default
+            track_latency(get_retrieval_duration(), {"mode": mode}),  # nosemgrep: xrag.no-dict-get-with-default
             trace_vector_search(
                 index_name="DocumentChunk",
                 top_k=top_k,
@@ -126,7 +130,7 @@ class SearchPipeline:
             # Step 4: Generate answer using LLM
             logger.info("Generating answer with OpenAI")
             prompt = build_rag_prompt(query=query, context=context)
-            with track_latency(llm_generation_duration, None):
+            with track_latency(get_llm_generation_duration(), {}):
                 answer = await self.llm_client.generate(
                     prompt=prompt,
                     max_tokens=openai_max_tokens,

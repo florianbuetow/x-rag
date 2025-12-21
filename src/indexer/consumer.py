@@ -12,7 +12,7 @@ from aiokafka.errors import KafkaError  # type: ignore[import-untyped]
 from opentelemetry import context
 from opentelemetry.propagate import extract
 
-from src.indexer.metrics import kafka_messages_total, kafka_poll_duration
+from src.indexer.metrics import inc_kafka_messages_total, record_kafka_poll_duration
 
 logger = logging.getLogger(__name__)
 
@@ -110,10 +110,10 @@ class DocumentEventConsumer:
                 logger.info(f"Event: type={event.get('event_type')}, doc_id={event.get('document_id')}")
 
                 # Track message count
-                kafka_messages_total.labels(topic=self.topic).inc()
+                inc_kafka_messages_total(topic=self.topic)
 
                 # Record poll duration for next iteration
-                kafka_poll_duration.observe(time.perf_counter() - poll_start)
+                record_kafka_poll_duration(time.perf_counter() - poll_start)
 
                 yield event, trace_ctx
 

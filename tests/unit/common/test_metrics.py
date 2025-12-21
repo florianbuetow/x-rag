@@ -2,16 +2,19 @@
 
 Tests cover:
 - OperationType enum
-- BucketConfig class
-- track_latency context manager
+- get_buckets function
+- track_latency context manager with OTel histograms
 """
 
+import time
+from unittest.mock import MagicMock, patch
+
 import pytest
-from prometheus_client import CollectorRegistry, Histogram
 
 from src.common.metrics import (
-    BucketConfig,
+    HISTOGRAM_BUCKETS,
     OperationType,
+    get_buckets,
     track_latency,
 )
 
@@ -41,84 +44,59 @@ class TestOperationType:
         assert values == {"fast", "medium", "slow", "batch"}
 
 
-class TestBucketConfig:
-    """Tests for BucketConfig class."""
-
-    def test_fast_buckets_defined(self):
-        """Tests that FAST buckets are defined."""
-        assert BucketConfig.FAST is not None
-        assert isinstance(BucketConfig.FAST, tuple)
-        assert len(BucketConfig.FAST) > 0
-
-    def test_medium_buckets_defined(self):
-        """Tests that MEDIUM buckets are defined."""
-        assert BucketConfig.MEDIUM is not None
-        assert isinstance(BucketConfig.MEDIUM, tuple)
-        assert len(BucketConfig.MEDIUM) > 0
-
-    def test_slow_buckets_defined(self):
-        """Tests that SLOW buckets are defined."""
-        assert BucketConfig.SLOW is not None
-        assert isinstance(BucketConfig.SLOW, tuple)
-        assert len(BucketConfig.SLOW) > 0
-
-    def test_batch_buckets_defined(self):
-        """Tests that BATCH buckets are defined."""
-        assert BucketConfig.BATCH is not None
-        assert isinstance(BucketConfig.BATCH, tuple)
-        assert len(BucketConfig.BATCH) > 0
+class TestGetBuckets:
+    """Tests for get_buckets function."""
 
     def test_get_fast_buckets(self):
-        """Tests that get() returns FAST buckets for FAST operation type."""
-        buckets = BucketConfig.get(OperationType.FAST)
-        assert buckets == BucketConfig.FAST
+        """Tests that get_buckets returns FAST buckets for FAST operation type."""
+        buckets = get_buckets(OperationType.FAST)
+        assert buckets == HISTOGRAM_BUCKETS[OperationType.FAST]
 
     def test_get_medium_buckets(self):
-        """Tests that get() returns MEDIUM buckets for MEDIUM operation type."""
-        buckets = BucketConfig.get(OperationType.MEDIUM)
-        assert buckets == BucketConfig.MEDIUM
+        """Tests that get_buckets returns MEDIUM buckets for MEDIUM operation type."""
+        buckets = get_buckets(OperationType.MEDIUM)
+        assert buckets == HISTOGRAM_BUCKETS[OperationType.MEDIUM]
 
     def test_get_slow_buckets(self):
-        """Tests that get() returns SLOW buckets for SLOW operation type."""
-        buckets = BucketConfig.get(OperationType.SLOW)
-        assert buckets == BucketConfig.SLOW
+        """Tests that get_buckets returns SLOW buckets for SLOW operation type."""
+        buckets = get_buckets(OperationType.SLOW)
+        assert buckets == HISTOGRAM_BUCKETS[OperationType.SLOW]
 
     def test_get_batch_buckets(self):
-        """Tests that get() returns BATCH buckets for BATCH operation type."""
-        buckets = BucketConfig.get(OperationType.BATCH)
-        assert buckets == BucketConfig.BATCH
+        """Tests that get_buckets returns BATCH buckets for BATCH operation type."""
+        buckets = get_buckets(OperationType.BATCH)
+        assert buckets == HISTOGRAM_BUCKETS[OperationType.BATCH]
 
     def test_fast_buckets_are_sorted(self):
         """Tests that FAST buckets are in ascending order."""
-        buckets = BucketConfig.FAST
+        buckets = get_buckets(OperationType.FAST)
         assert buckets == tuple(sorted(buckets))
 
     def test_medium_buckets_are_sorted(self):
         """Tests that MEDIUM buckets are in ascending order."""
-        buckets = BucketConfig.MEDIUM
+        buckets = get_buckets(OperationType.MEDIUM)
         assert buckets == tuple(sorted(buckets))
 
     def test_slow_buckets_are_sorted(self):
         """Tests that SLOW buckets are in ascending order."""
-        buckets = BucketConfig.SLOW
+        buckets = get_buckets(OperationType.SLOW)
         assert buckets == tuple(sorted(buckets))
 
     def test_batch_buckets_are_sorted(self):
         """Tests that BATCH buckets are in ascending order."""
-        buckets = BucketConfig.BATCH
+        buckets = get_buckets(OperationType.BATCH)
         assert buckets == tuple(sorted(buckets))
 
     def test_fast_buckets_contain_expected_values(self):
         """Tests that FAST buckets contain expected millisecond boundaries."""
-        buckets = BucketConfig.FAST
-        # Check key boundaries: 5ms, 100ms, 1s
+        buckets = get_buckets(OperationType.FAST)
+        # Check key boundaries: 5ms, 100ms
         assert 0.005 in buckets  # 5ms
         assert 0.1 in buckets  # 100ms
-        assert 1.0 in buckets  # 1s
 
     def test_slow_buckets_contain_expected_values(self):
         """Tests that SLOW buckets contain expected second boundaries."""
-        buckets = BucketConfig.SLOW
+        buckets = get_buckets(OperationType.SLOW)
         # Check key boundaries: 100ms, 5s, 30s
         assert 0.1 in buckets  # 100ms
         assert 5.0 in buckets  # 5s
@@ -128,114 +106,80 @@ class TestBucketConfig:
 class TestTrackLatencyContextManager:
     """Tests for track_latency context manager."""
 
-    @pytest.fixture
-    def registry(self):
-        """Create a fresh registry for each test."""
-        return CollectorRegistry()
+    def test_track_latency_records_duration(self):
+        """Tests that track_latency calls histogram.record()."""
+        mock_histogram = MagicMock()
 
-    def test_track_latency_observes_duration(self, registry):
-        """Tests that track_latency observes duration to histogram."""
-        histogram = Histogram(
-            "test_duration_seconds",
-            "Test duration",
-            registry=registry,
-        )
-
-        with track_latency(histogram, labels=None):
-            pass  # Minimal work
-
-        # Check that something was observed
-        count = registry.get_sample_value("test_duration_seconds_count")
-        assert count == 1
-
-    def test_track_latency_with_labels(self, registry):
-        """Tests that track_latency works with labeled histogram."""
-        histogram = Histogram(
-            "test_labeled_duration_seconds",
-            "Test labeled duration",
-            ["method"],
-            registry=registry,
-        )
-
-        with track_latency(histogram, {"method": "search"}):
+        with track_latency(mock_histogram, {}):
             pass
 
-        # Should not raise
+        mock_histogram.record.assert_called_once()
+        # Duration should be a positive float
+        call_args = mock_histogram.record.call_args
+        duration = call_args[0][0]
+        assert isinstance(duration, float)
+        assert duration >= 0
 
-    def test_track_latency_propagates_exception(self, registry):
+    def test_track_latency_with_attributes(self):
+        """Tests that track_latency passes attributes."""
+        mock_histogram = MagicMock()
+        attrs = {"method": "Search"}
+
+        with track_latency(mock_histogram, attrs):
+            pass
+
+        call_args = mock_histogram.record.call_args
+        passed_attrs = call_args[0][1]
+        assert passed_attrs == attrs
+
+    def test_track_latency_propagates_exception(self):
         """Tests that track_latency propagates exceptions."""
-        histogram = Histogram(
-            "test_error_duration_seconds",
-            "Test error duration",
-            registry=registry,
-        )
+        mock_histogram = MagicMock()
 
-        with pytest.raises(ValueError, match="Test error"), track_latency(histogram, labels=None):
-            raise ValueError("Test error")
+        with pytest.raises(ValueError, match="Test error"):
+            with track_latency(mock_histogram, {}):
+                raise ValueError("Test error")
 
-    def test_track_latency_records_even_on_exception(self, registry):
+    def test_track_latency_records_even_on_exception(self):
         """Tests that track_latency records duration even when exception occurs."""
-        histogram = Histogram(
-            "test_exception_duration_seconds",
-            "Test exception duration",
-            registry=registry,
-        )
+        mock_histogram = MagicMock()
 
-        with pytest.raises(ValueError), track_latency(histogram, labels=None):
-            raise ValueError("Error")
+        with pytest.raises(ValueError):
+            with track_latency(mock_histogram, {}):
+                raise ValueError("Error")
 
         # Duration should have been recorded despite exception
-        count = registry.get_sample_value("test_exception_duration_seconds_count")
-        assert count == 1
+        mock_histogram.record.assert_called_once()
 
-    def test_track_latency_measures_reasonable_duration(self, registry):
+    def test_track_latency_measures_reasonable_duration(self):
         """Tests that track_latency measures reasonable durations."""
-        import time
+        mock_histogram = MagicMock()
 
-        histogram = Histogram(
-            "test_sleep_duration_seconds",
-            "Test sleep duration",
-            buckets=(0.01, 0.05, 0.1, 0.5),
-            registry=registry,
-        )
-
-        with track_latency(histogram, labels=None):
+        with track_latency(mock_histogram, {}):
             time.sleep(0.05)  # Sleep 50ms
 
-        # Check that the recorded value is in the expected range
-        count = registry.get_sample_value("test_sleep_duration_seconds_count")
-        assert count == 1
+        call_args = mock_histogram.record.call_args
+        duration = call_args[0][0]
+        # Should be approximately 0.05 seconds (with tolerance)
+        assert 0.04 < duration < 0.15
 
-        # Sum should be approximately 0.05 seconds (with some tolerance)
-        sum_value = registry.get_sample_value("test_sleep_duration_seconds_sum")
-        assert sum_value is not None
-        assert 0.04 < sum_value < 0.15  # Allow for some variation
+    def test_track_latency_none_attributes(self):
+        """Tests that track_latency works with None attributes."""
+        mock_histogram = MagicMock()
 
-    def test_track_latency_without_labels(self, registry):
-        """Tests that track_latency works without labels."""
-        histogram = Histogram(
-            "test_no_labels_duration_seconds",
-            "Test no labels duration",
-            registry=registry,
-        )
-
-        with track_latency(histogram, labels=None):
+        with track_latency(mock_histogram, None):
             pass
 
-        count = registry.get_sample_value("test_no_labels_duration_seconds_count")
-        assert count == 1
+        call_args = mock_histogram.record.call_args
+        passed_attrs = call_args[0][1]
+        assert passed_attrs == {}
 
-    def test_track_latency_multiple_calls(self, registry):
-        """Tests that track_latency accumulates multiple observations."""
-        histogram = Histogram(
-            "test_multi_duration_seconds",
-            "Test multi duration",
-            registry=registry,
-        )
+    def test_track_latency_multiple_calls(self):
+        """Tests that track_latency can be called multiple times."""
+        mock_histogram = MagicMock()
 
         for _ in range(3):
-            with track_latency(histogram, labels=None):
+            with track_latency(mock_histogram, {}):
                 pass
 
-        count = registry.get_sample_value("test_multi_duration_seconds_count")
-        assert count == 3
+        assert mock_histogram.record.call_count == 3
