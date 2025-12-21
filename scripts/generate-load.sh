@@ -6,7 +6,7 @@
 #   ./scripts/generate-load.sh 100          # 100 requests
 #   ./scripts/generate-load.sh 100 0.5      # 100 requests, 0.5s delay between
 
-set -euo pipefail
+set -uo pipefail
 
 # Colors
 RED='\033[0;31m'
@@ -59,12 +59,12 @@ if ! curl -s "${SEARCH_UI_URL}/health" > /dev/null 2>&1; then
 fi
 echo -e "${GREEN}✓ Search UI accessible${NC}"
 
+SKIP_INGESTION=false
 if ! curl -s "${INGESTION_URL}/health" > /dev/null 2>&1; then
     echo -e "${YELLOW}⚠ Ingestion API not accessible at ${INGESTION_URL} (skipping ingestion tests)${NC}"
     SKIP_INGESTION=true
 else
     echo -e "${GREEN}✓ Ingestion API accessible${NC}"
-    SKIP_INGESTION=false
 fi
 echo ""
 
@@ -87,17 +87,16 @@ for i in $(seq 1 "$NUM_REQUESTS"); do
     # Make search request
     response=$(curl -s -w "\n%{http_code}" -X POST "${SEARCH_UI_URL}/api/search" \
         -H "Content-Type: application/json" \
-        -d "{\"query\": \"${query}\", \"mode\": \"${mode}\", \"top_k\": ${top_k}}" 2>/dev/null || echo "error")
+        -d "{\"query\": \"${query}\", \"mode\": \"${mode}\", \"top_k\": ${top_k}}" 2>/dev/null) || true
     
     http_code=$(echo "$response" | tail -n1)
     
     if [[ "$http_code" == "200" ]]; then
-        ((search_success++))
-        printf "\r  Search: %d/%d (success: %d, errors: %d)" "$i" "$NUM_REQUESTS" "$search_success" "$search_error"
+        search_success=$((search_success + 1))
     else
-        ((search_error++))
-        printf "\r  Search: %d/%d (success: %d, errors: %d)" "$i" "$NUM_REQUESTS" "$search_success" "$search_error"
+        search_error=$((search_error + 1))
     fi
+    printf "\r  Search: %d/%d (success: %d, errors: %d)" "$i" "$NUM_REQUESTS" "$search_success" "$search_error"
     
     sleep "$DELAY"
 done
@@ -116,26 +115,19 @@ if [[ "$SKIP_INGESTION" != "true" ]]; then
         doc_title="Load Test Document $i - $(date +%s%N)"
         doc_text="This is a test document generated for load testing purposes. It contains sample text about machine learning, natural language processing, and information retrieval. Document number $i was created at $(date -Iseconds). The purpose of this document is to test the ingestion pipeline, including MinIO storage and Kafka message publishing."
         
+        json_payload="{\"text\": \"${doc_text}\", \"metadata\": {\"title\": \"${doc_title}\", \"type\": \"test\"}, \"namespace\": \"loadtest\"}"
         response=$(curl -s -w "\n%{http_code}" -X POST "${INGESTION_URL}/ingest" \
             -H "Content-Type: application/json" \
-            -d "{
-                \"text\": \"${doc_text}\",
-                \"metadata\": {
-                    \"title\": \"${doc_title}\",
-                    \"type\": \"test\"
-                },
-                \"namespace\": \"loadtest\"
-            }" 2>/dev/null || echo "error")
+            -d "$json_payload" 2>/dev/null) || true
         
         http_code=$(echo "$response" | tail -n1)
         
-        if [[ "$http_code" == "200" ]] || [[ "$http_code" == "201" ]]; then
-            ((ingest_success++))
-            printf "\r  Ingest: %d/%d (success: %d, errors: %d)" "$i" "$ingest_count" "$ingest_success" "$ingest_error"
+        if [[ "$http_code" == "200" ]] || [[ "$http_code" == "201" ]] || [[ "$http_code" == "202" ]]; then
+            ingest_success=$((ingest_success + 1))
         else
-            ((ingest_error++))
-            printf "\r  Ingest: %d/%d (success: %d, errors: %d)" "$i" "$ingest_count" "$ingest_success" "$ingest_error"
+            ingest_error=$((ingest_error + 1))
         fi
+        printf "\r  Ingest: %d/%d (success: %d, errors: %d)" "$i" "$ingest_count" "$ingest_success" "$ingest_error"
         
         sleep "$DELAY"
     done
