@@ -199,7 +199,9 @@ class ServiceConfig(BaseConfig):
     port: int = Field(default=8080, description="Service port")
 
     # OpenTelemetry tracing configuration
-    otlp_endpoint: str | None = Field(default=None, description="OTLP endpoint for tracing (defaults to env var or http://xrag-tempo:4317)")
+    otlp_endpoint: str | None = Field(
+        default=None, description="OTLP endpoint for tracing (defaults to env var or http://tempo.monitoring.svc.cluster.local:4317)"
+    )
     environment: str = Field(default="development", description="Deployment environment (development, staging, production)")
 
     @field_validator("log_level")

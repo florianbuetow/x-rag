@@ -58,6 +58,7 @@ class TestInitTracing:
 
         assert tracing._tracer_provider is not None
 
+    @patch.dict("os.environ", {}, clear=True)
     @patch("src.common.tracing.OTLPSpanExporter")
     @patch("src.common.tracing.BatchSpanProcessor")
     def test_init_tracing_uses_default_endpoint(
@@ -70,7 +71,7 @@ class TestInitTracing:
 
         mock_exporter.assert_called_once()
         call_kwargs = mock_exporter.call_args[1]
-        assert call_kwargs["endpoint"] == "http://xrag-tempo:4317"
+        assert call_kwargs["endpoint"] == "http://tempo.monitoring.svc.cluster.local:4317"
 
     @patch("src.common.tracing.OTLPSpanExporter")
     @patch("src.common.tracing.BatchSpanProcessor")

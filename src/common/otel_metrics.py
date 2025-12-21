@@ -38,7 +38,7 @@ def init_otel_metrics(
     the OpenTelemetry SDK to export metrics via OTLP gRPC to Grafana Alloy.
 
     Environment variables:
-        OTEL_EXPORTER_OTLP_ENDPOINT: Alloy endpoint (default: http://xrag-alloy:4317)
+        OTEL_EXPORTER_OTLP_ENDPOINT: Alloy endpoint (default: http://alloy.monitoring.svc.cluster.local:4317)
         OTEL_METRICS_ENABLED: Set to "false" to disable (default: true)
 
     Args:
@@ -56,7 +56,7 @@ def init_otel_metrics(
         logger.info("OTel metrics disabled via OTEL_METRICS_ENABLED=false")
         return
 
-    endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://xrag-alloy:4317")
+    endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://alloy.monitoring.svc.cluster.local:4317")
     if endpoint.startswith("http://"):
         endpoint = endpoint[7:]
     elif endpoint.startswith("https://"):

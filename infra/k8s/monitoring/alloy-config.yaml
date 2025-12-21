@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: alloy-config
-  namespace: rag-system
+  namespace: monitoring
 data:
   config.alloy: |
     // =============================================================================
@@ -62,7 +62,7 @@ data:
     // -----------------------------------------------------------------------------
     prometheus.remote_write "prom" {
       endpoint {
-        url = "http://xrag-prometheus:9090/api/v1/write"
+        url = "http://prometheus.monitoring.svc.cluster.local:9090/api/v1/write"
       }
     }
     
@@ -71,7 +71,7 @@ data:
     // -----------------------------------------------------------------------------
     otelcol.exporter.otlp "tempo" {
       client {
-        endpoint = "xrag-tempo:4317"
+        endpoint = "tempo.monitoring.svc.cluster.local:4317"
         tls {
           insecure = true
         }
@@ -278,7 +278,7 @@ data:
     // -----------------------------------------------------------------------------
     prometheus.scrape "kube_state_metrics" {
       targets = [
-        {"__address__" = "kube-state-metrics.rag-system.svc.cluster.local:8080"},
+        {"__address__" = "kube-state-metrics.monitoring.svc.cluster.local:8080"},
       ]
       job_name        = "kube-state-metrics"
       scrape_interval = "30s"

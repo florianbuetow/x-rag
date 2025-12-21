@@ -415,11 +415,11 @@ cli-search-service: ## Connect to Search Service pod shell
 	@echo ""
 
 cli-prometheus: ## Connect to Prometheus pod shell
-	@./scripts/connect-pod.sh xrag-prometheus $(NAMESPACE)
+	@./scripts/connect-pod.sh prometheus monitoring
 	@echo ""
 
 cli-grafana: ## Connect to Grafana pod shell
-	@./scripts/connect-pod.sh xrag-grafana $(NAMESPACE)
+	@./scripts/connect-pod.sh grafana monitoring
 	@echo ""
 
 ##@ UI Shortcuts

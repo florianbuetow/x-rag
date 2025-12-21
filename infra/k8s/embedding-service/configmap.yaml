@@ -26,5 +26,5 @@ data:
   OPENAI_TIMEOUT: "30"
 
   # Distributed tracing (OpenTelemetry)
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://xrag-alloy:4317"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy.monitoring.svc.cluster.local:4317"
   ENVIRONMENT: "development"

@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: xrag-alloy
-  namespace: rag-system
+  name: alloy
+  namespace: monitoring
   labels:
-    app: xrag-alloy
+    app: alloy
 spec:
   type: ClusterIP
   ports:
@@ -18,24 +18,24 @@ spec:
       port: 12345
       targetPort: 12345
   selector:
-    app: xrag-alloy
+    app: alloy
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: xrag-alloy
-  namespace: rag-system
+  name: alloy
+  namespace: monitoring
   labels:
-    app: xrag-alloy
+    app: alloy
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: xrag-alloy
+      app: alloy
   template:
     metadata:
       labels:
-        app: xrag-alloy
+        app: alloy
     spec:
       serviceAccountName: alloy
       containers:

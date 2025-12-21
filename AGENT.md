@@ -66,6 +66,11 @@ make logs-*          # Tail service logs
 - **6379** = Redis
 - **9092** = Kafka
 
+### Kubernetes Namespaces
+- **rag-system** = Application workloads (search-ui, embedding-service, indexer, etc.)
+- **monitoring** = Observability stack (Prometheus, Grafana, Tempo, Loki, Alloy)
+- **kubernetes-dashboard** = Kubernetes Dashboard
+
 ### Environment Setup
 Copy `.env.example` to `.env` and add `OPENAI_API_KEY`
 

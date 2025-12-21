@@ -2,6 +2,7 @@
 set -euo pipefail
 
 NAMESPACE="rag-system"
+MONITORING_NAMESPACE="monitoring"
 CLUSTER_NAME="xrag-k8"
 
 # Color codes
@@ -61,7 +62,7 @@ fi
 echo ""
 
 # Check Namespace and Pods
-echo -e "${BLUE}[4/8] Kubernetes Pods${NC}"
+echo -e "${BLUE}[4/8] Kubernetes Pods (${NAMESPACE})${NC}"
 if kubectl get namespace ${NAMESPACE} &>/dev/null; then
     echo -e "  ${check_mark} Namespace '${NAMESPACE}' exists"
     echo ""
@@ -154,6 +155,36 @@ else
 fi
 echo ""
 
+# Check Monitoring Namespace and Pods
+echo -e "${BLUE}[Monitoring] Pods (${MONITORING_NAMESPACE})${NC}"
+if kubectl get namespace ${MONITORING_NAMESPACE} &>/dev/null; then
+    echo -e "  ${check_mark} Namespace '${MONITORING_NAMESPACE}' exists"
+    echo ""
+
+    # Get pod status
+    mon_pod_status=$(kubectl get pods -n ${MONITORING_NAMESPACE} --no-headers 2>/dev/null || echo "")
+
+    if [ -z "$mon_pod_status" ]; then
+        echo -e "  ${cross_mark} No pods found"
+    else
+        echo "  Pod Status:"
+        echo "$mon_pod_status" | while read line; do
+            pod_name=$(echo $line | awk '{print $1}')
+            ready=$(echo $line | awk '{print $2}')
+            status=$(echo $line | awk '{print $3}')
+
+            if [[ "$ready" == "1/1" ]] && [[ "$status" == "Running" ]]; then
+                echo -e "    ${check_mark} ${pod_name}"
+            else
+                echo -e "    ${cross_mark} ${pod_name} (${status}, ${ready})"
+            fi
+        done
+    fi
+else
+    echo -e "  ${cross_mark} Namespace '${MONITORING_NAMESPACE}' not found"
+fi
+echo ""
+
 # Test Prometheus
 echo -e "${BLUE}[Monitoring] Prometheus${NC}"
 if curl -s -f http://localhost:9090/-/healthy &>/dev/null; then
@@ -238,20 +269,33 @@ echo "  Summary"
 echo -e "==============================================${NC}"
 echo ""
 
-# Count ready pods (include both Running and Completed)
+# Count ready pods in rag-system namespace (include both Running and Completed)
 total_pods=$(kubectl get pods -n ${NAMESPACE} --no-headers 2>/dev/null | wc -l | tr -d ' ')
 running_pods=$(kubectl get pods -n ${NAMESPACE} --no-headers 2>/dev/null | { grep "1/1.*Running" || true; } | wc -l | tr -d ' ')
 completed_pods=$(kubectl get pods -n ${NAMESPACE} --no-headers 2>/dev/null | { grep "0/1.*Completed" || true; } | wc -l | tr -d ' ')
 ready_pods=$((running_pods + completed_pods))
 
+# Count ready pods in monitoring namespace
+mon_total_pods=$(kubectl get pods -n ${MONITORING_NAMESPACE} --no-headers 2>/dev/null | wc -l | tr -d ' ')
+mon_running_pods=$(kubectl get pods -n ${MONITORING_NAMESPACE} --no-headers 2>/dev/null | { grep "1/1.*Running" || true; } | wc -l | tr -d ' ')
+
 if [ "$total_pods" -gt 0 ]; then
-    echo -e "  Pods: ${ready_pods}/${total_pods} ready"
+    echo -e "  rag-system Pods: ${ready_pods}/${total_pods} ready"
 else
-    echo -e "  Pods: No pods deployed"
+    echo -e "  rag-system Pods: No pods deployed"
+fi
+
+if [ "$mon_total_pods" -gt 0 ]; then
+    echo -e "  monitoring Pods: ${mon_running_pods}/${mon_total_pods} ready"
+else
+    echo -e "  monitoring Pods: No pods deployed"
 fi
 
 # Overall status
-if [ "$ready_pods" -eq "$total_pods" ] && [ "$total_pods" -gt 0 ]; then
+all_ready=$((ready_pods + mon_running_pods))
+all_total=$((total_pods + mon_total_pods))
+
+if [ "$all_ready" -eq "$all_total" ] && [ "$all_total" -gt 0 ]; then
     echo -e "  Status: ${GREEN}All systems operational${NC}"
 else
     echo -e "  Status: ${YELLOW}Some services are not ready${NC}"

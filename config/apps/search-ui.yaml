@@ -14,5 +14,5 @@ ui:
   default_mode: hybrid
 
 tracing:
-  otlp_endpoint: http://xrag-tempo:4317
+  otlp_endpoint: http://tempo.monitoring.svc.cluster.local:4317
   environment: development

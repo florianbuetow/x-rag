@@ -276,10 +276,10 @@ else
     echo "  Actual:   ${SERVICES_WITH_TRACES} services"
     echo ""
     echo "  Troubleshooting:"
-    echo "    1. Check Alloy logs:  kubectl logs -l app=xrag-alloy -n rag-system"
-    echo "    2. Check Tempo logs:  kubectl logs -l app=xrag-tempo -n rag-system"
+    echo "    1. Check Alloy logs:  kubectl logs -l app=alloy -n monitoring"
+    echo "    2. Check Tempo logs:  kubectl logs -l app=tempo -n monitoring"
     echo "    3. Check service tracing: kubectl logs -l app=search-ui -n rag-system | grep -i trace"
-    echo "    4. Verify Alloy config: kubectl get configmap alloy-config -n rag-system -o yaml"
+    echo "    4. Verify Alloy config: kubectl get configmap alloy-config -n monitoring -o yaml"
     echo -e "${BLUE}==============================================================================${NC}"
     exit 1
 fi
