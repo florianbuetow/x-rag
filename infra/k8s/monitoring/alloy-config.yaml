@@ -1067,3 +1067,140 @@ data:
       
       forward_to = [prometheus.remote_write.prom.receiver]
     }
+    
+    // =============================================================================
+    // SECTION 9: LOG COLLECTION AND SHIPPING TO LOKI
+    // =============================================================================
+    //
+    // This section configures collection of container logs from Kubernetes pods
+    // and ships them to Loki for storage and querying in Grafana.
+    //
+    // HOW KUBERNETES LOGGING WORKS:
+    // 1. Containers write to stdout/stderr
+    // 2. Container runtime (containerd) captures output and writes to log files
+    // 3. Log files are stored on nodes at: /var/log/pods/<namespace>_<pod>_<uid>/<container>/*.log
+    // 4. Alloy reads these log files and ships to Loki
+    //
+    // DATA FLOW:
+    //   Container stdout/stderr
+    //         │
+    //         ▼
+    //   /var/log/pods/<namespace>_<pod>_<uid>/<container>/*.log
+    //         │
+    //         ▼
+    //   loki.source.kubernetes (discovers and tails log files)
+    //         │
+    //         ▼
+    //   loki.process (adds labels, parses, filters)
+    //         │
+    //         ▼
+    //   loki.write (ships to Loki)
+    //         │
+    //         ▼
+    //   Loki (storage and query)
+    //
+    // =============================================================================
+    
+    // -----------------------------------------------------------------------------
+    // Kubernetes Pod Log Discovery and Collection
+    // -----------------------------------------------------------------------------
+    // loki.source.kubernetes automatically discovers pods in the cluster and
+    // tails their log files. It adds Kubernetes metadata as labels:
+    // - namespace, pod, container
+    // - pod labels and annotations (optional)
+    // -----------------------------------------------------------------------------
+    
+    discovery.kubernetes "pods" {
+      role = "pod"
+    }
+    
+    discovery.relabel "pod_logs" {
+      targets = discovery.kubernetes.pods.targets
+      
+      // Only collect logs from running pods
+      rule {
+        source_labels = ["__meta_kubernetes_pod_phase"]
+        regex         = "Pending|Succeeded|Failed|Unknown"
+        action        = "drop"
+      }
+      
+      // Set the namespace label
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        target_label  = "namespace"
+      }
+      
+      // Set the pod label
+      rule {
+        source_labels = ["__meta_kubernetes_pod_name"]
+        target_label  = "pod"
+      }
+      
+      // Set the container label
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_name"]
+        target_label  = "container"
+      }
+      
+      // Set the app label from pod label if present
+      rule {
+        source_labels = ["__meta_kubernetes_pod_label_app"]
+        target_label  = "app"
+      }
+      
+      // Build the log file path
+      // Format: /var/log/pods/<namespace>_<pod>_<uid>/<container>/*.log
+      rule {
+        source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_name", "__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+        separator     = "/"
+        regex         = "(.+)/(.+)/(.+)/(.+)"
+        replacement   = "/var/log/pods/$1_$2_$3/$4/*.log"
+        target_label  = "__path__"
+      }
+    }
+    
+    loki.source.kubernetes "pod_logs" {
+      targets    = discovery.relabel.pod_logs.output
+      forward_to = [loki.process.pod_logs.receiver]
+    }
+    
+    // -----------------------------------------------------------------------------
+    // Log Processing Pipeline
+    // -----------------------------------------------------------------------------
+    // Process logs before sending to Loki:
+    // - Parse structured logs (JSON)
+    // - Add/modify labels
+    // - Filter unwanted logs
+    // -----------------------------------------------------------------------------
+    
+    loki.process "pod_logs" {
+      // Try to parse JSON logs and extract level
+      stage.json {
+        expressions = {
+          level = "level",
+          msg   = "msg",
+        }
+      }
+      
+      // Normalize log level to a label
+      stage.labels {
+        values = {
+          level = "",
+        }
+      }
+      
+      forward_to = [loki.write.default.receiver]
+    }
+    
+    // -----------------------------------------------------------------------------
+    // Loki Write Endpoint
+    // -----------------------------------------------------------------------------
+    // Ships processed logs to Loki for storage.
+    // Loki stores logs indexed by labels for efficient querying.
+    // -----------------------------------------------------------------------------
+    
+    loki.write "default" {
+      endpoint {
+        url = "http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push"
+      }
+    }

@@ -58,6 +58,9 @@ spec:
               mountPath: /etc/alloy
             - name: data
               mountPath: /var/lib/alloy/data
+            - name: varlogpods
+              mountPath: /var/log/pods
+              readOnly: true
           resources:
             requests:
               cpu: "100m"
@@ -83,3 +86,7 @@ spec:
             name: alloy-config
         - name: data
           emptyDir: {}
+        - name: varlogpods
+          hostPath:
+            path: /var/log/pods
+            type: Directory

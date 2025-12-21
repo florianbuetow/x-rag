@@ -23,6 +23,14 @@ data:
         jsonData:
           timeInterval: "15s"
           httpMethod: POST
+      - name: Loki
+        type: loki
+        uid: loki
+        url: http://loki:3100
+        access: proxy
+        editable: false
+        jsonData:
+          maxLines: 1000
       - name: Tempo
         type: tempo
         uid: tempo
@@ -31,7 +39,7 @@ data:
         editable: false
         jsonData:
           tracesToLogsV2:
-            datasourceUid: ''
+            datasourceUid: loki
           tracesToMetrics:
             datasourceUid: prometheus
           nodeGraph:
@@ -39,7 +47,7 @@ data:
           search:
             hide: false
           lokiSearch:
-            datasourceUid: ''
+            datasourceUid: loki
           traceQuery:
             timeShiftEnabled: true
             spanStartTimeShift: '1h'
