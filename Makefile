@@ -7,7 +7,7 @@
 .PHONY: cluster-start cluster-stop cluster-status cluster-clean cluster-reset cluster-destroy
 .PHONY: apps-generate-grpc apps-build apps-register apps-deploy apps-recycle apps-destroy
 .PHONY: test test-integration-config test-integration test-coverage test-e2e
-.PHONY: code-style code-format code-typecheck code-security code-deptry code-stats code-spell code-audit code-semgrep
+.PHONY: code-style code-format code-typecheck code-security code-deptry code-stats code-history code-spell code-audit code-semgrep
 .PHONY: ci ci-quiet
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
 .PHONY: logs-weaviate logs-kafka logs-redis
@@ -372,6 +372,12 @@ code-stats: ## Generate code statistics with pygount
 	@echo ""
 	@uv run pygount $(PYGOUNT_DIRS) $(PYGOUNT_OPTS) > reports/code-stats.txt
 	@echo "$(GREEN)✓ Report saved to reports/code-stats.txt$(NC)"
+	@echo ""
+
+code-history: ## Display git repository statistics (commits, contributors, changes)
+	@echo "$(BLUE)=== Git History Statistics ===$(NC)"
+	@echo ""
+	@./scripts/git-history-stats.sh
 	@echo ""
 
 code-spell: ## Check spelling in code and documentation
