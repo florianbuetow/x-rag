@@ -45,9 +45,7 @@ class EmbeddingGeneratorFactory:
             Configured embedding generator instance
         """
         if config.provider == EmbeddingProvider.HASH_BASED:
-            return EmbeddingGeneratorFactory._create_hash_based_generator(
-                default_dimension=config.dimension,
-            )
+            return EmbeddingGeneratorFactory._create_hash_based_generator()
         elif config.provider in (EmbeddingProvider.OPENAI, EmbeddingProvider.LOCAL):
             if not config.api_key:
                 raise ValueError(f"{config.provider.value} generator requires 'api_key'")
@@ -63,11 +61,8 @@ class EmbeddingGeneratorFactory:
     @staticmethod
     def _create_hash_based_generator(**kwargs: object) -> HashBasedEmbeddingGenerator:
         """Create hash-based embedding generator."""
-        if "default_dimension" not in kwargs:
-            raise ValueError("Hash-based generator requires 'default_dimension' parameter")
-        default_dimension = cast(int, kwargs["default_dimension"])
-        logger.info(f"Creating hash-based embedding generator (dimension={default_dimension})")
-        return HashBasedEmbeddingGenerator(default_dimension=default_dimension)
+        logger.info("Creating hash-based embedding generator")
+        return HashBasedEmbeddingGenerator()
 
     @staticmethod
     def _create_openai_generator(**kwargs: object) -> OpenAIEmbeddingGenerator:

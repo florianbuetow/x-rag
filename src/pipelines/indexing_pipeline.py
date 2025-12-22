@@ -464,7 +464,9 @@ class IndexingPipeline:
             List of DocumentChunk objects
         """
         doc_id = document["id"] if "id" in document else "unknown"
-        namespace = document["namespace"] if "namespace" in document else "default"
+        if "namespace" not in document:
+            raise ValueError(f"Document {doc_id} missing required 'namespace' field")
+        namespace = document["namespace"]
         metadata = document["metadata"] if "metadata" in document else {}
 
         chunks = [

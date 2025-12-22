@@ -38,14 +38,9 @@ class HashBasedEmbeddingGenerator(EmbeddingGenerator):
         "hash-large": 1536,
     }
 
-    def __init__(self, default_dimension: int) -> None:
-        """Initialize hash-based generator.
-
-        Args:
-            default_dimension: Default embedding dimension for unknown models
-        """
-        self.default_dimension = default_dimension
-        logger.info(f"HashBasedEmbeddingGenerator initialized (default_dimension={default_dimension})")
+    def __init__(self) -> None:
+        """Initialize hash-based generator."""
+        logger.info("HashBasedEmbeddingGenerator initialized")
 
     async def embed(self, text: str, model: str, **options: object) -> list[float]:
         """Generate deterministic embedding for a single text.
@@ -93,10 +88,15 @@ class HashBasedEmbeddingGenerator(EmbeddingGenerator):
 
         Returns:
             Embedding dimension
+
+        Raises:
+            ValueError: If model is not recognized
         """
-        if model in self.MODEL_DIMENSIONS:
-            return self.MODEL_DIMENSIONS[model]
-        return self.default_dimension
+        if model not in self.MODEL_DIMENSIONS:
+            raise ValueError(
+                f"Unknown model '{model}'. Supported models: {', '.join(self.MODEL_DIMENSIONS.keys())}"
+            )
+        return self.MODEL_DIMENSIONS[model]
 
     def _generate_embedding(self, text: str, dimension: int) -> list[float]:
         """Generate deterministic embedding vector from text.

@@ -15,12 +15,12 @@ class EmbeddingServiceConfig(ServiceConfig):
     dataset-specific settings are now configured per-namespace in datasets_config.yaml.
     """
 
-    service_name: str = Field(default="embedding-service", description="Service name")
-    port: int = Field(default=50051, description="gRPC port")
-    enable_reflection: bool = Field(default=True, description="Enable gRPC reflection")
+    service_name: str = Field(..., description="Service name")
+    port: int = Field(..., description="gRPC port")
+    enable_reflection: bool = Field(..., description="Enable gRPC reflection")
 
     # Dataset configuration path
     datasets_config_path: str = Field(
-        default="config/datasets_config.yaml",
+        ...,
         description="Path to datasets configuration file",
     )

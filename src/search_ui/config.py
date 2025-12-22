@@ -8,26 +8,32 @@ from src.common.config import ServiceConfig
 class SearchUIConfig(ServiceConfig):
     """Search UI configuration."""
 
-    service_name: str = Field(default="search-ui")
-    port: int = Field(default=8080)
+    service_name: str = Field(...)
+    port: int = Field(...)
 
     # Search Service connection
     search_service_addr: str = Field(
-        default="search-service:50052",
+        ...,
         description="Search Service gRPC address",
     )
     search_service_timeout: float = Field(
-        default=30.0,
+        ...,
         description="Search Service timeout in seconds",
     )
 
     # UI settings
-    cors_enabled: bool = Field(default=True, description="Enable CORS for browser access")
-    max_query_length: int = Field(default=1000, description="Maximum query length")
-    default_top_k: int = Field(default=5, description="Default number of results")
-    default_mode: str = Field(default="hybrid", description="Default search mode")
+    cors_enabled: bool = Field(..., description="Enable CORS for browser access")
+    max_query_length: int = Field(..., description="Maximum query length")
+    top_k: int = Field(..., description="Number of results")
+    mode: str = Field(..., description="Search mode")
 
-    @field_validator("default_mode")
+    # Dataset config path
+    datasets_config_path: str = Field(
+        ...,
+        description="Path to datasets configuration file",
+    )
+
+    @field_validator("mode")
     @classmethod
     def validate_mode(cls, v: str) -> str:
         """Validate search mode is valid."""

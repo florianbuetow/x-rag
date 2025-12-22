@@ -75,7 +75,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Load dataset configs
     logger.info("Loading dataset configurations...")
-    datasets_loader = DatasetsConfigLoader()
+    datasets_loader = DatasetsConfigLoader(config.datasets_config_path)
     logger.info(f"✓ Loaded {len(datasets_loader.list_namespaces())} datasets: {datasets_loader.list_namespaces()}")
 
     # Initialize Search Service client

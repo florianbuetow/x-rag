@@ -9,9 +9,9 @@ class SearchRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     query: str = Field(..., min_length=1, max_length=1000, description="Search query")
-    namespace: str = Field(default="default", pattern="^[a-z0-9-]+$", description="Search namespace")
-    top_k: int = Field(default=5, ge=1, le=50, description="Number of results to return")
-    mode: str = Field(default="hybrid", description="Search mode: vector, bm25, or hybrid")
+    namespace: str = Field(..., pattern="^[a-z0-9-]+$", description="Search namespace (required)")
+    top_k: int = Field(..., ge=1, le=50, description="Number of results to return")
+    mode: str = Field(..., description="Search mode: vector, bm25, or hybrid")
 
 
 class Source(BaseModel):

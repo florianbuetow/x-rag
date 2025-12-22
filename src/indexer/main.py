@@ -185,7 +185,11 @@ class IndexerService:
         # Process events
         try:
             async for event, trace_ctx in self.consumer.consume():
-                namespace = event["namespace"] if "namespace" in event else "default"
+                if "namespace" not in event:
+                    logger.error(f"Event missing required 'namespace' field: {event['document_id']}")
+                    inc_errors_total(stage="validation", error_type="MissingNamespace")
+                    continue
+                namespace = event["namespace"]
                 inc_active_documents()
 
                 # Attach trace context from Kafka message to link with producer span

@@ -32,7 +32,7 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
     Namespace-aware: uses dataset-specific embedding models based on namespace parameter.
     """
 
-    def __init__(self, datasets_config_path: str = "config/datasets_config.yaml") -> None:
+    def __init__(self, datasets_config_path: str) -> None:
         """Initialize servicer with dataset config loader.
 
         Args:
@@ -97,7 +97,9 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
 
                 # Extract namespace from options
                 options = dict(request.options) if request.options else {}
-                namespace = options.get("namespace", "default")
+                if "namespace" not in options:
+                    await context.abort(grpc.StatusCode.INVALID_ARGUMENT, "namespace is required in options")
+                namespace = options["namespace"]
 
                 # Get namespace-specific generator
                 try:
@@ -174,7 +176,9 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
 
                 # Extract namespace from options
                 options = dict(request.options) if request.options else {}
-                namespace = options.get("namespace", "default")
+                if "namespace" not in options:
+                    await context.abort(grpc.StatusCode.INVALID_ARGUMENT, "namespace is required in options")
+                namespace = options["namespace"]
 
                 # Get namespace-specific generator
                 try:
@@ -253,26 +257,25 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
             HealthCheckResponse with service status
         """
         try:
-            # For embedding service, we mainly check if the generator is accessible
-            # We can do a simple check by verifying we can get model dimensions
+            # Check if datasets config loader has at least one namespace configured
             try:
-                self.generator.get_dimension(self.default_model)
-                generator_healthy = True
+                namespaces = self.datasets_loader.list_namespaces()
+                config_healthy = len(namespaces) > 0
             except Exception as e:
-                logger.warning(f"Backend health check failed: {e}")
-                generator_healthy = False
+                logger.warning(f"Config health check failed: {e}")
+                config_healthy = False
 
-            if generator_healthy:
+            if config_healthy:
                 return common_pb2.HealthCheckResponse(
                     status=common_pb2.HealthCheckResponse.HEALTHY,
-                    dependencies={"generator": "HEALTHY"},
+                    dependencies={"datasets_config": "HEALTHY"},
                     message="Embedding service is healthy",
                 )
             else:
                 return common_pb2.HealthCheckResponse(
                     status=common_pb2.HealthCheckResponse.UNHEALTHY,
-                    dependencies={"generator": "UNHEALTHY"},
-                    message="Backend is not available",
+                    dependencies={"datasets_config": "UNHEALTHY"},
+                    message="No datasets configured",
                 )
 
         except Exception as e:

@@ -8,24 +8,24 @@ from src.common.config import KafkaConfig, MinIOConfig, ServiceConfig
 class IngestionAPIConfig(ServiceConfig):
     """Ingestion API configuration."""
 
-    service_name: str = Field(default="ingestion-api")
-    port: int = Field(default=8082)
+    service_name: str = Field(...)
+    port: int = Field(...)
 
     # MinIO
-    minio_endpoint: str = Field(default="xrag-minio:9000")
-    minio_access_key: str = Field(default="minioadmin")
-    minio_secret_key: str = Field(default="minioadmin123")
-    minio_bucket: str = Field(default="documents")
-    minio_secure: bool = Field(default=False)
+    minio_endpoint: str = Field(...)
+    minio_access_key: str = Field(...)
+    minio_secret_key: str = Field(...)
+    minio_bucket: str = Field(...)
+    minio_secure: bool = Field(...)
 
     # Kafka
-    kafka_bootstrap: str = Field(default="xrag-kafka:9092")
-    kafka_topic: str = Field(default="document-changes")
-    kafka_acks: str = Field(default="1")  # 0, 1, or "all"
+    kafka_bootstrap: str = Field(...)
+    kafka_topic: str = Field(...)
+    kafka_acks: str = Field(...)  # 0, 1, or "all"
 
     # API
-    max_content_length: int = Field(default=10_485_760)  # 10MB
-    cors_enabled: bool = Field(default=True)
+    max_content_length: int = Field(...)  # 10MB
+    cors_enabled: bool = Field(...)
 
     @field_validator("minio_endpoint")
     @classmethod

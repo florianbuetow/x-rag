@@ -28,11 +28,14 @@ class CoreDocument:
         """Get document namespace for multi-tenancy.
 
         Returns:
-            Namespace string (default: "default")
+            Namespace string
+
+        Raises:
+            ValueError: If namespace is not set in metadata
         """
-        if "namespace" in self.metadata:
-            return cast(str, self.metadata["namespace"])
-        return "default"
+        if "namespace" not in self.metadata:
+            raise ValueError("Document missing required 'namespace' in metadata")
+        return cast(str, self.metadata["namespace"])
 
     @property
     def source(self) -> str | None:

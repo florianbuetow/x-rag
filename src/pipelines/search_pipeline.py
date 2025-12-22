@@ -80,10 +80,12 @@ class SearchPipeline:
         if mode in ("vector", "hybrid"):
             logger.debug(f"Generating embedding for query: {query[:50]}...")
             with track_latency(get_embedding_duration(), {}):
+                if not namespace:
+                    raise ValueError("namespace is required for search")
                 query_embedding = await self.embedding_client.embed(
                     text=query,
                     model="text-embedding-3-small",
-                    namespace=namespace or "default",
+                    namespace=namespace,
                 )
             logger.debug(f"Generated embedding (dim={len(query_embedding)})")
 
@@ -113,13 +115,15 @@ class SearchPipeline:
         response: dict[str, Any]
         if not results:
             logger.info("No results found")
+            if not namespace:
+                raise ValueError("namespace is required for search")
             response = {
                 "answer": build_no_results_response(query),
                 "sources": [],
                 "metadata": {
                     "mode": mode,
                     "top_k": top_k,
-                    "namespace": namespace or "default",
+                    "namespace": namespace,
                     "num_sources": 0,
                 },
             }
@@ -141,13 +145,15 @@ class SearchPipeline:
 
             # Build response
             sources_list: list[dict[str, Any]] = [r.to_dict() for r in results]
+            if not namespace:
+                raise ValueError("namespace is required for search")
             response = {
                 "answer": answer,
                 "sources": sources_list,
                 "metadata": {
                     "mode": mode,
                     "top_k": top_k,
-                    "namespace": namespace or "default",
+                    "namespace": namespace,
                     "num_sources": len(results),
                 },
             }

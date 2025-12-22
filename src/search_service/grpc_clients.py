@@ -71,7 +71,7 @@ class EmbeddingServiceClient:
             self.channel = None
             self.stub = None
 
-    async def embed(self, text: str, model: str, namespace: str = "default") -> list[float]:
+    async def embed(self, text: str, model: str, namespace: str) -> list[float]:
         """Generate embedding for a single text (async).
 
         Args:
@@ -101,7 +101,7 @@ class EmbeddingServiceClient:
             logger.error(f"Embedding request failed: {e.code()} - {e.details()}")
             raise
 
-    async def embed_batch(self, texts: list[str], model: str, namespace: str = "default") -> list[list[float]]:
+    async def embed_batch(self, texts: list[str], model: str, namespace: str) -> list[list[float]]:
         """Generate embeddings for multiple texts (async).
 
         Args:

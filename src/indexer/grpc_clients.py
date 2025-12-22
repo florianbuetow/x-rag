@@ -96,7 +96,7 @@ class EmbeddingServiceClient:
             logger.error(f"Embedding request failed: {e.code()} - {e.details()}")
             raise
 
-    def embed_batch(self, texts: list[str], model: str, namespace: str = "default") -> list[list[float]]:
+    def embed_batch(self, texts: list[str], model: str, namespace: str) -> list[list[float]]:
         """Generate embeddings for multiple texts.
 
         Args:

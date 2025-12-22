@@ -61,17 +61,17 @@ class IngestRequest(BaseModel):
 
     text: str = Field(..., min_length=1, description="Document content")
     metadata: DocumentMetadata = Field(..., description="Document metadata")
-    namespace: str = Field(default="default", pattern="^[a-z0-9-]+$")
+    namespace: str = Field(..., pattern="^[a-z0-9-]+$", description="Document namespace (required)")
 
 
 class IngestResponse(BaseModel):
     """Document ingestion response."""
 
     document_id: str = Field(..., description="Unique document ID")
-    status: str = Field(default="accepted", description="Processing status")
+    status: str = Field(..., description="Processing status")
     minio_bucket: str = Field(..., description="Storage bucket")
     minio_key: str = Field(..., description="Storage key")
-    message: str = Field(default="Document accepted for processing")
+    message: str = Field(..., description="Processing message")
 
 
 # Global state

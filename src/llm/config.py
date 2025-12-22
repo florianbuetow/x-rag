@@ -39,28 +39,25 @@ class LLMConfig(BaseModel):
         ...,
         description="API key (any non-empty value for local LLMs)",
     )
-    base_url: str | None = Field(
-        default=None,
-        description="Base URL for API (None = OpenAI default, or local server URL)",
-    )
+    base_url: str | None = None
     model: str = Field(
-        default="gpt-4o-mini",
+        ...,
         description="Model name/ID",
     )
     max_tokens: int = Field(
-        default=500,
+        ...,
         description="Maximum tokens in response",
     )
     temperature: float = Field(
-        default=0.7,
+        ...,
         description="Sampling temperature (0.0-2.0)",
     )
     max_retries: int = Field(
-        default=3,
+        ...,
         description="Maximum retry attempts",
     )
     timeout: int = Field(
-        default=60,
+        ...,
         description="Request timeout in seconds",
     )
 
@@ -143,29 +140,23 @@ class EmbeddingConfig(BaseModel):
         description="Embedding provider type. Required - no default.",
     )
     model: str = Field(
-        default="text-embedding-3-small",
+        ...,
         description="Embedding model name/ID",
     )
     # OpenAI/Local provider settings
-    api_key: str | None = Field(
-        default=None,
-        description="API key (required for OpenAI/Local providers)",
-    )
-    base_url: str | None = Field(
-        default=None,
-        description="Base URL for API (required for Local provider)",
-    )
+    api_key: str | None = None
+    base_url: str | None = None
     max_retries: int = Field(
-        default=3,
+        ...,
         description="Maximum retry attempts",
     )
     timeout: int = Field(
-        default=30,
+        ...,
         description="Request timeout in seconds",
     )
     # Hash-based provider settings
     dimension: int = Field(
-        default=768,
+        ...,
         description="Embedding dimension (for hash_based provider)",
     )
 
