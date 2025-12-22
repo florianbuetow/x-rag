@@ -20,7 +20,7 @@ for service in "${SERVICES[@]}"; do
     echo "=== Building ${service} ==="
 
     echo "  Building ${image_name}..."
-    docker build --no-cache -t "${image_name}" -f "${dockerfile}" . --quiet
+    docker build --no-cache -t "${image_name}" -f "${dockerfile}" .
 
     echo "  ✓ ${service} built"
     echo ""
