@@ -24,12 +24,12 @@ class TestIngestRequestValidation:
         request = IngestRequest(
             text="Test document content",
             metadata=DocumentMetadata(title="Test Title"),
-            namespace="default",
+            namespace="test-ns",
         )
 
         assert request.text == "Test document content"
         assert request.metadata.title == "Test Title"
-        assert request.namespace == "default"
+        assert request.namespace == "test-ns"
 
     def test_empty_text_rejected(self):
         """Empty text raises validation error."""
@@ -39,7 +39,7 @@ class TestIngestRequestValidation:
             IngestRequest(
                 text="",
                 metadata=DocumentMetadata(title="Test"),
-                namespace="default",
+                namespace="test-ns",
             )
 
         assert "text" in str(exc_info.value)
@@ -59,7 +59,7 @@ class TestIngestRequestValidation:
 
     def test_valid_namespace_patterns(self):
         """Valid namespace patterns accepted."""
-        valid_namespaces = ["default", "my-namespace", "test123", "a-b-c-123"]
+        valid_namespaces = ["my-namespace", "test123", "a-b-c-123", "test-ns"]
 
         for ns in valid_namespaces:
             request = IngestRequest(
@@ -77,7 +77,7 @@ class TestIngestRequestValidation:
             IngestRequest(
                 text="Test content",
                 metadata=DocumentMetadata(title=""),  # Empty title
-                namespace="default",
+                namespace="test-ns",
             )
 
         assert "title" in str(exc_info.value)
@@ -92,7 +92,7 @@ class TestIngestRequestValidation:
                 type="pdf",
                 transcription_method="tesseract",
             ),
-            namespace="default",
+            namespace="test-ns",
         )
 
         assert request.metadata.source_file == "document.pdf"
@@ -143,7 +143,7 @@ class TestIngestEndpoint:
             request = IngestRequest(
                 text="Test document content",
                 metadata=DocumentMetadata(title="Test Title"),
-                namespace="default",
+                namespace="test-ns",
             )
 
             response = await ingest_document(request)
@@ -163,7 +163,7 @@ class TestIngestEndpoint:
             call_args = mock_kafka_client.publish.call_args
             event = call_args[0][1]
             assert event["event_type"] == "document.ingested"
-            assert event["namespace"] == "default"
+            assert event["namespace"] == "test-ns"
 
         finally:
             main_module.minio_client = original_minio
@@ -183,7 +183,7 @@ class TestIngestEndpoint:
             request = IngestRequest(
                 text="Test content",
                 metadata=DocumentMetadata(title="Test"),
-                namespace="default",
+                namespace="test-ns",
             )
 
             with pytest.raises(HTTPException) as exc_info:
@@ -212,7 +212,7 @@ class TestIngestEndpoint:
             request = IngestRequest(
                 text="Test content",
                 metadata=DocumentMetadata(title="Test"),
-                namespace="default",
+                namespace="test-ns",
             )
 
             with pytest.raises(HTTPException) as exc_info:
@@ -245,7 +245,7 @@ class TestIngestEndpoint:
             request = IngestRequest(
                 text="Test content",
                 metadata=DocumentMetadata(title="Test"),
-                namespace="default",
+                namespace="test-ns",
             )
 
             with pytest.raises(HTTPException) as exc_info:
@@ -277,7 +277,7 @@ class TestIngestEndpoint:
             request = IngestRequest(
                 text="Test content",
                 metadata=DocumentMetadata(title="Test"),
-                namespace="default",
+                namespace="test-ns",
             )
 
             with pytest.raises(HTTPException) as exc_info:

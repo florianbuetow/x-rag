@@ -139,7 +139,7 @@ test_search() {
         -H "Content-Type: application/json" \
         -d "{
             \"query\": \"$query\",
-            \"namespace\": \"default\",
+            \"namespace\": \"test-ns\",
             \"top_k\": 5,
             \"mode\": \"hybrid\"
         }" 2>&1)
@@ -239,7 +239,7 @@ ingest_document() {
         "type": "$type",
         "transcription_method": "$transcription_method"
     },
-    "namespace": "default"
+    "namespace": "test-ns"
 }
 EOF
 )
@@ -471,13 +471,13 @@ except:
 
     # Also verify namespace filter works
     local namespace_response
-    namespace_response=$(curl -s "$weaviate_url/v1/objects?limit=5&where=%7B%22path%22%3A%5B%22namespace%22%5D%2C%22operator%22%3A%22Equal%22%2C%22valueText%22%3A%22default%22%7D" 2>&1)
+    namespace_response=$(curl -s "$weaviate_url/v1/objects?limit=5&where=%7B%22path%22%3A%5B%22namespace%22%5D%2C%22operator%22%3A%22Equal%22%2C%22valueText%22%3A%22test-ns%22%7D" 2>&1)
 
     local namespace_count
     namespace_count=$(echo "$namespace_response" | python3 -c "import sys, json; print(len(json.load(sys.stdin).get('objects', [])))" 2>/dev/null || echo "0")
 
     if [ "$namespace_count" -gt 0 ]; then
-        log INFO "✓ Verified documents exist in 'default' namespace"
+        log INFO "✓ Verified documents exist in 'test-ns' namespace"
     else
         log WARN "Could not verify namespace filtering"
     fi

@@ -113,13 +113,13 @@ class TestDocumentNotFoundError:
         """Tests that DocumentNotFoundError inherits from XRagError."""
         assert issubclass(DocumentNotFoundError, XRagError)
 
-    def test_document_not_found_error_with_default_namespace(self):
-        """Tests DocumentNotFoundError with default namespace."""
-        error = DocumentNotFoundError("doc-123", namespace="default")
+    def test_document_not_found_error_with_test_namespace(self):
+        """Tests DocumentNotFoundError with test namespace."""
+        error = DocumentNotFoundError("doc-123", namespace="test-ns")
 
         assert error.doc_id == "doc-123"
-        assert error.namespace == "default"
-        assert str(error) == "Document 'doc-123' not found in namespace 'default'"
+        assert error.namespace == "test-ns"
+        assert str(error) == "Document 'doc-123' not found in namespace 'test-ns'"
 
     def test_document_not_found_error_with_custom_namespace(self):
         """Tests DocumentNotFoundError with custom namespace."""
@@ -139,7 +139,7 @@ class TestDocumentNotFoundError:
     def test_document_not_found_error_can_be_caught_as_xrag_error(self):
         """Tests that DocumentNotFoundError can be caught as XRagError."""
         with pytest.raises(XRagError) as exc_info:
-            raise DocumentNotFoundError("doc-id", namespace="default")
+            raise DocumentNotFoundError("doc-id", namespace="test-ns")
 
         assert exc_info.value.doc_id == "doc-id"
 
@@ -250,7 +250,7 @@ class TestErrorHierarchy:
         errors = [
             ConfigurationError("config"),
             ServiceUnavailableError("service", details=""),
-            DocumentNotFoundError("doc", namespace="default"),
+            DocumentNotFoundError("doc", namespace="test-ns"),
             EmbeddingError("embed"),
             SearchError("search"),
             IngestionError("ingest"),

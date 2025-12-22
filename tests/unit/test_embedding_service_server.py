@@ -27,14 +27,14 @@ class TestEmbeddingServicerInit:
         assert "test" in servicer.datasets_loader.list_namespaces()
 
     @patch("src.embedding_service.server.DatasetsConfigLoader")
-    def test_initialization_default_config_path(self, mock_loader_class):
-        """Servicer uses default config path if not specified."""
+    def test_initialization_with_config_path(self, mock_loader_class):
+        """Servicer requires explicit config path."""
         # Mock DatasetsConfigLoader to avoid needing real config file
         mock_loader = Mock()
-        mock_loader.list_namespaces.return_value = ["default"]
+        mock_loader.list_namespaces.return_value = ["test-ns"]
         mock_loader_class.return_value = mock_loader
 
-        servicer = EmbeddingServicer()
+        servicer = EmbeddingServicer("config/datasets_config.yaml")
 
         mock_loader_class.assert_called_once_with("config/datasets_config.yaml")
         assert servicer.datasets_loader is mock_loader
@@ -43,10 +43,10 @@ class TestEmbeddingServicerInit:
     def test_initialization_creates_health_checker(self, mock_loader_class):
         """Servicer creates HealthChecker on init."""
         mock_loader = Mock()
-        mock_loader.list_namespaces.return_value = ["default"]
+        mock_loader.list_namespaces.return_value = ["test-ns"]
         mock_loader_class.return_value = mock_loader
 
-        servicer = EmbeddingServicer()
+        servicer = EmbeddingServicer("config/datasets_config.yaml")
 
         assert servicer.health_checker is not None
 
@@ -67,7 +67,7 @@ class TestEmbedMethod:
 
             # For backward compatibility with existing tests, expose generator attribute
             servicer.generator = mock_embedding_generator
-            servicer.default_model = "text-embedding-3-small"
+            servicer.model = "text-embedding-3-small"
 
             return servicer
 
@@ -110,12 +110,12 @@ class TestEmbedMethod:
         assert response.model == "custom-model"
 
     @pytest.mark.asyncio
-    async def test_embed_uses_default_model(
+    async def test_embed_uses_test_ns_model(
         self,
         servicer,
         mock_async_grpc_context,
     ):
-        """Uses empty string for generator's default when not specified in request."""
+        """Uses empty string for generator's test-ns when not specified in request."""
         servicer.generator.embed.return_value = [0.1, 0.2, 0.3]
         servicer.generator.get_dimension.return_value = 3
 
@@ -125,9 +125,9 @@ class TestEmbedMethod:
 
         servicer.generator.embed.assert_called_once_with(
             "test text",
-            "",  # Empty string lets generator use its configured default
+            "",  # Empty string lets generator use its configured test-ns
         )
-        assert response.model == "default"  # Returns namespace when no model specified
+        assert response.model == "test-ns"  # Returns namespace when no model specified
 
     @pytest.mark.asyncio
     async def test_embed_successful_generation(
@@ -146,7 +146,7 @@ class TestEmbedMethod:
 
         assert list(response.embedding) == pytest.approx(expected_embedding, rel=1e-5)
         assert response.dimension == 5
-        assert response.model == "default"  # Uses namespace when no model specified
+        assert response.model == "test-ns"  # Uses namespace when no model specified
 
     @pytest.mark.asyncio
     async def test_embed_with_options(
@@ -160,17 +160,17 @@ class TestEmbedMethod:
 
         request = embedding_pb2.EmbedRequest(
             text="test text",
-            options={"namespace": "default"},  # Options used for namespace, not passed to generator
+            options={"namespace": "test-ns"},  # Options used for namespace, not passed to generator
         )
 
         response = await servicer.Embed(request, mock_async_grpc_context)
 
-        # Verify generator was called with empty string (default model)
+        # Verify generator was called with empty string (test-ns model)
         servicer.generator.embed.assert_called_once_with(
             "test text",
             "",
         )
-        assert response.model == "default"
+        assert response.model == "test-ns"
 
     @pytest.mark.asyncio
     async def test_embed_service_unavailable_error(
@@ -240,7 +240,7 @@ class TestEmbedBatchMethod:
 
             # For backward compatibility with existing tests, expose generator attribute
             servicer.generator = mock_embedding_generator
-            servicer.default_model = "text-embedding-3-small"
+            servicer.model = "text-embedding-3-small"
 
             return servicer
 
@@ -323,12 +323,12 @@ class TestEmbedBatchMethod:
         assert all(emb.model == "custom-model" for emb in response.embeddings)
 
     @pytest.mark.asyncio
-    async def test_embed_batch_uses_default_model(
+    async def test_embed_batch_uses_test_ns_model(
         self,
         servicer,
         mock_async_grpc_context,
     ):
-        """Uses empty string for generator's default when not specified."""
+        """Uses empty string for generator's test-ns when not specified."""
         servicer.generator.embed_batch.return_value = [[0.1, 0.2]]
         servicer.generator.get_dimension.return_value = 2
 
@@ -338,7 +338,7 @@ class TestEmbedBatchMethod:
 
         servicer.generator.embed_batch.assert_called_once_with(
             ["text"],
-            "",  # Empty string lets generator use its configured default
+            "",  # Empty string lets generator use its configured test-ns
         )
 
     @pytest.mark.asyncio
@@ -353,12 +353,12 @@ class TestEmbedBatchMethod:
 
         request = embedding_pb2.EmbedBatchRequest(
             texts=["text"],
-            options={"namespace": "default"},  # Options used for namespace, not passed to generator
+            options={"namespace": "test-ns"},  # Options used for namespace, not passed to generator
         )
 
         await servicer.EmbedBatch(request, mock_async_grpc_context)
 
-        # Verify generator was called with empty string (default model)
+        # Verify generator was called with empty string (test-ns model)
         servicer.generator.embed_batch.assert_called_once_with(
             ["text"],
             "",
@@ -425,10 +425,10 @@ class TestHealthCheckMethod:
             servicer = EmbeddingServicer(datasets_config_path="config/test_datasets.yaml")
 
             # NOTE: The current server.py has a bug where HealthCheck references
-            # self.generator and self.default_model which don't exist in the new architecture.
+            # self.generator and self.test-ns_model which don't exist in the new architecture.
             # We mock these attributes here so tests can work with the buggy code.
             servicer.generator = mock_embedding_generator
-            servicer.default_model = "text-embedding-3-small"
+            servicer.model = "text-embedding-3-small"
 
             return servicer
 
@@ -472,14 +472,14 @@ class TestHealthCheckMethod:
         servicer,
         mock_async_grpc_context,
     ):
-        """Health check verifies the default model."""
+        """Health check verifies the test-ns model."""
         servicer.generator.get_dimension.return_value = 1536
 
         request = common_pb2.HealthCheckRequest()
 
         await servicer.HealthCheck(request, mock_async_grpc_context)
 
-        # Verify get_dimension was called with default model
+        # Verify get_dimension was called with test-ns model
         servicer.generator.get_dimension.assert_called_with("text-embedding-3-small")
 
     @pytest.mark.asyncio

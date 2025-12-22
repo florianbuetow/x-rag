@@ -61,11 +61,12 @@ class TestCoreDocumentCreation:
 class TestCoreDocumentProperties:
     """Tests for CoreDocument property accessors."""
 
-    def test_namespace_returns_default_when_not_set(self):
-        """Tests that namespace returns 'default' when not in metadata."""
+    def test_namespace_raises_error_when_not_set(self):
+        """Tests that namespace raises ValueError when not in metadata."""
         doc = CoreDocument(id="doc-1", content="content")
 
-        assert doc.namespace == "default"
+        with pytest.raises(ValueError, match="Document missing required 'namespace' in metadata"):
+            _ = doc.namespace
 
     def test_namespace_returns_value_when_set(self):
         """Tests that namespace returns correct value when in metadata."""

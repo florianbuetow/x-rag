@@ -63,8 +63,8 @@ class TestSearchMethod:
 
         # Mock datasets_loader.get_dataset_config
         mock_dataset_config = Mock()
-        mock_dataset_config.search.default_top_k = 10
-        mock_dataset_config.search.default_mode = "hybrid"
+        mock_dataset_config.search.test-ns_top_k = 10
+        mock_dataset_config.search.test-ns_mode = "hybrid"
         mock_dataset_config.search.hybrid_alpha = 0.5
         mock_dataset_config.llm.max_tokens = 500
         mock_dataset_config.llm.temperature = 0.7
@@ -105,7 +105,7 @@ class TestSearchMethod:
             "metadata": {
                 "mode": "hybrid",
                 "top_k": 10,
-                "namespace": "default",
+                "namespace": "test-ns",
                 "cache_hit": False,
                 "num_sources": 0,
             },
@@ -117,27 +117,27 @@ class TestSearchMethod:
         servicer.pipeline.search.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_search_top_k_zero_uses_default(
+    async def test_search_top_k_zero_uses_test-ns(
         self,
         servicer,
         mock_async_grpc_context,
         sample_search_result,
     ):
-        """top_k=0 is treated as 'not specified' and uses config default.
+        """top_k=0 is treated as 'not specified' and uses config test-ns.
 
-        Note: This is due to `top_k = request.top_k or default` in server code.
-        The value 0 is falsy, so it falls back to the default.
+        Note: This is due to `top_k = request.top_k or test-ns` in server code.
+        The value 0 is falsy, so it falls back to the test-ns.
         """
         servicer.pipeline.search.return_value = sample_search_result
 
         request = search_pb2.SearchRequest(
             query="test query",
-            top_k=0,  # Falsy value, will use default
+            top_k=0,  # Falsy value, will use test-ns
         )
 
         await servicer.Search(request, mock_async_grpc_context)
 
-        # Verify default top_k was used
+        # Verify test-ns top_k was used
         call_kwargs = servicer.pipeline.search.call_args[1]
         assert call_kwargs["top_k"] == 10  # Default from config
 
@@ -329,13 +329,13 @@ class TestSearchMethod:
         assert call_kwargs["alpha"] == 0.7
 
     @pytest.mark.asyncio
-    async def test_search_uses_default_top_k(
+    async def test_search_uses_test-ns_top_k(
         self,
         servicer,
         mock_async_grpc_context,
         sample_search_result,
     ):
-        """When top_k not specified, uses config default."""
+        """When top_k not specified, uses config test-ns."""
         servicer.pipeline.search.return_value = sample_search_result
 
         request = search_pb2.SearchRequest(
@@ -349,13 +349,13 @@ class TestSearchMethod:
         assert call_kwargs["top_k"] == 10  # Default from config
 
     @pytest.mark.asyncio
-    async def test_search_uses_default_mode(
+    async def test_search_uses_test-ns_mode(
         self,
         servicer,
         mock_async_grpc_context,
         sample_search_result,
     ):
-        """When mode not specified, uses config default."""
+        """When mode not specified, uses config test-ns."""
         servicer.pipeline.search.return_value = sample_search_result
 
         request = search_pb2.SearchRequest(
@@ -369,13 +369,13 @@ class TestSearchMethod:
         assert call_kwargs["mode"] == "hybrid"  # Default from config
 
     @pytest.mark.asyncio
-    async def test_search_uses_default_namespace(
+    async def test_search_uses_test-ns_namespace(
         self,
         servicer,
         mock_async_grpc_context,
         sample_search_result,
     ):
-        """When namespace not specified, uses 'default'."""
+        """When namespace not specified, uses 'test-ns'."""
         servicer.pipeline.search.return_value = sample_search_result
 
         request = search_pb2.SearchRequest(
@@ -386,7 +386,7 @@ class TestSearchMethod:
         await servicer.Search(request, mock_async_grpc_context)
 
         call_kwargs = servicer.pipeline.search.call_args[1]
-        assert call_kwargs["namespace"] == "default"
+        assert call_kwargs["namespace"] == "test-ns"
 
     @pytest.mark.asyncio
     async def test_search_with_custom_namespace(
@@ -424,7 +424,7 @@ class TestSearchMethod:
 
         assert response.metadata["mode"] == "hybrid"
         assert response.metadata["top_k"] == "10"
-        assert response.metadata["namespace"] == "default"
+        assert response.metadata["namespace"] == "test-ns"
         assert response.metadata["cache_hit"] == "False"
         assert response.metadata["num_sources"] == "2"
 
@@ -481,16 +481,16 @@ class TestHealthCheckMethod:
 
         # Mock datasets_loader.get_dataset_config
         mock_dataset_config = Mock()
-        mock_dataset_config.search.default_top_k = 10
-        mock_dataset_config.search.default_mode = "hybrid"
+        mock_dataset_config.search.test-ns_top_k = 10
+        mock_dataset_config.search.test-ns_mode = "hybrid"
         mock_dataset_config.search.hybrid_alpha = 0.5
         mock_dataset_config.llm.max_tokens = 500
         mock_dataset_config.llm.temperature = 0.7
         servicer.datasets_loader.get_dataset_config = Mock(return_value=mock_dataset_config)
 
         # Populate caches for health check tests
-        servicer._retriever_cache["default"] = mock_search_pipeline.retriever
-        servicer._llm_cache["default"] = mock_search_pipeline.llm_client
+        servicer._retriever_cache["test-ns"] = mock_search_pipeline.retriever
+        servicer._llm_cache["test-ns"] = mock_search_pipeline.llm_client
 
         return servicer
 
@@ -508,16 +508,16 @@ class TestHealthCheckMethod:
 
         # Mock datasets_loader.get_dataset_config
         mock_dataset_config = Mock()
-        mock_dataset_config.search.default_top_k = 10
-        mock_dataset_config.search.default_mode = "hybrid"
+        mock_dataset_config.search.test-ns_top_k = 10
+        mock_dataset_config.search.test-ns_mode = "hybrid"
         mock_dataset_config.search.hybrid_alpha = 0.5
         mock_dataset_config.llm.max_tokens = 500
         mock_dataset_config.llm.temperature = 0.7
         servicer.datasets_loader.get_dataset_config = Mock(return_value=mock_dataset_config)
 
         # Populate caches for health check tests
-        servicer._retriever_cache["default"] = mock_search_pipeline.retriever
-        servicer._llm_cache["default"] = mock_search_pipeline.llm_client
+        servicer._retriever_cache["test-ns"] = mock_search_pipeline.retriever
+        servicer._llm_cache["test-ns"] = mock_search_pipeline.llm_client
 
         return servicer
 
@@ -528,7 +528,7 @@ class TestHealthCheckMethod:
         mock_async_grpc_context,
     ):
         """All dependencies healthy returns HEALTHY status."""
-        # All mocks default to healthy (see conftest fixtures)
+        # All mocks test-ns to healthy (see conftest fixtures)
         request = common_pb2.HealthCheckRequest()
 
         response = await servicer.HealthCheck(request, mock_async_grpc_context)
@@ -715,8 +715,8 @@ class TestHelperMethods:
 
         # Mock datasets_loader.get_dataset_config
         mock_dataset_config = Mock()
-        mock_dataset_config.search.default_top_k = 10
-        mock_dataset_config.search.default_mode = "hybrid"
+        mock_dataset_config.search.test-ns_top_k = 10
+        mock_dataset_config.search.test-ns_mode = "hybrid"
         mock_dataset_config.search.hybrid_alpha = 0.5
         mock_dataset_config.llm.max_tokens = 500
         mock_dataset_config.llm.temperature = 0.7
@@ -738,8 +738,8 @@ class TestHelperMethods:
 
         # Mock datasets_loader.get_dataset_config
         mock_dataset_config = Mock()
-        mock_dataset_config.search.default_top_k = 10
-        mock_dataset_config.search.default_mode = "hybrid"
+        mock_dataset_config.search.test-ns_top_k = 10
+        mock_dataset_config.search.test-ns_mode = "hybrid"
         mock_dataset_config.search.hybrid_alpha = 0.5
         mock_dataset_config.llm.max_tokens = 500
         mock_dataset_config.llm.temperature = 0.7
@@ -796,7 +796,7 @@ class TestHelperMethods:
             "metadata": {
                 "mode": "vector",
                 "top_k": 10,
-                "namespace": "default",
+                "namespace": "test-ns",
                 "num_sources": 1,
             },
         }

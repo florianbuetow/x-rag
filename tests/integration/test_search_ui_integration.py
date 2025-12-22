@@ -41,7 +41,7 @@ class TestSearchUIIntegration:
             f"{search_ui_url}/api/search",
             json={
                 "query": "What is Python?",
-                "namespace": "default",
+                "namespace": "test-ns",
                 "top_k": 5,
                 "mode": "hybrid",
             },

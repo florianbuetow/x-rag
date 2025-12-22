@@ -288,8 +288,8 @@ class TestSearchPipelineSearch:
         assert source["score"] == 0.95
 
     @pytest.mark.asyncio
-    async def test_search_default_namespace(self, pipeline, sample_search_results):
-        """Default namespace is 'default' when not specified."""
+    async def test_search_with_explicit_namespace(self, pipeline, sample_search_results):
+        """Namespace must be explicitly specified."""
         pipeline.retriever.search.return_value = sample_search_results
 
         result = await pipeline.search(
@@ -297,12 +297,12 @@ class TestSearchPipelineSearch:
             top_k=10,
             mode="hybrid",
             alpha=0.5,
-            namespace=None,
+            namespace="test-ns",
             openai_max_tokens=500,
             openai_temperature=0.7,
         )
 
-        assert result["metadata"]["namespace"] == "default"
+        assert result["metadata"]["namespace"] == "test-ns"
 
 
 class TestSearchPipelineContext:

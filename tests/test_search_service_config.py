@@ -44,5 +44,5 @@ def test_config_invalid_weaviate_url() -> None:
 # Note: OpenAI config (api_key, model, temperature) is now per-dataset
 # in datasets_config.yaml, not in SearchServiceConfig
 
-# Note: Search config (default_top_k, default_mode, hybrid_alpha) is now
+# Note: Search config (top_k, mode, hybrid_alpha) is now
 # per-dataset in datasets_config.yaml, not in SearchServiceConfig

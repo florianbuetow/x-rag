@@ -43,7 +43,7 @@ class TestRetrieverProtocol:
                 query: str,
                 top_k: int = 10,
                 mode: SearchMode = "hybrid",
-                namespace: str = "default",
+                namespace: str = "test-ns",
             ) -> list[CoreDocument]:
                 return []
 
@@ -69,7 +69,7 @@ class TestRetrieverProtocol:
                 query: str,
                 top_k: int = 10,
                 mode: SearchMode = "hybrid",
-                namespace: str = "default",
+                namespace: str = "test-ns",
             ) -> list[CoreDocument]:
                 return [CoreDocument(id="1", content="test")]
 
@@ -95,7 +95,7 @@ class TestGraphRetrieverProtocol:
                 self,
                 doc_ids: list[str],
                 top_k: int = 10,
-                namespace: str = "default",
+                namespace: str = "test-ns",
             ) -> list[CoreDocument]:
                 return []
 
@@ -120,7 +120,7 @@ class TestGraphRetrieverProtocol:
                 self,
                 doc_ids: list[str],
                 top_k: int = 10,
-                namespace: str = "default",
+                namespace: str = "test-ns",
             ) -> list[CoreDocument]:
                 return [CoreDocument(id="neighbor-1", content="neighbor content")]
 
@@ -312,7 +312,7 @@ class TestProtocolCompatibility:
                 query: str,
                 top_k: int = 10,
                 mode: SearchMode = "hybrid",
-                namespace: str = "default",
+                namespace: str = "test-ns",
             ) -> list[CoreDocument]:
                 return [
                     CoreDocument(id="1", content="content 1", score=0.9),

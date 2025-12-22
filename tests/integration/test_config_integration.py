@@ -185,8 +185,8 @@ class TestSearchServiceConfigIntegration:
             openai_model="gpt-4",
             openai_max_tokens=1000,
             openai_temperature=0.5,
-            default_top_k=20,
-            default_mode="vector",
+            top_k=20,
+            mode="vector",
             hybrid_alpha=0.7,
         )
 
@@ -317,18 +317,18 @@ class TestSearchUIConfigIntegration:
             search_service_addr="localhost:50052",
             search_service_timeout=60.0,
             cors_enabled=False,
-            default_top_k=10,
-            default_mode="hybrid",
+            top_k=10,
+            mode="hybrid",
         )
 
         assert config.search_service_addr == "localhost:50052"
-        assert config.default_mode == "hybrid"
+        assert config.mode == "hybrid"
 
     def test_search_ui_config_validation(self):
         """Test SearchUIConfig validation."""
         config = SearchUIConfig(
             service_name="test-ui",
-            default_mode="vector",
+            mode="vector",
         )
 
         result = config.validate_config()
@@ -339,7 +339,7 @@ class TestSearchUIConfigIntegration:
         with pytest.raises(ValidationError):
             SearchUIConfig(
                 service_name="test-ui",
-                default_mode="invalid-mode",
+                mode="invalid-mode",
             )
 
 

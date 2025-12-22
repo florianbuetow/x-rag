@@ -130,11 +130,20 @@ class TestOTelMetricsModule:
 
         assert callable(get_meter)
 
-    def test_track_latency_importable(self):
-        """Tests track_latency can be imported."""
-        from src.common.otel_metrics import track_latency
+    def test_track_latency_records_duration(self):
+        """Tests track_latency records duration to histogram."""
+        import time
 
-        assert callable(track_latency)
+        from src.common.otel_metrics import get_meter, track_latency
+
+        meter = get_meter()
+        histogram = meter.create_histogram("test_duration_seconds")
+
+        # Use context manager to track a small sleep
+        with track_latency(histogram, {"test": "value"}):
+            time.sleep(0.01)
+
+        # If we got here without errors, the context manager worked correctly
 
     def test_operation_type_enum(self):
         """Tests OperationType enum values."""

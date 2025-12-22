@@ -18,29 +18,34 @@ from src.llm.config import EmbeddingConfig, EmbeddingProvider, LLMConfig, LLMPro
 class TestLLMProvider:
     """Tests for LLMProvider enum."""
 
-    def test_openai_provider(self):
-        """Tests OPENAI provider value."""
-        assert LLMProvider.OPENAI.value == "openai"
+    def test_openai_provider_in_config(self):
+        """Tests OPENAI provider can be used in config."""
+        config = LLMConfig(provider=LLMProvider.OPENAI, api_key="test-key")
+        assert config.provider == LLMProvider.OPENAI
 
-    def test_local_provider(self):
-        """Tests LOCAL provider value."""
-        assert LLMProvider.LOCAL.value == "local"
+    def test_local_provider_in_config(self):
+        """Tests LOCAL provider can be used in config."""
+        config = LLMConfig(provider=LLMProvider.LOCAL, api_key="test-key")
+        assert config.provider == LLMProvider.LOCAL
 
 
 class TestEmbeddingProvider:
     """Tests for EmbeddingProvider enum."""
 
-    def test_openai_provider(self):
-        """Tests OPENAI provider value."""
-        assert EmbeddingProvider.OPENAI.value == "openai"
+    def test_openai_provider_in_config(self):
+        """Tests OPENAI provider can be used in config."""
+        config = EmbeddingConfig(provider=EmbeddingProvider.OPENAI)
+        assert config.provider == EmbeddingProvider.OPENAI
 
-    def test_local_provider(self):
-        """Tests LOCAL provider value."""
-        assert EmbeddingProvider.LOCAL.value == "local"
+    def test_local_provider_in_config(self):
+        """Tests LOCAL provider can be used in config."""
+        config = EmbeddingConfig(provider=EmbeddingProvider.LOCAL)
+        assert config.provider == EmbeddingProvider.LOCAL
 
-    def test_hash_based_provider(self):
-        """Tests HASH_BASED provider value."""
-        assert EmbeddingProvider.HASH_BASED.value == "hash_based"
+    def test_hash_based_provider_in_config(self):
+        """Tests HASH_BASED provider can be used in config."""
+        config = EmbeddingConfig(provider=EmbeddingProvider.HASH_BASED)
+        assert config.provider == EmbeddingProvider.HASH_BASED
 
 
 class TestLLMConfigDefaults:

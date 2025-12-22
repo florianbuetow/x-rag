@@ -102,8 +102,8 @@ class TestWeaviateRetrieverConnection:
             assert call_kwargs["http_host"] == "weaviate"
             assert call_kwargs["http_port"] == 8080
 
-    def test_connect_default_port(self):
-        """connect() uses default port 8080 when not specified."""
+    def test_connect_test-ns_port(self):
+        """connect() uses test-ns port 8080 when not specified."""
         retriever = WeaviateRetriever(
             weaviate_url="http://weaviate",
             collection_name="DocumentChunk",
@@ -168,7 +168,7 @@ class TestWeaviateRetrieverSearch:
             "content": "Test document content",
             "doc_id": "doc-123",
             "chunk_index": 0,
-            "namespace": "default",
+            "namespace": "test-ns",
             "source": "test.txt",
             "title": "Test Document",
             "metadata_json": '{"custom": "value"}',
@@ -383,7 +383,7 @@ class TestWeaviateRetrieverSearch:
         assert result.id == "chunk-uuid-123"
         assert result.content == "Test document content"
         assert result.metadata["doc_id"] == "doc-123"
-        assert result.metadata["namespace"] == "default"
+        assert result.metadata["namespace"] == "test-ns"
 
     def test_search_vector_mode_distance_to_score(self, retriever, mock_weaviate_result):
         """Vector mode converts distance to similarity score."""
@@ -551,7 +551,7 @@ class TestHelperMethods:
             "content": "Test content",
             "doc_id": "doc-123",
             "chunk_index": 0,
-            "namespace": "default",
+            "namespace": "test-ns",
             "source": "test.txt",
             "title": "Test Document",
             "metadata_json": '{"custom": "value"}',
@@ -696,7 +696,7 @@ class TestHelperMethods:
 
         assert result.metadata["doc_id"] == "doc-123"
         assert result.metadata["chunk_index"] == 0
-        assert result.metadata["namespace"] == "default"
+        assert result.metadata["namespace"] == "test-ns"
         assert result.metadata["source"] == "test.txt"
         assert result.metadata["title"] == "Test Document"
 

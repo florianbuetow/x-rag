@@ -209,8 +209,8 @@ class TestSearchServiceConfigFileIntegration:
             openai_temperature=openai_config.get("temperature", 0.7),
             openai_max_retries=openai_config.get("max_retries", 3),
             openai_timeout=openai_config.get("timeout", 60),
-            default_top_k=search_config.get("default_top_k", 10),
-            default_mode=search_config.get("default_mode", "hybrid"),
+            top_k=search_config["top_k"],
+            mode=search_config["mode"],
             hybrid_alpha=search_config.get("hybrid_alpha", 0.5),
             max_context_length=search_config.get("max_context_length", 4000),
         )
@@ -252,7 +252,7 @@ class TestEmbeddingServiceConfigFileIntegration:
             service_name=service_config.get("name", "embedding-service"),
             port=service_config.get("port", 50051),
             embedding_generator=generator_config.get("type", "hash_based"),
-            default_model=generator_config.get("default_model", "hash-small"),
+            model=generator_config["model"],
             max_batch_size=generator_config.get("max_batch_size", 100),
         )
 
@@ -287,8 +287,8 @@ class TestSearchUIConfigFileIntegration:
             port=service_config.get("port", 8080),
             search_service_addr=search_config.get("service_addr", "search-service:50052"),
             search_service_timeout=search_config.get("service_timeout", 30.0),
-            default_top_k=search_config.get("default_top_k", 5),
-            default_mode=search_config.get("default_mode", "hybrid"),
+            top_k=search_config["top_k"],
+            mode=search_config["mode"],
         )
 
         # Verify config is valid

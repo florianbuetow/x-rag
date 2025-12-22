@@ -22,12 +22,12 @@ class TestSearchUIConfig:
         assert config.port == 8080
         assert config.search_service_addr == "search-service:50052"
         assert config.cors_enabled is True
-        assert config.default_mode == "hybrid"
+        assert config.mode == "hybrid"
 
     def test_mode_validation(self):
         """Test search mode validation."""
         with pytest.raises(ValueError, match="Invalid mode"):
-            SearchUIConfig(default_mode="invalid")
+            SearchUIConfig(mode="invalid")
 
     def test_custom_values(self):
         """Test custom configuration values."""
@@ -37,22 +37,22 @@ class TestSearchUIConfig:
             search_service_timeout=60.0,
             cors_enabled=False,
             max_query_length=500,
-            default_top_k=10,
-            default_mode="vector",
+            top_k=10,
+            mode="vector",
         )
         assert config.port == 9000
         assert config.search_service_addr == "localhost:50052"
         assert config.search_service_timeout == 60.0
         assert config.cors_enabled is False
         assert config.max_query_length == 500
-        assert config.default_top_k == 10
-        assert config.default_mode == "vector"
+        assert config.top_k == 10
+        assert config.mode == "vector"
 
     def test_valid_modes(self):
         """Test all valid search modes."""
         for mode in ["vector", "bm25", "hybrid"]:
-            config = SearchUIConfig(default_mode=mode)
-            assert config.default_mode == mode
+            config = SearchUIConfig(mode=mode)
+            assert config.mode == mode
 
 
 class TestSearchUIModels:
@@ -63,7 +63,7 @@ class TestSearchUIModels:
         # Valid request
         request = SearchRequest(
             query="test query",
-            namespace="default",
+            namespace="test-ns",
             top_k=5,
             mode="hybrid",
         )
@@ -72,7 +72,7 @@ class TestSearchUIModels:
 
         # Invalid query (too short)
         with pytest.raises(ValueError):
-            SearchRequest(query="", namespace="default")
+            SearchRequest(query="", namespace="test-ns")
 
         # Invalid top_k (too large)
         with pytest.raises(ValueError):
@@ -99,7 +99,7 @@ class TestSearchUIModels:
     def test_search_request_defaults(self):
         """Test SearchRequest default values."""
         request = SearchRequest(query="test query")
-        assert request.namespace == "default"
+        assert request.namespace == "test-ns"
         assert request.top_k == 5
         assert request.mode == "hybrid"
 
@@ -262,7 +262,7 @@ class TestSearchUIEndpoints:
             "/api/search",
             json={
                 "query": "What is Python?",
-                "namespace": "default",
+                "namespace": "test-ns",
                 "top_k": 5,
                 "mode": "hybrid",
             },
@@ -279,7 +279,7 @@ class TestSearchUIEndpoints:
         # Invalid request (missing query)
         response = app_client.post(
             "/api/search",
-            json={"namespace": "default"},
+            json={"namespace": "test-ns"},
         )
         assert response.status_code == 422  # Validation error
 
@@ -288,7 +288,7 @@ class TestSearchUIEndpoints:
         with patch("src.search_ui.main.search_client", None):
             response = app_client.post(
                 "/api/search",
-                json={"query": "test", "namespace": "default"},
+                json={"query": "test", "namespace": "test-ns"},
             )
             # Returns 503 Service Unavailable when client not initialized
             assert response.status_code == 503
@@ -304,7 +304,7 @@ class TestSearchUIEndpoints:
 
         response = app_client.post(
             "/api/search",
-            json={"query": "test", "namespace": "default"},
+            json={"query": "test", "namespace": "test-ns"},
         )
         assert response.status_code == 500
 
@@ -461,7 +461,7 @@ class TestSearchServiceClient:
         # Perform search
         response = await client.search(
             query="test query",
-            namespace="default",
+            namespace="test-ns",
             top_k=5,
             mode="hybrid",
             options=None,
@@ -475,7 +475,7 @@ class TestSearchServiceClient:
         call_args = mock_stub.Search.call_args
         request = call_args[0][0]
         assert request.query == "test query"
-        assert request.namespace == "default"
+        assert request.namespace == "test-ns"
         assert request.top_k == 5
         assert request.mode == "hybrid"
 
@@ -490,7 +490,7 @@ class TestSearchServiceClient:
 
         await client.search(
             query="test",
-            namespace="default",
+            namespace="test-ns",
             top_k=5,
             mode="hybrid",
             options={"cache": "true", "explain": "true"},
@@ -507,7 +507,7 @@ class TestSearchServiceClient:
         client = SearchServiceClient(address="localhost:50052", timeout=30.0)
 
         with pytest.raises(RuntimeError, match="Client not connected"):
-            await client.search(query="test", namespace="default", top_k=5, mode="hybrid", options=None)
+            await client.search(query="test", namespace="test-ns", top_k=5, mode="hybrid", options=None)
 
     @pytest.mark.asyncio
     async def test_search_grpc_error(self):
@@ -527,7 +527,7 @@ class TestSearchServiceClient:
         client.stub = mock_stub
 
         with pytest.raises(grpc.RpcError):
-            await client.search(query="test", namespace="default", top_k=5, mode="hybrid", options=None)
+            await client.search(query="test", namespace="test-ns", top_k=5, mode="hybrid", options=None)
 
     @pytest.mark.asyncio
     async def test_health_check_success(self):

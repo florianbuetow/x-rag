@@ -16,16 +16,11 @@ from src.embedding_service.generators.hash_based_generator import HashBasedEmbed
 class TestHashBasedEmbeddingGeneratorInit:
     """Tests for HashBasedEmbeddingGenerator initialization."""
 
-    def test_init_sets_default_dimension(self):
-        """Tests that __init__ sets default_dimension."""
-        generator = HashBasedEmbeddingGenerator(default_dimension=768)
+    def test_init_creates_instance(self):
+        """Tests that __init__ creates instance."""
+        generator = HashBasedEmbeddingGenerator()
 
-        assert generator.default_dimension == 768
-
-    def test_init_requires_default_dimension(self):
-        """Tests that __init__ requires default_dimension parameter."""
-        with pytest.raises(TypeError, match="default_dimension"):
-            HashBasedEmbeddingGenerator()
+        assert generator is not None
 
 
 class TestHashBasedEmbeddingGeneratorEmbed:
@@ -34,7 +29,7 @@ class TestHashBasedEmbeddingGeneratorEmbed:
     @pytest.fixture
     def generator(self):
         """Create generator instance for tests."""
-        return HashBasedEmbeddingGenerator(default_dimension=1536)
+        return HashBasedEmbeddingGenerator()
 
     @pytest.mark.asyncio
     async def test_embed_returns_list_of_floats(self, generator):
@@ -124,7 +119,7 @@ class TestHashBasedEmbeddingGeneratorEmbedBatch:
     @pytest.fixture
     def generator(self):
         """Create generator instance for tests."""
-        return HashBasedEmbeddingGenerator(default_dimension=1536)
+        return HashBasedEmbeddingGenerator()
 
     @pytest.mark.asyncio
     async def test_embed_batch_returns_list_of_embeddings(self, generator):
@@ -183,7 +178,7 @@ class TestHashBasedEmbeddingGeneratorGetDimension:
     @pytest.fixture
     def generator(self):
         """Create generator instance for tests."""
-        return HashBasedEmbeddingGenerator(default_dimension=1536)
+        return HashBasedEmbeddingGenerator()
 
     def test_get_dimension_known_models(self, generator):
         """Tests that get_dimension returns correct dimension for known models."""
@@ -194,18 +189,12 @@ class TestHashBasedEmbeddingGeneratorGetDimension:
         assert generator.get_dimension("hash-medium") == 768
         assert generator.get_dimension("hash-large") == 1536
 
-    def test_get_dimension_unknown_model_returns_default(self, generator):
-        """Tests that get_dimension returns default for unknown model."""
-        dimension = generator.get_dimension("unknown-model")
+    def test_get_dimension_unknown_model_raises_error(self):
+        """Tests that get_dimension raises error for unknown model."""
+        generator = HashBasedEmbeddingGenerator()
 
-        assert dimension == 1536
-
-    def test_get_dimension_unknown_model_respects_custom_default(self):
-        """Tests that get_dimension uses custom default dimension."""
-        generator = HashBasedEmbeddingGenerator(default_dimension=512)
-        dimension = generator.get_dimension("unknown-model")
-
-        assert dimension == 512
+        with pytest.raises(ValueError, match="Unknown model"):
+            generator.get_dimension("unknown-model")
 
 
 class TestHashBasedEmbeddingGeneratorInternals:
@@ -214,7 +203,7 @@ class TestHashBasedEmbeddingGeneratorInternals:
     @pytest.fixture
     def generator(self):
         """Create generator instance for tests."""
-        return HashBasedEmbeddingGenerator(default_dimension=1536)
+        return HashBasedEmbeddingGenerator()
 
     def test_generate_embedding_produces_deterministic_output(self, generator):
         """Tests that _generate_embedding is deterministic."""

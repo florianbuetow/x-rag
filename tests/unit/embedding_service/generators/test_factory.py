@@ -22,21 +22,9 @@ class TestEmbeddingGeneratorFactoryCreateGenerator:
 
     def test_create_hash_based_generator(self):
         """Tests that create_generator creates HashBasedEmbeddingGenerator."""
-        generator = EmbeddingGeneratorFactory.create_generator("hash_based", default_dimension=1536)
+        generator = EmbeddingGeneratorFactory.create_generator("hash_based")
 
         assert isinstance(generator, HashBasedEmbeddingGenerator)
-
-    def test_create_hash_based_generator_with_custom_dimension(self):
-        """Tests that create_generator passes dimension to HashBasedEmbeddingGenerator."""
-        generator = EmbeddingGeneratorFactory.create_generator("hash_based", default_dimension=768)
-
-        assert isinstance(generator, HashBasedEmbeddingGenerator)
-        assert generator.default_dimension == 768
-
-    def test_create_hash_based_generator_requires_dimension(self):
-        """Tests that create_generator requires default_dimension for HashBasedEmbeddingGenerator."""
-        with pytest.raises(ValueError, match="default_dimension"):
-            EmbeddingGeneratorFactory.create_generator("hash_based")
 
     @patch("src.embedding_service.generators.factory.OpenAIEmbeddingGenerator")
     def test_create_openai_generator(self, mock_openai_generator):
@@ -95,7 +83,6 @@ class TestEmbeddingGeneratorFactoryCreateFromConfig:
         generator = EmbeddingGeneratorFactory.create_from_config(config)
 
         assert isinstance(generator, HashBasedEmbeddingGenerator)
-        assert generator.default_dimension == 768
 
     @patch("src.embedding_service.generators.factory.OpenAIEmbeddingGenerator")
     def test_create_from_config_openai(self, mock_openai_generator):

@@ -143,8 +143,8 @@ def search_service_config():
 
     return SearchServiceConfig(
         openai_api_key="sk-test-key-12345",
-        default_top_k=10,
-        default_mode="hybrid",
+        top_k=10,
+        mode="hybrid",
         hybrid_alpha=0.5,
         openai_max_tokens=500,
         openai_temperature=0.7,
@@ -158,8 +158,8 @@ def search_service_config_dev_mode():
 
     return SearchServiceConfig(
         openai_api_key="sk-your-key-here",
-        default_top_k=10,
-        default_mode="hybrid",
+        top_k=10,
+        mode="hybrid",
         hybrid_alpha=0.5,
     )
 
@@ -186,7 +186,7 @@ def sample_search_result():
         "metadata": {
             "mode": "hybrid",
             "top_k": 10,
-            "namespace": "default",
+            "namespace": "test-ns",
             "cache_hit": False,
             "num_sources": 2,
         },
@@ -236,8 +236,8 @@ def mock_dataset_config():
 
     # Search config
     config.search = Mock()
-    config.search.default_top_k = 10
-    config.search.default_mode = "hybrid"
+    config.search.top_k = 10
+    config.search.mode = "hybrid"
     config.search.hybrid_alpha = 0.5
 
     return config
