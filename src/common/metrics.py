@@ -21,15 +21,7 @@ from src.common.otel_metrics import (
     track_latency,
 )
 
-# Re-export BucketConfig as an alias for backward compatibility
-BucketConfig = type(
-    "BucketConfig",
-    (),
-    {"get": staticmethod(lambda op_type: get_buckets(op_type))},
-)
-
 __all__ = [
-    "BucketConfig",
     "HISTOGRAM_BUCKETS",
     "OperationType",
     "get_buckets",
