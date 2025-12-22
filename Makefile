@@ -450,7 +450,7 @@ test-e2e: ## Run E2E tests (destructive - resets cluster and data)
 
 ##@ CI/CD
 
-ci: init code-style code-typecheck code-security code-deptry code-spell code-semgrep code-audit test ## Run ALL validation checks (style + types + security + deps + spelling + semgrep + audit + tests)
+ci: init test-integration-config code-style code-typecheck code-security code-deptry code-spell code-semgrep code-audit test ## Run ALL validation checks (config tests + style + types + security + deps + spelling + semgrep + audit + tests)
 	@echo "$(GREEN)✓ All CI checks passed$(NC)"
 	@echo ""
 
@@ -459,6 +459,8 @@ ci-quiet: ## Run ALL validation checks silently (only show output on errors)
 	@TMPFILE=$$(mktemp); \
 	$(MAKE) init > $$TMPFILE 2>&1 || { echo "$(RED)✗ Init failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
 	echo "$(GREEN)✓ Init passed$(NC)"; \
+	$(MAKE) test-integration-config > $$TMPFILE 2>&1 || { echo "$(RED)✗ Test-integration-config failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
+	echo "$(GREEN)✓ Test-integration-config passed$(NC)"; \
 	$(MAKE) code-style > $$TMPFILE 2>&1 || { echo "$(RED)✗ Code-style failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
 	echo "$(GREEN)✓ Code-style passed$(NC)"; \
 	$(MAKE) code-typecheck > $$TMPFILE 2>&1 || { echo "$(RED)✗ Code-typecheck failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
