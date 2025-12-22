@@ -52,13 +52,12 @@ setup.log
 tmp/
 
 # Data and notes directories (entire folders excluded)
-data/
-notes/
+/data/
+/notes/
 
 # Environment
 .env
 .env.local
-*.env
 
 # Docker
 *.tar

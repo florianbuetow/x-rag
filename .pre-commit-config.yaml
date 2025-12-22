@@ -6,9 +6,9 @@
 repos:
   - repo: local
     hooks:
-      - id: prevent-env-commit
-        name: Prevent .env files from being committed
-        entry: ./scripts/prevent-env-commit.sh
+      - id: gitignore-enforcer
+        name: Block .gitignore violations in staged files
+        entry: ./scripts/check-gitignore-violations.sh
         language: system
         pass_filenames: false
         always_run: true
