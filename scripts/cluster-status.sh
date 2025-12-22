@@ -229,8 +229,7 @@ if [[ "${OBSERVABILITY_ENABLED}" == "true" ]]; then
     # Test Kubernetes Dashboard
     echo -e "${BLUE}[Monitoring] Kubernetes Dashboard${NC}"
     if kubectl get pod -n kubernetes-dashboard -l k8s-app=kubernetes-dashboard &>/dev/null; then
-        dashboard_ready=$(kubectl get pod -n kubernetes-dashboard -l k8s-app=kubernetes-dashboard -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)
-        if [[ "$dashboard_ready" == "True" ]]; then
+        if dashboard_ready; then
             echo -e "  ${check_mark} Dashboard is running"
             echo -e "  URL: https://localhost:8443"
         else
