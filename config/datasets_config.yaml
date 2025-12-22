@@ -8,37 +8,8 @@
 # - Search defaults
 # - Weaviate collection name
 
-# Global defaults (inherited by all datasets)
-defaults:
-  embedding:
-    provider: hash_based
-    dimension: 1024
-    timeout: 30
-    max_retries: 3
-    batch_size: 50
-
-  llm:
-    provider: openai
-    model: gpt-4o-mini
-    max_tokens: 500
-    temperature: 0.7
-    timeout: 60
-    max_retries: 3
-
-  chunking:
-    chunk_size: 100
-    chunk_overlap: 50
-    cleaner_remove_empty_lines: true
-    cleaner_remove_extra_whitespaces: true
-    cleaner_unicode_normalization: NFC
-
-  search:
-    default_top_k: 10
-    default_mode: hybrid
-    hybrid_alpha: 0.5
-    max_context_length: 4000
-
 # Per-dataset configurations
+# Each dataset must explicitly specify all configuration values
 datasets:
   nutritionfacts:
     # Dataset metadata
@@ -53,6 +24,9 @@ datasets:
     # Weaviate collection (separate collection per dataset)
     weaviate:
       collection: DocumentChunk_nutritionfacts
+      timeout_init: 30
+      timeout_query: 60
+      timeout_insert: 120
 
     # Embedding configuration
     embedding:
@@ -61,6 +35,8 @@ datasets:
       base_url_env: OPENAI_API_BASE  # Reference to env var
       api_key_env: OPENAI_API_KEY    # Reference to env var
       dimension: 1024
+      timeout: 30
+      max_retries: 3
       batch_size: 50
 
     # LLM configuration
@@ -71,6 +47,8 @@ datasets:
       api_key_env: OPENAI_API_KEY
       max_tokens: 500
       temperature: 0.7
+      timeout: 60
+      max_retries: 3
 
     # Chunking configuration
     chunking:
@@ -82,7 +60,7 @@ datasets:
 
     # Search configuration
     search:
-      default_top_k: 10
-      default_mode: hybrid
+      top_k: 10
+      mode: hybrid
       hybrid_alpha: 0.5
       max_context_length: 4000

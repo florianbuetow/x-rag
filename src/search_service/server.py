@@ -14,6 +14,7 @@ from src.llm.openai_client import OpenAIClient
 from src.pipelines.search_pipeline import SearchPipeline
 from src.proto_gen import common_pb2, search_pb2, search_pb2_grpc
 from src.retrievers.weaviate_retriever import WeaviateRetriever
+from src.retrievers.weaviate_retriever_factory import WeaviateRetrieverFactory
 from src.search_service.config import SearchServiceConfig
 from src.search_service.grpc_clients import EmbeddingServiceClient
 from src.search_service.metrics import (
@@ -50,6 +51,10 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
         self.embedding_client = embedding_client
         self.config = config
         self.datasets_loader = DatasetsConfigLoader(datasets_config_path)
+        self.retriever_factory = WeaviateRetrieverFactory(
+            datasets_config_path=datasets_config_path,
+            weaviate_url=config.weaviate_url,
+        )
         self._pipeline_cache: dict[str, SearchPipeline] = {}
         self._retriever_cache: dict[str, WeaviateRetriever] = {}
         self._llm_cache: dict[str, OpenAIClient] = {}
@@ -79,10 +84,7 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
 
         # Create or get retriever for this namespace
         if namespace not in self._retriever_cache:
-            retriever = WeaviateRetriever(
-                weaviate_url=self.config.weaviate_url,
-                collection_name=dataset_config.weaviate.collection,
-            )
+            retriever = self.retriever_factory.create_retriever(namespace)
             retriever.connect()
             self._retriever_cache[namespace] = retriever
             logger.info(f"Created retriever for '{namespace}': collection={dataset_config.weaviate.collection}")
@@ -134,8 +136,8 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
             await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
 
         query = request.query
-        top_k = request.top_k or dataset_config.search.default_top_k
-        mode = request.mode or dataset_config.search.default_mode
+        top_k = request.top_k or dataset_config.search.top_k
+        mode = request.mode or dataset_config.search.mode
 
         if top_k <= 0:
             await context.abort(grpc.StatusCode.INVALID_ARGUMENT, f"top_k must be positive, got {top_k}")
@@ -234,7 +236,9 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
         try:
             with track_latency(get_request_duration(), {"method": "Search"}):
                 # Extract namespace first
-                namespace = request.namespace or "default"
+                if not request.namespace:
+                    await context.abort(grpc.StatusCode.INVALID_ARGUMENT, "namespace is required")
+                namespace = request.namespace
 
                 # Get namespace-specific pipeline (validates namespace exists)
                 try:

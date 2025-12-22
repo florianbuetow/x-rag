@@ -261,7 +261,11 @@ class DocumentIndexer:
                 grpc_port=50051,
                 grpc_secure=False,
                 additional_config=AdditionalConfig(
-                    timeout=Timeout(init=30, query=60, insert=120),
+                    timeout=Timeout(
+                        init=self.config.weaviate_timeout_init,
+                        query=self.config.weaviate_timeout_query,
+                        insert=self.config.weaviate_timeout_insert,
+                    ),
                 ),
             )
             logger.info(f"✓ Connected to Weaviate at {host}:{port}")
@@ -288,7 +292,9 @@ class DocumentIndexer:
         """
         event_type = event["event_type"] if "event_type" in event else None
         document_id = cast(str, event["document_id"])
-        namespace = event["namespace"] if "namespace" in event else "default"
+        if "namespace" not in event:
+            raise ValueError(f"Event missing required 'namespace' field for document {document_id}")
+        namespace = event["namespace"]
         minio_bucket = cast(str, event.get("minio_bucket"))
         minio_key = cast(str, event.get("minio_key"))
 

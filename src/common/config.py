@@ -239,14 +239,12 @@ class ServiceConfig(BaseConfig):
     """Common service configuration."""
 
     service_name: str = Field(..., description="Service name for logging and metrics")
-    log_level: str = Field(default="INFO", description="Logging level")
-    port: int = Field(default=8080, description="Service port")
+    log_level: str = Field(..., description="Logging level")
+    port: int = Field(..., description="Service port")
 
     # OpenTelemetry tracing configuration
-    otlp_endpoint: str | None = Field(
-        default=None, description="OTLP endpoint for tracing (defaults to env var or http://tempo.monitoring.svc.cluster.local:4317)"
-    )
-    environment: str = Field(default="development", description="Deployment environment (development, staging, production)")
+    otlp_endpoint: str | None = None
+    environment: str = Field(..., description="Deployment environment (development, staging, production)")
 
     @field_validator("log_level")
     @classmethod
@@ -269,9 +267,11 @@ class WeaviateConfig(BaseModel):
     This is a standalone Pydantic model used for composition in service configs.
     """
 
-    weaviate_url: str = Field(default="http://weaviate:8080", description="Weaviate URL")
-    weaviate_timeout: int = Field(default=30, ge=1, description="Request timeout in seconds")
-    weaviate_collection: str = Field(default="DocumentChunk", description="Weaviate collection name")
+    weaviate_url: str = Field(..., description="Weaviate URL")
+    weaviate_timeout_init: int = Field(..., ge=1, description="Weaviate init timeout in seconds")
+    weaviate_timeout_query: int = Field(..., ge=1, description="Weaviate query timeout in seconds")
+    weaviate_timeout_insert: int = Field(..., ge=1, description="Weaviate insert timeout in seconds")
+    weaviate_collection: str = Field(..., description="Weaviate collection name")
 
     @field_validator("weaviate_url")
     @classmethod
@@ -288,9 +288,9 @@ class RedisConfig(BaseModel):
     This is a standalone Pydantic model used for composition in service configs.
     """
 
-    redis_url: str = Field(default="redis://redis:6379", description="Redis URL")
-    cache_ttl: int = Field(default=3600, ge=0, description="Default cache TTL in seconds")
-    enable_cache: bool = Field(default=True, description="Whether caching is enabled")
+    redis_url: str = Field(..., description="Redis URL")
+    cache_ttl: int = Field(..., ge=0, description="Default cache TTL in seconds")
+    enable_cache: bool = Field(..., description="Whether caching is enabled")
 
     @field_validator("redis_url")
     @classmethod
@@ -307,11 +307,11 @@ class KafkaConfig(BaseModel):
     This is a standalone Pydantic model used for composition in service configs.
     """
 
-    kafka_bootstrap: str = Field(default="kafka:9092", description="Kafka bootstrap servers")
-    kafka_topic: str = Field(default="document-changes", description="Kafka topic for document changes")
-    kafka_group_id: str | None = Field(default=None, description="Kafka consumer group ID (optional)")
-    kafka_acks: str = Field(default="1", description="Kafka acknowledgment setting (0, 1, or 'all')")
-    kafka_auto_offset_reset: str = Field(default="earliest", description="Kafka auto offset reset (earliest/latest)")
+    kafka_bootstrap: str = Field(..., description="Kafka bootstrap servers")
+    kafka_topic: str = Field(..., description="Kafka topic for document changes")
+    kafka_group_id: str | None = None
+    kafka_acks: str = Field(..., description="Kafka acknowledgment setting (0, 1, or 'all')")
+    kafka_auto_offset_reset: str = Field(..., description="Kafka auto offset reset (earliest/latest)")
 
     @field_validator("kafka_acks")
     @classmethod
@@ -340,12 +340,12 @@ class OpenAIConfig(BaseModel):
     """
 
     openai_api_key: str = Field(..., description="OpenAI API key (any non-empty value for local LLMs)")
-    openai_api_base: str | None = Field(default=None, description="OpenAI API base URL for compatible APIs (e.g., LM Studio)")
-    openai_model: str = Field(default="gpt-4o-mini", description="OpenAI model name")
-    openai_max_tokens: int = Field(default=500, ge=1, le=32000, description="Maximum tokens in response")
-    openai_temperature: float = Field(default=0.7, ge=0.0, le=2.0, description="Sampling temperature (0.0-2.0)")
-    openai_max_retries: int = Field(default=3, ge=0, description="Maximum retry attempts")
-    openai_timeout: int = Field(default=60, ge=1, description="Request timeout in seconds")
+    openai_api_base: str | None = None
+    openai_model: str = Field(..., description="OpenAI model name")
+    openai_max_tokens: int = Field(..., ge=1, le=32000, description="Maximum tokens in response")
+    openai_temperature: float = Field(..., ge=0.0, le=2.0, description="Sampling temperature (0.0-2.0)")
+    openai_max_retries: int = Field(..., ge=0, description="Maximum retry attempts")
+    openai_timeout: int = Field(..., ge=1, description="Request timeout in seconds")
 
     @field_validator("openai_api_key")
     @classmethod
@@ -382,8 +382,8 @@ class MinIOConfig(BaseModel):
     minio_endpoint: str = Field(..., description="MinIO endpoint")
     minio_access_key: str = Field(..., description="MinIO access key")
     minio_secret_key: str = Field(..., description="MinIO secret key")
-    minio_bucket: str = Field(default="documents", description="MinIO bucket name")
-    minio_secure: bool = Field(default=False, description="Use HTTPS for MinIO")
+    minio_bucket: str = Field(..., description="MinIO bucket name")
+    minio_secure: bool = Field(..., description="Use HTTPS for MinIO")
 
     @field_validator("minio_endpoint")
     @classmethod

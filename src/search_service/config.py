@@ -13,24 +13,23 @@ class SearchServiceConfig(ServiceConfig):
     """
 
     # Service settings
-    service_name: str = Field(default="search-service", description="Service name")
-    port: int = Field(default=50052, description="gRPC port")
-    enable_reflection: bool = Field(default=True, description="Enable gRPC reflection for debugging")
+    service_name: str = Field(..., description="Service name")
+    port: int = Field(..., description="gRPC port")
+    enable_reflection: bool = Field(..., description="Enable gRPC reflection for debugging")
 
     # Weaviate settings
-    weaviate_url: str = Field(default="http://weaviate:8080", description="Weaviate URL")
-    weaviate_timeout: int = Field(default=30, description="Weaviate request timeout in seconds")
+    weaviate_url: str = Field(..., description="Weaviate URL")
 
     # Embedding Service settings
     embedding_service_addr: str = Field(
-        default="embedding-service:50051",
+        ...,
         description="Embedding Service gRPC address",
     )
-    embedding_service_timeout: int = Field(default=30, description="Embedding Service timeout in seconds")
+    embedding_service_timeout: int = Field(..., description="Embedding Service timeout in seconds")
 
     # Dataset config path
     datasets_config_path: str = Field(
-        default="config/datasets_config.yaml",
+        ...,
         description="Path to datasets configuration file",
     )
 

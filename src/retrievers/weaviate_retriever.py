@@ -65,15 +65,24 @@ class WeaviateRetriever:
         self,
         weaviate_url: str,
         collection_name: str,
+        timeout_init: int,
+        timeout_query: int,
+        timeout_insert: int,
     ) -> None:
         """Initialize Weaviate retriever.
 
         Args:
             weaviate_url: Weaviate server URL (e.g., "http://weaviate:8080")
             collection_name: Name of Weaviate collection to query
+            timeout_init: Weaviate init timeout in seconds
+            timeout_query: Weaviate query timeout in seconds
+            timeout_insert: Weaviate insert timeout in seconds
         """
         self.weaviate_url = weaviate_url
         self.collection_name = collection_name
+        self.timeout_init = timeout_init
+        self.timeout_query = timeout_query
+        self.timeout_insert = timeout_insert
         self.client: WeaviateClient | None = None
 
     def connect(self) -> None:
@@ -102,7 +111,11 @@ class WeaviateRetriever:
             grpc_port=50051,
             grpc_secure=False,
             additional_config=AdditionalConfig(
-                timeout=Timeout(init=30, query=60, insert=120),
+                timeout=Timeout(
+                    init=self.timeout_init,
+                    query=self.timeout_query,
+                    insert=self.timeout_insert,
+                ),
             ),
         )
         logger.info(f"✓ Connected to Weaviate at {host}:{port}")

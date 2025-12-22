@@ -5,27 +5,27 @@ and mapping namespaces to dataset-specific settings (embedding, LLM, chunking, s
 """
 
 import os
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+from pydantic import BaseModel, Field
 
 from src.common.config import load_yaml_config
 from src.core.errors import ConfigurationError
 from src.llm.config import EmbeddingConfig, EmbeddingProvider, LLMConfig, LLMProvider
 
 
-@dataclass
-class DatasetEmbeddingConfig:
+class DatasetEmbeddingConfig(BaseModel):
     """Per-dataset embedding configuration."""
 
     provider: str
-    model: str | None = None
-    base_url_env: str | None = None  # Name of env var containing base URL
-    api_key_env: str | None = None  # Name of env var containing API key
-    dimension: int = 1024
-    timeout: int = 30
-    max_retries: int = 3
-    batch_size: int = 50
+    model: str
+    base_url_env: str | None  # Name of env var containing base URL
+    api_key_env: str | None  # Name of env var containing API key
+    dimension: int
+    timeout: int
+    max_retries: int
+    batch_size: int
 
     def to_embedding_config(self) -> EmbeddingConfig:
         """Convert to production EmbeddingConfig with env var resolution.
@@ -74,12 +74,12 @@ class DatasetLLMConfig:
 
     provider: str
     model: str
-    base_url_env: str | None = None
-    api_key_env: str | None = None
-    max_tokens: int = 500
-    temperature: float = 0.7
-    timeout: int = 60
-    max_retries: int = 3
+    base_url_env: str | None
+    api_key_env: str | None
+    max_tokens: int
+    temperature: float
+    timeout: int
+    max_retries: int
 
     def to_llm_config(self) -> LLMConfig:
         """Convert to production LLMConfig with env var resolution.
@@ -127,21 +127,21 @@ class DatasetLLMConfig:
 class DatasetChunkingConfig:
     """Per-dataset chunking configuration."""
 
-    chunk_size: int = 100
-    chunk_overlap: int = 50
-    cleaner_remove_empty_lines: bool = True
-    cleaner_remove_extra_whitespaces: bool = True
-    cleaner_unicode_normalization: str = "NFC"
+    chunk_size: int
+    chunk_overlap: int
+    cleaner_remove_empty_lines: bool
+    cleaner_remove_extra_whitespaces: bool
+    cleaner_unicode_normalization: str
 
 
 @dataclass
 class DatasetSearchConfig:
     """Per-dataset search configuration."""
 
-    default_top_k: int = 10
-    default_mode: str = "hybrid"
-    hybrid_alpha: float = 0.5
-    max_context_length: int = 4000
+    top_k: int
+    mode: str
+    hybrid_alpha: float
+    max_context_length: int
 
 
 @dataclass
@@ -149,6 +149,9 @@ class DatasetWeaviateConfig:
     """Per-dataset Weaviate configuration."""
 
     collection: str
+    timeout_init: int
+    timeout_query: int
+    timeout_insert: int
 
 
 @dataclass
@@ -171,7 +174,7 @@ class DatasetConfig:
 class DatasetsConfigLoader:
     """Loads and manages datasets_config.yaml with defaults merging."""
 
-    def __init__(self, config_path: str | Path = "config/datasets_config.yaml") -> None:
+    def __init__(self, config_path: str | Path) -> None:
         """Initialize from config file.
 
         Args:
@@ -194,13 +197,17 @@ class DatasetsConfigLoader:
         Returns:
             Merged configuration with defaults applied.
         """
-        defaults = self._raw_config.get("defaults", {})
+        if "defaults" not in self._raw_config:
+            raise ConfigurationError(f"Missing required 'defaults' section in {self.config_path}")
+        defaults = self._raw_config["defaults"]
         merged = {}
 
         # Merge each section (embedding, llm, chunking, search)
         for section in ["embedding", "llm", "chunking", "search", "weaviate"]:
-            default_section = defaults.get(section, {})
-            dataset_section = dataset_config.get(section, {})
+            if section not in defaults:
+                raise ConfigurationError(f"Missing required '{section}' in defaults section of {self.config_path}")
+            default_section = defaults[section]
+            dataset_section = dataset_config[section] if section in dataset_config else {}
 
             # Merge: dataset-specific overrides defaults
             merged[section] = {**default_section, **dataset_section}
@@ -229,12 +236,18 @@ class DatasetsConfigLoader:
         merged = self._merge_defaults(raw_config)
 
         try:
+            # Require description and input_path
+            if "description" not in merged:
+                raise ConfigurationError(f"Missing required 'description' for dataset '{namespace}'")
+            if "input_path" not in merged:
+                raise ConfigurationError(f"Missing required 'input_path' for dataset '{namespace}'")
+
             return DatasetConfig(
                 namespace=namespace,
-                description=merged.get("description", namespace),
-                input_path=merged.get("input_path", ""),
-                qa_output_base=merged.get("qa_output_base"),
-                eval_output_base=merged.get("eval_output_base"),
+                description=merged["description"],
+                input_path=merged["input_path"],
+                qa_output_base=merged["qa_output_base"] if "qa_output_base" in merged else None,
+                eval_output_base=merged["eval_output_base"] if "eval_output_base" in merged else None,
                 embedding=DatasetEmbeddingConfig(**merged["embedding"]),
                 llm=DatasetLLMConfig(**merged["llm"]),
                 chunking=DatasetChunkingConfig(**merged["chunking"]),
@@ -250,7 +263,9 @@ class DatasetsConfigLoader:
         Raises:
             ConfigurationError: If any dataset configuration is invalid.
         """
-        datasets_section = self._raw_config.get("datasets", {})
+        if "datasets" not in self._raw_config:
+            raise ConfigurationError(f"Missing required 'datasets' section in {self.config_path}")
+        datasets_section = self._raw_config["datasets"]
 
         if not isinstance(datasets_section, dict):
             raise ConfigurationError("'datasets' section must be a dictionary")

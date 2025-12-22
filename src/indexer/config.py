@@ -14,92 +14,96 @@ class IndexerConfig(ServiceConfig):
     """
 
     # Service info
-    service_name: str = Field(default="indexer", description="Service name")
-    log_level: str = Field(default="INFO", description="Logging level")
+    service_name: str = Field(..., description="Service name")
 
     # Kafka configuration
     kafka_bootstrap: str = Field(
-        default="kafka:9092",
+        ...,
         description="Kafka bootstrap servers",
     )
     kafka_topic: str = Field(
-        default="document-changes",
+        ...,
         description="Kafka topic to consume from",
     )
     kafka_group_id: str = Field(
-        default="indexer-group",
+        ...,
         description="Kafka consumer group ID",
     )
     kafka_auto_offset_reset: str = Field(
-        default="earliest",
+        ...,
         description="Kafka auto offset reset (earliest/latest)",
     )
 
     # MinIO configuration
     minio_endpoint: str = Field(
-        default="minio:9000",
+        ...,
         description="MinIO endpoint",
     )
     minio_access_key: str = Field(
-        default="minioadmin",
+        ...,
         description="MinIO access key",
     )
     minio_secret_key: str = Field(
-        default="minioadmin123",
+        ...,
         description="MinIO secret key",
     )
     minio_bucket: str = Field(
-        default="documents",
+        ...,
         description="MinIO bucket name",
     )
     minio_secure: bool = Field(
-        default=False,
+        ...,
         description="Use HTTPS for MinIO",
     )
 
     # Weaviate configuration
     weaviate_url: str = Field(
-        default="http://weaviate:8080",
+        ...,
         description="Weaviate URL",
+    )
+    weaviate_timeout_init: int = Field(
+        ...,
+        ge=1,
+        description="Weaviate init timeout in seconds",
+    )
+    weaviate_timeout_query: int = Field(
+        ...,
+        ge=1,
+        description="Weaviate query timeout in seconds",
+    )
+    weaviate_timeout_insert: int = Field(
+        ...,
+        ge=1,
+        description="Weaviate insert timeout in seconds",
     )
 
     # Embedding Service configuration
     embedding_service_addr: str = Field(
-        default="embedding-service:50051",
+        ...,
         description="Embedding Service gRPC address",
     )
 
     # Dataset config path
     datasets_config_path: str = Field(
-        default="config/datasets_config.yaml",
+        ...,
         description="Path to datasets configuration file",
     )
 
     # Processing configuration
     batch_size: int = Field(
-        default=10,
+        ...,
         description="Batch size for embedding requests",
     )
 
     # Health check server
     health_port: int = Field(
-        default=8080,
+        ...,
         description="Health check HTTP server port",
-    )
-
-    # OpenTelemetry tracing configuration
-    otlp_endpoint: str | None = Field(
-        default=None,
-        description="OTLP endpoint for tracing (defaults to env var or http://tempo.monitoring.svc.cluster.local:4317)",
-    )
-    environment: str = Field(
-        default="development",
-        description="Deployment environment (development, staging, production)",
     )
 
     # Embedding service timeout
     embedding_service_timeout: float = Field(
-        default=30.0,
+        ...,
         description="Embedding Service timeout in seconds",
     )
 
