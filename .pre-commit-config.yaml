@@ -6,6 +6,13 @@
 repos:
   - repo: local
     hooks:
+      - id: prevent-env-commit
+        name: Prevent .env files from being committed
+        entry: ./scripts/prevent-env-commit.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+
       - id: run-make-ci-quiet
         name: Run make ci-quiet
         entry: make ci-quiet
