@@ -51,6 +51,9 @@ setup.log
 # Temporary files
 tmp/
 
+# Cache files
+.cache/
+
 # Data and notes directories (entire folders excluded)
 /data/
 /notes/

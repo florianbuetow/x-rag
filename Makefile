@@ -16,6 +16,7 @@
 .PHONY: open-search-ui open-ingestion-api open-weaviate open-grafana open-prometheus open-k8-dashboard
 .PHONY: dashboard-token
 .PHONY: eval
+.PHONY: ai-review-unit-tests ai-review-unit-tests-nocache
 
 # Configuration
 CLUSTER_NAME := xrag-k8
@@ -661,6 +662,20 @@ show-k8-dashboard-token: ## Display Kubernetes Dashboard access token
 eval: ## Run evaluation (CONFIG=path, default: evals/configs/production.yaml)
 	@echo "$(BLUE)=== Running Evaluation ===$(NC)"
 	@uv run python -m evals.run_eval --config "$(or $(CONFIG),evals/configs/production.yaml)"
+	@echo ""
+
+##@ AI
+
+ai-review-unit-tests: ## Run AI-powered fake unit test detector
+	@echo "$(BLUE)=== Reviewing Unit Tests with AI ===$(NC)"
+	@uv run python tools/fake_test_detector/detect_fake_tests.py
+	@echo ""
+
+ai-review-unit-tests-nocache: ## Run AI-powered fake unit test detector (clear cache and force re-scan)
+	@echo "$(BLUE)=== Reviewing Unit Tests with AI (No Cache) ===$(NC)"
+	@rm -rf .cache/test_file_hashes.json
+	@echo "$(YELLOW)✓ Cache cleared$(NC)"
+	@uv run python tools/fake_test_detector/detect_fake_tests.py --no-cache
 	@echo ""
 
 # Internal targets (prefixed with . to hide from help)
