@@ -52,11 +52,11 @@ spec:
                 configMapKeyRef:
                   name: embedding-service-config
                   key: EMBEDDING_GENERATOR
-            - name: DEFAULT_MODEL
+            - name: MODEL
               valueFrom:
                 configMapKeyRef:
                   name: embedding-service-config
-                  key: DEFAULT_MODEL
+                  key: MODEL
             - name: HASH_BASED_DIMENSION
               valueFrom:
                 configMapKeyRef:

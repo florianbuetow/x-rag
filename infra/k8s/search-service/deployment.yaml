@@ -138,16 +138,16 @@ spec:
                   key: OPENAI_TIMEOUT
 
             # Search settings
-            - name: DEFAULT_TOP_K
+            - name: TOP_K
               valueFrom:
                 configMapKeyRef:
                   name: search-service-config
-                  key: DEFAULT_TOP_K
-            - name: DEFAULT_MODE
+                  key: TOP_K
+            - name: MODE
               valueFrom:
                 configMapKeyRef:
                   name: search-service-config
-                  key: DEFAULT_MODE
+                  key: MODE
             - name: HYBRID_ALPHA
               valueFrom:
                 configMapKeyRef:

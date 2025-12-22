@@ -31,8 +31,8 @@ openai:
   timeout: 60
 
 search:
-  default_top_k: 10
-  default_mode: hybrid
+  top_k: 10
+  mode: hybrid
   hybrid_alpha: 0.5
   max_context_length: 4000
 

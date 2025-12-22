@@ -10,7 +10,7 @@ grpc:
 
 embedding:
   generator: openai
-  default_model: text-embedding-bge-large-en-v1.5
+  model: text-embedding-bge-large-en-v1.5
   max_batch_size: 100
   hash_based_dimension: 1024
 

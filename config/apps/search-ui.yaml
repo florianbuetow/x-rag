@@ -10,8 +10,8 @@ search_service:
 ui:
   cors_enabled: true
   max_query_length: 1000
-  default_top_k: 5
-  default_mode: hybrid
+  top_k: 5
+  mode: hybrid
 
 tracing:
   otlp_endpoint: http://tempo.monitoring.svc.cluster.local:4317

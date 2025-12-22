@@ -16,8 +16,8 @@ data:
   # UI settings
   CORS_ENABLED: "true"
   MAX_QUERY_LENGTH: "1000"
-  DEFAULT_TOP_K: "5"
-  DEFAULT_MODE: "hybrid"
+  TOP_K: "5"
+  MODE: "hybrid"
 
   # Distributed tracing (OpenTelemetry)
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy.monitoring.svc.cluster.local:4317"
