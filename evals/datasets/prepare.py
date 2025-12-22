@@ -19,7 +19,7 @@ Usage:
     python -m evals.datasets.prepare \
         --qa-dir data/qa/@JasonLiu/video-transcripts/medium-en/qwen2.5-7b-instruct-mlx \
         --output data/eval/@JasonLiu/video-transcripts/medium-en/qwen2.5-7b-instruct-mlx/dataset.json \
-        --namespace default
+        --namespace my-eval-dataset
 """
 
 from __future__ import annotations
@@ -279,8 +279,8 @@ def main() -> int:
     parser.add_argument(
         "--namespace",
         type=str,
-        default="default",
-        help="Document namespace (default: default)",
+        required=True,
+        help="Document namespace (required)",
     )
     parser.add_argument(
         "--lines-per-chunk",

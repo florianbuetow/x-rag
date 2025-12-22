@@ -335,7 +335,7 @@ groups:
 | `status` | success, error | Request outcome |
 | `error_type` | ValueError, TimeoutError, etc. | Exception class name |
 | `mode` | vector, bm25, hybrid | Search mode |
-| `namespace` | default, user-defined | Document namespace |
+| `namespace` | user-defined (required) | Document namespace |
 | `model` | text-embedding-3-small, etc. | Embedding model |
 | `stage` | load, clean, split, embed, insert | Indexer pipeline stage |
 | `operation` | search, ingest | API operation |
@@ -407,7 +407,7 @@ curl -s http://localhost:9090/metrics | grep search_service
 # Send a search request
 curl -X POST http://localhost:8080/api/search \
   -H "Content-Type: application/json" \
-  -d '{"query": "test query", "namespace": "default"}'
+  -d '{"query": "test query", "namespace": "my-docs"}'
 
 # Check that metrics were recorded
 curl -s http://localhost:9090/metrics | grep search_service_requests_total

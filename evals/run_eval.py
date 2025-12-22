@@ -192,7 +192,7 @@ class EmbeddedWeaviateClient:
                         "content": chunk["content"],
                         "doc_id": chunk["doc_id"],
                         "chunk_index": chunk["chunk_index"],
-                        "namespace": chunk["namespace"] if "namespace" in chunk else "default",
+                        "namespace": chunk["namespace"],  # namespace is required
                         "source": chunk["source"] if "source" in chunk else "",
                         "title": chunk["title"] if "title" in chunk else "",
                     },
@@ -275,7 +275,7 @@ def load_and_chunk_documents(documents_path: str, chunk_size: int, chunk_overlap
                         "chunk_index": chunk_index,
                         "source": txt_file.name,
                         "title": txt_file.stem,
-                        "namespace": "default",
+                        "namespace": "eval-dataset",  # Update this to match your dataset
                     }
                 )
                 chunk_index += 1

@@ -71,7 +71,7 @@ curl -X POST http://localhost:8082/ingest \
       "title": "ML Introduction",
       "type": "text"
     },
-    "namespace": "default"
+    "namespace": "my-docs"
   }'
 ```
 

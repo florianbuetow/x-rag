@@ -517,7 +517,7 @@ service SearchService {
 
 message SearchRequest {
   string query = 1;
-  string namespace = 2;  // default: "default"
+  string namespace = 2;  // required
   int32 top_k = 3;       // default: 10
   string mode = 4;       // "vector", "bm25", or "hybrid"
   map<string, string> options = 5;
