@@ -28,3 +28,16 @@ rules:
       include:
         - src/
         - evals/
+
+  - id: xrag.no-pydantic-field-default
+    languages: [python]
+    message: >
+      Default values in Pydantic Field() hide configuration errors. Use Field(...)
+      without default= to keep fields required, or use explicit optional types with
+      None if the field is truly optional.
+    severity: ERROR
+    pattern: $FIELD = Field(..., default=..., ...)
+    paths:
+      include:
+        - src/
+        - evals/
