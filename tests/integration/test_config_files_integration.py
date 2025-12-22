@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 
 import pytest
+from dotenv import dotenv_values
 
 from src.common.config import load_yaml_config
 from src.embedding_service.config import EmbeddingServiceConfig
@@ -327,3 +328,90 @@ class TestAllConfigFilesIntegration:
                 assert "service" in config, f"{yaml_file.name} missing 'service' section"
             except Exception as e:
                 pytest.fail(f"Failed to load {yaml_file.name}: {e}")
+
+
+class TestEnvFileIntegration:
+    """Test that .env file contains all keys from .env.example with values."""
+
+    def test_env_example_file_exists(self):
+        """Test that .env.example file exists."""
+        env_example_path = Path(__file__).parent.parent.parent / ".env.example"
+        assert env_example_path.exists(), f".env.example file not found: {env_example_path}"
+
+    def test_env_file_exists(self):
+        """Test that .env file exists."""
+        env_path = Path(__file__).parent.parent.parent / ".env"
+        if not env_path.exists():
+            pytest.skip(".env file not found - this is expected in CI environments")
+
+    def test_env_contains_all_example_keys(self):
+        """Test that .env and .env.example contain the exact same keys."""
+        project_root = Path(__file__).parent.parent.parent
+        env_example_path = project_root / ".env.example"
+        env_path = project_root / ".env"
+
+        # Skip if .env doesn't exist (CI environments)
+        if not env_path.exists():
+            pytest.skip(".env file not found - this is expected in CI environments")
+
+        # Load both files using dotenv
+        env_example = dotenv_values(env_example_path)
+        env_actual = dotenv_values(env_path)
+
+        # Filter out comment-only lines and empty keys
+        env_example_keys = {k for k, v in env_example.items() if k and v is not None}
+        env_actual_keys = set(env_actual.keys())
+
+        # Check for keys missing from .env (critical config missing)
+        missing_from_env = env_example_keys - env_actual_keys
+
+        # Check for keys in .env but not in .env.example (undocumented config)
+        missing_from_example = env_actual_keys - env_example_keys
+
+        # Build error message
+        error_parts = []
+
+        if missing_from_env:
+            error_parts.append(
+                "❌ CRITICAL: The following keys from .env.example are missing from .env:\n"
+                + "\n".join([f"  - {key}" for key in sorted(missing_from_env)])
+                + "\n\nThese are required configuration keys. Please add them to your .env file."
+            )
+
+        if missing_from_example:
+            error_parts.append(
+                "⚠️  DOCUMENTATION: The following keys exist in .env but are not documented in .env.example:\n"
+                + "\n".join([f"  - {key}" for key in sorted(missing_from_example)])
+                + "\n\nPlease add these keys to .env.example to keep documentation up to date."
+            )
+
+        if error_parts:
+            pytest.fail("\n\n".join(error_parts))
+
+    def test_env_keys_have_values(self):
+        """Test that all keys from .env.example are set to non-empty values in .env."""
+        project_root = Path(__file__).parent.parent.parent
+        env_example_path = project_root / ".env.example"
+        env_path = project_root / ".env"
+
+        # Skip if .env doesn't exist (CI environments)
+        if not env_path.exists():
+            pytest.skip(".env file not found - this is expected in CI environments")
+
+        # Load both files using dotenv
+        env_example = dotenv_values(env_example_path)
+        env_actual = dotenv_values(env_path)
+
+        # Filter out comment-only lines and empty keys from example
+        env_example_keys = {k for k, v in env_example.items() if k and v is not None}
+
+        # Check for keys that are present but have no value
+        unset_keys = [key for key in env_example_keys if key not in env_actual or not env_actual[key] or env_actual[key].strip() == ""]
+
+        # Build error message
+        if unset_keys:
+            pytest.fail(
+                "❌ CRITICAL: The following keys from .env.example are not set to a value in .env:\n"
+                + "\n".join([f"  - {key}" for key in sorted(unset_keys)])
+                + "\n\nPlease set these environment variables to actual values in your .env file."
+            )
