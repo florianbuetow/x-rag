@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: xrag-minio
   namespace: rag-system
+  labels:
+    app: xrag-minio
 spec:
   ports:
     - port: 9000
@@ -27,6 +29,10 @@ spec:
     metadata:
       labels:
         app: xrag-minio
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9000"
+        prometheus.io/path: "/minio/v2/metrics/cluster"
     spec:
       containers:
         - name: minio
@@ -46,6 +52,8 @@ spec:
                 secretKeyRef:
                   name: minio-credentials
                   key: root-password
+            - name: MINIO_PROMETHEUS_AUTH_TYPE
+              value: "public"
           volumeMounts:
             - name: data
               mountPath: /data

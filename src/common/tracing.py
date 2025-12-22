@@ -54,7 +54,7 @@ def init_tracing(
     service_name: str,
     otlp_endpoint: str | None,
     environment: str,
-) -> TracerProvider:
+) -> TracerProvider | None:
     """Initialize OpenTelemetry tracing.
 
     Configures the global TracerProvider with OTLP export to Tempo.
@@ -63,16 +63,24 @@ def init_tracing(
     Args:
         service_name: Name of this service (appears in traces)
         otlp_endpoint: Tempo/collector endpoint. Defaults to OTEL_EXPORTER_OTLP_ENDPOINT
-                       env var or http://xrag-tempo:4317
+                       env var or http://tempo.monitoring.svc.cluster.local:4317
         environment: Deployment environment tag (development, staging, production)
 
+    Environment variables:
+        OTEL_METRICS_ENABLED: Set to "false" to disable tracing (default: true)
+
     Returns:
-        Configured TracerProvider
+        Configured TracerProvider, or None if tracing is disabled
 
     Raises:
         RuntimeError: If tracing is already initialized
     """
     global _tracer_provider
+
+    enabled = os.getenv("OTEL_METRICS_ENABLED", "true").lower() == "true"
+    if not enabled:
+        logger.info("Tracing disabled via OTEL_METRICS_ENABLED=false")
+        return None
 
     if _tracer_provider is not None:
         logger.warning("Tracing already initialized, returning existing provider")
@@ -81,7 +89,7 @@ def init_tracing(
     # Resolve endpoint from parameter, env var, or default
     endpoint = otlp_endpoint or os.getenv(
         "OTEL_EXPORTER_OTLP_ENDPOINT",
-        "http://xrag-tempo:4317",
+        "http://tempo.monitoring.svc.cluster.local:4317",
     )
 
     # Create resource with service metadata

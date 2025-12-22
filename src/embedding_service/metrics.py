@@ -1,81 +1,212 @@
-"""Prometheus metrics for Embedding Service.
+"""OpenTelemetry metrics for Embedding Service.
 
 Defines metrics following the four golden signals for the Embedding Service:
 - Latency: Request duration histograms with operation-specific buckets
 - Traffic: Request and embedding counters
 - Errors: Error counters with type labels
-- Saturation: Active request gauges
+- Saturation: Active request gauges (using UpDownCounter)
 
 All duration metrics are in seconds (Prometheus convention).
+Metrics are exported via OTLP to Grafana Alloy.
 """
 
-from prometheus_client import Counter, Gauge, Histogram
+from opentelemetry.metrics import Counter, Histogram, UpDownCounter
 
-from src.common.metrics import BucketConfig, OperationType
+from src.common.otel_metrics import get_meter
+
+# Module-level metric instances (lazily initialized)
+_request_duration: Histogram | None = None
+_backend_duration: Histogram | None = None
+_batch_size: Histogram | None = None
+_requests_total: Counter | None = None
+_embeddings_total: Counter | None = None
+_errors_total: Counter | None = None
+_active_requests: UpDownCounter | None = None
+_initialized = False
+
+
+def _ensure_metrics() -> None:
+    """Initialize metrics if not already done."""
+    global _request_duration, _backend_duration, _batch_size
+    global _requests_total, _embeddings_total, _errors_total
+    global _active_requests, _initialized
+
+    if _initialized:
+        return
+
+    meter = get_meter()
+
+    # Latency Metrics (Histograms)
+    _request_duration = meter.create_histogram(
+        name="embedding_service_request_duration_seconds",
+        description="Total duration of Embedding Service requests",
+        unit="s",
+    )
+
+    _backend_duration = meter.create_histogram(
+        name="embedding_service_backend_duration_seconds",
+        description="Duration of backend embedding generation",
+        unit="s",
+    )
+
+    _batch_size = meter.create_histogram(
+        name="embedding_service_batch_size",
+        description="Distribution of batch sizes for EmbedBatch requests",
+        unit="1",
+    )
+
+    # Traffic Metrics (Counters)
+    _requests_total = meter.create_counter(
+        name="embedding_service_requests_total",
+        description="Total number of Embedding Service requests",
+        unit="1",
+    )
+
+    _embeddings_total = meter.create_counter(
+        name="embedding_service_embeddings_total",
+        description="Total number of embeddings generated",
+        unit="1",
+    )
+
+    # Error Metrics (Counters)
+    _errors_total = meter.create_counter(
+        name="embedding_service_errors_total",
+        description="Total number of Embedding Service errors",
+        unit="1",
+    )
+
+    # Saturation Metrics (UpDownCounter for gauge-like behavior)
+    _active_requests = meter.create_up_down_counter(
+        name="embedding_service_active_requests",
+        description="Number of currently active requests",
+        unit="1",
+    )
+
+    _initialized = True
+
 
 # =============================================================================
-# Latency Metrics (Histograms)
+# Public API - Histogram recording functions
 # =============================================================================
 
-# Full request duration for Embed, EmbedBatch, and HealthCheck methods
-request_duration = Histogram(
-    "embedding_service_request_duration_seconds",
-    "Total duration of Embedding Service requests",
-    ["method"],
-    buckets=BucketConfig.get(OperationType.FAST),
-)
 
-# Backend embedding generation (actual model call)
-backend_duration = Histogram(
-    "embedding_service_backend_duration_seconds",
-    "Duration of backend embedding generation",
-    ["model"],
-    buckets=BucketConfig.get(OperationType.FAST),
-)
+def record_request_duration(duration_seconds: float, method: str) -> None:
+    """Record request duration.
 
-# Batch size distribution
-batch_size = Histogram(
-    "embedding_service_batch_size",
-    "Distribution of batch sizes for EmbedBatch requests",
-    buckets=(1, 2, 5, 10, 25, 50, 100, 250, 500, 1000),
-)
+    Args:
+        duration_seconds: Duration in seconds
+        method: The gRPC method name (e.g., "Embed", "EmbedBatch")
+    """
+    _ensure_metrics()
+    assert _request_duration is not None  # nosec B101
+    _request_duration.record(duration_seconds, {"method": method})
 
-# =============================================================================
-# Traffic Metrics (Counters)
-# =============================================================================
 
-# Total requests with status
-requests_total = Counter(
-    "embedding_service_requests_total",
-    "Total number of Embedding Service requests",
-    ["method", "status"],
-)
+def record_backend_duration(duration_seconds: float, model: str) -> None:
+    """Record backend embedding generation duration.
 
-# Total embeddings generated
-embeddings_total = Counter(
-    "embedding_service_embeddings_total",
-    "Total number of embeddings generated",
-    ["model"],
-)
+    Args:
+        duration_seconds: Duration in seconds
+        model: The model name
+    """
+    _ensure_metrics()
+    assert _backend_duration is not None  # nosec B101
+    _backend_duration.record(duration_seconds, {"model": model})
+
+
+def record_batch_size(size: int) -> None:
+    """Record batch size.
+
+    Args:
+        size: Number of texts in the batch
+    """
+    _ensure_metrics()
+    assert _batch_size is not None  # nosec B101
+    _batch_size.record(size)
+
 
 # =============================================================================
-# Error Metrics (Counters)
+# Public API - Counter increment functions
 # =============================================================================
 
-# Errors with type classification
-errors_total = Counter(
-    "embedding_service_errors_total",
-    "Total number of Embedding Service errors",
-    ["method", "error_type"],
-)
+
+def inc_requests_total(method: str, status: str) -> None:
+    """Increment request counter.
+
+    Args:
+        method: The gRPC method name (e.g., "Embed", "EmbedBatch")
+        status: Request status ("success" or "error")
+    """
+    _ensure_metrics()
+    assert _requests_total is not None  # nosec B101
+    _requests_total.add(1, {"method": method, "status": status})
+
+
+def inc_embeddings_total(model: str, count: int) -> None:
+    """Increment embeddings generated counter.
+
+    Args:
+        model: The model name
+        count: Number of embeddings generated
+    """
+    _ensure_metrics()
+    assert _embeddings_total is not None  # nosec B101
+    _embeddings_total.add(count, {"model": model})
+
+
+def inc_errors_total(method: str, error_type: str) -> None:
+    """Increment error counter.
+
+    Args:
+        method: The gRPC method name
+        error_type: The exception type name
+    """
+    _ensure_metrics()
+    assert _errors_total is not None  # nosec B101
+    _errors_total.add(1, {"method": method, "error_type": error_type})
+
 
 # =============================================================================
-# Saturation Metrics (Gauges)
+# Public API - Gauge-like functions (UpDownCounter)
 # =============================================================================
 
-# Currently active requests
-active_requests = Gauge(
-    "embedding_service_active_requests",
-    "Number of currently active requests",
-    ["method"],
-)
+
+def inc_active_requests(method: str) -> None:
+    """Increment active requests gauge.
+
+    Args:
+        method: The gRPC method name
+    """
+    _ensure_metrics()
+    assert _active_requests is not None  # nosec B101
+    _active_requests.add(1, {"method": method})
+
+
+def dec_active_requests(method: str) -> None:
+    """Decrement active requests gauge.
+
+    Args:
+        method: The gRPC method name
+    """
+    _ensure_metrics()
+    assert _active_requests is not None  # nosec B101
+    _active_requests.add(-1, {"method": method})
+
+
+# =============================================================================
+# Raw histogram accessors for track_latency context manager
+# =============================================================================
+
+
+def get_request_duration() -> Histogram:
+    """Get the request duration histogram for use with track_latency."""
+    _ensure_metrics()
+    assert _request_duration is not None  # nosec B101
+    return _request_duration
+
+
+def get_backend_duration() -> Histogram:
+    """Get the backend duration histogram for use with track_latency."""
+    _ensure_metrics()
+    assert _backend_duration is not None  # nosec B101
+    return _backend_duration

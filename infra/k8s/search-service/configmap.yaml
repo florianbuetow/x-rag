@@ -22,11 +22,11 @@ data:
   # Embedding Service settings
   EMBEDDING_SERVICE_ADDR: "embedding-service:50051"
   EMBEDDING_SERVICE_TIMEOUT: "30"
-  EMBEDDING_MODEL: "text-embedding-bge-large-en-v1.5"
+  EMBEDDING_MODEL: "${OPENAI_EMBEDDING_MODEL}"
 
   # OpenAI settings (or OpenAI-compatible API like LM Studio)
-  OPENAI_API_BASE: "http://host.docker.internal:1234/v1"
-  OPENAI_MODEL: "qwen2.5-7b-instruct-mlx"
+  OPENAI_API_BASE: "${OPENAI_API_BASE}"
+  OPENAI_MODEL: "${OPENAI_MODEL}"
   OPENAI_MAX_TOKENS: "500"
   OPENAI_TEMPERATURE: "0.7"
   OPENAI_MAX_RETRIES: "3"
@@ -39,5 +39,6 @@ data:
   MAX_CONTEXT_LENGTH: "4000"
 
   # Distributed tracing (OpenTelemetry)
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://xrag-alloy:4317"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy.monitoring.svc.cluster.local:4317"
+  OTEL_METRICS_ENABLED: "${OTEL_METRICS_ENABLED}"
   ENVIRONMENT: "development"

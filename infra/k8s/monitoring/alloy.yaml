@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: xrag-alloy
-  namespace: rag-system
+  name: alloy
+  namespace: monitoring
   labels:
-    app: xrag-alloy
+    app: alloy
 spec:
   type: ClusterIP
   ports:
@@ -18,24 +18,24 @@ spec:
       port: 12345
       targetPort: 12345
   selector:
-    app: xrag-alloy
+    app: alloy
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: xrag-alloy
-  namespace: rag-system
+  name: alloy
+  namespace: monitoring
   labels:
-    app: xrag-alloy
+    app: alloy
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: xrag-alloy
+      app: alloy
   template:
     metadata:
       labels:
-        app: xrag-alloy
+        app: alloy
     spec:
       serviceAccountName: alloy
       containers:
@@ -58,6 +58,9 @@ spec:
               mountPath: /etc/alloy
             - name: data
               mountPath: /var/lib/alloy/data
+            - name: varlogpods
+              mountPath: /var/log/pods
+              readOnly: true
           resources:
             requests:
               cpu: "100m"
@@ -83,3 +86,7 @@ spec:
             name: alloy-config
         - name: data
           emptyDir: {}
+        - name: varlogpods
+          hostPath:
+            path: /var/log/pods
+            type: Directory

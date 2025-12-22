@@ -25,6 +25,10 @@ REGISTRY_PORT := 5000
 REGISTRY := localhost:5000
 HELPERS := scripts/cluster_helper_functions.sh
 
+# Load .env file if it exists (for OBSERVABILITY_ENABLED, etc.)
+-include .env
+export OBSERVABILITY_ENABLED ?= true
+
 # Color codes for output
 RED := \033[0;31m
 GREEN := \033[0;32m
@@ -153,8 +157,12 @@ cluster-start: ## Start the cluster and all services
 	@echo "  Search UI:     http://localhost:8080"
 	@echo "  Ingestion API: http://localhost:8082"
 	@echo "  Weaviate:      http://localhost:8081/v1/.well-known/ready"
-	@echo "  Grafana:       http://localhost:3000 (admin/admin)"
-	@echo "  Prometheus:    http://localhost:9090"
+	@if [ "$(OBSERVABILITY_ENABLED)" = "true" ]; then \
+		echo "  Grafana:       http://localhost:3000 (admin/admin)"; \
+		echo "  Prometheus:    http://localhost:9090"; \
+	else \
+		echo "  Observability: $(YELLOW)Disabled$(NC)"; \
+	fi
 	@echo "  Redis:         localhost:6379"
 	@echo "  Kafka:         localhost:9092"
 	@echo ""
@@ -396,6 +404,11 @@ code-semgrep: ## Run Semgrep static analysis (no default values)
 
 ##@ Testing
 
+generate-load: ## Generate load for metrics dashboards (usage: make generate-load N=100 DELAY=0.1)
+	@echo "$(BLUE)=== Generating Load for Metrics ===$(NC)"
+	@./scripts/generate-load.sh $(or $(N),50) $(or $(DELAY),0.2)
+	@echo ""
+
 test: ## Run unit tests only (fast, no cluster required)
 	@echo "$(BLUE)=== Running Unit Tests ===$(NC)"
 	@uv run pytest tests/ -v --ignore=tests/integration
@@ -541,11 +554,11 @@ cli-search-service: ## Connect to Search Service pod shell
 	@echo ""
 
 cli-prometheus: ## Connect to Prometheus pod shell
-	@./scripts/connect-pod.sh xrag-prometheus $(NAMESPACE)
+	@./scripts/connect-pod.sh prometheus monitoring
 	@echo ""
 
 cli-grafana: ## Connect to Grafana pod shell
-	@./scripts/connect-pod.sh xrag-grafana $(NAMESPACE)
+	@./scripts/connect-pod.sh grafana monitoring
 	@echo ""
 
 ##@ UI Shortcuts
@@ -649,4 +662,41 @@ eval: ## Run evaluation (CONFIG=path, default: evals/configs/production.yaml)
 	@echo ""
 
 # Internal targets (prefixed with . to hide from help)
-# Note: Checkpoint logic removed - all checks now use helper functions directly
+
+.setup-cluster:
+	@if [ -f $(SETUP_DIR)/cluster.done ]; then \
+		echo "$(GREEN)[SKIP]$(NC) Cluster already exists"; \
+	else \
+		echo "$(YELLOW)[CREATE]$(NC) Setting up Kind cluster..."; \
+		./scripts/create-cluster.sh; \
+		touch $(SETUP_DIR)/cluster.done; \
+	fi
+
+.setup-registry:
+	@if [ -f $(SETUP_DIR)/registry.done ]; then \
+		echo "$(GREEN)[SKIP]$(NC) Registry already running"; \
+	else \
+		echo "$(YELLOW)[CREATE]$(NC) Setting up container registry..."; \
+		./scripts/setup-registry.sh; \
+		touch $(SETUP_DIR)/registry.done; \
+	fi
+
+.deploy-infrastructure:
+	@if [ -f $(SETUP_DIR)/infrastructure.done ]; then \
+		echo "$(GREEN)[SKIP]$(NC) Infrastructure already deployed"; \
+	else \
+		echo "$(YELLOW)[DEPLOY]$(NC) Deploying infrastructure services..."; \
+		./scripts/deploy-infrastructure.sh; \
+		touch $(SETUP_DIR)/infrastructure.done; \
+	fi
+
+.deploy-monitoring:
+	@if [ "$(OBSERVABILITY_ENABLED)" != "true" ]; then \
+		echo "$(YELLOW)[SKIP]$(NC) Observability disabled (OBSERVABILITY_ENABLED=false)"; \
+	elif [ -f $(SETUP_DIR)/monitoring.done ]; then \
+		echo "$(GREEN)[SKIP]$(NC) Monitoring already deployed"; \
+	else \
+		echo "$(YELLOW)[DEPLOY]$(NC) Deploying monitoring stack..."; \
+		./scripts/deploy-monitoring.sh; \
+		touch $(SETUP_DIR)/monitoring.done; \
+	fi

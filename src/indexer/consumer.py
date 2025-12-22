@@ -1,4 +1,4 @@
-"""Kafka consumer for document change events."""
+"""Kafka consumer for document change events with trace context propagation."""
 
 import asyncio
 import json
@@ -9,8 +9,10 @@ from typing import Any
 
 from aiokafka import AIOKafkaConsumer  # type: ignore[import-untyped]
 from aiokafka.errors import KafkaError  # type: ignore[import-untyped]
+from opentelemetry import context
+from opentelemetry.propagate import extract
 
-from src.indexer.metrics import kafka_messages_total, kafka_poll_duration
+from src.indexer.metrics import inc_kafka_messages_total, record_kafka_poll_duration
 
 logger = logging.getLogger(__name__)
 
@@ -73,11 +75,15 @@ class DocumentEventConsumer:
             await self.consumer.stop()
             logger.info("✓ Kafka consumer stopped")
 
-    async def consume(self) -> AsyncIterator[dict[str, Any]]:
-        """Consume events from Kafka.
+    async def consume(self) -> AsyncIterator[tuple[dict[str, Any], context.Context | None]]:
+        """Consume events from Kafka with trace context extraction.
+
+        Extracts W3C Trace Context from Kafka message headers to enable
+        distributed tracing across the async message boundary.
 
         Yields:
-            Event dictionaries from Kafka
+            Tuple of (event dict, trace context) from Kafka.
+            The trace context can be used to link consumer spans to producer spans.
 
         Raises:
             RuntimeError: If consumer is not started
@@ -94,16 +100,22 @@ class DocumentEventConsumer:
 
                 logger.debug(f"Received message: partition={message.partition}, offset={message.offset}")
 
+                # Extract trace context from Kafka headers for distributed tracing
+                trace_ctx = None
+                if message.headers:
+                    headers_dict = {k: v.decode("utf-8") for k, v in message.headers}
+                    trace_ctx = extract(headers_dict)
+
                 event = message.value
                 logger.info(f"Event: type={event.get('event_type')}, doc_id={event.get('document_id')}")
 
                 # Track message count
-                kafka_messages_total.labels(topic=self.topic).inc()
+                inc_kafka_messages_total(topic=self.topic)
 
                 # Record poll duration for next iteration
-                kafka_poll_duration.observe(time.perf_counter() - poll_start)
+                record_kafka_poll_duration(time.perf_counter() - poll_start)
 
-                yield event
+                yield event, trace_ctx
 
         except asyncio.CancelledError:
             logger.info("Consumer task cancelled")

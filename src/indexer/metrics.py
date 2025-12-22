@@ -1,131 +1,321 @@
-"""Prometheus metrics for Indexer Service.
+"""OpenTelemetry metrics for Indexer Service.
 
 Defines metrics following the four golden signals for the Indexer:
 - Latency: Processing duration histograms for each pipeline stage
 - Traffic: Document and chunk counters
 - Errors: Error counters with stage labels
-- Saturation: Active document processing gauges
+- Saturation: Active document processing gauges (using UpDownCounter)
 
 All duration metrics are in seconds (Prometheus convention).
-
-Note: This module consolidates and extends the existing metrics that were
-previously defined in main.py.
+Metrics are exported via OTLP to Grafana Alloy.
 """
 
-from prometheus_client import Counter, Gauge, Histogram
+from opentelemetry.metrics import Counter, Histogram, UpDownCounter
 
-from src.common.metrics import BucketConfig, OperationType
+from src.common.otel_metrics import get_meter
+
+# Module-level metric instances (lazily initialized)
+_processing_duration: Histogram | None = None
+_kafka_poll_duration: Histogram | None = None
+_minio_load_duration: Histogram | None = None
+_text_cleaning_duration: Histogram | None = None
+_text_splitting_duration: Histogram | None = None
+_embedding_duration: Histogram | None = None
+_weaviate_insert_duration: Histogram | None = None
+_duplicate_check_duration: Histogram | None = None
+_documents_processed_total: Counter | None = None
+_chunks_created_total: Counter | None = None
+_kafka_messages_total: Counter | None = None
+_errors_total: Counter | None = None
+_active_documents: UpDownCounter | None = None
+_kafka_lag: UpDownCounter | None = None
+_initialized = False
+
+
+def _ensure_metrics() -> None:
+    """Initialize metrics if not already done."""
+    global _processing_duration, _kafka_poll_duration, _minio_load_duration
+    global _text_cleaning_duration, _text_splitting_duration, _embedding_duration
+    global _weaviate_insert_duration, _duplicate_check_duration
+    global _documents_processed_total, _chunks_created_total, _kafka_messages_total
+    global _errors_total, _active_documents, _kafka_lag, _initialized
+
+    if _initialized:
+        return
+
+    meter = get_meter()
+
+    # Latency Metrics (Histograms)
+    _processing_duration = meter.create_histogram(
+        name="indexer_processing_duration_seconds",
+        description="Total duration of document processing",
+        unit="s",
+    )
+
+    _kafka_poll_duration = meter.create_histogram(
+        name="indexer_kafka_poll_duration_seconds",
+        description="Duration of Kafka message polling",
+        unit="s",
+    )
+
+    _minio_load_duration = meter.create_histogram(
+        name="indexer_minio_load_duration_seconds",
+        description="Duration of loading document from MinIO",
+        unit="s",
+    )
+
+    _text_cleaning_duration = meter.create_histogram(
+        name="indexer_text_cleaning_duration_seconds",
+        description="Duration of text cleaning",
+        unit="s",
+    )
+
+    _text_splitting_duration = meter.create_histogram(
+        name="indexer_text_splitting_duration_seconds",
+        description="Duration of text splitting into chunks",
+        unit="s",
+    )
+
+    _embedding_duration = meter.create_histogram(
+        name="indexer_embedding_duration_seconds",
+        description="Duration of embedding generation for chunks",
+        unit="s",
+    )
+
+    _weaviate_insert_duration = meter.create_histogram(
+        name="indexer_weaviate_insert_duration_seconds",
+        description="Duration of batch insert into Weaviate",
+        unit="s",
+    )
+
+    _duplicate_check_duration = meter.create_histogram(
+        name="indexer_duplicate_check_duration_seconds",
+        description="Duration of duplicate document check",
+        unit="s",
+    )
+
+    # Traffic Metrics (Counters)
+    _documents_processed_total = meter.create_counter(
+        name="indexer_documents_processed_total",
+        description="Total number of documents processed",
+        unit="1",
+    )
+
+    _chunks_created_total = meter.create_counter(
+        name="indexer_chunks_created_total",
+        description="Total number of chunks created",
+        unit="1",
+    )
+
+    _kafka_messages_total = meter.create_counter(
+        name="indexer_kafka_messages_total",
+        description="Total number of Kafka messages consumed",
+        unit="1",
+    )
+
+    # Error Metrics (Counters)
+    _errors_total = meter.create_counter(
+        name="indexer_errors_total",
+        description="Total number of indexer errors",
+        unit="1",
+    )
+
+    # Saturation Metrics (UpDownCounter for gauge-like behavior)
+    _active_documents = meter.create_up_down_counter(
+        name="indexer_active_documents",
+        description="Number of documents currently being processed",
+        unit="1",
+    )
+
+    _kafka_lag = meter.create_up_down_counter(
+        name="indexer_kafka_lag",
+        description="Kafka consumer lag by partition",
+        unit="1",
+    )
+
+    _initialized = True
+
 
 # =============================================================================
-# Latency Metrics (Histograms)
+# Public API - Histogram recording functions
 # =============================================================================
 
-# Full document processing duration (end-to-end pipeline)
-processing_duration = Histogram(
-    "indexer_processing_duration_seconds",
-    "Total duration of document processing",
-    ["namespace"],
-    buckets=BucketConfig.get(OperationType.BATCH),
-)
 
-# Kafka message polling duration
-kafka_poll_duration = Histogram(
-    "indexer_kafka_poll_duration_seconds",
-    "Duration of Kafka message polling",
-    buckets=BucketConfig.get(OperationType.BATCH),
-)
+def record_processing_duration(duration_seconds: float, namespace: str) -> None:
+    """Record document processing duration."""
+    _ensure_metrics()
+    assert _processing_duration is not None  # nosec B101
+    _processing_duration.record(duration_seconds, {"namespace": namespace})
 
-# MinIO document loading duration
-minio_load_duration = Histogram(
-    "indexer_minio_load_duration_seconds",
-    "Duration of loading document from MinIO",
-    buckets=BucketConfig.get(OperationType.MEDIUM),
-)
 
-# Text cleaning duration
-text_cleaning_duration = Histogram(
-    "indexer_text_cleaning_duration_seconds",
-    "Duration of text cleaning",
-    buckets=BucketConfig.get(OperationType.FAST),
-)
+def record_kafka_poll_duration(duration_seconds: float) -> None:
+    """Record Kafka poll duration."""
+    _ensure_metrics()
+    assert _kafka_poll_duration is not None  # nosec B101
+    _kafka_poll_duration.record(duration_seconds)
 
-# Text splitting duration
-text_splitting_duration = Histogram(
-    "indexer_text_splitting_duration_seconds",
-    "Duration of text splitting into chunks",
-    buckets=BucketConfig.get(OperationType.FAST),
-)
 
-# Embedding generation duration (calling Embedding Service)
-embedding_duration = Histogram(
-    "indexer_embedding_duration_seconds",
-    "Duration of embedding generation for chunks",
-    buckets=BucketConfig.get(OperationType.MEDIUM),
-)
+def record_minio_load_duration(duration_seconds: float) -> None:
+    """Record MinIO load duration."""
+    _ensure_metrics()
+    assert _minio_load_duration is not None  # nosec B101
+    _minio_load_duration.record(duration_seconds)
 
-# Weaviate batch insert duration
-weaviate_insert_duration = Histogram(
-    "indexer_weaviate_insert_duration_seconds",
-    "Duration of batch insert into Weaviate",
-    buckets=BucketConfig.get(OperationType.MEDIUM),
-)
 
-# Duplicate check duration
-duplicate_check_duration = Histogram(
-    "indexer_duplicate_check_duration_seconds",
-    "Duration of duplicate document check",
-    buckets=BucketConfig.get(OperationType.FAST),
-)
+def record_text_cleaning_duration(duration_seconds: float) -> None:
+    """Record text cleaning duration."""
+    _ensure_metrics()
+    assert _text_cleaning_duration is not None  # nosec B101
+    _text_cleaning_duration.record(duration_seconds)
 
-# =============================================================================
-# Traffic Metrics (Counters)
-# =============================================================================
 
-# Total documents processed with status
-documents_processed_total = Counter(
-    "indexer_documents_processed_total",
-    "Total number of documents processed",
-    ["status", "namespace"],
-)
+def record_text_splitting_duration(duration_seconds: float) -> None:
+    """Record text splitting duration."""
+    _ensure_metrics()
+    assert _text_splitting_duration is not None  # nosec B101
+    _text_splitting_duration.record(duration_seconds)
 
-# Total chunks created
-chunks_created_total = Counter(
-    "indexer_chunks_created_total",
-    "Total number of chunks created",
-    ["namespace"],
-)
 
-# Kafka messages consumed
-kafka_messages_total = Counter(
-    "indexer_kafka_messages_total",
-    "Total number of Kafka messages consumed",
-    ["topic"],
-)
+def record_embedding_duration(duration_seconds: float) -> None:
+    """Record embedding generation duration."""
+    _ensure_metrics()
+    assert _embedding_duration is not None  # nosec B101
+    _embedding_duration.record(duration_seconds)
+
+
+def record_weaviate_insert_duration(duration_seconds: float) -> None:
+    """Record Weaviate insert duration."""
+    _ensure_metrics()
+    assert _weaviate_insert_duration is not None  # nosec B101
+    _weaviate_insert_duration.record(duration_seconds)
+
+
+def record_duplicate_check_duration(duration_seconds: float) -> None:
+    """Record duplicate check duration."""
+    _ensure_metrics()
+    assert _duplicate_check_duration is not None  # nosec B101
+    _duplicate_check_duration.record(duration_seconds)
+
 
 # =============================================================================
-# Error Metrics (Counters)
+# Public API - Counter increment functions
 # =============================================================================
 
-# Errors with stage classification
-errors_total = Counter(
-    "indexer_errors_total",
-    "Total number of indexer errors",
-    ["stage", "error_type"],
-)
+
+def inc_documents_processed_total(status: str, namespace: str) -> None:
+    """Increment documents processed counter."""
+    _ensure_metrics()
+    assert _documents_processed_total is not None  # nosec B101
+    _documents_processed_total.add(1, {"status": status, "namespace": namespace})
+
+
+def inc_chunks_created_total(namespace: str, count: int) -> None:
+    """Increment chunks created counter."""
+    _ensure_metrics()
+    assert _chunks_created_total is not None  # nosec B101
+    _chunks_created_total.add(count, {"namespace": namespace})
+
+
+def inc_kafka_messages_total(topic: str) -> None:
+    """Increment Kafka messages counter."""
+    _ensure_metrics()
+    assert _kafka_messages_total is not None  # nosec B101
+    _kafka_messages_total.add(1, {"topic": topic})
+
+
+def inc_errors_total(stage: str, error_type: str) -> None:
+    """Increment error counter."""
+    _ensure_metrics()
+    assert _errors_total is not None  # nosec B101
+    _errors_total.add(1, {"stage": stage, "error_type": error_type})
+
 
 # =============================================================================
-# Saturation Metrics (Gauges)
+# Public API - Gauge-like functions (UpDownCounter)
 # =============================================================================
 
-# Currently active document processing
-active_documents = Gauge(
-    "indexer_active_documents",
-    "Number of documents currently being processed",
-)
 
-# Kafka consumer lag (if available)
-kafka_lag = Gauge(
-    "indexer_kafka_lag",
-    "Kafka consumer lag by partition",
-    ["partition"],
-)
+def inc_active_documents() -> None:
+    """Increment active documents gauge."""
+    _ensure_metrics()
+    assert _active_documents is not None  # nosec B101
+    _active_documents.add(1)
+
+
+def dec_active_documents() -> None:
+    """Decrement active documents gauge."""
+    _ensure_metrics()
+    assert _active_documents is not None  # nosec B101
+    _active_documents.add(-1)
+
+
+def set_kafka_lag(partition: str, lag: int) -> None:
+    """Set Kafka consumer lag for a partition.
+
+    Note: This uses add() since UpDownCounter doesn't have set().
+    For accurate lag tracking, you should track the delta.
+    """
+    _ensure_metrics()
+    assert _kafka_lag is not None  # nosec B101
+    _kafka_lag.add(lag, {"partition": partition})
+
+
+# =============================================================================
+# Raw histogram accessors for track_latency context manager
+# =============================================================================
+
+
+def get_processing_duration() -> Histogram:
+    """Get the processing duration histogram for use with track_latency."""
+    _ensure_metrics()
+    assert _processing_duration is not None  # nosec B101
+    return _processing_duration
+
+
+def get_kafka_poll_duration() -> Histogram:
+    """Get the Kafka poll duration histogram for use with track_latency."""
+    _ensure_metrics()
+    assert _kafka_poll_duration is not None  # nosec B101
+    return _kafka_poll_duration
+
+
+def get_minio_load_duration() -> Histogram:
+    """Get the MinIO load duration histogram for use with track_latency."""
+    _ensure_metrics()
+    assert _minio_load_duration is not None  # nosec B101
+    return _minio_load_duration
+
+
+def get_text_cleaning_duration() -> Histogram:
+    """Get the text cleaning duration histogram for use with track_latency."""
+    _ensure_metrics()
+    assert _text_cleaning_duration is not None  # nosec B101
+    return _text_cleaning_duration
+
+
+def get_text_splitting_duration() -> Histogram:
+    """Get the text splitting duration histogram for use with track_latency."""
+    _ensure_metrics()
+    assert _text_splitting_duration is not None  # nosec B101
+    return _text_splitting_duration
+
+
+def get_embedding_duration() -> Histogram:
+    """Get the embedding duration histogram for use with track_latency."""
+    _ensure_metrics()
+    assert _embedding_duration is not None  # nosec B101
+    return _embedding_duration
+
+
+def get_weaviate_insert_duration() -> Histogram:
+    """Get the Weaviate insert duration histogram for use with track_latency."""
+    _ensure_metrics()
+    assert _weaviate_insert_duration is not None  # nosec B101
+    return _weaviate_insert_duration
+
+
+def get_duplicate_check_duration() -> Histogram:
+    """Get the duplicate check duration histogram for use with track_latency."""
+    _ensure_metrics()
+    assert _duplicate_check_duration is not None  # nosec B101
+    return _duplicate_check_duration

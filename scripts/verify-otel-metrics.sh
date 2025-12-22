@@ -17,6 +17,29 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="${SCRIPT_DIR}/.."
+
+# Load environment variables from .env if it exists
+if [ -f "${PROJECT_ROOT}/.env" ]; then
+    set -a
+    # shellcheck disable=SC1091
+    source "${PROJECT_ROOT}/.env"
+    set +a
+fi
+
+# Check if observability is disabled
+if [[ "${OBSERVABILITY_ENABLED:-true}" == "false" ]]; then
+    echo "=============================================="
+    echo "  OTel Metrics Verification SKIPPED"
+    echo "=============================================="
+    echo ""
+    echo "Observability is disabled (OBSERVABILITY_ENABLED=false)."
+    echo "Set OBSERVABILITY_ENABLED=true in .env to enable metrics."
+    echo ""
+    exit 0
+fi
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -252,10 +275,10 @@ else
     echo "  Actual:   ${SERVICES_WITH_METRICS} services"
     echo ""
     echo "  Troubleshooting:"
-    echo "    1. Check Alloy logs:  kubectl logs -l app=xrag-alloy -n rag-system"
+    echo "    1. Check Alloy logs:  kubectl logs -l app=alloy -n monitoring"
     echo "    2. Check service logs: kubectl logs -l app=search-ui -n rag-system | grep -i otel"
     echo "    3. Check Prometheus targets: ${PROMETHEUS_URL}/targets"
-    echo "    4. Verify Alloy config: kubectl get configmap alloy-config -n rag-system -o yaml"
+    echo "    4. Verify Alloy config: kubectl get configmap alloy-config -n monitoring -o yaml"
     echo -e "${BLUE}==============================================================================${NC}"
     exit 1
 fi

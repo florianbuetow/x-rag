@@ -9,8 +9,33 @@ REGISTRY="localhost:5000"
 cd "${PROJECT_ROOT}"
 
 echo "=============================================="
-echo "  Deploying Application Services"
+echo "  Deploying Application Services to: {$NAMESPACE}"
 echo "=============================================="
+
+# Load environment variables from .env if it exists
+if [ -f ".env" ]; then
+    set -a
+    # shellcheck disable=SC1091
+    source .env
+    set +a
+fi
+
+# Set defaults for required variables
+: "${OPENAI_API_BASE:=https://api.openai.com/v1}"
+: "${OPENAI_MODEL:=gpt-4o-mini}"
+: "${OPENAI_EMBEDDING_MODEL:=text-embedding-3-small}"
+: "${OPENAI_API_KEY:=sk-your-key-here}"
+
+# Derive OTEL_METRICS_ENABLED from OBSERVABILITY_ENABLED
+if [[ "${OBSERVABILITY_ENABLED:-true}" == "false" ]]; then
+    OTEL_METRICS_ENABLED="false"
+else
+    OTEL_METRICS_ENABLED="true"
+fi
+
+export OPENAI_API_BASE OPENAI_MODEL OPENAI_EMBEDDING_MODEL OPENAI_API_KEY OTEL_METRICS_ENABLED
+
+echo "Deploying application services to namespace: ${NAMESPACE}..."
 echo ""
 
 # Get list of services from central script
@@ -48,8 +73,10 @@ for service in "${SERVICES[@]}"; do
 
     echo "=== Deploying ${service} ==="
 
-    # Apply manifests
-    kubectl apply -f "${manifest_dir}/" -n "${NAMESPACE}"
+    # Apply manifests with environment variable substitution
+    for manifest in "${manifest_dir}"/*.yaml; do
+        envsubst '${OPENAI_API_BASE} ${OPENAI_MODEL} ${OPENAI_EMBEDDING_MODEL} ${OPENAI_API_KEY} ${OTEL_METRICS_ENABLED}' < "${manifest}" | kubectl apply -n "${NAMESPACE}" -f -
+    done
 
     echo "  ✓ ${service} manifests applied"
     echo ""

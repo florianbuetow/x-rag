@@ -14,7 +14,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 DASHBOARDS_DIR="$PROJECT_ROOT/infra/k8s/monitoring/grafana-dashboards"
-NAMESPACE="rag-system"
+NAMESPACE="monitoring"
 CONFIGMAP_NAME="grafana-dashboards"
 
 echo "=== Generating Grafana Dashboards ConfigMap ==="
@@ -49,11 +49,11 @@ kubectl create configmap "$CONFIGMAP_NAME" \
 echo "ConfigMap created successfully."
 
 # Check if Grafana is deployed
-if kubectl get deployment xrag-grafana -n "$NAMESPACE" &>/dev/null; then
+if kubectl get deployment grafana -n "$NAMESPACE" &>/dev/null; then
     echo ""
     echo "Restarting Grafana to pick up new dashboards..."
-    kubectl rollout restart deployment/xrag-grafana -n "$NAMESPACE"
-    kubectl rollout status deployment/xrag-grafana -n "$NAMESPACE" --timeout=60s
+    kubectl rollout restart deployment/grafana -n "$NAMESPACE"
+    kubectl rollout status deployment/grafana -n "$NAMESPACE" --timeout=60s
     echo "Grafana restarted successfully."
 else
     echo ""

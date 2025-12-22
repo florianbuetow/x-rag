@@ -11,7 +11,7 @@ data:
   PORT: "50051"
   # Generator type: "hash_based" or "openai"
   EMBEDDING_GENERATOR: "openai"
-  DEFAULT_MODEL: "text-embedding-bge-large-en-v1.5"
+  DEFAULT_MODEL: "${OPENAI_EMBEDDING_MODEL}"
   MAX_BATCH_SIZE: "100"
   ENABLE_REFLECTION: "true"
   MAX_WORKERS: "10"
@@ -20,11 +20,12 @@ data:
   HASH_BASED_DIMENSION: "1024"
 
   # OpenAI settings (or OpenAI-compatible API like LM Studio)
-  OPENAI_API_BASE: "http://host.docker.internal:1234/v1"
-  OPENAI_EMBEDDING_MODEL: "text-embedding-bge-large-en-v1.5"
+  OPENAI_API_BASE: "${OPENAI_API_BASE}"
+  OPENAI_EMBEDDING_MODEL: "${OPENAI_EMBEDDING_MODEL}"
   OPENAI_MAX_RETRIES: "3"
   OPENAI_TIMEOUT: "30"
 
   # Distributed tracing (OpenTelemetry)
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://xrag-alloy:4317"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy.monitoring.svc.cluster.local:4317"
+  OTEL_METRICS_ENABLED: "${OTEL_METRICS_ENABLED}"
   ENVIRONMENT: "development"

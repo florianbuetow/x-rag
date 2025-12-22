@@ -100,7 +100,7 @@ class IndexerConfig(ServiceConfig):
     # OpenTelemetry tracing configuration
     otlp_endpoint: str | None = Field(
         default=None,
-        description="OTLP endpoint for tracing (defaults to env var or http://xrag-tempo:4317)",
+        description="OTLP endpoint for tracing (defaults to env var or http://tempo.monitoring.svc.cluster.local:4317)",
     )
     environment: str = Field(
         default="development",

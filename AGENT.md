@@ -66,8 +66,22 @@ make logs-*          # Tail service logs
 - **6379** = Redis
 - **9092** = Kafka
 
+### Kubernetes Namespaces
+- **rag-system** = Application workloads (search-ui, embedding-service, indexer, etc.)
+- **monitoring** = Observability stack (Prometheus, Grafana, Tempo, Loki, Alloy)
+- **kubernetes-dashboard** = Kubernetes Dashboard
+
 ### Environment Setup
 Copy `.env.example` to `.env` and add `OPENAI_API_KEY`
+
+### Disabling Observability Stack
+Set `OBSERVABILITY_ENABLED=false` in `.env` to disable the entire monitoring stack:
+- Skips deployment of Prometheus, Grafana, Tempo, Loki, Alloy
+- Skips kube-state-metrics, node-exporter, Kubernetes Dashboard
+- Disables OTel metrics export in all services
+- Services still expose local `/metrics` endpoints (just not scraped)
+
+This saves significant resources when monitoring isn't needed for development.
 
 ## Development Principles
 

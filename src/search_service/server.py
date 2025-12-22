@@ -11,10 +11,11 @@ from src.pipelines.search_pipeline import SearchPipeline
 from src.proto_gen import common_pb2, search_pb2, search_pb2_grpc
 from src.search_service.config import SearchServiceConfig
 from src.search_service.metrics import (
-    active_requests,
-    errors_total,
-    request_duration,
-    requests_total,
+    dec_active_requests,
+    get_request_duration,
+    inc_active_requests,
+    inc_errors_total,
+    inc_requests_total,
 )
 
 logger = logging.getLogger(__name__)
@@ -195,9 +196,9 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
         Returns:
             SearchResponse with answer and sources
         """
-        active_requests.labels(method="Search").inc()
+        inc_active_requests("Search")
         try:
-            with track_latency(request_duration, {"method": "Search"}):
+            with track_latency(get_request_duration(), {"method": "Search"}):
                 # Validate and extract parameters
                 query, namespace, top_k, mode, alpha = await self._validate_search_params(request, context)
 
@@ -221,22 +222,22 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
                 cache_hit = result["metadata"]["cache_hit"] if "cache_hit" in result["metadata"] else False
                 logger.info(f"Search completed: {len(response.sources)} sources, cache_hit={cache_hit}")
 
-            requests_total.labels(method="Search", status="success").inc()
+            inc_requests_total("Search", "success")
             return response
 
         except grpc.RpcError:
             # Re-raise gRPC errors (already aborted)
-            requests_total.labels(method="Search", status="error").inc()
+            inc_requests_total("Search", "error")
             raise
 
         except Exception as e:
             logger.error(f"Unexpected error in Search: {e}", exc_info=True)
-            requests_total.labels(method="Search", status="error").inc()
-            errors_total.labels(method="Search", error_type=type(e).__name__).inc()
+            inc_requests_total("Search", "error")
+            inc_errors_total("Search", type(e).__name__)
             await context.abort(grpc.StatusCode.INTERNAL, f"Internal error: {e}")
 
         finally:
-            active_requests.labels(method="Search").dec()
+            dec_active_requests("Search")
 
     async def HealthCheck(
         self,

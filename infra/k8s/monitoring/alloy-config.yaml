@@ -2,194 +2,703 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: alloy-config
-  namespace: rag-system
+  namespace: monitoring
 data:
   config.alloy: |
     // =============================================================================
-    // Grafana Alloy Configuration for X-RAG
+    // GRAFANA ALLOY CONFIGURATION FOR X-RAG
     // =============================================================================
-    // Receives OTLP metrics and traces from services
-    // - Metrics -> Prometheus (via remote_write)
-    // - Traces -> Tempo (via OTLP)
+    //
+    // WHAT IS GRAFANA ALLOY?
+    // Grafana Alloy is a vendor-neutral OpenTelemetry (OTel) Collector distribution.
+    // It acts as a central telemetry pipeline that:
+    //   1. RECEIVES telemetry data (metrics, traces, logs) from applications
+    //   2. PROCESSES the data (batching, filtering, transforming)
+    //   3. EXPORTS the data to storage backends (Prometheus, Tempo, Loki)
+    //
+    // WHY USE ALLOY INSTEAD OF DIRECT INSTRUMENTATION?
+    // - Decouples applications from observability backends
+    // - Provides a single entry point for all telemetry data
+    // - Allows processing (filtering, enrichment) before storage
+    // - Reduces load on backends through batching
+    // - Enables switching backends without changing application code
+    //
+    // CONFIGURATION LANGUAGE:
+    // Alloy uses its own DSL called "River" (formerly Alloy Configuration Language).
+    // Components are defined as blocks: component.type "label" { ... }
+    // Data flows between components via "receivers" and outputs.
+    //
+    // DATA FLOW IN THIS CONFIG:
+    //
+    //   ┌─────────────────────────────────────────────────────────────────────┐
+    //   │                        APPLICATION METRICS                          │
+    //   │                                                                     │
+    //   │  Services (search-ui, indexer, etc.)                               │
+    //   │         │ OTLP (port 4317/4318)                                    │
+    //   │         ▼                                                          │
+    //   │  ┌─────────────────┐                                               │
+    //   │  │ otelcol.receiver│ ─── Receives OTLP metrics and traces          │
+    //   │  │     .otlp       │                                               │
+    //   │  └────────┬────────┘                                               │
+    //   │           │                                                        │
+    //   │     ┌─────┴─────┐                                                  │
+    //   │     │           │                                                  │
+    //   │     ▼           ▼                                                  │
+    //   │ ┌───────────┐ ┌───────────┐                                        │
+    //   │ │ batch     │ │ batch     │ ─── Batches data to reduce load        │
+    //   │ │ (metrics) │ │ (traces)  │                                        │
+    //   │ └─────┬─────┘ └─────┬─────┘                                        │
+    //   │       │             │                                              │
+    //   │       ▼             ▼                                              │
+    //   │ ┌───────────┐ ┌───────────┐                                        │
+    //   │ │prometheus │ │otlp       │ ─── Exports to storage backends        │
+    //   │ │ exporter  │ │ exporter  │                                        │
+    //   │ └─────┬─────┘ └─────┬─────┘                                        │
+    //   │       │             │                                              │
+    //   │       ▼             ▼                                              │
+    //   │  Prometheus       Tempo                                            │
+    //   └─────────────────────────────────────────────────────────────────────┘
+    //
+    //   ┌─────────────────────────────────────────────────────────────────────┐
+    //   │                        KUBERNETES METRICS                           │
+    //   │                                                                     │
+    //   │  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────┐      │
+    //   │  │ kubelet     │    │ cadvisor    │    │ kube-state-metrics  │      │
+    //   │  │ /resource   │    │ /cadvisor   │    │ (K8s API state)     │      │
+    //   │  └──────┬──────┘    └──────┬──────┘    └──────────┬──────────┘      │
+    //   │         │                  │                      │                 │
+    //   │         ▼                  ▼                      ▼                 │
+    //   │  ┌────────────────────────────────────────────────────────────┐     │
+    //   │  │                   prometheus.scrape                        │     │
+    //   │  │  (pulls metrics from each source on scheduled intervals)   │     │
+    //   │  └────────────────────────────────────────────────────────────┘     │
+    //   │                              │                                      │
+    //   │                              ▼                                      │
+    //   │  ┌────────────────────────────────────────────────────────────┐     │
+    //   │  │                  prometheus.relabel                        │     │
+    //   │  │  (filters metrics to reduce cardinality & storage costs)   │     │
+    //   │  └────────────────────────────────────────────────────────────┘     │
+    //   │                              │                                      │
+    //   │                              ▼                                      │
+    //   │                         Prometheus                                  │
+    //   └─────────────────────────────────────────────────────────────────────┘
+    //
+    // =============================================================================
     
-    // -----------------------------------------------------------------------------
-    // OTLP Receiver - receives metrics and traces from services
-    // -----------------------------------------------------------------------------
+    // =============================================================================
+    // SECTION 1: OTLP RECEIVER
+    // =============================================================================
+    //
+    // The OTLP (OpenTelemetry Protocol) receiver listens for telemetry data
+    // sent by applications instrumented with OpenTelemetry SDKs.
+    //
+    // OTLP is the native protocol of OpenTelemetry and supports:
+    // - Metrics (counters, gauges, histograms)
+    // - Traces (distributed request tracing)
+    // - Logs (structured log messages)
+    //
+    // Applications connect to Alloy using the OTEL_EXPORTER_OTLP_ENDPOINT
+    // environment variable, typically set to "http://alloy:4317" for gRPC
+    // or "http://alloy:4318" for HTTP.
+    //
+    // =============================================================================
+    
     otelcol.receiver.otlp "default" {
+      // gRPC endpoint configuration
+      // Port 4317 is the OTLP standard for gRPC transport
+      // gRPC is preferred for production due to better performance and streaming
       grpc {
+        // "0.0.0.0" binds to all network interfaces
+        // This allows connections from any pod in the Kubernetes cluster
         endpoint = "0.0.0.0:4317"
       }
+      
+      // HTTP endpoint configuration
+      // Port 4318 is the OTLP standard for HTTP transport
+      // HTTP is useful for environments where gRPC is blocked or unsupported
       http {
+        // Same binding as gRPC - accepts connections from any pod
         endpoint = "0.0.0.0:4318"
       }
+      
+      // Output configuration - where to send received data
+      // The receiver routes metrics and traces to their respective batch processors
+      // Note: Logs are not configured in this setup (would need otelcol.processor.batch.logs)
       output {
+        // Metrics are sent to the metrics batch processor
+        // The syntax [component.input] creates a pipeline connection
         metrics = [otelcol.processor.batch.metrics.input]
+        
+        // Traces are sent to the traces batch processor
         traces  = [otelcol.processor.batch.traces.input]
       }
     }
     
+    // =============================================================================
+    // SECTION 2: BATCH PROCESSORS
+    // =============================================================================
+    //
+    // Batch processors accumulate telemetry data before sending to exporters.
+    // This is CRITICAL for production because:
+    //
+    // 1. REDUCED NETWORK OVERHEAD: Instead of sending 1000 individual requests,
+    //    we send 1 request with 1000 data points bundled together.
+    //
+    // 2. BACKEND PROTECTION: Prevents overwhelming storage backends with
+    //    too many small writes.
+    //
+    // 3. EFFICIENCY: Compression works better on larger payloads.
+    //
+    // The batch processor flushes data when EITHER condition is met:
+    // - timeout expires (e.g., every 5 seconds)
+    // - send_batch_size is reached (e.g., 1000 metrics)
+    //
     // -----------------------------------------------------------------------------
-    // Batch Processor for Metrics
+    // SAMPLING OPTIONS FOR OTLP METRICS (to reduce volume/load):
     // -----------------------------------------------------------------------------
+    //
+    // OPTION 1: Increase batch size and timeout (reduces write frequency)
+    //   timeout = "15s"           // Wait longer before flushing (default: 5s)
+    //   send_batch_size = 5000    // Accumulate more data points (default: 1000)
+    //
+    // OPTION 2: Add a filter processor to drop specific metrics
+    //   // Insert between receiver and batch processor:
+    //   // otelcol.processor.filter "metrics_filter" {
+    //   //   error_mode = "ignore"
+    //   //   metrics {
+    //   //     // Drop verbose histogram metrics
+    //   //     metric = ["name == \"http_request_duration_seconds\""]
+    //   //     // Or drop by attribute
+    //   //     datapoint = ["attributes[\"http.route\"] == \"/health\""]
+    //   //   }
+    //   //   output {
+    //   //     metrics = [otelcol.processor.batch.metrics.input]
+    //   //   }
+    //   // }
+    //
+    // OPTION 3: Add probabilistic sampling (keep X% of data points)
+    //   // otelcol.processor.probabilistic_sampler "metrics_sampler" {
+    //   //   sampling_percentage = 50.0  // Keep 50% of metrics
+    //   //   output {
+    //   //     metrics = [otelcol.processor.batch.metrics.input]
+    //   //   }
+    //   // }
+    //
+    // =============================================================================
+    
+    // Batch processor for metrics
+    // Separate from traces because metrics typically have different characteristics:
+    // - Higher volume (many metrics per scrape)
+    // - More tolerant of delays (historical data is still useful)
     otelcol.processor.batch "metrics" {
+      // Maximum time to wait before sending a batch
+      // Even if we haven't reached send_batch_size, we'll flush after 5 seconds
+      // This ensures metrics are delivered in near-real-time
       timeout = "5s"
+      
+      // Maximum number of metrics to accumulate before flushing
+      // 1000 is a good balance between efficiency and memory usage
+      // Larger values = more efficient but higher memory usage and latency
       send_batch_size = 1000
+      
+      // Pipeline output - processed metrics go to Prometheus exporter
       output {
         metrics = [otelcol.exporter.prometheus.default.input]
       }
     }
     
+    // Batch processor for traces
+    // Traces have different characteristics:
+    // - Lower volume than metrics (one trace per request vs many metrics)
+    // - More latency-sensitive (users want to see traces quickly)
+    //
     // -----------------------------------------------------------------------------
-    // Batch Processor for Traces
+    // SAMPLING OPTIONS FOR OTLP TRACES (to reduce volume/load):
+    // -----------------------------------------------------------------------------
+    //
+    // OPTION 1: Probabilistic sampling (random sampling)
+    //   // Insert between receiver and batch processor:
+    //   // otelcol.processor.probabilistic_sampler "traces_sampler" {
+    //   //   sampling_percentage = 20.0  // Keep 20% of traces randomly
+    //   //   output {
+    //   //     traces = [otelcol.processor.batch.traces.input]
+    //   //   }
+    //   // }
+    //
+    // OPTION 2: Tail-based sampling (sample based on trace attributes)
+    //   // More intelligent sampling - keeps errors, samples healthy traces
+    //   // otelcol.processor.tail_sampling "traces_tail_sampler" {
+    //   //   decision_wait = "10s"  // Wait for complete trace before deciding
+    //   //   policies = [
+    //   //     // Always keep traces with errors
+    //   //     {
+    //   //       name = "keep-errors"
+    //   //       type = "status_code"
+    //   //       status_code { status_codes = ["ERROR"] }
+    //   //     },
+    //   //     // Always keep slow traces (latency > 1s)
+    //   //     {
+    //   //       name = "keep-slow"
+    //   //       type = "latency"
+    //   //       latency { threshold_ms = 1000 }
+    //   //     },
+    //   //     // Sample healthy traces at 10%
+    //   //     {
+    //   //       name = "sample-healthy"
+    //   //       type = "probabilistic"
+    //   //       probabilistic { sampling_percentage = 10 }
+    //   //     },
+    //   //   ]
+    //   //   output {
+    //   //     traces = [otelcol.processor.batch.traces.input]
+    //   //   }
+    //   // }
+    //
+    // OPTION 3: Head sampling in applications (most efficient)
+    //   // Configure in application's OpenTelemetry SDK:
+    //   // OTEL_TRACES_SAMPLER=parentbased_traceidratio
+    //   // OTEL_TRACES_SAMPLER_ARG=0.1  // Sample 10% of traces
+    //
     // -----------------------------------------------------------------------------
     otelcol.processor.batch "traces" {
+      // Same 5 second timeout as metrics
       timeout = "5s"
+      
+      // Smaller batch size for traces (500 vs 1000 for metrics)
+      // Traces are larger objects, so smaller batches prevent memory issues
+      // Also ensures traces are available for debugging quickly
       send_batch_size = 500
+      
+      // Pipeline output - processed traces go to Tempo exporter
       output {
         traces = [otelcol.exporter.otlp.tempo.input]
       }
     }
     
-    // -----------------------------------------------------------------------------
-    // Prometheus Exporter - converts OTLP to Prometheus format
-    // -----------------------------------------------------------------------------
+    // =============================================================================
+    // SECTION 3: PROMETHEUS EXPORTER
+    // =============================================================================
+    //
+    // This exporter converts OTLP metrics to Prometheus format and exposes them
+    // for Prometheus to scrape OR forwards them via remote_write.
+    //
+    // OTLP vs Prometheus format differences:
+    // - OTLP: Push-based, rich semantic conventions, supports exemplars natively
+    // - Prometheus: Pull-based, simple text format, uses labels heavily
+    //
+    // The exporter handles the conversion automatically, including:
+    // - Converting OTLP metric names to Prometheus-compatible names
+    // - Translating OTLP attributes to Prometheus labels
+    // - Handling different metric types (counter, gauge, histogram, summary)
+    //
+    // =============================================================================
+    
     otelcol.exporter.prometheus "default" {
+      // forward_to specifies where converted metrics should be sent
+      // Here we use remote_write to PUSH metrics to Prometheus
+      // Alternative: expose a /metrics endpoint for Prometheus to PULL from
       forward_to = [prometheus.remote_write.prom.receiver]
     }
     
-    // -----------------------------------------------------------------------------
-    // Remote Write - sends metrics to Prometheus
-    // -----------------------------------------------------------------------------
+    // =============================================================================
+    // SECTION 4: PROMETHEUS REMOTE WRITE
+    // =============================================================================
+    //
+    // Remote write is a Prometheus protocol for pushing metrics to a remote endpoint.
+    // Instead of Prometheus pulling from exporters, we push directly to Prometheus.
+    //
+    // WHY REMOTE WRITE?
+    // - Simpler architecture: no need to configure Prometheus to scrape Alloy
+    // - Better for ephemeral workloads: metrics are pushed before pod dies
+    // - Works through firewalls: outbound connections only
+    //
+    // The URL format is: http://<prometheus-host>:<port>/api/v1/write
+    // Prometheus must have remote write receiver enabled (--web.enable-remote-write-receiver)
+    //
+    // =============================================================================
+    
     prometheus.remote_write "prom" {
+      // Endpoint configuration block
       endpoint {
-        url = "http://xrag-prometheus:9090/api/v1/write"
+        // Full URL to Prometheus remote write endpoint
+        // Format: http://<service>.<namespace>.svc.cluster.local:<port>/api/v1/write
+        //
+        // Breakdown:
+        // - prometheus: Kubernetes service name
+        // - monitoring: Kubernetes namespace
+        // - svc.cluster.local: Kubernetes DNS suffix for services
+        // - 9090: Prometheus default port
+        // - /api/v1/write: Remote write API endpoint
+        url = "http://prometheus.monitoring.svc.cluster.local:9090/api/v1/write"
       }
     }
     
-    // -----------------------------------------------------------------------------
-    // OTLP Exporter - sends traces to Tempo
-    // -----------------------------------------------------------------------------
+    // =============================================================================
+    // SECTION 5: TEMPO EXPORTER (TRACES)
+    // =============================================================================
+    //
+    // Tempo is Grafana's distributed tracing backend, similar to Jaeger or Zipkin.
+    // It stores traces and integrates with Grafana for visualization.
+    //
+    // Traces show the path of a request through a distributed system:
+    // - Each service adds a "span" to the trace
+    // - Spans show timing, errors, and metadata for each operation
+    // - Traces help debug latency issues and understand request flow
+    //
+    // We use OTLP to send traces to Tempo (Tempo natively supports OTLP).
+    //
+    // =============================================================================
+    
     otelcol.exporter.otlp "tempo" {
+      // Client configuration for connecting to Tempo
       client {
-        endpoint = "xrag-tempo:4317"
+        // Tempo's OTLP gRPC endpoint
+        // Port 4317 is the standard OTLP gRPC port
+        // Tempo runs in the monitoring namespace alongside Alloy
+        endpoint = "tempo.monitoring.svc.cluster.local:4317"
+        
+        // TLS configuration
         tls {
+          // Disable TLS verification for in-cluster communication
+          // This is safe because:
+          // 1. Traffic stays within the Kubernetes cluster network
+          // 2. Network policies can restrict who can talk to Tempo
+          // 3. Setting up proper TLS certs adds complexity for dev environments
+          //
+          // PRODUCTION NOTE: Enable TLS with proper certificates for production!
           insecure = true
         }
       }
     }
     
-    // -----------------------------------------------------------------------------
-    // Logging - for debugging
-    // -----------------------------------------------------------------------------
+    // =============================================================================
+    // SECTION 6: ALLOY INTERNAL LOGGING
+    // =============================================================================
+    //
+    // Configures Alloy's own logging output to stdout (NOT application log collection).
+    // Useful for debugging Alloy itself when pipelines aren't working.
+    // For application log collection and shipping to Loki, see Section 9.
+    //
+    // Log levels (in order of verbosity):
+    // - error: Only critical errors
+    // - warn: Warnings and errors
+    // - info: Normal operational messages (default)
+    // - debug: Detailed debugging information (very verbose)
+    //
+    // =============================================================================
+    
     logging {
+      // Log level for Alloy's internal logging
+      // "info" shows:
+      // - Component startup/shutdown
+      // - Configuration reloads
+      // - Connection status to backends
+      // - Periodic health information
       level = "info"
+      
+      // Log format: "logfmt" or "json"
+      // logfmt: key=value pairs, human-readable
+      //   Example: level=info msg="starting component" component=otelcol.receiver.otlp
+      // json: structured JSON, better for log aggregation
+      //   Example: {"level":"info","msg":"starting component","component":"otelcol.receiver.otlp"}
       format = "logfmt"
     }
     
     // =============================================================================
-    // KUBERNETES POD SYSTEM METRICS
+    // SECTION 7: KUBERNETES POD SYSTEM METRICS
     // =============================================================================
     //
-    // We collect pod metrics from THREE different sources because each provides
-    // unique data that the others don't:
+    // The following sections collect metrics about Kubernetes pods and nodes.
+    // This is DIFFERENT from application metrics (Section 1-5):
     //
-    // 1. KUBELET /metrics/resource (lightweight, real-time)
-    //    - Basic CPU and memory usage per container
-    //    - Minimal overhead, fast scraping (30s interval)
-    //    - Metrics: container_cpu_usage_seconds_total, container_memory_working_set_bytes
+    // - APPLICATION METRICS: Business logic, request counts, processing times
+    //   → Sent by apps via OTLP to the receiver above
     //
-    // 2. KUBELET /metrics/cadvisor (comprehensive runtime metrics)
-    //    - Network I/O (bytes, packets, errors per interface)
-    //    - Disk/Filesystem I/O (reads, writes, usage)
-    //    - Detailed memory breakdown (cache, RSS, swap)
-    //    - CPU throttling metrics
-    //    - Resource limits from container spec
-    //    - Higher overhead, slower scraping (60s interval)
+    // - SYSTEM METRICS: CPU, memory, network, disk for containers
+    //   → Scraped by Alloy from Kubernetes components (below)
     //
-    // 3. KUBE-STATE-METRICS (Kubernetes API object state)
-    //    - Resource requests and limits (what was REQUESTED vs cAdvisor's actual LIMIT)
-    //    - Pod status, phase, conditions
+    // We collect from THREE sources because each provides unique data:
+    //
+    // ┌─────────────────────────────────────────────────────────────────────────┐
+    // │ SOURCE              │ WHAT IT PROVIDES                │ INTERVAL        │
+    // ├─────────────────────────────────────────────────────────────────────────┤
+    // │ kubelet /resource   │ Basic CPU/memory per container  │ 30s (fast)      │
+    // │ kubelet /cadvisor   │ Network, disk, detailed memory  │ 60s (slow)      │
+    // │ kube-state-metrics  │ K8s object state (requests,     │ 30s             │
+    // │                     │ limits, pod status, restarts)   │                 │
+    // └─────────────────────────────────────────────────────────────────────────┘
+    //
+    // WHY THREE SOURCES?
+    //
+    // 1. /metrics/resource (Kubelet)
+    //    - Lightweight, fast, low overhead
+    //    - Only basic CPU and memory usage
+    //    - Good for real-time dashboards
+    //
+    // 2. /metrics/cadvisor (Kubelet)
+    //    - Comprehensive container metrics from cAdvisor (Container Advisor)
+    //    - Network I/O, disk I/O, filesystem usage
+    //    - Memory breakdown (RSS, cache, swap)
+    //    - CPU throttling (when containers hit CPU limits)
+    //    - Higher overhead, so we scrape less frequently
+    //
+    // 3. kube-state-metrics (Separate deployment)
+    //    - Metrics about Kubernetes objects from the K8s API
+    //    - Resource requests and limits (what was REQUESTED)
+    //    - Pod phase (Pending, Running, Failed, Succeeded)
     //    - Container restart counts
-    //    - Deployment replica counts
-    //    - NOT runtime metrics - reflects K8s API state
+    //    - Deployment replica status
+    //    - NOT runtime data - reflects desired vs actual state
     //
-    // Together these enable queries like:
-    //   - "Pods using more memory than requested" (kube-state + cadvisor)
-    //   - "Containers being CPU throttled" (cadvisor)
-    //   - "Network throughput per pod" (cadvisor)
-    //   - "Pods in CrashLoopBackOff" (kube-state-metrics)
+    // EXAMPLE QUERIES ENABLED BY COMBINING THESE SOURCES:
+    //
+    // - "Pods using more memory than requested":
+    //     container_memory_working_set_bytes > kube_pod_container_resource_requests{resource="memory"}
+    //
+    // - "CPU throttled containers" (cadvisor only):
+    //     rate(container_cpu_cfs_throttled_seconds_total[5m]) > 0
+    //
+    // - "Pods in CrashLoopBackOff" (kube-state-metrics only):
+    //     kube_pod_container_status_waiting{reason="CrashLoopBackOff"} > 0
     //
     // =============================================================================
     
     // =============================================================================
-    // Source 1: Kubelet /metrics/resource (Basic CPU/Memory)
+    // SOURCE 1: KUBELET /metrics/resource
+    // =============================================================================
+    //
+    // The kubelet is the primary Kubernetes agent running on every node.
+    // Its /metrics/resource endpoint provides lightweight container metrics.
+    //
+    // Metrics provided:
+    // - container_cpu_usage_seconds_total: Total CPU time consumed
+    // - container_memory_working_set_bytes: Current memory usage (most useful)
+    //
+    // These are the same metrics you see with `kubectl top pods`.
+    //
+    // -----------------------------------------------------------------------------
+    // SAMPLING OPTIONS FOR PROMETHEUS SCRAPES (to reduce volume/load):
+    // -----------------------------------------------------------------------------
+    //
+    // OPTION 1: Increase scrape_interval (reduces scrape frequency)
+    //   scrape_interval = "60s"   // Scrape every 60s instead of 30s (halves volume)
+    //   scrape_interval = "120s"  // Scrape every 2 minutes (quarters volume)
+    //
+    // OPTION 2: Use prometheus.relabel to drop metrics by name
+    //   // Add a rule to prometheus.relabel block:
+    //   // rule {
+    //   //   source_labels = ["__name__"]
+    //   //   regex = "container_.*_seconds_total"  // Drop timing histograms
+    //   //   action = "drop"
+    //   // }
+    //
+    // OPTION 3: Drop high-cardinality labels before remote_write
+    //   // rule {
+    //   //   regex = "pod_uid|container_id"  // Remove unique IDs
+    //   //   action = "labeldrop"
+    //   // }
+    //
+    // OPTION 4: Keep only specific namespaces
+    //   // rule {
+    //   //   source_labels = ["namespace"]
+    //   //   regex = "rag-system|monitoring"  // Only keep these namespaces
+    //   //   action = "keep"
+    //   // }
+    //
+    // OPTION 5: Sample metrics probabilistically (via recording rules)
+    //   // This is done in Prometheus, not Alloy. Create a recording rule:
+    //   // - record: sampled:container_cpu_usage_seconds_total
+    //   //   expr: container_cpu_usage_seconds_total * (random() < 0.5)
+    //
     // =============================================================================
     
     // -----------------------------------------------------------------------------
-    // Kubernetes Node Discovery
+    // Step 1: Discover all Kubernetes nodes
     // -----------------------------------------------------------------------------
+    // discovery.kubernetes finds targets (things to scrape) automatically.
+    // With role="node", it discovers all nodes in the cluster.
+    //
+    // For each node, it provides metadata labels like:
+    // - __address__: Node IP and port
+    // - __meta_kubernetes_node_name: Node name (e.g., "kind-worker")
+    // - __meta_kubernetes_node_label_*: Node labels
+    //
+    // This is how Alloy automatically discovers new nodes as the cluster scales.
+    // -----------------------------------------------------------------------------
+    
     discovery.kubernetes "nodes" {
+      // "node" role discovers Kubernetes nodes (not pods or services)
+      // Other roles: "pod", "service", "endpoints", "ingress"
       role = "node"
     }
     
     // -----------------------------------------------------------------------------
-    // Relabel node targets to kubelet /metrics/resource endpoint
+    // Step 2: Relabel node targets to point to kubelet /metrics/resource
     // -----------------------------------------------------------------------------
+    // discovery.relabel transforms the targets discovered above.
+    // We need to change the discovered address to point to the kubelet's
+    // metrics endpoint instead of the default Kubernetes API server port.
+    //
+    // Relabeling is a powerful Prometheus concept for:
+    // - Changing target addresses
+    // - Adding/removing labels
+    // - Filtering targets
+    // - Renaming labels
+    //
+    // Rules are applied in order, and each rule can modify the target.
+    // -----------------------------------------------------------------------------
+    
     discovery.relabel "kubelet" {
+      // Input: nodes discovered by discovery.kubernetes "nodes"
       targets = discovery.kubernetes.nodes.targets
       
+      // Rule 1: Rewrite the port to 10250 (kubelet HTTPS port)
+      // The discovered __address__ is usually <node-ip>:10250 already,
+      // but this ensures we use the correct port.
+      //
+      // Regex explanation:
+      // - (.+):(.+) matches "host:port" and captures both parts
+      // - $1:10250 replaces with "host:10250"
       rule {
-        source_labels = ["__address__"]
-        regex         = "(.+):(.+)"
-        target_label  = "__address__"
-        replacement   = "$1:10250"
+        source_labels = ["__address__"]    // Label to read from
+        regex         = "(.+):(.+)"        // Pattern to match (captures host and port)
+        target_label  = "__address__"      // Label to write to (can be same as source)
+        replacement   = "$1:10250"         // New value ($1 = first capture group = host)
       }
       
+      // Rule 2: Set the scheme to HTTPS
+      // Kubelet only accepts HTTPS connections for security.
+      // This special label controls the protocol used for scraping.
       rule {
-        target_label = "__scheme__"
-        replacement  = "https"
+        target_label = "__scheme__"  // Special label for protocol
+        replacement  = "https"       // Use HTTPS instead of default HTTP
       }
       
+      // Rule 3: Set the metrics path to /metrics/resource
+      // Default path is /metrics, but kubelet exposes different metric types
+      // at different paths:
+      // - /metrics: Kubelet's own metrics (Go runtime, etc.)
+      // - /metrics/resource: Container CPU and memory (what we want)
+      // - /metrics/cadvisor: Detailed container metrics (used later)
+      // - /metrics/probes: Liveness/readiness probe metrics
       rule {
-        target_label = "__metrics_path__"
-        replacement  = "/metrics/resource"
+        target_label = "__metrics_path__"  // Special label for scrape path
+        replacement  = "/metrics/resource" // Lightweight container resource metrics
       }
       
+      // Rule 4: Add a "node" label from the Kubernetes node name
+      // This makes it easier to filter and aggregate metrics by node.
+      // __meta_kubernetes_node_name is auto-populated by discovery.kubernetes.
       rule {
-        source_labels = ["__meta_kubernetes_node_name"]
-        target_label  = "node"
+        source_labels = ["__meta_kubernetes_node_name"]  // Source: node name from K8s
+        target_label  = "node"                           // Target: add as "node" label
       }
     }
     
     // -----------------------------------------------------------------------------
-    // Scrape kubelet /metrics/resource endpoint
+    // Step 3: Scrape the kubelet /metrics/resource endpoints
     // -----------------------------------------------------------------------------
+    // prometheus.scrape is the core component for pulling metrics.
+    // It connects to each target, downloads metrics, and forwards them.
+    //
+    // Authentication: We use the service account token mounted by Kubernetes.
+    // This token has permissions to access kubelet metrics (via RBAC).
+    // -----------------------------------------------------------------------------
+    
     prometheus.scrape "kubelet_resource" {
-      targets         = discovery.relabel.kubelet.output
-      job_name        = "kubelet-resource"
-      scheme          = "https"
-      scrape_interval = "30s"
-      scrape_timeout  = "10s"
+      // Targets from the relabeled node discovery
+      targets = discovery.relabel.kubelet.output
       
+      // Job name appears as the "job" label on all scraped metrics
+      // Useful for filtering in Prometheus queries: {job="kubelet-resource"}
+      job_name = "kubelet-resource"
+      
+      // HTTPS scheme (must match __scheme__ from relabeling)
+      scheme = "https"
+      
+      // Scrape interval: how often to collect metrics
+      // 30s is frequent enough for real-time monitoring without overloading kubelet
+      // Shorter = more resolution but more overhead
+      // Longer = less overhead but might miss short-lived issues
+      scrape_interval = "30s"
+      
+      // Scrape timeout: maximum time to wait for response
+      // Must be less than scrape_interval
+      // 10s is generous for the small /metrics/resource payload
+      scrape_timeout = "10s"
+      
+      // Authentication: Use the Kubernetes service account token
+      // This file is auto-mounted by Kubernetes into every pod at this path.
+      // The token is a JWT that identifies this Alloy pod to the kubelet.
+      // RBAC rules (in alloy-rbac.yaml) grant permission to read metrics.
       bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
       
+      // TLS configuration for connecting to kubelet
       tls_config {
+        // Skip certificate verification
+        // The kubelet uses a self-signed certificate in Kind clusters.
+        // In production, you'd configure proper CA certificates.
         insecure_skip_verify = true
       }
       
+      // Forward scraped metrics to Prometheus via remote_write
       forward_to = [prometheus.remote_write.prom.receiver]
     }
     
     // =============================================================================
-    // Source 2: Kubelet /metrics/cadvisor (Network, Disk, Detailed Memory)
+    // SOURCE 2: KUBELET /metrics/cadvisor
+    // =============================================================================
+    //
+    // cAdvisor (Container Advisor) is built into the kubelet and provides
+    // comprehensive container metrics. It monitors all containers on a node.
+    //
+    // Metrics NOT available in /metrics/resource but available here:
+    //
+    // NETWORK METRICS:
+    // - container_network_receive_bytes_total: Bytes received
+    // - container_network_transmit_bytes_total: Bytes sent
+    // - container_network_receive_packets_total: Packets received
+    // - container_network_transmit_packets_total: Packets sent
+    // - container_network_receive_errors_total: Receive errors
+    // - container_network_transmit_errors_total: Transmit errors
+    //
+    // FILESYSTEM METRICS:
+    // - container_fs_usage_bytes: Filesystem usage
+    // - container_fs_limit_bytes: Filesystem capacity
+    // - container_fs_reads_bytes_total: Bytes read from disk
+    // - container_fs_writes_bytes_total: Bytes written to disk
+    //
+    // DETAILED MEMORY METRICS:
+    // - container_memory_cache: Bytes used by page cache
+    // - container_memory_rss: Bytes used by process (resident set size)
+    // - container_memory_usage_bytes: Total memory (cache + rss + other)
+    //
+    // CPU THROTTLING METRICS:
+    // - container_cpu_cfs_throttled_seconds_total: CPU time throttled
+    //   (when container hits CPU limits set in Kubernetes)
+    //
+    // CONTAINER SPEC METRICS:
+    // - container_spec_memory_limit_bytes: Memory limit from pod spec
+    // - container_spec_cpu_quota: CPU limit in microseconds per period
+    //
+    // WHY SCRAPE LESS FREQUENTLY (60s vs 30s)?
+    // - cAdvisor returns MANY more metrics (hundreds vs tens)
+    // - Higher cardinality (more label combinations)
+    // - More overhead on kubelet to collect
+    // - Network/disk metrics are less time-sensitive than CPU/memory
+    //
     // =============================================================================
     
     // -----------------------------------------------------------------------------
-    // Relabel node targets to kubelet /metrics/cadvisor endpoint
+    // Relabel targets for /metrics/cadvisor endpoint
+    // Same structure as kubelet relabeling, but different path.
     // -----------------------------------------------------------------------------
+    
     discovery.relabel "cadvisor" {
+      // Reuse the same node discovery
       targets = discovery.kubernetes.nodes.targets
       
+      // Same port (10250) as kubelet - cAdvisor is part of kubelet
       rule {
         source_labels = ["__address__"]
         regex         = "(.+):(.+)"
@@ -197,16 +706,19 @@ data:
         replacement   = "$1:10250"
       }
       
+      // Same HTTPS scheme
       rule {
         target_label = "__scheme__"
         replacement  = "https"
       }
       
+      // Different path: /metrics/cadvisor instead of /metrics/resource
       rule {
         target_label = "__metrics_path__"
         replacement  = "/metrics/cadvisor"
       }
       
+      // Same node label
       rule {
         source_labels = ["__meta_kubernetes_node_name"]
         target_label  = "node"
@@ -214,84 +726,209 @@ data:
     }
     
     // -----------------------------------------------------------------------------
-    // Scrape kubelet /metrics/cadvisor endpoint
+    // Scrape cAdvisor metrics from kubelet
     // -----------------------------------------------------------------------------
+    
     prometheus.scrape "cadvisor" {
-      targets         = discovery.relabel.cadvisor.output
-      job_name        = "cadvisor"
-      scheme          = "https"
-      scrape_interval = "60s"
-      scrape_timeout  = "15s"
+      targets  = discovery.relabel.cadvisor.output
+      job_name = "cadvisor"
+      scheme   = "https"
       
+      // 60 seconds - less frequent due to higher overhead
+      scrape_interval = "60s"
+      
+      // 15 seconds - longer timeout because payload is larger
+      scrape_timeout = "15s"
+      
+      // Same authentication as kubelet
       bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
       
       tls_config {
         insecure_skip_verify = true
       }
       
+      // Forward to filter FIRST, then to Prometheus
+      // This is important to reduce metric volume before storage
       forward_to = [prometheus.relabel.cadvisor_filter.receiver]
     }
     
     // -----------------------------------------------------------------------------
-    // Filter cAdvisor metrics to reduce cardinality
-    // Keep only essential metrics for pod monitoring
+    // Filter cAdvisor metrics to reduce storage costs
     // -----------------------------------------------------------------------------
+    // cAdvisor generates MANY metrics. Without filtering:
+    // - Hundreds of metrics per container
+    // - High cardinality labels (interface names, device names)
+    // - Significant storage and query performance impact
+    //
+    // We filter to keep only ESSENTIAL metrics for monitoring.
+    // This reduces storage by ~90% while keeping useful data.
+    //
+    // prometheus.relabel uses Prometheus relabeling rules to filter, modify,
+    // and transform metrics AFTER scraping but BEFORE storage.
+    // -----------------------------------------------------------------------------
+    
     prometheus.relabel "cadvisor_filter" {
+      // Rule 1: Keep only specific metrics by name
+      // action = "keep" means: drop everything that DOESN'T match the regex
+      //
+      // The regex is a long OR pattern matching metric names we want to keep:
+      // - CPU: cpu_usage_seconds_total, cpu_cfs_throttled_seconds_total
+      // - Memory: memory_working_set_bytes, memory_usage_bytes, memory_cache, memory_rss
+      // - Network: network_receive/transmit_bytes/packets/errors_total
+      // - Filesystem: fs_usage_bytes, fs_limit_bytes, fs_reads/writes_bytes_total
+      // - Spec: spec_memory_limit_bytes, spec_cpu_quota, spec_cpu_period
       rule {
-        source_labels = ["__name__"]
+        source_labels = ["__name__"]  // __name__ is the metric name
         regex         = "container_(cpu_usage_seconds_total|cpu_cfs_throttled_seconds_total|memory_working_set_bytes|memory_usage_bytes|memory_cache|memory_rss|network_receive_bytes_total|network_transmit_bytes_total|network_receive_packets_total|network_transmit_packets_total|network_receive_errors_total|network_transmit_errors_total|fs_usage_bytes|fs_limit_bytes|fs_reads_bytes_total|fs_writes_bytes_total|spec_memory_limit_bytes|spec_cpu_quota|spec_cpu_period)"
-        action        = "keep"
+        action        = "keep"  // Keep matching, drop non-matching
       }
       
-      // Drop metrics for pause containers (infrastructure containers)
-      // But keep network metrics which have empty container label
+      // Rule 2: Drop "POD" container metrics
+      // Every pod has a "pause" container (also called "POD") that holds the
+      // network namespace. It uses almost no resources and clutters metrics.
+      //
+      // action = "drop" means: drop everything that MATCHES the regex
       rule {
         source_labels = ["container"]
         regex         = "POD"
         action        = "drop"
       }
       
-      // Drop empty container labels EXCEPT for network metrics
-      // (network metrics are reported at pod level with container="")
+      // Rule 3: Drop empty container labels for non-network metrics
+      // Some metrics have container="" which are aggregate metrics.
+      // We want individual container metrics, not aggregates.
+      //
+      // EXCEPTION: Network metrics (container_network_*) SHOULD have container=""
+      // because network is shared at the pod level, not per-container.
+      //
+      // The regex matches:
+      // - container_(cpu|memory|fs|spec).*: CPU, memory, filesystem, spec metrics
+      // - ;^$: Followed by semicolon (label separator) and empty value
+      //
+      // This keeps network metrics with empty container labels.
       rule {
-        source_labels = ["__name__", "container"]
-        regex         = "container_(cpu|memory|fs|spec).*;^$"
+        source_labels = ["__name__", "container"]  // Check both name and container
+        regex         = "container_(cpu|memory|fs|spec).*;^$"  // Non-network + empty container
         action        = "drop"
       }
       
-      // Drop node-level aggregates (id="/")
+      // Rule 4: Drop node-level aggregates
+      // Metrics with id="/" are aggregated across the entire node.
+      // We want per-container metrics, not node totals.
       rule {
         source_labels = ["id"]
         regex         = "/"
         action        = "drop"
       }
       
+      // After filtering, forward to Prometheus
       forward_to = [prometheus.remote_write.prom.receiver]
     }
     
     // =============================================================================
-    // Source 3: kube-state-metrics (K8s API Object State)
+    // SOURCE 3: KUBE-STATE-METRICS
+    // =============================================================================
+    //
+    // kube-state-metrics (KSM) is a separate service that exposes Kubernetes
+    // object state as Prometheus metrics. It reads from the Kubernetes API.
+    //
+    // CRITICAL DIFFERENCE FROM KUBELET/CADVISOR:
+    // - Kubelet/cAdvisor: ACTUAL runtime usage (how much CPU is being used NOW)
+    // - kube-state-metrics: DESIRED state from K8s API (what was REQUESTED/LIMITED)
+    //
+    // Metrics provided:
+    //
+    // POD STATUS:
+    // - kube_pod_status_phase: Pod phase (Pending, Running, Succeeded, Failed, Unknown)
+    // - kube_pod_status_ready: Whether pod is ready to serve traffic
+    // - kube_pod_status_scheduled: Whether pod has been scheduled to a node
+    //
+    // CONTAINER STATUS:
+    // - kube_pod_container_status_running: Container is running (1 or 0)
+    // - kube_pod_container_status_waiting: Container is waiting (with reason)
+    // - kube_pod_container_status_terminated: Container has terminated
+    // - kube_pod_container_status_restarts_total: Number of restarts (crucial for reliability)
+    //
+    // RESOURCE REQUESTS AND LIMITS:
+    // - kube_pod_container_resource_requests: CPU/memory REQUESTED
+    // - kube_pod_container_resource_limits: CPU/memory LIMITS
+    //
+    // Note: cAdvisor provides spec_memory_limit_bytes (the LIMIT), but not REQUESTS.
+    // kube-state-metrics provides BOTH, which is essential for capacity planning.
+    //
+    // DEPLOYMENT STATUS:
+    // - kube_deployment_status_replicas: Current replica count
+    // - kube_deployment_status_replicas_available: Replicas that are available
+    // - kube_deployment_status_replicas_unavailable: Replicas that are unavailable
+    // - kube_deployment_spec_replicas: DESIRED replica count
+    //
+    // This enables queries like:
+    // - "Deployments that are under-replicated": spec_replicas > status_replicas_available
+    //
     // =============================================================================
     
     // -----------------------------------------------------------------------------
-    // Scrape kube-state-metrics service
+    // Scrape kube-state-metrics
     // -----------------------------------------------------------------------------
+    // Unlike kubelet, we use a static target because kube-state-metrics is a
+    // single deployment with a known service name.
+    // -----------------------------------------------------------------------------
+    
     prometheus.scrape "kube_state_metrics" {
+      // Static target - kube-state-metrics service in monitoring namespace
+      // Port 8080 is the default metrics port for kube-state-metrics
       targets = [
-        {"__address__" = "kube-state-metrics.rag-system.svc.cluster.local:8080"},
+        {"__address__" = "kube-state-metrics.monitoring.svc.cluster.local:8080"},
       ]
+      
       job_name        = "kube-state-metrics"
       scrape_interval = "30s"
       scrape_timeout  = "10s"
       
+      // Forward to filter before Prometheus
       forward_to = [prometheus.relabel.kube_state_filter.receiver]
     }
     
     // -----------------------------------------------------------------------------
-    // Filter kube-state-metrics to essential pod/deployment metrics
+    // Filter kube-state-metrics to essential metrics
     // -----------------------------------------------------------------------------
+    // kube-state-metrics generates metrics for EVERY Kubernetes object type.
+    // We only need pod, container, deployment, and node metrics.
+    //
+    // Without filtering, you'd get metrics for:
+    // - ConfigMaps, Secrets (rarely needed for monitoring)
+    // - CronJobs, Jobs, DaemonSets
+    // - PersistentVolumes, PersistentVolumeClaims
+    // - ResourceQuotas, LimitRanges
+    // - And many more...
+    // -----------------------------------------------------------------------------
+    
     prometheus.relabel "kube_state_filter" {
-      // Keep pod, container, deployment, node, and resource metrics
+      // Keep only metrics matching this pattern
+      // The regex matches prefixes for different object types:
+      //
+      // POD METRICS (kube_pod_*):
+      // - status_phase: Pending, Running, Failed, etc.
+      // - status_ready: Is the pod ready?
+      // - status_scheduled: Has it been scheduled?
+      // - container_status_*: Container-level status
+      // - container_resource_*: Requests and limits
+      // - info, created, start_time: Pod metadata
+      //
+      // DEPLOYMENT METRICS (kube_deployment_*):
+      // - status_replicas*: Current replica counts
+      // - spec_replicas: Desired replicas
+      //
+      // STATEFULSET METRICS (kube_statefulset_*):
+      // - status_replicas*: Similar to deployments
+      //
+      // NODE METRICS (kube_node_*):
+      // - status_condition: Node conditions (Ready, DiskPressure, etc.)
+      // - status_allocatable: Allocatable resources per node
+      // - info: Node metadata
+      //
+      // NAMESPACE METRICS (kube_namespace_*):
+      // - status_phase: Active or Terminating
       rule {
         source_labels = ["__name__"]
         regex         = "kube_(pod_status_phase|pod_status_ready|pod_status_scheduled|pod_container_status_restarts_total|pod_container_status_running|pod_container_status_waiting|pod_container_status_terminated|pod_container_resource_requests|pod_container_resource_limits|pod_info|pod_created|pod_start_time|deployment_status_replicas|deployment_status_replicas_available|deployment_status_replicas_unavailable|deployment_spec_replicas|statefulset_status_replicas|statefulset_status_replicas_ready|node_status_condition|node_status_allocatable|node_info|namespace_status_phase)"
@@ -299,4 +936,473 @@ data:
       }
       
       forward_to = [prometheus.remote_write.prom.receiver]
+    }
+    
+    // =============================================================================
+    // SECTION 8: INFRASTRUCTURE SERVICE METRICS
+    // =============================================================================
+    //
+    // Beyond Kubernetes system metrics, we also scrape metrics from infrastructure
+    // services: Redis, Kafka, and MinIO. These provide insights that container
+    // metrics cannot:
+    //
+    // REDIS:
+    // - Command rates and latencies
+    // - Memory fragmentation
+    // - Key evictions and expirations
+    // - Connection counts
+    // - Persistence status (RDB/AOF)
+    //
+    // KAFKA:
+    // - Consumer lag (how far behind consumers are)
+    // - Partition leadership
+    // - Topic message counts
+    // - Broker health
+    //
+    // MINIO:
+    // - S3 request counts and errors
+    // - Bucket sizes and object counts
+    // - Network throughput
+    // - Disk usage
+    //
+    // Without these, you'd only know "Kafka is using 500MB RAM" but not
+    // "Kafka has 1000 messages of consumer lag on topic X".
+    //
+    // =============================================================================
+    
+    // =============================================================================
+    // REDIS EXPORTER
+    // =============================================================================
+    //
+    // redis_exporter is a Prometheus exporter for Redis. It connects to Redis
+    // and translates Redis INFO command output to Prometheus metrics.
+    //
+    // It runs as a sidecar container in the Redis pod and exposes metrics on
+    // port 9121 (the conventional redis_exporter port).
+    //
+    // Key metrics:
+    // - redis_up: Is Redis reachable? (1 = yes, 0 = no)
+    // - redis_uptime_in_seconds: How long Redis has been running
+    // - redis_connected_clients: Current client connections
+    // - redis_blocked_clients: Clients waiting on BLPOP, etc.
+    // - redis_commands_total: Total commands processed (by command type)
+    // - redis_commands_duration_seconds_total: Time spent processing commands
+    // - redis_memory_used_bytes: Total memory used by Redis
+    // - redis_memory_max_bytes: Maximum memory limit (maxmemory config)
+    // - redis_keyspace_hits/misses_total: Cache hit rate calculation
+    // - redis_expired_keys_total: Keys removed due to TTL expiration
+    // - redis_evicted_keys_total: Keys evicted due to memory pressure
+    //
+    // =============================================================================
+    
+    prometheus.scrape "redis_exporter" {
+      targets = [
+        // xrag-redis is the Redis service in the rag-system namespace
+        // Port 9121 is redis_exporter's default metrics port
+        {"__address__" = "xrag-redis.rag-system.svc.cluster.local:9121"},
+      ]
+      job_name        = "redis"
+      scrape_interval = "30s"
+      scrape_timeout  = "10s"
+      
+      forward_to = [prometheus.relabel.redis_filter.receiver]
+    }
+    
+    // Filter Redis metrics to essential ones
+    prometheus.relabel "redis_filter" {
+      rule {
+        source_labels = ["__name__"]
+        // Keep essential Redis metrics:
+        // - Health: up, uptime
+        // - Clients: connected_clients, blocked_clients, rejected_connections
+        // - Commands: commands_total, commands_duration_seconds_total
+        // - Memory: memory_used_bytes, memory_max_bytes, memory_used_rss_bytes,
+        //           mem_fragmentation_ratio (used/rss - high ratio = fragmentation)
+        // - Keys: db_keys, db_keys_expiring (per-database key counts)
+        //         expired_keys_total, evicted_keys_total
+        // - Performance: keyspace_hits/misses_total (cache hit rate)
+        //               instantaneous_ops_per_sec (current throughput)
+        //               instantaneous_input/output_kbps (network throughput)
+        // - Replication: connected_slaves (for master-replica setups)
+        // - Persistence: rdb_last_save_timestamp_seconds, rdb_changes_since_last_save
+        //               aof_rewrite_in_progress
+        // - Network: net_input/output_bytes_total
+        // - Slow queries: slowlog_length (queries exceeding slowlog threshold)
+        regex = "redis_(up|uptime_in_seconds|connected_clients|blocked_clients|commands_total|commands_duration_seconds_total|memory_used_bytes|memory_max_bytes|memory_used_rss_bytes|mem_fragmentation_ratio|db_keys|db_keys_expiring|expired_keys_total|evicted_keys_total|keyspace_hits_total|keyspace_misses_total|connected_slaves|instantaneous_ops_per_sec|instantaneous_input_kbps|instantaneous_output_kbps|rejected_connections_total|rdb_last_save_timestamp_seconds|rdb_changes_since_last_save|aof_rewrite_in_progress|slowlog_length|net_input_bytes_total|net_output_bytes_total|loading_dump_file)"
+        action = "keep"
+      }
+      
+      forward_to = [prometheus.remote_write.prom.receiver]
+    }
+    
+    // =============================================================================
+    // KAFKA EXPORTER
+    // =============================================================================
+    //
+    // kafka_exporter is a Prometheus exporter for Apache Kafka. It connects to
+    // Kafka brokers and exposes topic, partition, and consumer group metrics.
+    //
+    // It runs as a separate deployment (not a sidecar) because it needs to
+    // connect to all brokers in the cluster.
+    //
+    // Key metrics:
+    //
+    // BROKER METRICS:
+    // - kafka_brokers: Number of brokers in the cluster
+    // - kafka_broker_info: Broker metadata (labels only)
+    //
+    // TOPIC/PARTITION METRICS:
+    // - kafka_topic_partitions: Number of partitions per topic
+    // - kafka_topic_partition_current_offset: Latest message offset (how many messages exist)
+    // - kafka_topic_partition_oldest_offset: Oldest available message offset
+    // - kafka_topic_partition_leader: Which broker is the partition leader
+    // - kafka_topic_partition_replicas: Number of replicas
+    // - kafka_topic_partition_in_sync_replica: In-sync replica count
+    // - kafka_topic_partition_under_replicated_partition: Is the partition under-replicated?
+    //
+    // CONSUMER GROUP METRICS (MOST IMPORTANT):
+    // - kafka_consumergroup_current_offset: Where the consumer is reading from
+    // - kafka_consumergroup_lag: CONSUMER LAG = current_offset - consumer_offset
+    //   This is the MOST important Kafka metric - high lag means consumers can't keep up
+    // - kafka_consumergroup_members: Number of consumers in the group
+    //
+    // Consumer lag example:
+    //   Producer writes message 1000 to topic.
+    //   Consumer last read message 900.
+    //   Lag = 1000 - 900 = 100 messages behind.
+    //
+    // =============================================================================
+    
+    prometheus.scrape "kafka_exporter" {
+      targets = [
+        // kafka-exporter service in rag-system namespace
+        // Port 9308 is kafka_exporter's default metrics port
+        {"__address__" = "kafka-exporter.rag-system.svc.cluster.local:9308"},
+      ]
+      job_name        = "kafka"
+      scrape_interval = "30s"
+      scrape_timeout  = "10s"
+      
+      forward_to = [prometheus.relabel.kafka_filter.receiver]
+    }
+    
+    // Filter Kafka metrics to essential ones
+    prometheus.relabel "kafka_filter" {
+      rule {
+        source_labels = ["__name__"]
+        // Keep essential Kafka metrics:
+        // - Cluster: brokers (count), broker_info (metadata)
+        // - Topics: topic_partitions, topic_partition_current/oldest_offset
+        // - Replication: topic_partition_leader, replicas, in_sync_replica,
+        //               under_replicated_partition
+        // - Consumer groups: consumergroup_current_offset, consumergroup_lag,
+        //                   consumergroup_members
+        // - Exporter: exporter_build_info (for debugging)
+        regex = "kafka_(brokers|broker_info|topic_partitions|topic_partition_current_offset|topic_partition_oldest_offset|topic_partition_leader|topic_partition_replicas|topic_partition_in_sync_replica|topic_partition_under_replicated_partition|consumergroup_current_offset|consumergroup_lag|consumergroup_members|exporter_build_info)"
+        action = "keep"
+      }
+      
+      forward_to = [prometheus.remote_write.prom.receiver]
+    }
+    
+    // =============================================================================
+    // MINIO METRICS
+    // =============================================================================
+    //
+    // MinIO is an S3-compatible object storage server. It natively exposes
+    // Prometheus metrics without needing a separate exporter.
+    //
+    // MinIO has multiple metrics endpoints:
+    // - /minio/v2/metrics/cluster: Cluster-wide metrics (what we use)
+    // - /minio/v2/metrics/node: Per-node metrics
+    // - /minio/v2/metrics/bucket: Per-bucket metrics
+    // - /minio/v2/metrics/resource: Resource metrics
+    //
+    // Key metrics:
+    //
+    // S3 REQUEST METRICS:
+    // - minio_s3_requests_total: Total S3 API requests (by API type: GetObject, PutObject, etc.)
+    // - minio_s3_requests_errors_total: Failed requests
+    // - minio_s3_requests_waiting_total: Requests waiting to be processed
+    // - minio_s3_requests_incoming_total: Incoming requests
+    // - minio_s3_requests_rejected_*: Rejected requests (auth, header, invalid)
+    // - minio_s3_requests_4xx/5xx_errors_total: HTTP error codes
+    //
+    // TRAFFIC METRICS:
+    // - minio_s3_traffic_received_bytes: Total bytes received
+    // - minio_s3_traffic_sent_bytes: Total bytes sent
+    // - minio_s3_requests_ttfb_seconds_distribution: Time to first byte (latency)
+    //
+    // STORAGE METRICS:
+    // - minio_bucket_usage_object_total: Number of objects per bucket
+    // - minio_bucket_usage_total_bytes: Storage used per bucket
+    // - minio_node_drive_total/used/free_bytes: Disk usage per drive
+    // - minio_cluster_capacity_usable_total/free_bytes: Cluster-wide capacity
+    //
+    // HEALTH:
+    // - minio_cluster_health_status: Overall cluster health (1 = healthy)
+    // - minio_node_process_uptime_seconds: How long MinIO has been running
+    //
+    // =============================================================================
+    
+    prometheus.scrape "minio" {
+      targets = [
+        // xrag-minio service in rag-system namespace
+        // Port 9000 is MinIO's default API port (also used for metrics)
+        {"__address__" = "xrag-minio.rag-system.svc.cluster.local:9000"},
+      ]
+      job_name = "minio"
+      
+      // MinIO exposes metrics at a specific path, not the default /metrics
+      metrics_path = "/minio/v2/metrics/cluster"
+      
+      scrape_interval = "30s"
+      scrape_timeout  = "10s"
+      
+      forward_to = [prometheus.relabel.minio_filter.receiver]
+    }
+    
+    // Filter MinIO metrics to essential ones
+    prometheus.relabel "minio_filter" {
+      rule {
+        source_labels = ["__name__"]
+        // Keep essential MinIO metrics:
+        // - Requests: s3_requests_total, errors, waiting, incoming, rejected
+        // - Errors: 4xx_errors, 5xx_errors
+        // - Traffic: traffic_received_bytes, traffic_sent_bytes, ttfb
+        // - Storage: bucket_usage_object_total, bucket_usage_total_bytes
+        // - Disk: node_drive_total/used/free_bytes
+        // - Cluster: cluster_capacity_usable_total/free_bytes, health_status
+        // - Uptime: node_process_uptime_seconds
+        // - Inter-node: inter_node_traffic_*
+        // - Version: software_version_info
+        regex = "minio_(s3_requests_total|s3_requests_errors_total|s3_requests_waiting_total|s3_requests_incoming_total|s3_requests_rejected_auth_total|s3_requests_rejected_header_total|s3_requests_rejected_invalid_total|s3_requests_4xx_errors_total|s3_requests_5xx_errors_total|s3_traffic_received_bytes|s3_traffic_sent_bytes|s3_requests_ttfb_seconds_distribution|bucket_usage_object_total|bucket_usage_total_bytes|node_drive_total_bytes|node_drive_used_bytes|node_drive_free_bytes|cluster_capacity_usable_total_bytes|cluster_capacity_usable_free_bytes|cluster_health_status|node_process_uptime_seconds|inter_node_traffic_received_bytes|inter_node_traffic_sent_bytes|software_version_info)"
+        action = "keep"
+      }
+      
+      forward_to = [prometheus.remote_write.prom.receiver]
+    }
+    
+    // =============================================================================
+    // SECTION 9: LOG COLLECTION AND SHIPPING TO LOKI
+    // =============================================================================
+    //
+    // This section configures collection of container logs from Kubernetes pods
+    // and ships them to Loki for storage and querying in Grafana.
+    //
+    // HOW KUBERNETES LOGGING WORKS:
+    // 1. Containers write to stdout/stderr
+    // 2. Container runtime (containerd) captures output and writes to log files
+    // 3. Log files are stored on nodes at: /var/log/pods/<namespace>_<pod>_<uid>/<container>/*.log
+    // 4. Alloy reads these log files and ships to Loki
+    //
+    // DATA FLOW:
+    //   Container stdout/stderr
+    //         │
+    //         ▼
+    //   /var/log/pods/<namespace>_<pod>_<uid>/<container>/*.log
+    //         │
+    //         ▼
+    //   loki.source.kubernetes (discovers and tails log files)
+    //         │
+    //         ▼
+    //   loki.process (adds labels, parses, filters)
+    //         │
+    //         ▼
+    //   loki.write (ships to Loki)
+    //         │
+    //         ▼
+    //   Loki (storage and query)
+    //
+    // -----------------------------------------------------------------------------
+    // SAMPLING OPTIONS FOR LOGS (to reduce volume/load):
+    // -----------------------------------------------------------------------------
+    //
+    // OPTION 1: Probabilistic sampling (keep X% of logs)
+    //   // Add to loki.process block:
+    //   // stage.sampling {
+    //   //   rate = 0.25                      // Keep 25% of logs, drop 75%
+    //   //   drop_counter_reason = "sampling" // Metric label for dropped logs
+    //   // }
+    //
+    // OPTION 2: Rate limiting with token bucket
+    //   // stage.limit {
+    //   //   rate  = 100   // Max 100 lines per second
+    //   //   burst = 200   // Allow bursts up to 200 lines
+    //   //   drop  = true  // Drop excess (vs backpressure)
+    //   // }
+    //
+    // OPTION 3: Rate limiting per label (e.g., per namespace)
+    //   // stage.limit {
+    //   //   rate  = 50
+    //   //   burst = 100
+    //   //   drop  = true
+    //   //   by_label_name = "namespace"      // Each namespace gets its own limit
+    //   //   max_distinct_labels = 100        // Track up to 100 unique namespaces
+    //   // }
+    //
+    // OPTION 4: Drop logs by content (regex match)
+    //   // stage.drop {
+    //   //   expression = ".*health.*check.*" // Drop health check logs
+    //   //   drop_counter_reason = "health_check"
+    //   // }
+    //
+    // OPTION 5: Drop logs by extracted value
+    //   // stage.drop {
+    //   //   source = "level"                 // Use extracted "level" field
+    //   //   value  = "debug"                 // Drop all debug logs
+    //   // }
+    //
+    // OPTION 6: Drop logs by size or age
+    //   // stage.drop {
+    //   //   longer_than = "10KB"             // Drop logs over 10KB
+    //   // }
+    //   // stage.drop {
+    //   //   older_than = "1h"                // Drop logs older than 1 hour
+    //   // }
+    //
+    // OPTION 7: Conditional processing with LogQL selector
+    //   // stage.match {
+    //   //   selector = "{namespace=\"kube-system\"}"
+    //   //   action   = "drop"                // Drop all kube-system logs
+    //   // }
+    //   // stage.match {
+    //   //   selector = "{level=\"debug\"}"
+    //   //   action   = "drop"                // Drop debug logs using LogQL
+    //   // }
+    //
+    // OPTION 8: Keep only specific log levels (whitelist)
+    //   // stage.match {
+    //   //   selector = "{level=~\"warn|error|fatal\"}"
+    //   //   action   = "keep"                // Only keep warn/error/fatal
+    //   //   // Nested stages applied only to matched logs
+    //   // }
+    //
+    // OPTION 9: Drop high-cardinality labels
+    //   // stage.label_drop {
+    //   //   values = ["pod_uid", "container_id"]  // Remove unique IDs
+    //   // }
+    //
+    // OPTION 10: Keep only essential labels
+    //   // stage.label_keep {
+    //   //   values = ["namespace", "pod", "container", "level"]
+    //   // }
+    //
+    // OPTION 11: Discovery-level filtering (before log collection)
+    //   // In discovery.relabel "pod_logs" block:
+    //   // rule {
+    //   //   source_labels = ["__meta_kubernetes_namespace"]
+    //   //   regex = "kube-system|kube-public"  // Drop noisy namespaces
+    //   //   action = "drop"
+    //   // }
+    //   // rule {
+    //   //   source_labels = ["__meta_kubernetes_pod_label_app"]
+    //   //   regex = "fluent-bit|promtail"      // Skip log collectors themselves
+    //   //   action = "drop"
+    //   // }
+    //
+    // =============================================================================
+    
+    // -----------------------------------------------------------------------------
+    // Kubernetes Pod Log Discovery and Collection
+    // -----------------------------------------------------------------------------
+    // loki.source.kubernetes automatically discovers pods in the cluster and
+    // tails their log files. It adds Kubernetes metadata as labels:
+    // - namespace, pod, container
+    // - pod labels and annotations (optional)
+    // -----------------------------------------------------------------------------
+    
+    discovery.kubernetes "pods" {
+      role = "pod"
+    }
+    
+    discovery.relabel "pod_logs" {
+      targets = discovery.kubernetes.pods.targets
+      
+      // Only collect logs from running pods
+      rule {
+        source_labels = ["__meta_kubernetes_pod_phase"]
+        regex         = "Pending|Succeeded|Failed|Unknown"
+        action        = "drop"
+      }
+      
+      // Set the namespace label
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        target_label  = "namespace"
+      }
+      
+      // Set the pod label
+      rule {
+        source_labels = ["__meta_kubernetes_pod_name"]
+        target_label  = "pod"
+      }
+      
+      // Set the container label
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_name"]
+        target_label  = "container"
+      }
+      
+      // Set the app label from pod label if present
+      rule {
+        source_labels = ["__meta_kubernetes_pod_label_app"]
+        target_label  = "app"
+      }
+      
+      // Build the log file path
+      // Format: /var/log/pods/<namespace>_<pod>_<uid>/<container>/*.log
+      rule {
+        source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_name", "__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+        separator     = "/"
+        regex         = "(.+)/(.+)/(.+)/(.+)"
+        replacement   = "/var/log/pods/$1_$2_$3/$4/*.log"
+        target_label  = "__path__"
+      }
+    }
+    
+    loki.source.kubernetes "pod_logs" {
+      targets    = discovery.relabel.pod_logs.output
+      forward_to = [loki.process.pod_logs.receiver]
+    }
+    
+    // -----------------------------------------------------------------------------
+    // Log Processing Pipeline
+    // -----------------------------------------------------------------------------
+    // Process logs before sending to Loki:
+    // - Parse structured logs (JSON)
+    // - Add/modify labels
+    // - Filter unwanted logs
+    // -----------------------------------------------------------------------------
+    
+    loki.process "pod_logs" {
+      // Try to parse JSON logs and extract level
+      stage.json {
+        expressions = {
+          level = "level",
+          msg   = "msg",
+        }
+      }
+      
+      // Normalize log level to a label
+      stage.labels {
+        values = {
+          level = "",
+        }
+      }
+      
+      forward_to = [loki.write.default.receiver]
+    }
+    
+    // -----------------------------------------------------------------------------
+    // Loki Write Endpoint
+    // -----------------------------------------------------------------------------
+    // Ships processed logs to Loki for storage.
+    // Loki stores logs indexed by labels for efficient querying.
+    // -----------------------------------------------------------------------------
+    
+    loki.write "default" {
+      endpoint {
+        url = "http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push"
+      }
     }

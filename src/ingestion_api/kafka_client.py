@@ -1,4 +1,4 @@
-"""Thin wrapper for Kafka producer."""
+"""Thin wrapper for Kafka producer with trace context propagation."""
 
 import json
 import logging
@@ -6,6 +6,7 @@ from typing import Any
 
 from aiokafka import AIOKafkaProducer  # type: ignore[import-untyped]
 from aiokafka.errors import KafkaError  # type: ignore[import-untyped]
+from opentelemetry.propagate import inject
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,10 @@ class KafkaClient:
             logger.info("Kafka producer stopped")
 
     async def publish(self, topic: str, message: dict[str, Any]) -> None:
-        """Publish message to Kafka topic.
+        """Publish message to Kafka topic with trace context propagation.
+
+        Injects W3C Trace Context headers into Kafka message headers,
+        enabling distributed tracing across the async message boundary.
 
         Args:
             topic: Kafka topic name
@@ -71,7 +75,18 @@ class KafkaClient:
             raise RuntimeError("Kafka producer not started")
 
         try:
-            await self.producer.send_and_wait(topic, value=message)
+            # Inject trace context into headers for propagation to consumer
+            headers: dict[str, str] = {}
+            inject(headers)
+
+            # Convert headers to Kafka format (list of tuples with bytes values)
+            kafka_headers = [(k, v.encode("utf-8")) for k, v in headers.items()]
+
+            await self.producer.send_and_wait(
+                topic,
+                value=message,
+                headers=kafka_headers,
+            )
             event_type = message["event_type"] if "event_type" in message else "unknown"
             logger.debug(f"Published to {topic}: {event_type}")
         except KafkaError as e:

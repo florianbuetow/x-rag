@@ -29,5 +29,5 @@ chunking:
   batch_size: 10
 
 tracing:
-  otlp_endpoint: http://xrag-tempo:4317
+  otlp_endpoint: http://tempo.monitoring.svc.cluster.local:4317
   environment: development

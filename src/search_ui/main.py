@@ -21,12 +21,13 @@ from src.common.tracing import get_current_trace_id, init_tracing, shutdown_trac
 from src.search_ui.config import SearchUIConfig
 from src.search_ui.grpc_clients import SearchServiceClient
 from src.search_ui.metrics import (
-    active_requests,
-    errors_total,
-    grpc_call_duration,
-    request_duration,
-    requests_total,
-    sources_returned,
+    dec_active_requests,
+    get_grpc_call_duration,
+    get_request_duration,
+    inc_active_requests,
+    inc_errors_total,
+    inc_requests_total,
+    record_sources_returned,
 )
 from src.search_ui.models import SearchRequest, SearchResponse, Source
 
@@ -147,9 +148,9 @@ async def search(request: SearchRequest) -> SearchResponse:
     Raises:
         HTTPException: If search fails
     """
-    active_requests.inc()
+    inc_active_requests()
     try:
-        with track_latency(request_duration, {"operation": "search"}):
+        with track_latency(get_request_duration(), {"operation": "search"}):
             if search_client is None:
                 raise HTTPException(
                     status_code=503,
@@ -157,7 +158,7 @@ async def search(request: SearchRequest) -> SearchResponse:
                 )
 
             # Call Search Service via gRPC with metrics
-            with track_latency(grpc_call_duration, {"method": "Search"}):
+            with track_latency(get_grpc_call_duration(), {"method": "Search"}):
                 grpc_response = await search_client.search(
                     query=request.query,
                     namespace=request.namespace,
@@ -178,7 +179,7 @@ async def search(request: SearchRequest) -> SearchResponse:
             ]
 
             # Record number of sources returned
-            sources_returned.observe(len(sources))
+            record_sources_returned(len(sources))
 
             # Add trace_id to metadata for debugging
             response_metadata = dict(grpc_response.metadata)
@@ -193,7 +194,7 @@ async def search(request: SearchRequest) -> SearchResponse:
             )
 
         # Track success
-        requests_total.labels(status="success", mode=request.mode).inc()
+        inc_requests_total("success", request.mode)
 
         logger.info(
             f"Search completed: query='{request.query[:50]}...', mode={request.mode}, sources={len(sources)}",
@@ -202,12 +203,12 @@ async def search(request: SearchRequest) -> SearchResponse:
         return response
 
     except HTTPException:
-        requests_total.labels(status="error", mode=request.mode).inc()
+        inc_requests_total("error", request.mode)
         raise
 
     except Exception as e:
-        requests_total.labels(status="error", mode=request.mode).inc()
-        errors_total.labels(operation="search", error_type=type(e).__name__).inc()
+        inc_requests_total("error", request.mode)
+        inc_errors_total("search", type(e).__name__)
         logger.error(f"Search failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -215,7 +216,7 @@ async def search(request: SearchRequest) -> SearchResponse:
         ) from e
 
     finally:
-        active_requests.dec()
+        dec_active_requests()
 
 
 @app.get("/health")

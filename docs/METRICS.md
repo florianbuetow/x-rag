@@ -494,7 +494,7 @@ X-RAG includes a pre-built Grafana dashboard that is automatically provisioned w
 make open-grafana
 
 # Or manually port-forward
-kubectl port-forward svc/xrag-grafana 3000:3000 -n rag-system
+kubectl port-forward svc/grafana 3000:3000 -n monitoring
 # Then open http://localhost:3000
 ```
 

@@ -5,7 +5,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: kube-state-metrics
-  namespace: rag-system
+  namespace: monitoring
   labels:
     app: kube-state-metrics
 ---
@@ -109,4 +109,4 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: kube-state-metrics
-    namespace: rag-system
+    namespace: monitoring

@@ -19,14 +19,13 @@ from src.common.metrics import track_latency
 from src.common.tracing_utils import (
     trace_database_operation,
     trace_document_processing,
-    trace_embedding_generation,
 )
 from src.indexer.config import IndexerConfig
 from src.indexer.grpc_clients import EmbeddingServiceClient as GrpcEmbeddingServiceClient
 from src.indexer.metrics import (
-    duplicate_check_duration,
-    embedding_duration,
-    weaviate_insert_duration,
+    get_duplicate_check_duration,
+    get_embedding_duration,
+    get_weaviate_insert_duration,
 )
 from src.pipelines.indexing_pipeline import (
     BasicTextCleaner,
@@ -79,10 +78,7 @@ class BatchEmbedder:
         all_embeddings = []
 
         # Process in batches
-        with (
-            track_latency(embedding_duration, None),
-            trace_embedding_generation(model=self.model, chunk_count=len(texts), total_tokens=None) as embed_span,
-        ):
+        with track_latency(get_embedding_duration(), {}):
             for i in range(0, len(texts), self.batch_size):
                 batch = texts[i : i + self.batch_size]
                 logger.debug(f"Generating embeddings for batch {i // self.batch_size + 1} ({len(batch)} texts)")
@@ -92,8 +88,6 @@ class BatchEmbedder:
                     model=self.model,
                 )
                 all_embeddings.extend(embeddings)
-
-            embed_span.set_attribute("embedding.batch_count", (len(texts) + self.batch_size - 1) // self.batch_size)
 
         return all_embeddings
 
@@ -152,7 +146,7 @@ class WeaviateBatchInserter:
         # Batch insert with metrics and tracing
         logger.debug(f"Inserting {len(objects)} chunks into Weaviate collection {self.collection_name}")
         with (
-            track_latency(weaviate_insert_duration, None),
+            track_latency(get_weaviate_insert_duration(), {}),
             trace_database_operation("insert", "weaviate", self.collection_name) as db_span,
             collection.batch.dynamic() as batch,
         ):
@@ -349,7 +343,7 @@ class DocumentIndexer:
 
             # Query for existing chunks with this doc_id (async) with metrics
             with (
-                track_latency(duplicate_check_duration, None),
+                track_latency(get_duplicate_check_duration(), {}),
                 trace_document_processing(document_id, "duplicate_check") as dup_span,
             ):
                 existing = await asyncio.to_thread(

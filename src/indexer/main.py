@@ -15,16 +15,20 @@ from threading import Thread
 from types import FrameType
 from typing import cast
 
+from opentelemetry import context, trace
+
+from src.common.metrics import track_latency
 from src.common.otel_metrics import init_otel_metrics, shutdown_otel_metrics
 from src.common.tracing import init_tracing, shutdown_tracing
 from src.indexer.config import IndexerConfig
 from src.indexer.consumer import DocumentEventConsumer
 from src.indexer.metrics import (
-    active_documents,
-    chunks_created_total,
-    documents_processed_total,
-    errors_total,
-    processing_duration,
+    dec_active_documents,
+    get_processing_duration,
+    inc_active_documents,
+    inc_chunks_created_total,
+    inc_documents_processed_total,
+    inc_errors_total,
 )
 from src.indexer.processor import DocumentIndexer
 
@@ -180,23 +184,40 @@ class IndexerService:
 
         # Process events
         try:
-            async for event in self.consumer.consume():
+            async for event, trace_ctx in self.consumer.consume():
                 namespace = event["namespace"] if "namespace" in event else "default"
-                active_documents.inc()
+                inc_active_documents()
 
-                with processing_duration.labels(namespace=namespace).time():
-                    try:
-                        result = await self.indexer.process_event(event)
-                        documents_processed_total.labels(status="success", namespace=namespace).inc()
-                        # Record chunks created if available
-                        if result and "chunks_created" in result:
-                            chunks_created_total.labels(namespace=namespace).inc(result["chunks_created"])
-                    except Exception as e:
-                        logger.error(f"Failed to process event: {e}", exc_info=True)
-                        documents_processed_total.labels(status="error", namespace=namespace).inc()
-                        errors_total.labels(stage="processing", error_type=type(e).__name__).inc()
-                    finally:
-                        active_documents.dec()
+                # Attach trace context from Kafka message to link with producer span
+                ctx = trace_ctx if trace_ctx else context.get_current()
+                tracer = trace.get_tracer(__name__)
+
+                with tracer.start_as_current_span(
+                    "indexer.process_document",
+                    context=ctx,
+                    kind=trace.SpanKind.CONSUMER,
+                ) as span:
+                    span.set_attribute("messaging.system", "kafka")
+                    span.set_attribute("messaging.operation", "consume")
+                    doc_id = event["document_id"] if "document_id" in event else "unknown"
+                    span.set_attribute("document.id", doc_id)
+                    span.set_attribute("document.namespace", namespace)
+
+                    with track_latency(get_processing_duration(), {"namespace": namespace}):
+                        try:
+                            result = await self.indexer.process_event(event)
+                            inc_documents_processed_total(status="success", namespace=namespace)
+                            # Record chunks created if available
+                            if result and "chunks_created" in result:
+                                inc_chunks_created_total(namespace=namespace, count=result["chunks_created"])
+                                span.set_attribute("document.chunks_created", result["chunks_created"])
+                        except Exception as e:
+                            logger.error(f"Failed to process event: {e}", exc_info=True)
+                            inc_documents_processed_total(status="error", namespace=namespace)
+                            inc_errors_total(stage="processing", error_type=type(e).__name__)
+                            span.record_exception(e)
+                        finally:
+                            dec_active_documents()
 
         except asyncio.CancelledError:
             logger.info("Indexer task cancelled")
