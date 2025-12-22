@@ -22,11 +22,13 @@ class TestBatchEmbedder:
         embedder = BatchEmbedder(
             client=mock_client,
             model="text-embedding-3-small",
+            namespace="test",
             batch_size=32,
         )
 
         assert embedder.client == mock_client
         assert embedder.model == "text-embedding-3-small"
+        assert embedder.namespace == "test"
         assert embedder.batch_size == 32
 
     def test_generate_empty_input(self):
@@ -35,6 +37,7 @@ class TestBatchEmbedder:
         embedder = BatchEmbedder(
             client=mock_client,
             model="test-model",
+            namespace="test",
             batch_size=10,
         )
 
@@ -54,6 +57,7 @@ class TestBatchEmbedder:
         embedder = BatchEmbedder(
             client=mock_client,
             model="test-model",
+            namespace="test",
             batch_size=10,
         )
 
@@ -67,6 +71,7 @@ class TestBatchEmbedder:
         mock_client.embed_batch.assert_called_once_with(
             texts=texts,
             model="test-model",
+            namespace="test",
         )
 
     def test_generate_multiple_batches(self):
@@ -82,6 +87,7 @@ class TestBatchEmbedder:
         embedder = BatchEmbedder(
             client=mock_client,
             model="test-model",
+            namespace="test",
             batch_size=2,  # Small batch size to force multiple batches
         )
 
@@ -110,6 +116,7 @@ class TestBatchEmbedder:
         embedder = BatchEmbedder(
             client=mock_client,
             model="test-model",
+            namespace="test",
             batch_size=3,
         )
 
@@ -277,13 +284,10 @@ class TestDocumentIndexer:
             minio_secret_key="minioadmin123",
             minio_secure=False,
             weaviate_url="http://weaviate:8080",
-            weaviate_class="TestCollection",
             embedding_service_addr="embedding-service:50051",
-            embedding_model="test-model",
             kafka_bootstrap="kafka:9092",
             kafka_topic="test-topic",
             batch_size=10,
-            chunk_size=500,
         )
 
         mock_client_instance = Mock()
@@ -310,13 +314,10 @@ class TestDocumentIndexer:
             minio_secret_key="minioadmin123",
             minio_secure=False,
             weaviate_url="http://weaviate:8080",
-            weaviate_class="TestCollection",
             embedding_service_addr="embedding-service:50051",
-            embedding_model="test-model",
             kafka_bootstrap="kafka:9092",
             kafka_topic="test-topic",
             batch_size=10,
-            chunk_size=500,
         )
 
         mock_client_instance = Mock()
@@ -344,13 +345,10 @@ class TestDocumentIndexer:
             minio_secret_key="minioadmin123",
             minio_secure=False,
             weaviate_url="http://weaviate:8080",
-            weaviate_class="TestCollection",
             embedding_service_addr="embedding-service:50051",
-            embedding_model="test-model",
             kafka_bootstrap="kafka:9092",
             kafka_topic="test-topic",
             batch_size=10,
-            chunk_size=500,
         )
 
         mock_client_instance = Mock()
@@ -404,13 +402,10 @@ class TestDocumentIndexer:
             minio_secret_key="minioadmin123",
             minio_secure=False,
             weaviate_url="http://weaviate:8080",
-            weaviate_class="TestCollection",
             embedding_service_addr="embedding-service:50051",
-            embedding_model="test-model",
             kafka_bootstrap="kafka:9092",
             kafka_topic="test-topic",
             batch_size=10,
-            chunk_size=500,
         )
 
         mock_client_instance = Mock()
@@ -438,7 +433,7 @@ class TestDocumentIndexer:
         event = {
             "event_type": "document.ingested",
             "document_id": "doc123",
-            "namespace": "test",
+            "namespace": "nutritionfacts",
             "minio_bucket": "documents",
             "minio_key": "doc123.json",
         }
@@ -463,13 +458,10 @@ class TestDocumentIndexer:
             minio_secret_key="minioadmin123",
             minio_secure=False,
             weaviate_url="http://weaviate:8080",
-            weaviate_class="TestCollection",
             embedding_service_addr="embedding-service:50051",
-            embedding_model="test-model",
             kafka_bootstrap="kafka:9092",
             kafka_topic="test-topic",
             batch_size=10,
-            chunk_size=500,
         )
 
         mock_client_instance = Mock()
@@ -553,13 +545,10 @@ class TestDocumentIndexer:
             minio_secret_key="minioadmin123",
             minio_secure=False,
             weaviate_url="http://weaviate:8080",
-            weaviate_class="TestCollection",
             embedding_service_addr="embedding-service:50051",
-            embedding_model="test-model",
             kafka_bootstrap="kafka:9092",
             kafka_topic="test-topic",
             batch_size=10,
-            chunk_size=500,
         )
 
         mock_client_instance = Mock()
@@ -602,13 +591,10 @@ class TestDocumentIndexer:
             minio_secret_key="minioadmin123",
             minio_secure=False,
             weaviate_url="http://weaviate:8080",
-            weaviate_class="TestCollection",
             embedding_service_addr="embedding-service:50051",
-            embedding_model="test-model",
             kafka_bootstrap="kafka:9092",
             kafka_topic="test-topic",
             batch_size=10,
-            chunk_size=500,
         )
 
         mock_client_instance = Mock()
@@ -650,7 +636,7 @@ class TestDocumentIndexer:
         event = {
             "event_type": "document.ingested",
             "document_id": "doc123",
-            "namespace": "test",
+            "namespace": "nutritionfacts",
             "minio_bucket": "documents",
             "minio_key": "doc123.json",
         }
@@ -679,13 +665,10 @@ class TestDocumentIndexer:
             minio_secret_key="minioadmin123",
             minio_secure=False,
             weaviate_url="http://weaviate:8080",
-            weaviate_class="TestCollection",
             embedding_service_addr="embedding-service:50051",
-            embedding_model="test-model",
             kafka_bootstrap="kafka:9092",
             kafka_topic="test-topic",
             batch_size=10,
-            chunk_size=500,
         )
 
         mock_client_instance = Mock()
@@ -706,7 +689,7 @@ class TestDocumentIndexer:
         event = {
             "event_type": "document.ingested",
             "document_id": "doc123",
-            "namespace": "test",
+            "namespace": "nutritionfacts",
             "minio_bucket": "documents",
             "minio_key": "doc123.json",
         }

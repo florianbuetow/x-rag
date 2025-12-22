@@ -1,5 +1,7 @@
 """Tests for Search Service gRPC server implementation."""
 
+from unittest.mock import Mock
+
 import grpc
 import pytest
 
@@ -11,46 +13,64 @@ from tests.conftest import GrpcAbortException
 class TestSearchServicerInit:
     """Tests for SearchServicer initialization."""
 
-    def test_initialization_with_pipeline_and_config(
+    def test_initialization_with_embedding_client_and_config(
         self,
-        mock_search_pipeline,
+        mock_embedding_service_client,
         search_service_config,
     ):
-        """Servicer initializes with SearchPipeline and config."""
+        """Servicer initializes with EmbeddingServiceClient and config."""
         servicer = SearchServicer(
-            pipeline=mock_search_pipeline,
+            embedding_client=mock_embedding_service_client,
             config=search_service_config,
         )
 
-        assert servicer.pipeline is mock_search_pipeline
+        assert servicer.embedding_client is mock_embedding_service_client
         assert servicer.config is search_service_config
+        assert isinstance(servicer._pipeline_cache, dict)
+        assert isinstance(servicer._retriever_cache, dict)
+        assert isinstance(servicer._llm_cache, dict)
 
     def test_initialization_stores_config_values(
         self,
-        mock_search_pipeline,
+        mock_embedding_service_client,
         search_service_config,
     ):
         """Servicer has access to configuration values."""
         servicer = SearchServicer(
-            pipeline=mock_search_pipeline,
+            embedding_client=mock_embedding_service_client,
             config=search_service_config,
         )
 
-        assert servicer.config.default_top_k == 10
-        assert servicer.config.default_mode == "hybrid"
-        assert servicer.config.hybrid_alpha == 0.5
+        # Config values are now loaded from datasets_config.yaml per namespace
+        # Just verify the servicer stores the config
+        assert servicer.config is search_service_config
 
 
 class TestSearchMethod:
     """Tests for Search gRPC method."""
 
     @pytest.fixture
-    def servicer(self, mock_search_pipeline, search_service_config):
+    def servicer(self, mock_embedding_service_client, mock_search_pipeline, search_service_config):
         """Create a SearchServicer instance for testing."""
-        return SearchServicer(
-            pipeline=mock_search_pipeline,
+        servicer = SearchServicer(
+            embedding_client=mock_embedding_service_client,
             config=search_service_config,
         )
+        # Mock _get_pipeline to return our mock pipeline
+        servicer._get_pipeline = Mock(return_value=mock_search_pipeline)
+        # For backward compatibility with tests, expose pipeline attribute
+        servicer.pipeline = mock_search_pipeline
+
+        # Mock datasets_loader.get_dataset_config
+        mock_dataset_config = Mock()
+        mock_dataset_config.search.default_top_k = 10
+        mock_dataset_config.search.default_mode = "hybrid"
+        mock_dataset_config.search.hybrid_alpha = 0.5
+        mock_dataset_config.llm.max_tokens = 500
+        mock_dataset_config.llm.temperature = 0.7
+        servicer.datasets_loader.get_dataset_config = Mock(return_value=mock_dataset_config)
+
+        return servicer
 
     @pytest.mark.asyncio
     async def test_search_empty_query_aborts(
@@ -448,20 +468,58 @@ class TestHealthCheckMethod:
     """Tests for HealthCheck gRPC method."""
 
     @pytest.fixture
-    def servicer(self, mock_search_pipeline, search_service_config):
+    def servicer(self, mock_embedding_service_client, mock_search_pipeline, search_service_config):
         """Create a SearchServicer instance for testing."""
-        return SearchServicer(
-            pipeline=mock_search_pipeline,
+        servicer = SearchServicer(
+            embedding_client=mock_embedding_service_client,
             config=search_service_config,
         )
+        # Mock _get_pipeline to return our mock pipeline
+        servicer._get_pipeline = Mock(return_value=mock_search_pipeline)
+        # For backward compatibility with tests, expose pipeline attribute
+        servicer.pipeline = mock_search_pipeline
+
+        # Mock datasets_loader.get_dataset_config
+        mock_dataset_config = Mock()
+        mock_dataset_config.search.default_top_k = 10
+        mock_dataset_config.search.default_mode = "hybrid"
+        mock_dataset_config.search.hybrid_alpha = 0.5
+        mock_dataset_config.llm.max_tokens = 500
+        mock_dataset_config.llm.temperature = 0.7
+        servicer.datasets_loader.get_dataset_config = Mock(return_value=mock_dataset_config)
+
+        # Populate caches for health check tests
+        servicer._retriever_cache["default"] = mock_search_pipeline.retriever
+        servicer._llm_cache["default"] = mock_search_pipeline.llm_client
+
+        return servicer
 
     @pytest.fixture
-    def servicer_dev_mode(self, mock_search_pipeline, search_service_config_dev_mode):
+    def servicer_dev_mode(self, mock_embedding_service_client, mock_search_pipeline, search_service_config_dev_mode):
         """Create a SearchServicer with dev mode config."""
-        return SearchServicer(
-            pipeline=mock_search_pipeline,
+        servicer = SearchServicer(
+            embedding_client=mock_embedding_service_client,
             config=search_service_config_dev_mode,
         )
+        # Mock _get_pipeline to return our mock pipeline
+        servicer._get_pipeline = Mock(return_value=mock_search_pipeline)
+        # For backward compatibility with tests, expose pipeline attribute
+        servicer.pipeline = mock_search_pipeline
+
+        # Mock datasets_loader.get_dataset_config
+        mock_dataset_config = Mock()
+        mock_dataset_config.search.default_top_k = 10
+        mock_dataset_config.search.default_mode = "hybrid"
+        mock_dataset_config.search.hybrid_alpha = 0.5
+        mock_dataset_config.llm.max_tokens = 500
+        mock_dataset_config.llm.temperature = 0.7
+        servicer.datasets_loader.get_dataset_config = Mock(return_value=mock_dataset_config)
+
+        # Populate caches for health check tests
+        servicer._retriever_cache["default"] = mock_search_pipeline.retriever
+        servicer._llm_cache["default"] = mock_search_pipeline.llm_client
+
+        return servicer
 
     @pytest.mark.asyncio
     async def test_health_check_all_healthy(
@@ -478,7 +536,7 @@ class TestHealthCheckMethod:
         assert response.status == common_pb2.HealthCheckResponse.HEALTHY
         assert response.dependencies["weaviate"] == "HEALTHY"
         assert response.dependencies["embedding_service"] == "HEALTHY"
-        assert response.dependencies["openai"] == "HEALTHY"
+        assert response.dependencies["llm"] == "HEALTHY"
         assert "healthy" in response.message.lower()
 
     @pytest.mark.asyncio
@@ -505,7 +563,7 @@ class TestHealthCheckMethod:
         mock_async_grpc_context,
     ):
         """Embedding service unhealthy returns UNHEALTHY (critical)."""
-        servicer.pipeline.embedding_client.health_check.return_value = False
+        servicer.embedding_client.health_check.return_value = False
 
         request = common_pb2.HealthCheckRequest()
 
@@ -527,9 +585,9 @@ class TestHealthCheckMethod:
 
         response = await servicer.HealthCheck(request, mock_async_grpc_context)
 
-        # OpenAI is critical when using a real key
+        # LLM is critical when using a real key
         assert response.status == common_pb2.HealthCheckResponse.UNHEALTHY
-        assert response.dependencies["openai"] == "UNHEALTHY"
+        assert response.dependencies["llm"] == "UNHEALTHY"
 
     @pytest.mark.asyncio
     async def test_health_check_openai_unhealthy_dev_mode(
@@ -544,10 +602,9 @@ class TestHealthCheckMethod:
 
         response = await servicer_dev_mode.HealthCheck(request, mock_async_grpc_context)
 
-        # OpenAI is non-critical with placeholder key
-        assert response.status == common_pb2.HealthCheckResponse.HEALTHY
-        assert response.dependencies["openai"] == "UNHEALTHY"
-        assert "dev mode" in response.message.lower()
+        # LLM health check passes even if unhealthy (all dependencies are critical now)
+        assert response.status == common_pb2.HealthCheckResponse.UNHEALTHY
+        assert response.dependencies["llm"] == "UNHEALTHY"
 
     @pytest.mark.asyncio
     async def test_health_check_weaviate_exception(
@@ -572,7 +629,7 @@ class TestHealthCheckMethod:
         mock_async_grpc_context,
     ):
         """Exception during Embedding Service health check returns UNHEALTHY."""
-        servicer.pipeline.embedding_client.health_check.side_effect = RuntimeError("gRPC error")
+        servicer.embedding_client.health_check.side_effect = RuntimeError("gRPC error")
 
         request = common_pb2.HealthCheckRequest()
 
@@ -587,16 +644,16 @@ class TestHealthCheckMethod:
         servicer_dev_mode,
         mock_async_grpc_context,
     ):
-        """Exception during OpenAI health check in dev mode returns HEALTHY."""
+        """Exception during LLM health check returns UNHEALTHY."""
         servicer_dev_mode.pipeline.llm_client.health_check.side_effect = RuntimeError("API error")
 
         request = common_pb2.HealthCheckRequest()
 
         response = await servicer_dev_mode.HealthCheck(request, mock_async_grpc_context)
 
-        # OpenAI exception with placeholder key doesn't affect overall status
-        assert response.status == common_pb2.HealthCheckResponse.HEALTHY
-        assert response.dependencies["openai"] == "UNHEALTHY"
+        # LLM exception affects overall status
+        assert response.status == common_pb2.HealthCheckResponse.UNHEALTHY
+        assert response.dependencies["llm"] == "UNHEALTHY"
 
     @pytest.mark.asyncio
     async def test_health_check_multiple_failures(
@@ -606,7 +663,7 @@ class TestHealthCheckMethod:
     ):
         """Multiple dependency failures still returns UNHEALTHY."""
         servicer.pipeline.retriever.health_check.return_value = False
-        servicer.pipeline.embedding_client.health_check.return_value = False
+        servicer.embedding_client.health_check.return_value = False
         servicer.pipeline.llm_client.health_check.return_value = False
 
         request = common_pb2.HealthCheckRequest()
@@ -616,7 +673,7 @@ class TestHealthCheckMethod:
         assert response.status == common_pb2.HealthCheckResponse.UNHEALTHY
         assert response.dependencies["weaviate"] == "UNHEALTHY"
         assert response.dependencies["embedding_service"] == "UNHEALTHY"
-        assert response.dependencies["openai"] == "UNHEALTHY"
+        assert response.dependencies["llm"] == "UNHEALTHY"
 
     @pytest.mark.asyncio
     async def test_health_check_unexpected_exception(
@@ -645,20 +702,50 @@ class TestHelperMethods:
     """Tests for private helper methods extracted during refactoring."""
 
     @pytest.fixture
-    def servicer(self, mock_search_pipeline, search_service_config):
+    def servicer(self, mock_embedding_service_client, mock_search_pipeline, search_service_config):
         """Create a SearchServicer instance for testing."""
-        return SearchServicer(
-            pipeline=mock_search_pipeline,
+        servicer = SearchServicer(
+            embedding_client=mock_embedding_service_client,
             config=search_service_config,
         )
+        # Mock _get_pipeline to return our mock pipeline
+        servicer._get_pipeline = Mock(return_value=mock_search_pipeline)
+        # For backward compatibility with tests, expose pipeline attribute
+        servicer.pipeline = mock_search_pipeline
+
+        # Mock datasets_loader.get_dataset_config
+        mock_dataset_config = Mock()
+        mock_dataset_config.search.default_top_k = 10
+        mock_dataset_config.search.default_mode = "hybrid"
+        mock_dataset_config.search.hybrid_alpha = 0.5
+        mock_dataset_config.llm.max_tokens = 500
+        mock_dataset_config.llm.temperature = 0.7
+        servicer.datasets_loader.get_dataset_config = Mock(return_value=mock_dataset_config)
+
+        return servicer
 
     @pytest.fixture
-    def servicer_dev_mode(self, mock_search_pipeline, search_service_config_dev_mode):
+    def servicer_dev_mode(self, mock_embedding_service_client, mock_search_pipeline, search_service_config_dev_mode):
         """Create a SearchServicer with dev mode config."""
-        return SearchServicer(
-            pipeline=mock_search_pipeline,
+        servicer = SearchServicer(
+            embedding_client=mock_embedding_service_client,
             config=search_service_config_dev_mode,
         )
+        # Mock _get_pipeline to return our mock pipeline
+        servicer._get_pipeline = Mock(return_value=mock_search_pipeline)
+        # For backward compatibility with tests, expose pipeline attribute
+        servicer.pipeline = mock_search_pipeline
+
+        # Mock datasets_loader.get_dataset_config
+        mock_dataset_config = Mock()
+        mock_dataset_config.search.default_top_k = 10
+        mock_dataset_config.search.default_mode = "hybrid"
+        mock_dataset_config.search.hybrid_alpha = 0.5
+        mock_dataset_config.llm.max_tokens = 500
+        mock_dataset_config.llm.temperature = 0.7
+        servicer.datasets_loader.get_dataset_config = Mock(return_value=mock_dataset_config)
+
+        return servicer
 
     # Tests for _build_search_response
     def test_build_search_response_basic(self, servicer, sample_search_result):
@@ -721,53 +808,6 @@ class TestHelperMethods:
         assert source_meta["count"] == "42"
         assert source_meta["active"] == "True"
         assert source_meta["ratio"] == "3.14"
-
-    # Tests for _determine_health_status
-    def test_determine_health_status_all_healthy(self, servicer):
-        """All healthy returns HEALTHY status."""
-        status, message = servicer._determine_health_status(
-            all_critical_healthy=True,
-            openai_is_critical=True,
-            openai_ok=True,
-        )
-
-        assert status == common_pb2.HealthCheckResponse.HEALTHY
-        assert "healthy" in message.lower()
-        assert "dev mode" not in message.lower()
-
-    def test_determine_health_status_critical_unhealthy(self, servicer):
-        """Critical dependency unhealthy returns UNHEALTHY status."""
-        status, message = servicer._determine_health_status(
-            all_critical_healthy=False,
-            openai_is_critical=True,
-            openai_ok=True,
-        )
-
-        assert status == common_pb2.HealthCheckResponse.UNHEALTHY
-        assert "unhealthy" in message.lower()
-
-    def test_determine_health_status_dev_mode_openai_down(self, servicer):
-        """Dev mode with OpenAI down returns HEALTHY with dev mode message."""
-        status, message = servicer._determine_health_status(
-            all_critical_healthy=True,
-            openai_is_critical=False,
-            openai_ok=False,
-        )
-
-        assert status == common_pb2.HealthCheckResponse.HEALTHY
-        assert "dev mode" in message.lower()
-
-    def test_determine_health_status_dev_mode_all_ok(self, servicer):
-        """Dev mode with all ok returns HEALTHY without dev mode message."""
-        status, message = servicer._determine_health_status(
-            all_critical_healthy=True,
-            openai_is_critical=False,
-            openai_ok=True,
-        )
-
-        assert status == common_pb2.HealthCheckResponse.HEALTHY
-        # When OpenAI is ok, no need to mention dev mode
-        assert "Search service is healthy" in message
 
     # Tests for _check_dependency
     @pytest.mark.asyncio
@@ -841,40 +881,3 @@ class TestHelperMethods:
 
         assert status == "UNHEALTHY"
         assert healthy is False
-
-    # Tests for _parse_alpha
-    @pytest.mark.asyncio
-    async def test_parse_alpha_default(self, servicer, mock_async_grpc_context):
-        """_parse_alpha returns config default when not specified."""
-        request = search_pb2.SearchRequest(query="test")
-
-        alpha = await servicer._parse_alpha(request, mock_async_grpc_context)
-
-        assert alpha == 0.5  # Default from config
-
-    @pytest.mark.asyncio
-    async def test_parse_alpha_valid_value(self, servicer, mock_async_grpc_context):
-        """_parse_alpha parses valid alpha value."""
-        request = search_pb2.SearchRequest(query="test", options={"alpha": "0.8"})
-
-        alpha = await servicer._parse_alpha(request, mock_async_grpc_context)
-
-        assert alpha == 0.8
-
-    @pytest.mark.asyncio
-    async def test_parse_alpha_boundary_zero(self, servicer, mock_async_grpc_context):
-        """_parse_alpha accepts alpha=0.0."""
-        request = search_pb2.SearchRequest(query="test", options={"alpha": "0.0"})
-
-        alpha = await servicer._parse_alpha(request, mock_async_grpc_context)
-
-        assert alpha == 0.0
-
-    @pytest.mark.asyncio
-    async def test_parse_alpha_boundary_one(self, servicer, mock_async_grpc_context):
-        """_parse_alpha accepts alpha=1.0."""
-        request = search_pb2.SearchRequest(query="test", options={"alpha": "1.0"})
-
-        alpha = await servicer._parse_alpha(request, mock_async_grpc_context)
-
-        assert alpha == 1.0

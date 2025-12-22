@@ -307,31 +307,18 @@ def test_indexer_config_getters():
     assert isinstance(minio_config, MinIOConfig)
     assert minio_config.minio_endpoint == "http://minio:9000"
 
-    # Test Weaviate config getter
-    weaviate_config = config.get_weaviate_config()
-    assert isinstance(weaviate_config, WeaviateConfig)
-    assert weaviate_config.weaviate_url == "http://weaviate:8080"
+    # Weaviate config is now per-dataset in datasets_config.yaml, not in IndexerConfig
 
 
 def test_indexer_config_validation():
     """Test IndexerConfig validation."""
     config = IndexerConfig(
         service_name="test-indexer",
-        chunk_size=100,
-        chunk_overlap=50,
     )
     result = config.validate_config()
     assert result["valid"] is True
 
-    # Test invalid chunk_overlap
-    config = IndexerConfig(
-        service_name="test-indexer",
-        chunk_size=100,
-        chunk_overlap=150,  # Invalid: overlap >= size
-    )
-    result = config.validate_config()
-    assert result["valid"] is False
-    assert any("chunk_overlap" in err for err in result["errors"])
+    # Chunking config (chunk_size, chunk_overlap) is now per-dataset in datasets_config.yaml
 
 
 def test_ingestion_api_config_getters():
@@ -360,20 +347,9 @@ def test_search_service_config_getters():
     """Test SearchServiceConfig getter methods."""
     config = SearchServiceConfig(
         service_name="test-search",
-        openai_api_key="sk-test-key",
-        weaviate_url="http://weaviate:8080",
     )
 
-    # Test Weaviate config getter
-    weaviate_config = config.get_weaviate_config()
-    assert isinstance(weaviate_config, WeaviateConfig)
-    assert weaviate_config.weaviate_url == "http://weaviate:8080"
-
-    # Test OpenAI config getter
-    openai_config = config.get_openai_config()
-    assert isinstance(openai_config, OpenAIConfig)
-    assert openai_config.openai_api_key == "sk-test-key"
-
-    # Test LLM config getter (should use OpenAI config internally)
-    llm_config = config.get_llm_config()
-    assert llm_config.api_key == "sk-test-key"
+    # Weaviate, LLM, and OpenAI configs are now per-dataset in datasets_config.yaml
+    # SearchServiceConfig is now just infrastructure settings
+    assert config.service_name == "test-search"
+    assert config.datasets_config_path == "config/datasets_config.yaml"

@@ -128,6 +128,15 @@ def mock_search_pipeline():
 
 
 @pytest.fixture
+def mock_embedding_service_client():
+    """Mock EmbeddingServiceClient for Search Service tests."""
+    client = AsyncMock()
+    client.health_check = AsyncMock(return_value=True)
+    client.embed = AsyncMock(return_value=[0.1] * 384)  # Mock embedding vector
+    return client
+
+
+@pytest.fixture
 def search_service_config():
     """Search service configuration fixture."""
     from src.search_service.config import SearchServiceConfig
@@ -202,6 +211,59 @@ def mock_embedding_generator():
     )
     generator.get_dimension = Mock(return_value=1536)
     return generator
+
+
+@pytest.fixture
+def mock_dataset_config():
+    """Mock DatasetConfig for testing."""
+    config = Mock()
+
+    # Embedding config
+    config.embedding = Mock()
+    config.embedding.provider = "hash_based"
+    config.embedding.model = "text-embedding-3-small"
+    config.embedding.dimension = 1536
+    config.embedding.to_embedding_config.return_value = Mock(
+        provider=Mock(value="hash_based"),
+        model="text-embedding-3-small",
+        dimension=1536,
+    )
+
+    # LLM config
+    config.llm = Mock()
+    config.llm.max_tokens = 500
+    config.llm.temperature = 0.7
+
+    # Search config
+    config.search = Mock()
+    config.search.default_top_k = 10
+    config.search.default_mode = "hybrid"
+    config.search.hybrid_alpha = 0.5
+
+    return config
+
+
+@pytest.fixture
+def mock_datasets_loader(mock_dataset_config):
+    """Mock DatasetsConfigLoader for testing."""
+    loader = Mock()
+    loader.list_namespaces.return_value = ["test"]
+    loader.get_dataset_config.return_value = mock_dataset_config
+    loader.has_dataset.return_value = True
+    return loader
+
+
+@pytest.fixture
+def embedding_service_config():
+    """Embedding service configuration fixture."""
+    from src.embedding_service.config import EmbeddingServiceConfig
+
+    return EmbeddingServiceConfig(
+        service_name="embedding-service",
+        port=50051,
+        enable_reflection=True,
+        datasets_config_path="config/datasets_config.yaml",
+    )
 
 
 # ============================================
