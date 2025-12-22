@@ -1,0 +1,88 @@
+# Dataset Configuration
+# Single source of truth for all dataset-specific settings
+#
+# Each dataset (namespace) has its own configuration for:
+# - Embedding model and provider
+# - LLM model and provider
+# - Chunking strategy
+# - Search defaults
+# - Weaviate collection name
+
+# Global defaults (inherited by all datasets)
+defaults:
+  embedding:
+    provider: hash_based
+    dimension: 1024
+    timeout: 30
+    max_retries: 3
+    batch_size: 50
+
+  llm:
+    provider: openai
+    model: gpt-4o-mini
+    max_tokens: 500
+    temperature: 0.7
+    timeout: 60
+    max_retries: 3
+
+  chunking:
+    chunk_size: 100
+    chunk_overlap: 50
+    cleaner_remove_empty_lines: true
+    cleaner_remove_extra_whitespaces: true
+    cleaner_unicode_normalization: NFC
+
+  search:
+    default_top_k: 10
+    default_mode: hybrid
+    hybrid_alpha: 0.5
+    max_context_length: 4000
+
+# Per-dataset configurations
+datasets:
+  nutritionfacts:
+    # Dataset metadata
+    description: "NutritionFacts.org - Video Transcripts"
+    namespace: nutritionfacts
+
+    # Data paths
+    input_path: data/input/nutritionfacts.org
+    qa_output_base: data/output/nutritionfacts.org
+    eval_output_base: data/eval/nutritionfacts.org
+
+    # Weaviate collection (separate collection per dataset)
+    weaviate:
+      collection: DocumentChunk_nutritionfacts
+
+    # Embedding configuration
+    embedding:
+      provider: local
+      model: text-embedding-bge-large-en-v1.5
+      base_url_env: OPENAI_API_BASE  # Reference to env var
+      api_key_env: OPENAI_API_KEY    # Reference to env var
+      dimension: 1024
+      batch_size: 50
+
+    # LLM configuration
+    llm:
+      provider: local
+      model: qwen2.5-7b-instruct-mlx
+      base_url_env: OPENAI_API_BASE
+      api_key_env: OPENAI_API_KEY
+      max_tokens: 500
+      temperature: 0.7
+
+    # Chunking configuration
+    chunking:
+      chunk_size: 100
+      chunk_overlap: 50
+      cleaner_remove_empty_lines: true
+      cleaner_remove_extra_whitespaces: true
+      cleaner_unicode_normalization: NFC
+
+    # Search configuration
+    search:
+      default_top_k: 10
+      default_mode: hybrid
+      hybrid_alpha: 0.5
+      max_context_length: 4000

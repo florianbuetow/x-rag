@@ -16,11 +16,7 @@ from opentelemetry.instrumentation.grpc import GrpcAioInstrumentorServer
 
 from src.common.otel_metrics import init_otel_metrics, shutdown_otel_metrics
 from src.common.tracing import init_tracing, shutdown_tracing
-from src.llm.factory import create_llm_client
-from src.llm.openai_client import OpenAIClient
-from src.pipelines.search_pipeline import SearchPipeline
 from src.proto_gen import search_pb2_grpc
-from src.retrievers.weaviate_retriever import WeaviateRetriever
 from src.search_service.config import SearchServiceConfig
 from src.search_service.grpc_clients import EmbeddingServiceClient
 from src.search_service.server import SearchServicer
@@ -48,10 +44,7 @@ class SearchServiceRunner:
         self.shutdown_event = asyncio.Event()
 
         # Component references for cleanup
-        self.retriever: WeaviateRetriever | None = None
         self.embedding_client: EmbeddingServiceClient | None = None
-        self.llm_client: OpenAIClient | None = None
-        self.pipeline: SearchPipeline | None = None
 
         # Configure logging level
         logging.getLogger().setLevel(config.log_level)
@@ -79,15 +72,7 @@ class SearchServiceRunner:
         # Initialize components
         logger.info("Initializing components...")
 
-        # 1. Weaviate retriever
-        logger.info(f"Connecting to Weaviate at {self.config.weaviate_url}")
-        self.retriever = WeaviateRetriever(
-            weaviate_url=self.config.weaviate_url,
-            collection_name=self.config.weaviate_collection,
-        )
-        self.retriever.connect()
-
-        # 2. Embedding Service client
+        # 1. Embedding Service client (shared, namespace-aware)
         logger.info(f"Connecting to Embedding Service at {self.config.embedding_service_addr}")
         self.embedding_client = EmbeddingServiceClient(
             address=self.config.embedding_service_addr,
@@ -95,22 +80,12 @@ class SearchServiceRunner:
         )
         await self.embedding_client.connect()
 
-        # 3. LLM client (OpenAI or local LLM via factory)
-        llm_config = self.config.get_llm_config()
-        logger.info(f"Initializing LLM client (provider={llm_config.provider.value}, model={llm_config.model})")
-        self.llm_client = create_llm_client(llm_config)
-
-        # 4. Search pipeline
-        logger.info("Creating search pipeline...")
-        self.pipeline = SearchPipeline(
-            retriever=self.retriever,
+        # Create servicer (will create namespace-specific pipelines on-demand)
+        servicer = SearchServicer(
             embedding_client=self.embedding_client,
-            llm_client=self.llm_client,
-            max_context_length=self.config.max_context_length,
+            config=self.config,
+            datasets_config_path=self.config.datasets_config_path,
         )
-
-        # Create servicer
-        servicer = SearchServicer(pipeline=self.pipeline, config=self.config)
 
         # Create gRPC server
         self.server = grpc.aio.server(
@@ -146,10 +121,7 @@ class SearchServiceRunner:
         await self.server.start()
 
         logger.info(f"✓ {self.config.service_name} listening on {listen_addr}")
-        logger.info(f"Default search mode: {self.config.default_mode}")
-        logger.info(f"Default top_k: {self.config.default_top_k}")
-        logger.info(f"OpenAI model: {self.config.openai_model}")
-        logger.info("Ready to serve requests")
+        logger.info("Namespace-aware search service ready to serve requests")
 
         # Wait for shutdown signal
         await self.shutdown_event.wait()
@@ -166,18 +138,9 @@ class SearchServiceRunner:
         if self.server:
             await self.server.stop(grace=5.0)
 
-        # Close components
-        if self.pipeline:
-            await self.pipeline.close()
-
-        if self.llm_client:
-            await self.llm_client.close()
-
+        # Close embedding client
         if self.embedding_client:
             await self.embedding_client.close()
-
-        if self.retriever:
-            self.retriever.close()
 
         logger.info("Server stopped")
 

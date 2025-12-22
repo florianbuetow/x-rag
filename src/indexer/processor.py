@@ -15,11 +15,13 @@ import weaviate
 from weaviate import WeaviateClient
 from weaviate.classes.init import AdditionalConfig, Timeout
 
+from src.common.dataset_config import DatasetsConfigLoader
 from src.common.metrics import track_latency
 from src.common.tracing_utils import (
     trace_database_operation,
     trace_document_processing,
 )
+from src.core.errors import ConfigurationError
 from src.indexer.config import IndexerConfig
 from src.indexer.grpc_clients import EmbeddingServiceClient as GrpcEmbeddingServiceClient
 from src.indexer.metrics import (
@@ -43,28 +45,32 @@ class BatchEmbedder:
     """Batches text and calls embedding service to generate embeddings.
 
     Implements the AbstractEmbedder interface for the indexing pipeline.
+    Namespace-aware: routes embedding requests to namespace-specific models.
     """
 
     def __init__(
         self,
         client: GrpcEmbeddingServiceClient,
         model: str,
+        namespace: str,
         batch_size: int,
     ) -> None:
         """Initialize batch embedder.
 
         Args:
             client: Connected embedding service client
-            model: Embedding model name
+            model: Embedding model name (may be ignored if namespace uses different model)
+            namespace: Dataset namespace for routing to correct embedding model
             batch_size: Batch size for embedding generation
         """
         self.client = client
         self.model = model
+        self.namespace = namespace
         self.batch_size = batch_size
-        logger.info(f"✓ Batch embedder initialized (model={model}, batch_size={batch_size})")
+        logger.info(f"✓ Batch embedder initialized (namespace={namespace}, model={model}, batch_size={batch_size})")
 
     def generate(self, texts: list[str]) -> list[list[float]]:
-        """Generate embeddings for texts.
+        """Generate embeddings for texts using namespace-specific model.
 
         Args:
             texts: List of texts to embed
@@ -86,6 +92,7 @@ class BatchEmbedder:
                 embeddings = self.client.embed_batch(
                     texts=batch,
                     model=self.model,
+                    namespace=self.namespace,
                 )
                 all_embeddings.extend(embeddings)
 
@@ -162,6 +169,7 @@ class DocumentIndexer:
     - Duplicate detection via Weaviate
     - Lazy Weaviate connection management
     - Async event processing from Kafka
+    - Namespace-aware: creates pipelines per dataset namespace
     """
 
     def __init__(self, config: IndexerConfig) -> None:
@@ -172,76 +180,30 @@ class DocumentIndexer:
         """
         self.config = config
 
+        # Load dataset configs
+        self.datasets_loader = DatasetsConfigLoader(config.datasets_config_path)
+
         # Weaviate client (initialized lazily for thread safety)
         self.weaviate_client: WeaviateClient | None = None
         self._weaviate_lock = threading.Lock()
 
-        # Initialize Embedding Service client
+        # Initialize Embedding Service client (shared, namespace-aware)
         self.embedding_client = GrpcEmbeddingServiceClient(
             address=config.embedding_service_addr,
             timeout=config.embedding_service_timeout,
         )
         self.embedding_client.connect()
 
-        # Pipeline components (typed for mypy)
-        self._pipeline_components: dict[str, Any]
-        self._chunk_ingester_factory: Callable[[], ChunkIngestionInterface]
-
-        # Initialize indexing pipeline components
-        self._init_pipeline()
-
-        logger.info("✓ Document indexer initialized")
-
-    def _init_pipeline(self) -> None:
-        """Initialize the indexing pipeline and its components."""
-        # Document loader
-        loader = MinIODocumentLoader(
-            endpoint=self.config.minio_endpoint,
-            access_key=self.config.minio_access_key,
-            secret_key=self.config.minio_secret_key,
-            secure=self.config.minio_secure,
+        # Shared MinIO loader (same for all namespaces)
+        self.minio_loader = MinIODocumentLoader(
+            endpoint=config.minio_endpoint,
+            access_key=config.minio_access_key,
+            secret_key=config.minio_secret_key,
+            secure=config.minio_secure,
         )
 
-        # Text cleaner
-        cleaner = BasicTextCleaner(
-            remove_empty_lines=self.config.cleaner_remove_empty_lines,
-            remove_extra_whitespaces=self.config.cleaner_remove_extra_whitespaces,
-            unicode_normalization=self.config.cleaner_unicode_normalization,
-        )
-
-        # Text splitter (convert char-based chunk_size/overlap to word counts)
-        chunk_size_words = max(1, self.config.chunk_size // 5)
-        chunk_overlap_words = max(0, self.config.chunk_overlap // 5)
-        splitter = WordBasedTextSplitter(
-            chunk_size_words=chunk_size_words,
-            chunk_overlap_words=chunk_overlap_words,
-        )
-
-        # Embedder
-        embedder = BatchEmbedder(
-            client=self.embedding_client,
-            model=self.config.embedding_model,
-            batch_size=self.config.batch_size,
-        )
-
-        # Chunk ingester (initialized lazily, uses _get_weaviate_client)
-        # We'll create this on-demand when processing
-        self._chunk_ingester_factory = lambda: WeaviateBatchInserter(
-            client=self._get_weaviate_client(),
-            collection_name=self.config.weaviate_class,
-        )
-
-        # Create the pipeline components
-        # Note: We can't initialize chunk_ingester yet because Weaviate is lazy
-        # We'll recreate the pipeline in process_event after ensuring connection
-        self._pipeline_components = {
-            "loader": loader,
-            "cleaner": cleaner,
-            "splitter": splitter,
-            "embedder": embedder,
-        }
-
-        logger.info("✓ Indexing pipeline components initialized")
+        namespaces = self.datasets_loader.list_namespaces()
+        logger.info(f"✓ Document indexer initialized with {len(namespaces)} datasets: {namespaces}")
 
     def __enter__(self) -> "DocumentIndexer":
         """Context manager entry."""
@@ -337,9 +299,19 @@ class DocumentIndexer:
             return {"chunks_created": 0, "skipped": True, "reason": "unknown_event_type"}
 
         try:
+            # Load dataset config for namespace
+            try:
+                dataset_config = self.datasets_loader.get_dataset_config(namespace)
+            except ConfigurationError as e:
+                logger.error(f"Unknown namespace '{namespace}': {e}")
+                raise ValueError(f"Unknown namespace: {namespace}") from e
+
+            # Get namespace-specific collection name
+            collection_name = dataset_config.weaviate.collection
+
             # Check if document already exists in Weaviate (duplicate detection)
             weaviate_client = self._get_weaviate_client()
-            collection = weaviate_client.collections.get(self.config.weaviate_class)
+            collection = weaviate_client.collections.get(collection_name)
 
             # Query for existing chunks with this doc_id (async) with metrics
             with (
@@ -357,13 +329,44 @@ class DocumentIndexer:
                 logger.info(f"Document {document_id} already indexed ({len(existing.objects)} chunks found), skipping...")
                 return {"chunks_created": 0, "skipped": True, "reason": "duplicate"}
 
-            # Create indexing pipeline with Weaviate client
-            chunk_ingester = self._chunk_ingester_factory()
+            # Create namespace-specific pipeline components
+            logger.debug(f"Creating pipeline components for namespace '{namespace}'")
+
+            # Text cleaner with dataset-specific settings
+            cleaner = BasicTextCleaner(
+                remove_empty_lines=dataset_config.chunking.cleaner_remove_empty_lines,
+                remove_extra_whitespaces=dataset_config.chunking.cleaner_remove_extra_whitespaces,
+                unicode_normalization=dataset_config.chunking.cleaner_unicode_normalization,
+            )
+
+            # Text splitter with dataset-specific chunk size/overlap
+            chunk_size_words = max(1, dataset_config.chunking.chunk_size // 5)
+            chunk_overlap_words = max(0, dataset_config.chunking.chunk_overlap // 5)
+            splitter = WordBasedTextSplitter(
+                chunk_size_words=chunk_size_words,
+                chunk_overlap_words=chunk_overlap_words,
+            )
+
+            # Namespace-aware embedder (routes to namespace-specific model)
+            embedder = BatchEmbedder(
+                client=self.embedding_client,
+                model=dataset_config.embedding.model or "default",
+                namespace=namespace,
+                batch_size=self.config.batch_size,
+            )
+
+            # Chunk ingester for namespace-specific collection
+            chunk_ingester = WeaviateBatchInserter(
+                client=weaviate_client,
+                collection_name=collection_name,
+            )
+
+            # Create indexing pipeline
             pipeline = IndexingPipeline(
-                loader=self._pipeline_components["loader"],
-                cleaner=self._pipeline_components["cleaner"],
-                splitter=self._pipeline_components["splitter"],
-                embedder=self._pipeline_components["embedder"],
+                loader=self.minio_loader,
+                cleaner=cleaner,
+                splitter=splitter,
+                embedder=embedder,
                 chunk_ingester=chunk_ingester,
             )
 
@@ -372,6 +375,7 @@ class DocumentIndexer:
                 pipeline_span.set_attribute("document.namespace", namespace)
                 pipeline_span.set_attribute("document.bucket", minio_bucket)
                 pipeline_span.set_attribute("document.key", minio_key)
+                pipeline_span.set_attribute("document.collection", collection_name)
                 num_chunks = await asyncio.to_thread(
                     pipeline.process_document,
                     bucket=minio_bucket,
@@ -379,7 +383,7 @@ class DocumentIndexer:
                 )
                 pipeline_span.set_attribute("document.chunk_count", num_chunks)
 
-            logger.info(f"✓ Successfully processed document {document_id} ({num_chunks} chunks)")
+            logger.info(f"✓ Successfully processed document {document_id} ({num_chunks} chunks) into {collection_name}")
             return {"chunks_created": num_chunks, "skipped": False}
 
         except Exception as e:

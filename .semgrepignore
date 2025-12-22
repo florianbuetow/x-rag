@@ -8,3 +8,4 @@ reports/
 .data/
 .cache/
 src/proto_gen/
+tools/

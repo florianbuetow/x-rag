@@ -96,12 +96,13 @@ class EmbeddingServiceClient:
             logger.error(f"Embedding request failed: {e.code()} - {e.details()}")
             raise
 
-    def embed_batch(self, texts: list[str], model: str) -> list[list[float]]:
+    def embed_batch(self, texts: list[str], model: str, namespace: str = "default") -> list[list[float]]:
         """Generate embeddings for multiple texts.
 
         Args:
             texts: List of texts to embed
             model: Model to use
+            namespace: Dataset namespace for selecting embedding model
 
         Returns:
             List of embedding vectors
@@ -112,7 +113,11 @@ class EmbeddingServiceClient:
         if not self.stub:
             raise RuntimeError("Client not connected. Call connect() first.")
 
-        request = embedding_pb2.EmbedBatchRequest(texts=texts, model=model)
+        request = embedding_pb2.EmbedBatchRequest(
+            texts=texts,
+            model=model,
+            options={"namespace": namespace},
+        )
 
         try:
             response = self.stub.EmbedBatch(request, timeout=self.timeout)

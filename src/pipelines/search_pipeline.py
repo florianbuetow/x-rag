@@ -83,6 +83,7 @@ class SearchPipeline:
                 query_embedding = await self.embedding_client.embed(
                     text=query,
                     model="text-embedding-3-small",
+                    namespace=namespace or "default",
                 )
             logger.debug(f"Generated embedding (dim={len(query_embedding)})")
 

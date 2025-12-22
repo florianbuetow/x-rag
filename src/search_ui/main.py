@@ -14,10 +14,12 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
+from src.common.dataset_config import DatasetsConfigLoader
 from src.common.health import HealthChecker
 from src.common.metrics import track_latency
 from src.common.otel_metrics import init_otel_metrics, shutdown_otel_metrics
 from src.common.tracing import get_current_trace_id, init_tracing, shutdown_tracing
+from src.core.errors import ConfigurationError
 from src.search_ui.config import SearchUIConfig
 from src.search_ui.grpc_clients import SearchServiceClient
 from src.search_ui.metrics import (
@@ -43,6 +45,7 @@ logger = logging.getLogger(__name__)
 config = SearchUIConfig()
 search_client: SearchServiceClient | None = None
 health_checker: HealthChecker | None = None
+datasets_loader: DatasetsConfigLoader | None = None
 
 # Templates
 templates_dir = Path(__file__).parent / "templates"
@@ -52,7 +55,7 @@ templates = Jinja2Templates(directory=str(templates_dir))
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """FastAPI lifespan context manager."""
-    global search_client, health_checker
+    global search_client, health_checker, datasets_loader
 
     # Startup
     logger.info(f"Starting {config.service_name}...")
@@ -69,6 +72,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         service_name=config.service_name,
         service_version=os.getenv("SERVICE_VERSION", "0.1.0"),
     )
+
+    # Load dataset configs
+    logger.info("Loading dataset configurations...")
+    datasets_loader = DatasetsConfigLoader()
+    logger.info(f"✓ Loaded {len(datasets_loader.list_namespaces())} datasets: {datasets_loader.list_namespaces()}")
 
     # Initialize Search Service client
     logger.info("Initializing Search Service client...")
@@ -217,6 +225,40 @@ async def search(request: SearchRequest) -> SearchResponse:
 
     finally:
         dec_active_requests()
+
+
+@app.get("/api/datasets")
+async def get_datasets() -> dict[str, Any]:
+    """Get list of available datasets for dropdown.
+
+    Returns:
+        Dictionary with datasets list
+
+    Raises:
+        HTTPException: If datasets_loader not initialized
+    """
+    if datasets_loader is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Datasets loader not initialized",
+        )
+
+    try:
+        datasets = [
+            {
+                "namespace": ds.namespace,
+                "display_name": ds.description,
+            }
+            for ds in datasets_loader.get_all_datasets()
+        ]
+        return {"datasets": datasets}
+
+    except Exception as e:
+        logger.error(f"Failed to get datasets: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get datasets: {str(e)}",
+        ) from e
 
 
 @app.get("/health")

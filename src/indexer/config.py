@@ -62,30 +62,20 @@ class IndexerConfig(ServiceConfig):
         default="http://weaviate:8080",
         description="Weaviate URL",
     )
-    weaviate_class: str = Field(
-        default="DocumentChunk",
-        description="Weaviate class name",
-    )
 
     # Embedding Service configuration
     embedding_service_addr: str = Field(
         default="embedding-service:50051",
         description="Embedding Service gRPC address",
     )
-    embedding_model: str = Field(
-        default="text-embedding-3-small",
-        description="Embedding model to use",
+
+    # Dataset config path
+    datasets_config_path: str = Field(
+        default="config/datasets_config.yaml",
+        description="Path to datasets configuration file",
     )
 
     # Processing configuration
-    chunk_size: int = Field(
-        default=500,
-        description="Chunk size in characters",
-    )
-    chunk_overlap: int = Field(
-        default=50,
-        description="Chunk overlap in characters",
-    )
     batch_size: int = Field(
         default=10,
         description="Batch size for embedding requests",
@@ -111,20 +101,6 @@ class IndexerConfig(ServiceConfig):
     embedding_service_timeout: float = Field(
         default=30.0,
         description="Embedding Service timeout in seconds",
-    )
-
-    # Text cleaner configuration
-    cleaner_remove_empty_lines: bool = Field(
-        default=True,
-        description="Remove empty lines during text cleaning",
-    )
-    cleaner_remove_extra_whitespaces: bool = Field(
-        default=True,
-        description="Remove extra whitespaces during text cleaning",
-    )
-    cleaner_unicode_normalization: Literal["NFC", "NFKC", "NFD", "NFKD"] | None = Field(
-        default="NFC",
-        description="Unicode normalization form (NFC, NFKC, NFD, NFKD)",
     )
 
     # Getter methods for composed configs
@@ -156,18 +132,6 @@ class IndexerConfig(ServiceConfig):
             minio_secure=self.minio_secure,
         )
 
-    def get_weaviate_config(self) -> WeaviateConfig:
-        """Get Weaviate configuration as a validated model.
-
-        Returns:
-            WeaviateConfig instance with validated Weaviate settings
-        """
-        return WeaviateConfig(
-            weaviate_url=self.weaviate_url,
-            weaviate_timeout=30,  # Use default since not in IndexerConfig
-            weaviate_collection=self.weaviate_class,
-        )
-
     def _validate_cross_fields(self, errors: list[str], warnings: list[str]) -> None:
         """Validate cross-field dependencies and composed configs.
 
@@ -186,15 +150,7 @@ class IndexerConfig(ServiceConfig):
         except ValidationError as e:
             errors.extend(f"MinIO config: {err}" for err in e.errors())
 
-        try:
-            self.get_weaviate_config()
-        except ValidationError as e:
-            errors.extend(f"Weaviate config: {err}" for err in e.errors())
-
-        # Validate chunk configuration
-        if self.chunk_overlap >= self.chunk_size:
-            errors.append(f"chunk_overlap ({self.chunk_overlap}) must be less than chunk_size ({self.chunk_size})")
-
+        # Validate processing configuration
         if self.batch_size <= 0:
             errors.append(f"batch_size must be positive, got {self.batch_size}")
 

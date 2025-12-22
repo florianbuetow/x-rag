@@ -4,20 +4,30 @@ metadata:
   name: indexer-config
   namespace: rag-system
 data:
+  # Kafka settings
   KAFKA_BOOTSTRAP: "xrag-kafka:9092"
   KAFKA_TOPIC: "document-changes"
   KAFKA_GROUP_ID: "indexer-group"
   KAFKA_AUTO_OFFSET_RESET: "earliest"
+
+  # MinIO settings
   MINIO_ENDPOINT: "xrag-minio:9000"
   MINIO_BUCKET: "documents"
   MINIO_SECURE: "false"
+
+  # Weaviate settings (infrastructure only)
   WEAVIATE_URL: "http://xrag-weaviate:8080"
-  WEAVIATE_CLASS: "DocumentChunk"
+
+  # Embedding Service settings
   EMBEDDING_SERVICE_ADDR: "embedding-service:50051"
-  EMBEDDING_MODEL: "${OPENAI_EMBEDDING_MODEL}"
-  CHUNK_SIZE: "500"
-  CHUNK_OVERLAP: "50"
+
+  # Dataset config path (contains all dataset-specific settings)
+  DATASETS_CONFIG_PATH: "config/datasets_config.yaml"
+
+  # Processing settings
   BATCH_SIZE: "10"
+
+  # Service settings
   HEALTH_PORT: "8080"
   LOG_LEVEL: "INFO"
 

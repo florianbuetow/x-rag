@@ -32,8 +32,8 @@ fi
 
 # Stop registry if it exists (use helper function)
 if registry_exists; then
-    echo "  Removing registry ${REGISTRY_NAME}..."
-    docker rm -f "${REGISTRY_NAME}" 2>/dev/null && deleted=1 || echo "  Warning: Failed to remove registry"
+    echo "  Stopping registry ${REGISTRY_NAME}..."
+    docker stop "${REGISTRY_NAME}" 2>/dev/null && deleted=1 || echo "  Warning: Failed to stop registry"
 else
     echo "  No registry found"
 fi

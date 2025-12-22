@@ -191,8 +191,10 @@
 
                 <div class="options-row">
                     <div class="form-group">
-                        <label for="namespace">Namespace</label>
-                        <input type="text" id="namespace" name="namespace" value="default">
+                        <label for="namespace">Dataset</label>
+                        <select id="namespace" name="namespace" disabled>
+                            <option value="">Loading datasets...</option>
+                        </select>
                     </div>
 
                     <div class="form-group">
@@ -238,6 +240,48 @@
     </div>
 
     <script>
+        // Load datasets on page load
+        async function loadDatasets() {
+            const select = document.getElementById('namespace');
+
+            try {
+                const response = await fetch('/api/datasets');
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Failed to load datasets');
+                }
+
+                // Clear loading option
+                select.innerHTML = '';
+                select.disabled = false;
+
+                // Populate dropdown with datasets
+                data.datasets.forEach((dataset, index) => {
+                    const option = document.createElement('option');
+                    option.value = dataset.namespace;
+                    option.textContent = dataset.display_name;
+
+                    // Auto-select first dataset
+                    if (index === 0) {
+                        option.selected = true;
+                    }
+
+                    select.appendChild(option);
+                });
+
+                console.log(`Loaded ${data.datasets.length} datasets`);
+            } catch (err) {
+                console.error('Failed to load datasets:', err);
+                select.innerHTML = '<option value="default">default (error loading datasets)</option>';
+                select.disabled = false;
+            }
+        }
+
+        // Load datasets when page loads
+        document.addEventListener('DOMContentLoaded', loadDatasets);
+
+        // Search form submission
         document.getElementById('searchForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 

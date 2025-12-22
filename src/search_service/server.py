@@ -6,10 +6,16 @@ from typing import Any, Literal, cast
 
 import grpc
 
+from src.common.dataset_config import DatasetsConfigLoader
 from src.common.metrics import track_latency
+from src.core.errors import ConfigurationError
+from src.llm.factory import create_llm_client
+from src.llm.openai_client import OpenAIClient
 from src.pipelines.search_pipeline import SearchPipeline
 from src.proto_gen import common_pb2, search_pb2, search_pb2_grpc
+from src.retrievers.weaviate_retriever import WeaviateRetriever
 from src.search_service.config import SearchServiceConfig
+from src.search_service.grpc_clients import EmbeddingServiceClient
 from src.search_service.metrics import (
     dec_active_requests,
     get_request_duration,
@@ -25,40 +31,111 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
     """gRPC servicer for Search Service.
 
     Implements the SearchService gRPC interface defined in search.proto.
+    Namespace-aware: creates separate pipelines for each dataset namespace.
     """
 
-    def __init__(self, pipeline: SearchPipeline, config: SearchServiceConfig) -> None:
+    def __init__(
+        self,
+        embedding_client: EmbeddingServiceClient,
+        config: SearchServiceConfig,
+        datasets_config_path: str = "config/datasets_config.yaml",
+    ) -> None:
         """Initialize servicer.
 
         Args:
-            pipeline: Search pipeline instance
+            embedding_client: Shared embedding service client (namespace-aware)
             config: Service configuration
+            datasets_config_path: Path to datasets configuration file
         """
-        self.pipeline = pipeline
+        self.embedding_client = embedding_client
         self.config = config
-        logger.info("SearchServicer initialized")
+        self.datasets_loader = DatasetsConfigLoader(datasets_config_path)
+        self._pipeline_cache: dict[str, SearchPipeline] = {}
+        self._retriever_cache: dict[str, WeaviateRetriever] = {}
+        self._llm_cache: dict[str, OpenAIClient] = {}
 
-    async def _validate_search_params(
+        namespaces = self.datasets_loader.list_namespaces()
+        logger.info(f"SearchServicer initialized with {len(namespaces)} datasets: {namespaces}")
+
+    def _get_pipeline(self, namespace: str) -> SearchPipeline:
+        """Get or create search pipeline for namespace.
+
+        Args:
+            namespace: Dataset namespace
+
+        Returns:
+            SearchPipeline for the namespace
+
+        Raises:
+            ConfigurationError: If namespace is unknown
+        """
+        # Check cache first
+        if namespace in self._pipeline_cache:
+            return self._pipeline_cache[namespace]
+
+        # Load dataset config
+        logger.info(f"Creating search pipeline for namespace: {namespace}")
+        dataset_config = self.datasets_loader.get_dataset_config(namespace)
+
+        # Create or get retriever for this namespace
+        if namespace not in self._retriever_cache:
+            retriever = WeaviateRetriever(
+                weaviate_url=self.config.weaviate_url,
+                collection_name=dataset_config.weaviate.collection,
+            )
+            retriever.connect()
+            self._retriever_cache[namespace] = retriever
+            logger.info(f"Created retriever for '{namespace}': collection={dataset_config.weaviate.collection}")
+
+        # Create or get LLM client for this namespace
+        if namespace not in self._llm_cache:
+            llm_config = dataset_config.llm.to_llm_config()
+            llm_client = create_llm_client(llm_config)
+            self._llm_cache[namespace] = llm_client
+            logger.info(f"Created LLM client for '{namespace}': provider={llm_config.provider.value}, model={llm_config.model}")
+
+        # Create pipeline with namespace-specific components
+        pipeline = SearchPipeline(
+            retriever=self._retriever_cache[namespace],
+            embedding_client=self.embedding_client,  # Shared, routes by namespace internally
+            llm_client=self._llm_cache[namespace],
+            max_context_length=dataset_config.search.max_context_length,
+        )
+
+        # Cache for future requests
+        self._pipeline_cache[namespace] = pipeline
+        logger.info(f"Cached pipeline for '{namespace}': max_context_length={dataset_config.search.max_context_length}")
+
+        return pipeline
+
+    async def _validate_and_get_search_params(
         self,
         request: search_pb2.SearchRequest,
+        namespace: str,
         context: grpc.aio.ServicerContext[search_pb2.SearchRequest, search_pb2.SearchResponse],
-    ) -> tuple[str, str, int, str, float]:
-        """Validate and extract search parameters from request.
+    ) -> tuple[str, int, str, float]:
+        """Validate and extract search parameters from request using dataset defaults.
 
         Args:
             request: The search request
+            namespace: Dataset namespace
             context: gRPC context for error reporting
 
         Returns:
-            Tuple of (query, namespace, top_k, mode, alpha)
+            Tuple of (query, top_k, mode, alpha)
         """
         if not request.query:
             await context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Query cannot be empty")
 
+        # Load dataset-specific defaults
+        try:
+            dataset_config = self.datasets_loader.get_dataset_config(namespace)
+        except ConfigurationError as e:
+            await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
+
         query = request.query
-        namespace = request.namespace or "default"
-        top_k = request.top_k or self.config.default_top_k
-        mode = request.mode or self.config.default_mode
+        top_k = request.top_k or dataset_config.search.default_top_k
+        mode = request.mode or dataset_config.search.default_mode
 
         if top_k <= 0:
             await context.abort(grpc.StatusCode.INVALID_ARGUMENT, f"top_k must be positive, got {top_k}")
@@ -72,25 +149,8 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
                 f"Invalid mode '{mode}'. Must be one of: {', '.join(valid_modes)}",
             )
 
-        alpha = await self._parse_alpha(request, context)
-
-        return query, namespace, top_k, mode, alpha
-
-    async def _parse_alpha(
-        self,
-        request: search_pb2.SearchRequest,
-        context: grpc.aio.ServicerContext[search_pb2.SearchRequest, search_pb2.SearchResponse],
-    ) -> float:
-        """Parse alpha value from request options.
-
-        Args:
-            request: The search request
-            context: gRPC context for error reporting
-
-        Returns:
-            Alpha value for hybrid search
-        """
-        alpha = self.config.hybrid_alpha
+        # Parse alpha from request options or use dataset default
+        alpha = dataset_config.search.hybrid_alpha
         if "alpha" in request.options:
             try:
                 alpha = float(request.options["alpha"])
@@ -98,7 +158,8 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
                     await context.abort(grpc.StatusCode.INVALID_ARGUMENT, f"alpha must be between 0.0 and 1.0, got {alpha}")
             except ValueError:
                 await context.abort(grpc.StatusCode.INVALID_ARGUMENT, f"Invalid alpha value: {request.options['alpha']}")
-        return alpha
+
+        return query, top_k, mode, alpha
 
     def _build_search_response(self, result: dict[str, Any]) -> search_pb2.SearchResponse:
         """Build protobuf response from search result.
@@ -155,33 +216,6 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
             logger.warning(f"{name} health check failed: {e}")
             return ("UNHEALTHY", False)
 
-    def _determine_health_status(
-        self, all_critical_healthy: bool, openai_is_critical: bool, openai_ok: bool
-    ) -> tuple[common_pb2.HealthCheckResponse.Status.ValueType, str]:
-        """Determine overall health status and message.
-
-        Args:
-            all_critical_healthy: Whether all critical dependencies are healthy
-            openai_is_critical: Whether OpenAI is considered critical
-            openai_ok: Whether OpenAI health check passed
-
-        Returns:
-            Tuple of (status_code, message)
-        """
-        if not all_critical_healthy:
-            return (
-                common_pb2.HealthCheckResponse.UNHEALTHY,
-                "Search service is unhealthy (critical dependencies down)",
-            )
-
-        if not openai_is_critical and not openai_ok:
-            return (
-                common_pb2.HealthCheckResponse.HEALTHY,
-                "Search service is healthy (dev mode: OpenAI disabled)",
-            )
-
-        return (common_pb2.HealthCheckResponse.HEALTHY, "Search service is healthy")
-
     async def Search(
         self,
         request: search_pb2.SearchRequest,
@@ -199,22 +233,31 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
         inc_active_requests("Search")
         try:
             with track_latency(get_request_duration(), {"method": "Search"}):
-                # Validate and extract parameters
-                query, namespace, top_k, mode, alpha = await self._validate_search_params(request, context)
+                # Extract namespace first
+                namespace = request.namespace or "default"
+
+                # Get namespace-specific pipeline (validates namespace exists)
+                try:
+                    pipeline = self._get_pipeline(namespace)
+                    dataset_config = self.datasets_loader.get_dataset_config(namespace)
+                except ConfigurationError as e:
+                    await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
+
+                # Validate and extract parameters with dataset-specific defaults
+                query, top_k, mode, alpha = await self._validate_and_get_search_params(request, namespace, context)
 
                 logger.info(f"Search request: query='{query[:50]}...', mode={mode}, top_k={top_k}, namespace={namespace}")
 
-                # Execute search pipeline
-                # Cast mode to literal type after validation
+                # Execute search pipeline with dataset-specific settings
                 search_mode = cast(Literal["vector", "bm25", "hybrid"], mode)
-                result = await self.pipeline.search(
+                result = await pipeline.search(
                     query=query,
                     top_k=top_k,
                     mode=search_mode,
                     alpha=alpha,
                     namespace=namespace,
-                    openai_max_tokens=self.config.openai_max_tokens,
-                    openai_temperature=self.config.openai_temperature,
+                    openai_max_tokens=dataset_config.llm.max_tokens,
+                    openai_temperature=dataset_config.llm.temperature,
                 )
 
                 # Build and return response
@@ -246,10 +289,10 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
     ) -> common_pb2.HealthCheckResponse:
         """Health check endpoint.
 
-        Checks all critical dependencies:
-        - Weaviate (critical)
-        - Embedding Service (critical)
-        - OpenAI API (critical)
+        Checks critical dependencies:
+        - Embedding Service (critical, shared)
+        - Weaviate (checked via first cached retriever, if any)
+        - LLM (checked via first cached LLM client, if any)
 
         Args:
             request: HealthCheckRequest (empty)
@@ -259,25 +302,43 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
             HealthCheckResponse with aggregate status
         """
         try:
-            # Check all dependencies
-            weaviate_status, weaviate_ok = await self._check_dependency("Weaviate", self.pipeline.retriever.health_check, is_async=False)
+            dependencies: dict[str, str] = {}
+
+            # Check shared embedding service (critical)
             embedding_status, embedding_ok = await self._check_dependency(
-                "Embedding Service", self.pipeline.embedding_client.health_check, is_async=True
+                "Embedding Service", self.embedding_client.health_check, is_async=True
             )
-            openai_status, openai_ok = await self._check_dependency("OpenAI", self.pipeline.llm_client.health_check, is_async=True)
+            dependencies["embedding_service"] = embedding_status
 
-            dependencies = {
-                "weaviate": weaviate_status,
-                "embedding_service": embedding_status,
-                "openai": openai_status,
-            }
+            # Check Weaviate via first cached retriever (if any)
+            weaviate_ok = True
+            if self._retriever_cache:
+                first_retriever = next(iter(self._retriever_cache.values()))
+                weaviate_status, weaviate_ok = await self._check_dependency("Weaviate", first_retriever.health_check, is_async=False)
+                dependencies["weaviate"] = weaviate_status
+            else:
+                dependencies["weaviate"] = "NOT_CHECKED"
 
-            # OpenAI is only critical if not using placeholder key
-            openai_is_critical = self.config.openai_api_key != "sk-your-key-here"
-            all_critical_healthy = weaviate_ok and embedding_ok and (openai_ok or not openai_is_critical)
+            # Check LLM via first cached LLM client (if any)
+            llm_ok = True
+            if self._llm_cache:
+                first_llm = next(iter(self._llm_cache.values()))
+                llm_status, llm_ok = await self._check_dependency("LLM", first_llm.health_check, is_async=True)
+                dependencies["llm"] = llm_status
+            else:
+                dependencies["llm"] = "NOT_CHECKED"
 
-            # Determine status and message
-            status, message = self._determine_health_status(all_critical_healthy, openai_is_critical, openai_ok)
+            # Service is healthy if embedding service is healthy (critical)
+            # Weaviate and LLM are checked opportunistically if pipelines exist
+            all_critical_healthy = embedding_ok and (not self._retriever_cache or weaviate_ok) and (not self._llm_cache or llm_ok)
+
+            # Determine status
+            if all_critical_healthy:
+                status = common_pb2.HealthCheckResponse.HEALTHY
+                message = "Search service is healthy"
+            else:
+                status = common_pb2.HealthCheckResponse.UNHEALTHY
+                message = "Search service is unhealthy (critical dependencies down)"
 
             return common_pb2.HealthCheckResponse(status=status, dependencies=dependencies, message=message)
 

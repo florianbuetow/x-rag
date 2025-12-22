@@ -17,8 +17,6 @@ from opentelemetry.instrumentation.grpc import GrpcAioInstrumentorServer
 from src.common.otel_metrics import init_otel_metrics, shutdown_otel_metrics
 from src.common.tracing import init_tracing, shutdown_tracing
 from src.embedding_service.config import EmbeddingServiceConfig
-from src.embedding_service.generators.embedding_generator import EmbeddingGenerator
-from src.embedding_service.generators.factory import EmbeddingGeneratorFactory
 from src.embedding_service.server import EmbeddingServicer
 from src.proto_gen import embedding_pb2_grpc
 
@@ -67,15 +65,8 @@ class EmbeddingServiceRunner:
         # Instrument gRPC server for distributed tracing
         GrpcAioInstrumentorServer().instrument()  # type: ignore[no-untyped-call]
 
-        # Initialize generator using factory
-        logger.info(f"Initializing {self.config.embedding_generator} embedding generator...")
-        generator = self._create_generator()
-
-        # Create servicer
-        servicer = EmbeddingServicer(
-            generator=generator,
-            default_model=self.config.default_model,
-        )
+        # Create servicer (namespace-aware, loads generators on-demand)
+        servicer = EmbeddingServicer(datasets_config_path=self.config.datasets_config_path)
 
         # Create gRPC server
         self.server = grpc.aio.server(
@@ -111,8 +102,7 @@ class EmbeddingServiceRunner:
         await self.server.start()
 
         logger.info(f"✓ {self.config.service_name} listening on {listen_addr}")
-        logger.info(f"Default model: {self.config.default_model}")
-        logger.info("Ready to serve requests")
+        logger.info("Namespace-aware embedding service ready to serve requests")
 
         # Wait for shutdown signal
         await self.shutdown_event.wait()
@@ -128,16 +118,6 @@ class EmbeddingServiceRunner:
         if self.server:
             await self.server.stop(grace=5.0)
             logger.info("Server stopped")
-
-    def _create_generator(self) -> EmbeddingGenerator:
-        """Create embedding generator based on configuration.
-
-        Returns:
-            Configured embedding generator instance
-        """
-        embedding_config = self.config.get_embedding_config()
-        logger.info(f"Creating {embedding_config.provider.value} embedding generator (model={embedding_config.model})")
-        return EmbeddingGeneratorFactory.create_from_config(embedding_config)
 
     def signal_handler(self, signum: int, frame: FrameType | None) -> None:
         """Handle shutdown signals.

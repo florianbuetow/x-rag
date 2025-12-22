@@ -7,39 +7,28 @@ dependencies = [
     # Web framework
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
-    
     # Data validation
     "pydantic>=2.5.0",
     "pydantic-settings>=2.1.0",
-    
     # Haystack for RAG
     "haystack-ai>=2.0.0",
     "weaviate-haystack>=2.0.0",
-    
     # gRPC
     "grpcio>=1.60.0",
     "grpcio-tools>=1.60.0",
     "grpcio-reflection>=1.60.0",
-    
     # HTTP client
     "httpx>=0.25.0",
-    
     # Databases/Caching
     "redis[hiredis]>=5.0.0",
     "weaviate-client>=4.0.0",
-    
     # LLM/Embeddings
     "openai>=1.3.0",
-    
     # Messaging
     "aiokafka>=0.9.0",
-    
     # Object storage
     "minio>=7.2.0",
-    
     # Observability
-
-
     # Distributed Tracing (OpenTelemetry)
     "opentelemetry-api>=1.20.0",
     "opentelemetry-sdk>=1.20.0",
@@ -49,15 +38,14 @@ dependencies = [
     "opentelemetry-instrumentation-httpx>=0.41b0",
     "opentelemetry-instrumentation-logging>=0.41b0",
     "opentelemetry-instrumentation-openai>=0.40.0",
-
     # Utilities
     "python-dotenv>=1.0.0",
     "pyyaml>=6.0.0",
-
     # Security: Pin transitive dependencies to patched versions
     "urllib3>=2.6.0", # Fix GHSA-gm62-xv2j-4w53, GHSA-2xpw-w6gg-jr37
     "filelock>=3.20.1",
     "autogen-ext[openai]>=0.7.5",
+    "autogen-agentchat>=0.7.5",
 ]
 
 [project.optional-dependencies]
@@ -96,8 +84,8 @@ packages = ["src", "evals"]
 line-length = 140
 indent-width = 4
 target-version = "py311"
-# Exclude generated gRPC/protobuf code, notes, and data scripts from all linting
-exclude = ["src/proto_gen/*", "notes/*", "data/*"]
+# Exclude generated gRPC/protobuf code, notes, data scripts, and tools from all linting
+exclude = ["src/proto_gen/*", "notes/*", "data/*", "tools/*"]
 
 [tool.ruff.lint]
 # Core errors & warnings, Google-style docs, types, bugbear, quotes, imports, naming

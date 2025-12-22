@@ -4,10 +4,12 @@ import logging
 
 import grpc
 
+from src.common.dataset_config import DatasetsConfigLoader
 from src.common.health import HealthChecker
 from src.common.metrics import track_latency
-from src.core.errors import ServiceUnavailableError
+from src.core.errors import ConfigurationError, ServiceUnavailableError
 from src.embedding_service.generators.embedding_generator import EmbeddingGenerator
+from src.embedding_service.generators.factory import EmbeddingGeneratorFactory
 from src.embedding_service.metrics import (
     dec_active_requests,
     get_backend_duration,
@@ -27,19 +29,50 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
     """gRPC servicer for Embedding Service.
 
     Implements the EmbeddingService gRPC interface defined in embedding.proto.
+    Namespace-aware: uses dataset-specific embedding models based on namespace parameter.
     """
 
-    def __init__(self, generator: EmbeddingGenerator, default_model: str) -> None:
-        """Initialize servicer.
+    def __init__(self, datasets_config_path: str = "config/datasets_config.yaml") -> None:
+        """Initialize servicer with dataset config loader.
 
         Args:
-            generator: Embedding generator implementation
-            default_model: Default model to use if not specified in request
+            datasets_config_path: Path to datasets_config.yaml file.
         """
-        self.generator = generator
-        self.default_model = default_model
+        self.datasets_loader = DatasetsConfigLoader(datasets_config_path)
+        self._generator_cache: dict[str, EmbeddingGenerator] = {}
         self.health_checker = HealthChecker()
-        logger.info(f"EmbeddingServicer initialized with default model: {default_model}")
+
+        namespaces = self.datasets_loader.list_namespaces()
+        logger.info(f"EmbeddingServicer initialized with {len(namespaces)} datasets: {namespaces}")
+
+    def _get_generator(self, namespace: str) -> EmbeddingGenerator:
+        """Get or create embedding generator for namespace.
+
+        Args:
+            namespace: Dataset namespace.
+
+        Returns:
+            Embedding generator for the namespace.
+
+        Raises:
+            ConfigurationError: If namespace is unknown.
+        """
+        # Check cache first
+        if namespace in self._generator_cache:
+            return self._generator_cache[namespace]
+
+        # Load dataset config and create generator
+        logger.info(f"Creating embedding generator for namespace: {namespace}")
+        dataset_config = self.datasets_loader.get_dataset_config(namespace)
+        embedding_config = dataset_config.embedding.to_embedding_config()
+
+        generator = EmbeddingGeneratorFactory.create_from_config(embedding_config)
+
+        # Cache for future requests
+        self._generator_cache[namespace] = generator
+        logger.info(f"Cached generator for '{namespace}': provider={embedding_config.provider.value}, model={embedding_config.model}")
+
+        return generator
 
     async def Embed(
         self,
@@ -62,26 +95,34 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
                 if not request.text:
                     await context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Text cannot be empty")
 
-                # Use default model if not specified
-                model = request.model or self.default_model
-
-                # Convert options map to dict
+                # Extract namespace from options
                 options = dict(request.options) if request.options else {}
+                namespace = options.get("namespace", "default")
+
+                # Get namespace-specific generator
+                try:
+                    generator = self._get_generator(namespace)
+                except ConfigurationError as e:
+                    logger.error(f"Unknown namespace: {namespace}")
+                    await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
+
+                # Use request model or None (generator will use its configured model)
+                model = request.model or None
 
                 # Generate embedding
-                logger.debug(f"Generating embedding for text (model={model})")
-                with track_latency(get_backend_duration(), {"model": model}):
-                    embedding = await self.generator.embed(request.text, model, **options)
-                    dimension = self.generator.get_dimension(model)
+                logger.debug(f"Generating embedding for namespace={namespace}, model={model}")
+                with track_latency(get_backend_duration(), {"namespace": namespace}):
+                    embedding = await generator.embed(request.text, model or "")
+                    dimension = generator.get_dimension(model or "")
 
                 # Record embedding generated
-                inc_embeddings_total(model, 1)
+                inc_embeddings_total(model or namespace, 1)
 
             inc_requests_total("Embed", "success")
             return embedding_pb2.EmbedResponse(
                 embedding=embedding,
                 dimension=dimension,
-                model=model,
+                model=model or namespace,
             )
 
         except grpc.RpcError:
@@ -131,21 +172,29 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
                 if not request.texts:
                     await context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Texts list cannot be empty")
 
-                # Use default model if not specified
-                model = request.model or self.default_model
-
-                # Convert options map to dict
+                # Extract namespace from options
                 options = dict(request.options) if request.options else {}
+                namespace = options.get("namespace", "default")
+
+                # Get namespace-specific generator
+                try:
+                    generator = self._get_generator(namespace)
+                except ConfigurationError as e:
+                    logger.error(f"Unknown namespace: {namespace}")
+                    await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
+
+                # Use request model or None (generator will use its configured model)
+                model = request.model or None
 
                 # Record batch size
                 num_texts = len(request.texts)
                 record_batch_size(num_texts)
 
                 # Generate embeddings
-                logger.debug(f"Generating {num_texts} embeddings in batch (model={model})")
-                with track_latency(get_backend_duration(), {"model": model}):
-                    embeddings = await self.generator.embed_batch(list(request.texts), model, **options)
-                    dimension = self.generator.get_dimension(model)
+                logger.debug(f"Generating {num_texts} embeddings in batch (namespace={namespace}, model={model})")
+                with track_latency(get_backend_duration(), {"namespace": namespace}):
+                    embeddings = await generator.embed_batch(list(request.texts), model or "")
+                    dimension = generator.get_dimension(model or "")
 
                 # Record embeddings generated
                 inc_embeddings_total(model, num_texts)

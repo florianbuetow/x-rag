@@ -71,12 +71,13 @@ class EmbeddingServiceClient:
             self.channel = None
             self.stub = None
 
-    async def embed(self, text: str, model: str) -> list[float]:
+    async def embed(self, text: str, model: str, namespace: str = "default") -> list[float]:
         """Generate embedding for a single text (async).
 
         Args:
             text: Text to embed
             model: Model to use (e.g., "text-embedding-3-small")
+            namespace: Dataset namespace for selecting embedding model
 
         Returns:
             Embedding vector as list of floats
@@ -87,7 +88,11 @@ class EmbeddingServiceClient:
         if not self.stub:
             raise RuntimeError("Client not connected. Call connect() first.")
 
-        request = embedding_pb2.EmbedRequest(text=text, model=model)
+        request = embedding_pb2.EmbedRequest(
+            text=text,
+            model=model,
+            options={"namespace": namespace},
+        )
 
         try:
             response = await self.stub.Embed(request, timeout=self.timeout)
@@ -96,12 +101,13 @@ class EmbeddingServiceClient:
             logger.error(f"Embedding request failed: {e.code()} - {e.details()}")
             raise
 
-    async def embed_batch(self, texts: list[str], model: str) -> list[list[float]]:
+    async def embed_batch(self, texts: list[str], model: str, namespace: str = "default") -> list[list[float]]:
         """Generate embeddings for multiple texts (async).
 
         Args:
             texts: List of texts to embed
             model: Model to use
+            namespace: Dataset namespace for selecting embedding model
 
         Returns:
             List of embedding vectors
@@ -112,7 +118,11 @@ class EmbeddingServiceClient:
         if not self.stub:
             raise RuntimeError("Client not connected. Call connect() first.")
 
-        request = embedding_pb2.EmbedBatchRequest(texts=texts, model=model)
+        request = embedding_pb2.EmbedBatchRequest(
+            texts=texts,
+            model=model,
+            options={"namespace": namespace},
+        )
 
         try:
             response = await self.stub.EmbedBatch(request, timeout=self.timeout)

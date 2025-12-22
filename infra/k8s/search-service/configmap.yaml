@@ -9,34 +9,16 @@ data:
   PORT: "50052"
   ENABLE_REFLECTION: "true"
 
-  # Weaviate settings
+  # Weaviate settings (infrastructure only)
   WEAVIATE_URL: "http://xrag-weaviate:8080"
   WEAVIATE_TIMEOUT: "30"
-  WEAVIATE_COLLECTION: "DocumentChunk"
-
-  # Redis settings
-  REDIS_URL: "redis://xrag-redis:6379"
-  CACHE_TTL: "3600"
-  ENABLE_CACHE: "true"
 
   # Embedding Service settings
   EMBEDDING_SERVICE_ADDR: "embedding-service:50051"
   EMBEDDING_SERVICE_TIMEOUT: "30"
-  EMBEDDING_MODEL: "${OPENAI_EMBEDDING_MODEL}"
 
-  # OpenAI settings (or OpenAI-compatible API like LM Studio)
-  OPENAI_API_BASE: "${OPENAI_API_BASE}"
-  OPENAI_MODEL: "${OPENAI_MODEL}"
-  OPENAI_MAX_TOKENS: "500"
-  OPENAI_TEMPERATURE: "0.7"
-  OPENAI_MAX_RETRIES: "3"
-  OPENAI_TIMEOUT: "60"
-
-  # Search settings
-  DEFAULT_TOP_K: "10"
-  DEFAULT_MODE: "hybrid"
-  HYBRID_ALPHA: "0.5"
-  MAX_CONTEXT_LENGTH: "4000"
+  # Dataset config path (contains all dataset-specific settings)
+  DATASETS_CONFIG_PATH: "config/datasets_config.yaml"
 
   # Distributed tracing (OpenTelemetry)
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy.monitoring.svc.cluster.local:4317"

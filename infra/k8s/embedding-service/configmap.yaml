@@ -9,21 +9,10 @@ data:
   SERVICE_NAME: "embedding-service"
   LOG_LEVEL: "INFO"
   PORT: "50051"
-  # Generator type: "hash_based" or "openai"
-  EMBEDDING_GENERATOR: "openai"
-  DEFAULT_MODEL: "${OPENAI_EMBEDDING_MODEL}"
-  MAX_BATCH_SIZE: "100"
   ENABLE_REFLECTION: "true"
-  MAX_WORKERS: "10"
 
-  # Hash-based settings (for testing)
-  HASH_BASED_DIMENSION: "1024"
-
-  # OpenAI settings (or OpenAI-compatible API like LM Studio)
-  OPENAI_API_BASE: "${OPENAI_API_BASE}"
-  OPENAI_EMBEDDING_MODEL: "${OPENAI_EMBEDDING_MODEL}"
-  OPENAI_MAX_RETRIES: "3"
-  OPENAI_TIMEOUT: "30"
+  # Dataset config path (contains all dataset-specific settings)
+  DATASETS_CONFIG_PATH: "config/datasets_config.yaml"
 
   # Distributed tracing (OpenTelemetry)
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy.monitoring.svc.cluster.local:4317"
