@@ -273,8 +273,8 @@
                 console.log(`Loaded ${data.datasets.length} datasets`);
             } catch (err) {
                 console.error('Failed to load datasets:', err);
-                select.innerHTML = '<option value="default">default (error loading datasets)</option>';
-                select.disabled = false;
+                select.innerHTML = '<option value="">Error loading datasets - please select a namespace</option>';
+                select.disabled = true;
             }
         }
 
