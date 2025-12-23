@@ -37,7 +37,6 @@ from evals.harness import EvalRunResult
 from evals.metrics.retrieval import compute_retrieval_metrics
 from src.embedding_service.generators.embedding_generator import EmbeddingGenerator
 from src.embedding_service.generators.factory import EmbeddingGeneratorFactory
-from src.embedding_service.generators.openai_generator import OpenAIEmbeddingGenerator
 
 # Production imports - reuse exactly what production uses
 from src.llm.config import EmbeddingConfig
@@ -53,6 +52,70 @@ def load_config(path: str | Path) -> dict[str, Any]:
     """Load YAML config file."""
     with open(path) as f:
         return yaml.safe_load(f)
+
+
+def _create_hash_based_config(embed_cfg: dict[str, Any]) -> tuple[EmbeddingConfig, str, int]:
+    """Create hash-based embedding config."""
+    dimension = embed_cfg["dimension"]
+    max_retries = embed_cfg["max_retries"]
+    timeout = embed_cfg["timeout"]
+
+    embedding_config = EmbeddingConfig.for_hash_based(
+        dimension=dimension,
+        max_retries=max_retries,
+        timeout=timeout,
+    )
+    return embedding_config, "hash-based", dimension
+
+
+def _create_local_config(embed_cfg: dict[str, Any]) -> tuple[EmbeddingConfig, str, int]:
+    """Create local embedding config."""
+    base_url = embed_cfg.get("base_url")
+    if base_url is None:
+        base_url = os.environ.get("OPENAI_API_BASE")
+    if base_url is None:
+        raise ValueError("Missing required config: embedding.base_url for local provider (or OPENAI_API_BASE env var)")
+
+    model = embed_cfg["model"]
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if api_key is None:
+        api_key = "local"
+
+    max_retries = embed_cfg["max_retries"]
+    timeout = embed_cfg["timeout"]
+    dimension = embed_cfg["dimension"]
+
+    embedding_config = EmbeddingConfig.for_local(
+        base_url=base_url,
+        model=model,
+        api_key=api_key,
+        max_retries=max_retries,
+        timeout=timeout,
+        dimension=dimension,
+    )
+
+    return embedding_config, model, dimension
+
+
+def _create_openai_config(embed_cfg: dict[str, Any]) -> tuple[EmbeddingConfig, str, int]:
+    """Create OpenAI embedding config."""
+    model = embed_cfg["model"]
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError("OPENAI_API_KEY environment variable required for OpenAI provider")
+
+    max_retries = embed_cfg["max_retries"]
+    timeout = embed_cfg["timeout"]
+    dimension = embed_cfg["dimension"]
+
+    embedding_config = EmbeddingConfig.for_openai(
+        api_key=api_key,
+        model=model,
+        max_retries=max_retries,
+        timeout=timeout,
+        dimension=dimension,
+    )
+    return embedding_config, model, dimension
 
 
 def create_embedding_generator(config: dict[str, Any]) -> tuple[EmbeddingGenerator, str, int]:
@@ -77,26 +140,11 @@ def create_embedding_generator(config: dict[str, Any]) -> tuple[EmbeddingGenerat
 
     # Create production EmbeddingConfig using factory methods
     if provider == "hash_based":
-        dimension = embed_cfg["dimension"] if "dimension" in embed_cfg else 1024
-        embedding_config = EmbeddingConfig.for_hash_based(dimension=dimension)
-        model = "hash-based"
+        embedding_config, model, dimension = _create_hash_based_config(embed_cfg)
     elif provider == "local":
-        base_url = embed_cfg.get("base_url") or os.environ.get("OPENAI_API_BASE")
-        model = embed_cfg["model"] if "model" in embed_cfg else "text-embedding-bge-large-en-v1.5"
-        embedding_config = EmbeddingConfig.for_local(
-            base_url=base_url,
-            model=model,
-            api_key=os.environ["OPENAI_API_KEY"] if "OPENAI_API_KEY" in os.environ else "local",
-        )
-        dim_fallback = embed_cfg["dimension"] if "dimension" in embed_cfg else 1024
-        dimension = OpenAIEmbeddingGenerator.MODEL_DIMENSIONS[model] if model in OpenAIEmbeddingGenerator.MODEL_DIMENSIONS else dim_fallback
+        embedding_config, model, dimension = _create_local_config(embed_cfg)
     elif provider == "openai":
-        model = embed_cfg["model"] if "model" in embed_cfg else "text-embedding-3-small"
-        embedding_config = EmbeddingConfig.for_openai(
-            api_key=os.environ.get("OPENAI_API_KEY"),
-            model=model,
-        )
-        dimension = OpenAIEmbeddingGenerator.MODEL_DIMENSIONS[model] if model in OpenAIEmbeddingGenerator.MODEL_DIMENSIONS else 1536
+        embedding_config, model, dimension = _create_openai_config(embed_cfg)
     else:
         raise ValueError(f"Unknown embedding provider: {provider}")
 
@@ -193,8 +241,8 @@ class EmbeddedWeaviateClient:
                         "doc_id": chunk["doc_id"],
                         "chunk_index": chunk["chunk_index"],
                         "namespace": chunk["namespace"],  # namespace is required
-                        "source": chunk["source"] if "source" in chunk else "",
-                        "title": chunk["title"] if "title" in chunk else "",
+                        "source": chunk["source"],
+                        "title": chunk["title"],
                     },
                     vector=embedding,
                 )
@@ -226,20 +274,24 @@ class EmbeddedWeaviateClient:
 
         results = []
         for obj in result.objects:
-            doc_id = obj.properties["doc_id"] if "doc_id" in obj.properties else ""
-            chunk_index = obj.properties["chunk_index"] if "chunk_index" in obj.properties else 0
+            doc_id = obj.properties["doc_id"]
+            chunk_index = obj.properties["chunk_index"]
             chunk_id = f"{doc_id}-chunk-{chunk_index}"
             if mode == "vector":
-                distance = obj.metadata.distance or 0.0
+                if obj.metadata.distance is None:
+                    raise ValueError(f"Missing distance metadata for vector search result: {obj}")
+                distance = obj.metadata.distance
                 score = 1.0 / (1.0 + distance)
             else:
-                score = obj.metadata.score or 0.0
+                if obj.metadata.score is None:
+                    raise ValueError(f"Missing score metadata for {mode} search result: {obj}")
+                score = obj.metadata.score
             results.append(
                 {
                     "chunk_id": chunk_id,
                     "doc_id": doc_id,
                     "chunk_index": chunk_index,
-                    "content": obj.properties["content"] if "content" in obj.properties else "",
+                    "content": obj.properties["content"],
                     "score": score,
                 }
             )
@@ -287,16 +339,16 @@ def load_and_chunk_documents(documents_path: str, chunk_size: int, chunk_overlap
 
 def run_evaluation(config: dict[str, Any]) -> EvalRunResult:
     """Run evaluation using production components."""
-    name = config["name"] if "name" in config else "unnamed"
+    name = config["name"]
     run_id = f"{name}-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}"
     started_at = datetime.now(UTC).isoformat().replace("+00:00", "Z")
     start_time = time.time()
 
     # Extract config sections
     dataset_path = config["dataset_path"]
-    index_cfg = config["index"] if "index" in config else {}
-    search_cfg = config["search"] if "search" in config else {}
-    chunking_cfg = config["chunking"] if "chunking" in config else {}
+    index_cfg = config["index"]
+    search_cfg = config["search"]
+    chunking_cfg = config["chunking"]
 
     logger.info("=" * 60)
     logger.info(f"Evaluation Run: {run_id}")
@@ -304,16 +356,16 @@ def run_evaluation(config: dict[str, Any]) -> EvalRunResult:
     logger.info("")
     logger.info("Configuration:")
     logger.info(f"  Dataset: {dataset_path}")
-    logger.info(f"  Documents: {index_cfg['documents_path'] if 'documents_path' in index_cfg else None}")
+    logger.info(f"  Documents: {index_cfg['documents_path']}")
 
     # Create embedding generator using production factory
     generator, model, dimension = create_embedding_generator(config)
     embedding_client = SyncEmbeddingWrapper(generator, model)
-    embed_cfg_for_log = config["embedding"] if "embedding" in config else {}
-    provider_for_log = embed_cfg_for_log["provider"] if "provider" in embed_cfg_for_log else None
+    embed_cfg_for_log = config["embedding"]
+    provider_for_log = embed_cfg_for_log["provider"]
     logger.info(f"  Embeddings: {provider_for_log} ({model}, dim={dimension})")
-    mode_for_log = search_cfg["mode"] if "mode" in search_cfg else "hybrid"
-    top_k_for_log = search_cfg["top_k"] if "top_k" in search_cfg else 10
+    mode_for_log = search_cfg["mode"]
+    top_k_for_log = search_cfg["top_k"]
     logger.info(f"  Search: mode={mode_for_log}, top_k={top_k_for_log}")
     logger.info("")
 
@@ -323,7 +375,7 @@ def run_evaluation(config: dict[str, Any]) -> EvalRunResult:
     logger.info(f"  Loaded {len(dataset)} QA samples")
 
     # Start embedded Weaviate
-    collection_name = index_cfg["collection"] if "collection" in index_cfg else "DocumentChunk"
+    collection_name = index_cfg["collection"]
     weaviate_client = EmbeddedWeaviateClient(collection_name=collection_name)
     weaviate_client.connect()
     weaviate_client.create_collection(dimension=dimension)
@@ -331,9 +383,9 @@ def run_evaluation(config: dict[str, Any]) -> EvalRunResult:
     # Load and chunk documents
     logger.info("")
     logger.info("Loading and chunking documents...")
-    documents_path = index_cfg["documents_path"] if "documents_path" in index_cfg else None
-    chunk_size_val = chunking_cfg["chunk_size"] if "chunk_size" in chunking_cfg else 500
-    chunk_overlap_val = chunking_cfg["chunk_overlap"] if "chunk_overlap" in chunking_cfg else 50
+    documents_path = index_cfg["documents_path"]
+    chunk_size_val = chunking_cfg["chunk_size"]
+    chunk_overlap_val = chunking_cfg["chunk_overlap"]
     chunks = load_and_chunk_documents(
         documents_path,
         chunk_size=chunk_size_val,
@@ -343,8 +395,8 @@ def run_evaluation(config: dict[str, Any]) -> EvalRunResult:
     # Generate embeddings
     logger.info("Generating embeddings for chunks...")
     chunk_texts = [c["content"] for c in chunks]
-    embed_cfg_batch = config["embedding"] if "embedding" in config else {}
-    batch_size = embed_cfg_batch["batch_size"] if "batch_size" in embed_cfg_batch else 50
+    embed_cfg_batch = config["embedding"]
+    batch_size = embed_cfg_batch["batch_size"]
     chunk_embeddings = embedding_client.embed_batch(chunk_texts, batch_size=batch_size)
     logger.info(f"  Generated {len(chunk_embeddings)} embeddings")
 
@@ -360,11 +412,11 @@ def run_evaluation(config: dict[str, Any]) -> EvalRunResult:
     relevant_ids_list: list[set[str]] = []
     per_sample_results: list[dict] = []
 
-    top_k = search_cfg["top_k"] if "top_k" in search_cfg else 10
-    mode = search_cfg["mode"] if "mode" in search_cfg else "hybrid"
-    alpha = search_cfg["alpha"] if "alpha" in search_cfg else 0.5
-    namespace = search_cfg["namespace"] if "namespace" in search_cfg else None
-    include_per_sample = config["include_per_sample"] if "include_per_sample" in config else False
+    top_k = search_cfg["top_k"]
+    mode = search_cfg["mode"]
+    alpha = search_cfg["alpha"]
+    namespace = search_cfg.get("namespace")
+    include_per_sample = config["include_per_sample"]
 
     for i, sample in enumerate(dataset.samples):
         if (i + 1) % 50 == 0 or i == 0:
@@ -420,9 +472,7 @@ def run_evaluation(config: dict[str, Any]) -> EvalRunResult:
             "num_chunks": len(chunks),
             "num_documents": len(set(c["doc_id"] for c in chunks)),
             "dataset_version": dataset.version,
-            "embedding_provider": (
-                config["embedding"]["provider"] if "embedding" in config and "provider" in config["embedding"] else None
-            ),
+            "embedding_provider": config["embedding"]["provider"],
             "embedding_model": model,
             "embedding_dimension": dimension,
             "weaviate_type": "embedded",
@@ -483,15 +533,15 @@ def main() -> int:
         logger.error(f"Dataset not found: {config['dataset_path']}")
         return 1
 
-    index_cfg = config["index"] if "index" in config else {}
-    documents_path_val = index_cfg["documents_path"] if "documents_path" in index_cfg else ""
+    index_cfg = config["index"]
+    documents_path_val = index_cfg["documents_path"]
     if not Path(documents_path_val).exists():
         logger.error(f"Documents not found: {documents_path_val}")
         return 1
 
     try:
         result = run_evaluation(config)
-        output_dir_val = config["output_dir"] if "output_dir" in config else "evals/reports"
+        output_dir_val = config["output_dir"]
         output_path = save_result(result, output_dir_val)
         logger.info(f"\nResults saved to: {output_path}")
         return 0

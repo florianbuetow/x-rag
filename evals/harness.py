@@ -98,8 +98,8 @@ class EvalRunResult:
             started_at=data["started_at"],
             completed_at=data["completed_at"],
             duration_seconds=data["duration_seconds"],
-            per_sample_results=tuple(data["per_sample_results"] if "per_sample_results" in data else []),
-            metadata=data["metadata"] if "metadata" in data else {},
+            per_sample_results=tuple(data["per_sample_results"]),
+            metadata=data["metadata"],
         )
 
 
@@ -174,7 +174,8 @@ class RetrievalEvaluator:
         Returns:
             EvalRunResult with metrics and metadata
         """
-        run_id = run_id or f"run-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}"
+        if run_id is None:
+            run_id = f"run-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}"
         started_at = datetime.utcnow().isoformat() + "Z"
         start_time = time.time()
 
@@ -201,7 +202,14 @@ class RetrievalEvaluator:
             )
 
             # Extract chunk IDs from results
-            retrieved_ids = [r["chunk_id"] if "chunk_id" in r else (r["id"] if "id" in r else "") for r in results]
+            retrieved_ids = []
+            for r in results:
+                if "chunk_id" in r:
+                    retrieved_ids.append(r["chunk_id"])
+                elif "id" in r:
+                    retrieved_ids.append(r["id"])
+                else:
+                    raise ValueError(f"Result missing both 'chunk_id' and 'id' fields: {r}")
             retrieved_ids_list.append(retrieved_ids)
             relevant_ids_list.append(set(sample.relevant_chunk_ids))
 

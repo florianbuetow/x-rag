@@ -95,8 +95,8 @@ def load_qa_file(filepath: Path) -> QAFile | None:
         logger.warning(f"Could not load {filepath}: {e}")
         return None
 
-    question = data["question"] if "question" in data else ""
-    answer = data["answer"] if "answer" in data else ""
+    question = data["question"]
+    answer = data["answer"]
 
     if not question:
         logger.warning(f"Empty question in {filepath}")
@@ -195,6 +195,7 @@ def create_eval_sample(
         "line_end": line_end,
         "chunk_id": chunk_id,
         "relevant_chunk_ids": [chunk_id],
+        "metadata": {},
     }
 
 
