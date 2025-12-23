@@ -362,3 +362,52 @@ def mock_kafka_producer():
     client.publish = AsyncMock()
     client.health_check = AsyncMock(return_value=True)
     return client
+
+
+# ============================================
+# Search UI Fixtures
+# ============================================
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_search_ui_env(request):
+    """Set up environment variables for Search UI tests.
+
+    This is a session-scoped autouse fixture that runs before any tests.
+    It sets environment variables needed for SearchUIConfig initialization.
+    """
+    import os
+
+    # Save original environment
+    original_env = {}
+
+    # Required environment variables for SearchUIConfig
+    test_env = {
+        "SERVICE_NAME": "search-ui-test",
+        "PORT": "8080",
+        "LOG_LEVEL": "INFO",
+        "ENVIRONMENT": "test",
+        "SEARCH_SERVICE_ADDR": "localhost:50052",
+        "SEARCH_SERVICE_TIMEOUT": "30.0",
+        "CORS_ENABLED": "true",
+        "MAX_QUERY_LENGTH": "1000",
+        "TOP_K": "10",
+        "MODE": "hybrid",
+        "DATASETS_CONFIG_PATH": "config/test/datasets_config.yaml",
+        "OTLP_ENDPOINT": "",  # Empty string to disable OTLP in tests
+    }
+
+    # Set environment variables and save originals
+    for key, value in test_env.items():
+        if key in os.environ:
+            original_env[key] = os.environ[key]
+        os.environ[key] = value
+
+    yield
+
+    # Restore original environment
+    for key in test_env:
+        if key in original_env:
+            os.environ[key] = original_env[key]
+        else:
+            os.environ.pop(key, None)

@@ -15,8 +15,25 @@ from src.search_ui.models import SearchRequest, SearchResponse, Source
 class TestSearchUIConfig:
     """Test Search UI configuration."""
 
-    def test_default_values(self):
+    def test_default_values(self, monkeypatch):
         """Test that SearchUIConfig requires all fields."""
+        # Clear environment variables to test that all fields are required
+        for key in [
+            "SERVICE_NAME",
+            "PORT",
+            "LOG_LEVEL",
+            "ENVIRONMENT",
+            "SEARCH_SERVICE_ADDR",
+            "SEARCH_SERVICE_TIMEOUT",
+            "CORS_ENABLED",
+            "MAX_QUERY_LENGTH",
+            "TOP_K",
+            "MODE",
+            "DATASETS_CONFIG_PATH",
+            "OTLP_ENDPOINT",
+        ]:
+            monkeypatch.delenv(key, raising=False)
+
         # All fields are required - no defaults
         with pytest.raises(ValueError, match="Field required"):
             SearchUIConfig()
@@ -312,7 +329,7 @@ class TestSearchUIEndpoints:
         with patch("src.search_ui.main.search_client", None):
             response = app_client.post(
                 "/api/search",
-                json={"query": "test", "namespace": "test-ns"},
+                json={"query": "test", "namespace": "test-ns", "top_k": 5, "mode": "hybrid"},
             )
             # Returns 503 Service Unavailable when client not initialized
             assert response.status_code == 503
@@ -328,7 +345,7 @@ class TestSearchUIEndpoints:
 
         response = app_client.post(
             "/api/search",
-            json={"query": "test", "namespace": "test-ns"},
+            json={"query": "test", "namespace": "test-ns", "top_k": 5, "mode": "hybrid"},
         )
         assert response.status_code == 500
 
@@ -346,7 +363,7 @@ class TestSearchUIEndpoints:
 
             response = app_client.post(
                 "/api/search",
-                json={"query": "test", "mode": mode},
+                json={"query": "test", "namespace": "test-ns", "top_k": 5, "mode": mode},
             )
             assert response.status_code == 200
             assert response.json()["metadata"]["mode"] == mode
@@ -395,7 +412,7 @@ class TestSearchUIEndpoints:
 
         response = app_client.post(
             "/api/search",
-            json={"query": "test"},
+            json={"query": "test", "namespace": "test-ns", "top_k": 5, "mode": "hybrid"},
         )
         assert response.status_code == 200
         assert len(response.json()["sources"]) == 0

@@ -24,6 +24,135 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 echo -e "${CYAN}Repository:${NC} $(basename "$REPO_ROOT")"
 echo ""
 
+# Function to compute commit counts for last N days
+compute_daily_commits() {
+    local num_days=$1
+    local commits_data=$(git log --since="$num_days days ago" --date=short --pretty=format:'%ad' | sort | uniq -c | awk '{print $2 " " $1}')
+
+    # Generate date range (oldest first)
+    local i
+    for (( i=num_days-1; i>=0; i-- )); do
+        local date_str=$(date -v-${i}d +%Y-%m-%d 2>/dev/null || date -d "$i days ago" +%Y-%m-%d 2>/dev/null)
+
+        # Find commit count for this date
+        local count=$(echo "$commits_data" | grep "^$date_str " | awk '{print $2}')
+        [ -z "$count" ] && count=0
+
+        echo "$date_str $count"
+    done
+}
+
+# Function to display histogram
+display_histogram() {
+    local data="$1"
+    local num_days=$2
+    local bar_width=$3
+    local height=$4
+    local label_interval=$5
+
+    local max_commits=0
+    local -a dates
+    local -a counts
+
+    # Parse data into arrays
+    while IFS=' ' read -r date count; do
+        dates+=("$date")
+        counts+=("$count")
+        [ "$count" -gt "$max_commits" ] && max_commits=$count
+    done <<< "$data"
+
+    # Check if there are any commits
+    if [ "$max_commits" -eq 0 ]; then
+        echo "  No commits in the last $num_days days"
+        return
+    fi
+
+    local width=${#dates[@]}
+
+    # Build the chart array (height rows x width columns)
+    local -a chart
+    local row col
+    for (( row=0; row<height; row++ )); do
+        chart[$row]=""
+        for (( col=0; col<width; col++ )); do
+            local count=${counts[$col]}
+            local bar_height=$(( (count * height) / max_commits ))
+
+            # Fill from bottom up: row 0 is top, row (height-1) is bottom
+            local threshold=$(( height - row ))
+            if [ $bar_height -ge $threshold ]; then
+                local bar=$(printf "%${bar_width}s" | tr ' ' '█')
+                chart[$row]+="${GREEN}${bar}${NC}"
+            else
+                chart[$row]+=$(printf "%${bar_width}s" "")
+            fi
+        done
+    done
+
+    # Print the chart with Y-axis labels
+    for (( row=0; row<height; row++ )); do
+        local value=$(( ((height - row) * max_commits) / height ))
+
+        # Y-axis label
+        if [ $row -eq 0 ]; then
+            printf "  %3s │" "$max_commits"
+        elif [ $row -eq $(( height - 1 )) ]; then
+            printf "  %3s │" "0"
+        elif [ $(( row % 3 )) -eq 0 ] && [ $height -ge 10 ]; then
+            printf "  %3s │" "$value"
+        elif [ $(( row % 2 )) -eq 0 ] && [ $height -lt 10 ]; then
+            printf "  %3s │" "$value"
+        else
+            printf "      │"
+        fi
+
+        # Print chart row
+        echo -e "${chart[$row]}"
+    done
+
+    # X-axis separator
+    printf "      └"
+    for (( col=0; col<width; col++ )); do
+        printf "%${bar_width}s" "" | tr ' ' '─'
+    done
+    echo ""
+
+    # X-axis labels
+    printf "       "
+    if [ $label_interval -eq 1 ]; then
+        # Show every date (for 7-day view)
+        for i in "${!dates[@]}"; do
+            printf "${CYAN}%-${bar_width}s${NC}" "${dates[$i]:5:5}"
+        done
+    else
+        # Show every Nth date (for 30-day view)
+        for i in "${!dates[@]}"; do
+            if [ $(( i % label_interval )) -eq 0 ]; then
+                printf "${CYAN}%s${NC}" "${dates[$i]:5:5}"
+                if [ $i -lt $(( ${#dates[@]} - label_interval )) ]; then
+                    local padding=$(( (label_interval * bar_width) - 5 ))
+                    printf "%${padding}s" ""
+                fi
+            elif [ $i -eq $(( ${#dates[@]} - 1 )) ] && [ $(( i % label_interval )) -ne 0 ]; then
+                local days_since_last=$(( i % label_interval ))
+                local spaces=$(( (days_since_last * bar_width) - 5 ))
+                [ $spaces -gt 0 ] && printf "%${spaces}s" ""
+                printf "${CYAN}%s${NC}" "${dates[$i]:5:5}"
+            fi
+        done
+    fi
+    echo ""
+    echo ""
+}
+
+# === Commits per Day (Last 30 Days) ===
+COMMITS_30=$(git log --since='30 days ago' --oneline | wc -l | tr -d ' ')
+echo -e "${YELLOW}Commits per Day (Last 30 Days) - ${COMMITS_30} commits:${NC}"
+daily_data_30=$(compute_daily_commits 30)
+display_histogram "$daily_data_30" 30 2 10 5
+
+echo ""
+
 # === Commit Statistics ===
 echo -e "${YELLOW}Commit Statistics:${NC}"
 TOTAL_COMMITS=$(git rev-list --count HEAD 2>/dev/null || echo "0")
@@ -105,6 +234,34 @@ echo -e "${YELLOW}Recent Activity:${NC}"
 echo -e "  Last 7 days:          $(git log --since='7 days ago' --oneline | wc -l | tr -d ' ') commits"
 echo -e "  Last 30 days:         $(git log --since='30 days ago' --oneline | wc -l | tr -d ' ') commits"
 echo -e "  Last 90 days:         $(git log --since='90 days ago' --oneline | wc -l | tr -d ' ') commits"
+echo ""
+
+# === Commits per Day (Last 7 Days) ===
+COMMITS_7=$(git log --since='7 days ago' --oneline | wc -l | tr -d ' ')
+echo -e "${YELLOW}Commits per Day (Last 7 Days) - ${COMMITS_7} commits:${NC}"
+daily_data_7=$(compute_daily_commits 7)
+display_histogram "$daily_data_7" 7 6 8 1
+
+echo ""
+
+# === Recent Commit History (Last 7 Days) ===
+echo -e "${YELLOW}Recent Commit History (Last 7 Days):${NC}"
+TOTAL_COMMITS=$(git log --since='7 days ago' --oneline | wc -l | tr -d ' ')
+if [ "$TOTAL_COMMITS" -eq 0 ]; then
+    echo "  No commits in the last 7 days"
+else
+    git log --since='7 days ago' --pretty=format:"%ad  %s (%an)" --date=short | head -n 20 | while IFS= read -r line; do
+        # Extract date from the line
+        date=$(echo "$line" | awk '{print $1}')
+        rest=$(echo "$line" | cut -d' ' -f2-)
+        echo -e "  ${CYAN}${date}${NC}  ${rest}"
+    done || true  # Ignore pipe errors
+
+    if [ "$TOTAL_COMMITS" -gt 20 ]; then
+        echo ""
+        echo -e "  ${YELLOW}... (showing first 20 of ${TOTAL_COMMITS} commits)${NC}"
+    fi
+fi
 echo ""
 
 # === Most Modified Files ===
