@@ -92,15 +92,36 @@ class LLMConfig(BaseModel):
         cls,
         api_key: str,
         model: str,
+        max_tokens: int,
+        temperature: float,
+        max_retries: int,
+        timeout: int,
         **kwargs: object,
     ) -> "LLMConfig":
-        """Create config for OpenAI API."""
+        """Create config for OpenAI API.
+
+        All parameters required. For namespace-based config with defaults,
+        use DatasetsConfigLoader.get_dataset_config(namespace).llm.to_llm_config()
+
+        Args:
+            api_key: OpenAI API key (required)
+            model: Model name (required, e.g., 'gpt-4')
+            max_tokens: Maximum tokens in response (required)
+            temperature: Sampling temperature 0.0-2.0 (required)
+            max_retries: Maximum retry attempts (required)
+            timeout: Request timeout in seconds (required)
+            **kwargs: Additional config overrides
+        """
         return cls(
             provider=LLMProvider.OPENAI,
             api_key=api_key,
             base_url=None,
             model=model,
-            **kwargs,  # type: ignore[arg-type]
+            max_tokens=max_tokens,
+            temperature=temperature,
+            max_retries=max_retries,
+            timeout=timeout,
+            **kwargs,
         )
 
     @classmethod
@@ -109,15 +130,37 @@ class LLMConfig(BaseModel):
         base_url: str,
         model: str,
         api_key: str,
+        max_tokens: int,
+        temperature: float,
+        max_retries: int,
+        timeout: int,
         **kwargs: object,
     ) -> "LLMConfig":
-        """Create config for local LLM (LM Studio, Ollama, etc.)."""
+        """Create config for local LLM (LM Studio, Ollama, etc.).
+
+        All parameters required. For namespace-based config with defaults,
+        use DatasetsConfigLoader.get_dataset_config(namespace).llm.to_llm_config()
+
+        Args:
+            base_url: Base URL for the local LLM server (required)
+            model: Model name/ID (required)
+            api_key: API key (required - use "local" for servers that don't validate)
+            max_tokens: Maximum tokens in response (required)
+            temperature: Sampling temperature 0.0-2.0 (required)
+            max_retries: Maximum retry attempts (required)
+            timeout: Request timeout in seconds (required)
+            **kwargs: Additional config overrides
+        """
         return cls(
             provider=LLMProvider.LOCAL,
             api_key=api_key,
             base_url=base_url,
             model=model,
-            **kwargs,  # type: ignore[arg-type]
+            max_tokens=max_tokens,
+            temperature=temperature,
+            max_retries=max_retries,
+            timeout=timeout,
+            **kwargs,
         )
 
     @property
@@ -175,15 +218,33 @@ class EmbeddingConfig(BaseModel):
         cls,
         api_key: str,
         model: str,
+        max_retries: int,
+        timeout: int,
+        dimension: int,
         **kwargs: object,
     ) -> "EmbeddingConfig":
-        """Create config for OpenAI API."""
+        """Create config for OpenAI API.
+
+        All parameters required. For namespace-based config with defaults,
+        use DatasetsConfigLoader.get_dataset_config(namespace).embedding.to_embedding_config()
+
+        Args:
+            api_key: OpenAI API key (required)
+            model: Embedding model name (required, e.g., 'text-embedding-3-small')
+            max_retries: Maximum retry attempts (required)
+            timeout: Request timeout in seconds (required)
+            dimension: Embedding dimension (required)
+            **kwargs: Additional config overrides
+        """
         return cls(
             provider=EmbeddingProvider.OPENAI,
             api_key=api_key,
             base_url=None,
             model=model,
-            **kwargs,  # type: ignore[arg-type]
+            max_retries=max_retries,
+            timeout=timeout,
+            dimension=dimension,
+            **kwargs,
         )
 
     @classmethod
@@ -192,28 +253,61 @@ class EmbeddingConfig(BaseModel):
         base_url: str,
         model: str,
         api_key: str,
+        max_retries: int,
+        timeout: int,
+        dimension: int,
         **kwargs: object,
     ) -> "EmbeddingConfig":
-        """Create config for local embedding server (LM Studio, Ollama, etc.)."""
+        """Create config for local embedding server (LM Studio, Ollama, etc.).
+
+        All parameters required. For namespace-based config with defaults,
+        use DatasetsConfigLoader.get_dataset_config(namespace).embedding.to_embedding_config()
+
+        Args:
+            base_url: Base URL for the local embedding server (required)
+            model: Model name/ID (required)
+            api_key: API key (required - use "local" for servers that don't validate)
+            max_retries: Maximum retry attempts (required)
+            timeout: Request timeout in seconds (required)
+            dimension: Embedding dimension (required)
+            **kwargs: Additional config overrides
+        """
         return cls(
             provider=EmbeddingProvider.LOCAL,
             api_key=api_key,
             base_url=base_url,
             model=model,
-            **kwargs,  # type: ignore[arg-type]
+            max_retries=max_retries,
+            timeout=timeout,
+            dimension=dimension,
+            **kwargs,
         )
 
     @classmethod
     def for_hash_based(
         cls,
         dimension: int,
+        max_retries: int,
+        timeout: int,
         **kwargs: object,
     ) -> "EmbeddingConfig":
-        """Create config for hash-based embeddings (testing only)."""
+        """Create config for hash-based embeddings (testing only).
+
+        All parameters required. For namespace-based config with defaults,
+        use DatasetsConfigLoader.get_dataset_config(namespace).embedding.to_embedding_config()
+
+        Args:
+            dimension: Embedding dimension (required)
+            max_retries: Maximum retry attempts (required - typically 0 for local hashing)
+            timeout: Request timeout in seconds (required)
+            **kwargs: Additional config overrides
+        """
         return cls(
             provider=EmbeddingProvider.HASH_BASED,
             model="hash-based",
             dimension=dimension,
+            max_retries=max_retries,
+            timeout=timeout,
             **kwargs,  # type: ignore[arg-type]
         )
 

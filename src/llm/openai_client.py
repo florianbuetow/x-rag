@@ -83,7 +83,10 @@ class OpenAIClient:
             )
 
             # Extract response text
-            answer = response.choices[0].message.content or ""
+            content = response.choices[0].message.content
+            if content is None:
+                raise ValueError("OpenAI returned None for message content")
+            answer = content
 
             # Log token usage
             if response.usage:

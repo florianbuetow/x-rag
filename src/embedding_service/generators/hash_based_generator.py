@@ -93,9 +93,7 @@ class HashBasedEmbeddingGenerator(EmbeddingGenerator):
             ValueError: If model is not recognized
         """
         if model not in self.MODEL_DIMENSIONS:
-            raise ValueError(
-                f"Unknown model '{model}'. Supported models: {', '.join(self.MODEL_DIMENSIONS.keys())}"
-            )
+            raise ValueError(f"Unknown model '{model}'. Supported models: {', '.join(self.MODEL_DIMENSIONS.keys())}")
         return self.MODEL_DIMENSIONS[model]
 
     def _generate_embedding(self, text: str, dimension: int) -> list[float]:

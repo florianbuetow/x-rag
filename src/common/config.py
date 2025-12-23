@@ -310,13 +310,15 @@ class KafkaConfig(BaseModel):
     kafka_bootstrap: str = Field(..., description="Kafka bootstrap servers")
     kafka_topic: str = Field(..., description="Kafka topic for document changes")
     kafka_group_id: str | None = None
-    kafka_acks: str = Field(..., description="Kafka acknowledgment setting (0, 1, or 'all')")
-    kafka_auto_offset_reset: str = Field(..., description="Kafka auto offset reset (earliest/latest)")
+    kafka_acks: str | None = Field(None, description="Kafka acknowledgment setting (0, 1, or 'all') - producer only")
+    kafka_auto_offset_reset: str | None = Field(None, description="Kafka auto offset reset (earliest/latest) - consumer only")
 
     @field_validator("kafka_acks")
     @classmethod
-    def validate_acks(cls, v: str) -> str:
+    def validate_acks(cls, v: str | None) -> str | None:
         """Validate acks value."""
+        if v is None:
+            return v
         valid_acks = ["0", "1", "all"]
         if v not in valid_acks:
             raise ValueError(f"Invalid kafka_acks '{v}'. Must be one of: {', '.join(valid_acks)}")
@@ -324,8 +326,10 @@ class KafkaConfig(BaseModel):
 
     @field_validator("kafka_auto_offset_reset")
     @classmethod
-    def validate_auto_offset_reset(cls, v: str) -> str:
+    def validate_auto_offset_reset(cls, v: str | None) -> str | None:
         """Validate auto_offset_reset value."""
+        if v is None:
+            return v
         valid_values = ["earliest", "latest"]
         if v not in valid_values:
             raise ValueError(f"Invalid kafka_auto_offset_reset '{v}'. Must be one of: {', '.join(valid_values)}")

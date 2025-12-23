@@ -5,10 +5,11 @@ and mapping namespaces to dataset-specific settings (embedding, LLM, chunking, s
 """
 
 import os
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from src.common.config import load_yaml_config
 from src.core.errors import ConfigurationError
@@ -39,7 +40,11 @@ class DatasetEmbeddingConfig(BaseModel):
         provider_enum = EmbeddingProvider(self.provider)
 
         if provider_enum == EmbeddingProvider.HASH_BASED:
-            return EmbeddingConfig.for_hash_based(dimension=self.dimension)
+            return EmbeddingConfig.for_hash_based(
+                dimension=self.dimension,
+                max_retries=self.max_retries,
+                timeout=self.timeout,
+            )
 
         # Resolve env vars
         api_key = os.getenv(self.api_key_env) if self.api_key_env else None
@@ -48,21 +53,25 @@ class DatasetEmbeddingConfig(BaseModel):
         if provider_enum == EmbeddingProvider.LOCAL:
             if not base_url:
                 raise ConfigurationError(f"Missing environment variable: {self.base_url_env} (required for local embedding provider)")
+            if api_key is None:
+                api_key = "local"
             return EmbeddingConfig.for_local(
                 base_url=base_url,
-                model=self.model or "text-embedding-bge-large-en-v1.5",
-                api_key=api_key or "local",
+                model=self.model,
+                api_key=api_key,
                 timeout=self.timeout,
                 max_retries=self.max_retries,
+                dimension=self.dimension,
             )
         elif provider_enum == EmbeddingProvider.OPENAI:
             if not api_key:
                 raise ConfigurationError(f"Missing environment variable: {self.api_key_env} (required for OpenAI embedding provider)")
             return EmbeddingConfig.for_openai(
                 api_key=api_key,
-                model=self.model or "text-embedding-3-small",
+                model=self.model,
                 timeout=self.timeout,
                 max_retries=self.max_retries,
+                dimension=self.dimension,
             )
 
         raise ConfigurationError(f"Unsupported embedding provider: {provider_enum}")
@@ -99,10 +108,12 @@ class DatasetLLMConfig:
         if provider_enum == LLMProvider.LOCAL:
             if not base_url:
                 raise ConfigurationError(f"Missing environment variable: {self.base_url_env} (required for local LLM provider)")
+            if api_key is None:
+                api_key = "local"
             return LLMConfig.for_local(
                 base_url=base_url,
                 model=self.model,
-                api_key=api_key or "local",
+                api_key=api_key,
                 max_tokens=self.max_tokens,
                 temperature=self.temperature,
                 timeout=self.timeout,
@@ -207,7 +218,7 @@ class DatasetsConfigLoader:
             if section not in defaults:
                 raise ConfigurationError(f"Missing required '{section}' in defaults section of {self.config_path}")
             default_section = defaults[section]
-            dataset_section = dataset_config[section] if section in dataset_config else {}
+            dataset_section = dataset_config[section]
 
             # Merge: dataset-specific overrides defaults
             merged[section] = {**default_section, **dataset_section}
@@ -246,8 +257,8 @@ class DatasetsConfigLoader:
                 namespace=namespace,
                 description=merged["description"],
                 input_path=merged["input_path"],
-                qa_output_base=merged["qa_output_base"] if "qa_output_base" in merged else None,
-                eval_output_base=merged["eval_output_base"] if "eval_output_base" in merged else None,
+                qa_output_base=merged.get("qa_output_base"),
+                eval_output_base=merged.get("eval_output_base"),
                 embedding=DatasetEmbeddingConfig(**merged["embedding"]),
                 llm=DatasetLLMConfig(**merged["llm"]),
                 chunking=DatasetChunkingConfig(**merged["chunking"]),
