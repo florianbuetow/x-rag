@@ -1,0 +1,117 @@
+# Test dataset configuration
+# Minimal valid configuration for running tests
+
+defaults:
+  embedding:
+    provider: "hash_based"
+    model: "hash-based"
+    base_url_env: null
+    api_key_env: null
+    dimension: 1536
+    timeout: 10
+    max_retries: 0
+    batch_size: 10
+  chunking:
+    chunk_size: 512
+    chunk_overlap: 50
+    cleaner_remove_empty_lines: true
+    cleaner_remove_extra_whitespaces: true
+    cleaner_unicode_normalization: "NFC"
+  search:
+    top_k: 10
+    mode: "hybrid"
+    hybrid_alpha: 0.5
+    max_context_length: 3000
+  llm:
+    provider: "openai"
+    model: "gpt-4o-mini"
+    max_tokens: 500
+    temperature: 0.7
+    base_url_env: null
+    api_key_env: "OPENAI_API_KEY"
+    timeout: 60
+    max_retries: 3
+  weaviate:
+    collection: "DocumentChunk_test"
+    timeout_init: 30
+    timeout_query: 60
+    timeout_insert: 120
+
+datasets:
+  test-ns:
+    description: "Test namespace for unit tests"
+    namespace: "test-ns"
+    input_path: "tests/data/test"  # Required test data path
+    embedding:
+      provider: "hash_based"
+      model: "hash-based"
+      base_url_env: null
+      api_key_env: null
+      dimension: 1536
+      timeout: 10
+      max_retries: 0
+      batch_size: 10
+    chunking:
+      chunk_size: 512
+      chunk_overlap: 50
+      cleaner_remove_empty_lines: true
+      cleaner_remove_extra_whitespaces: true
+      cleaner_unicode_normalization: "NFC"
+    weaviate:
+      collection: "DocumentChunk_test"
+      timeout_init: 30
+      timeout_query: 60
+      timeout_insert: 120
+    search:
+      top_k: 10
+      mode: "hybrid"
+      hybrid_alpha: 0.5
+      max_context_length: 3000
+    llm:
+      provider: "openai"
+      model: "gpt-4o-mini"
+      max_tokens: 500
+      temperature: 0.7
+      base_url_env: null
+      api_key_env: "OPENAI_API_KEY"
+      timeout: 60
+      max_retries: 3
+
+  wiki:
+    description: "Wiki test dataset"
+    namespace: "wiki"
+    input_path: "tests/data/wiki"  # Required test data path
+    embedding:
+      provider: "hash_based"
+      model: "hash-based"
+      base_url_env: null
+      api_key_env: null
+      dimension: 384
+      timeout: 10
+      max_retries: 0
+      batch_size: 10
+    chunking:
+      chunk_size: 256
+      chunk_overlap: 25
+      cleaner_remove_empty_lines: true
+      cleaner_remove_extra_whitespaces: true
+      cleaner_unicode_normalization: "NFC"
+    weaviate:
+      collection: "DocumentChunk_wiki"
+      timeout_init: 30
+      timeout_query: 60
+      timeout_insert: 120
+    search:
+      top_k: 5
+      mode: "vector"
+      hybrid_alpha: 0.5
+      max_context_length: 2000
+    llm:
+      provider: "openai"
+      model: "gpt-4o-mini"
+      max_tokens: 300
+      temperature: 0.5
+      base_url_env: null
+      api_key_env: "OPENAI_API_KEY"
+      timeout: 60
+      max_retries: 3
