@@ -91,6 +91,7 @@ This saves significant resources when monitoring isn't needed for development.
 - Missing configuration = immediate startup failure with clear error message
 - This applies to: `EMBEDDING_GENERATOR`, `LLM_PROVIDER`, `LLM_API_KEY`, etc.
 - Silent fallbacks are an anti-pattern - they hide configuration problems
+- **Exception**: Test files (`tests/`) are excluded from these rules to allow convenient test fixtures with default values
 
 ### Always Use Makefile
 - **NEVER** run scripts directly
@@ -150,14 +151,42 @@ When writing configuration classes or factory methods:
 - **NEVER** provide default values for provider/backend selection
 - Use `Field(...)` (Ellipsis = required) instead of `Field(default=...)`
 - Factory methods must raise `ValueError` for unknown types
-- Example:
-  ```python
-  # WRONG - silent fallback hides misconfiguration
-  embedding_generator: str = Field(default="hash_based")
+- **Exception**: Test files (`tests/`) are exempt from these rules
 
-  # CORRECT - Ellipsis (...) means required, fails if not set
-  embedding_generator: str = Field(..., description="Required - no default")
-  ```
+**Pydantic Field Pattern:**
+```python
+# WRONG - silent fallback hides misconfiguration
+embedding_generator: str = Field(default="hash_based")
+
+# CORRECT - Ellipsis (...) means required, fails if not set
+embedding_generator: str = Field(..., description="Required - no default")
+```
+
+**Configuration Pattern:**
+All LLM and embedding configurations use namespace-based loading from YAML:
+
+```python
+# CORRECT - Namespace-based loading (production code)
+from src.common.dataset_config import DatasetsConfigLoader
+
+loader = DatasetsConfigLoader("config/datasets_config.yaml")
+dataset_config = loader.get_dataset_config("nutritionfacts")
+llm_config = dataset_config.llm.to_llm_config()
+embedding_config = dataset_config.embedding.to_embedding_config()
+
+# CORRECT - Explicit values (tests only)
+config = LLMConfig.for_openai(
+    api_key="test-key",
+    model="gpt-4",
+    max_tokens=1000,
+    temperature=0.7,
+    max_retries=3,
+    timeout=60,
+)
+
+# WRONG - Missing required parameters (will raise TypeError)
+config = LLMConfig.for_openai(api_key="...", model="gpt-4")
+```
 
 ### Code Style
 This project follows the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html).

@@ -232,6 +232,8 @@ extend_exclude = [
     "reports",
     "notes",              # Reference notes and documentation
     "src/proto_gen",      # Generated protobuf/gRPC code
+    "tools",              # Development tools with their own dependencies
+    "evals",              # Evaluation scripts with their own dependencies
 ]
 
 # Ignore Jupyter notebooks (not part of production code)
@@ -261,6 +263,7 @@ DEP002 = [
     "urllib3",             # Security: pinned to >=2.6.0 to fix GHSA-gm62-xv2j-4w53, GHSA-2xpw-w6gg-jr37
     "filelock",            # Security: pinned to >=3.20.1 to fix GHSA-w853-jp5j-5j7f
     "autogen-ext",         # Agent framework: for future QA generation and agent-based eval workflows
+    "autogen-agentchat",   # Agent framework: used in tools/fake_test_detector
 ]
 
 # pygount configuration (reference only - pygount uses CLI args, not pyproject.toml)
