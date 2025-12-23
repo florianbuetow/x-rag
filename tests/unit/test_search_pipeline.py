@@ -119,7 +119,7 @@ class TestSearchPipelineSearch:
             top_k=10,
             mode="vector",
             alpha=0.5,
-            namespace=None,
+            namespace="test-namespace",
             openai_max_tokens=500,
             openai_temperature=0.7,
         )
@@ -138,7 +138,7 @@ class TestSearchPipelineSearch:
             top_k=10,
             mode="hybrid",
             alpha=0.5,
-            namespace=None,
+            namespace="test-namespace",
             openai_max_tokens=500,
             openai_temperature=0.7,
         )
@@ -155,7 +155,7 @@ class TestSearchPipelineSearch:
             top_k=10,
             mode="bm25",
             alpha=0.5,
-            namespace=None,
+            namespace="test-namespace",
             openai_max_tokens=500,
             openai_temperature=0.7,
         )
@@ -195,7 +195,7 @@ class TestSearchPipelineSearch:
             top_k=10,
             mode="hybrid",
             alpha=0.5,
-            namespace=None,
+            namespace="test-namespace",
             openai_max_tokens=500,
             openai_temperature=0.7,
         )
@@ -216,7 +216,7 @@ class TestSearchPipelineSearch:
             top_k=10,
             mode="hybrid",
             alpha=0.5,
-            namespace=None,
+            namespace="test-namespace",
             openai_max_tokens=500,
             openai_temperature=0.7,
         )
@@ -234,7 +234,7 @@ class TestSearchPipelineSearch:
             top_k=10,
             mode="hybrid",
             alpha=0.5,
-            namespace=None,
+            namespace="test-namespace",
             openai_max_tokens=200,
             openai_temperature=0.3,
         )
@@ -276,7 +276,7 @@ class TestSearchPipelineSearch:
             top_k=10,
             mode="hybrid",
             alpha=0.5,
-            namespace=None,
+            namespace="test-namespace",
             openai_max_tokens=500,
             openai_temperature=0.7,
         )

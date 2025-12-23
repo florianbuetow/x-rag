@@ -137,31 +137,53 @@ def mock_embedding_service_client():
 
 
 @pytest.fixture
-def search_service_config():
-    """Search service configuration fixture."""
+def search_service_config(monkeypatch):
+    """Search service configuration fixture.
+
+    Uses environment variables to create a properly configured instance.
+    """
     from src.search_service.config import SearchServiceConfig
 
-    return SearchServiceConfig(
-        openai_api_key="sk-test-key-12345",
-        top_k=10,
-        mode="hybrid",
-        hybrid_alpha=0.5,
-        openai_max_tokens=500,
-        openai_temperature=0.7,
-    )
+    # Set required environment variables for SearchServiceConfig
+    test_env = {
+        "SERVICE_NAME": "search-service-test",
+        "PORT": "50052",
+        "ENABLE_REFLECTION": "true",
+        "WEAVIATE_URL": "http://localhost:8081",
+        "EMBEDDING_SERVICE_ADDR": "localhost:50051",
+        "EMBEDDING_SERVICE_TIMEOUT": "30",
+        "DATASETS_CONFIG_PATH": "config/test/datasets_config.yaml",
+    }
+
+    for key, value in test_env.items():
+        monkeypatch.setenv(key, value)
+
+    return SearchServiceConfig()
 
 
 @pytest.fixture
-def search_service_config_dev_mode():
-    """Search service configuration with placeholder key (dev mode)."""
+def search_service_config_dev_mode(monkeypatch):
+    """Search service configuration with placeholder key (dev mode).
+
+    Uses environment variables to create a properly configured instance.
+    """
     from src.search_service.config import SearchServiceConfig
 
-    return SearchServiceConfig(
-        openai_api_key="sk-your-key-here",
-        top_k=10,
-        mode="hybrid",
-        hybrid_alpha=0.5,
-    )
+    # Set required environment variables for SearchServiceConfig
+    test_env = {
+        "SERVICE_NAME": "search-service-test",
+        "PORT": "50052",
+        "ENABLE_REFLECTION": "true",
+        "WEAVIATE_URL": "http://localhost:8081",
+        "EMBEDDING_SERVICE_ADDR": "localhost:50051",
+        "EMBEDDING_SERVICE_TIMEOUT": "30",
+        "DATASETS_CONFIG_PATH": "config/test/datasets_config.yaml",
+    }
+
+    for key, value in test_env.items():
+        monkeypatch.setenv(key, value)
+
+    return SearchServiceConfig()
 
 
 @pytest.fixture
@@ -254,16 +276,25 @@ def mock_datasets_loader(mock_dataset_config):
 
 
 @pytest.fixture
-def embedding_service_config():
-    """Embedding service configuration fixture."""
+def embedding_service_config(monkeypatch):
+    """Embedding service configuration fixture.
+
+    Uses environment variables to create a properly configured instance.
+    """
     from src.embedding_service.config import EmbeddingServiceConfig
 
-    return EmbeddingServiceConfig(
-        service_name="embedding-service",
-        port=50051,
-        enable_reflection=True,
-        datasets_config_path="config/datasets_config.yaml",
-    )
+    # Set required environment variables for EmbeddingServiceConfig
+    test_env = {
+        "SERVICE_NAME": "embedding-service-test",
+        "PORT": "50051",
+        "ENABLE_REFLECTION": "true",
+        "DATASETS_CONFIG_PATH": "config/test/datasets_config.yaml",
+    }
+
+    for key, value in test_env.items():
+        monkeypatch.setenv(key, value)
+
+    return EmbeddingServiceConfig()
 
 
 # ============================================

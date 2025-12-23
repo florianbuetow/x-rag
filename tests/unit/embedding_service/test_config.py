@@ -1,61 +1,119 @@
 """Unit tests for src/embedding_service/config.py.
 
 Tests cover:
-- EmbeddingServiceConfig default values
+- EmbeddingServiceConfig loading from environment
 - EmbeddingServiceConfig custom values
 - Integration with ServiceConfig base class
+- Pydantic validation
 """
 
 import pytest
+from pydantic import ValidationError
 
 from src.embedding_service.config import EmbeddingServiceConfig
 
 
-class TestEmbeddingServiceConfigDefaults:
-    """Tests for EmbeddingServiceConfig default values."""
+class TestEmbeddingServiceConfigFromEnv:
+    """Tests for EmbeddingServiceConfig loading from environment variables."""
 
-    def test_default_service_name(self):
-        """Tests default service name."""
+    def test_loads_service_name_from_env(self, monkeypatch):
+        """Tests service name loaded from environment."""
+        test_env = {
+            "SERVICE_NAME": "embedding-service",
+            "PORT": "50051",
+            "ENABLE_REFLECTION": "true",
+            "DATASETS_CONFIG_PATH": "config/datasets_config.yaml",
+        }
+        for key, value in test_env.items():
+            monkeypatch.setenv(key, value)
+
         config = EmbeddingServiceConfig()
         assert config.service_name == "embedding-service"
 
-    def test_default_port(self):
-        """Tests default port."""
+    def test_loads_port_from_env(self, monkeypatch):
+        """Tests port loaded from environment."""
+        test_env = {
+            "SERVICE_NAME": "embedding-service",
+            "PORT": "50051",
+            "ENABLE_REFLECTION": "true",
+            "DATASETS_CONFIG_PATH": "config/datasets_config.yaml",
+        }
+        for key, value in test_env.items():
+            monkeypatch.setenv(key, value)
+
         config = EmbeddingServiceConfig()
         assert config.port == 50051
 
-    def test_default_enable_reflection(self):
-        """Tests default enable_reflection."""
+    def test_loads_enable_reflection_from_env(self, monkeypatch):
+        """Tests enable_reflection loaded from environment."""
+        test_env = {
+            "SERVICE_NAME": "embedding-service",
+            "PORT": "50051",
+            "ENABLE_REFLECTION": "true",
+            "DATASETS_CONFIG_PATH": "config/datasets_config.yaml",
+        }
+        for key, value in test_env.items():
+            monkeypatch.setenv(key, value)
+
         config = EmbeddingServiceConfig()
         assert config.enable_reflection is True
 
-    def test_default_datasets_config_path(self):
-        """Tests default datasets_config_path."""
+    def test_loads_datasets_config_path_from_env(self, monkeypatch):
+        """Tests datasets_config_path loaded from environment."""
+        test_env = {
+            "SERVICE_NAME": "embedding-service",
+            "PORT": "50051",
+            "ENABLE_REFLECTION": "true",
+            "DATASETS_CONFIG_PATH": "config/datasets_config.yaml",
+        }
+        for key, value in test_env.items():
+            monkeypatch.setenv(key, value)
+
         config = EmbeddingServiceConfig()
         assert config.datasets_config_path == "config/datasets_config.yaml"
 
 
 class TestEmbeddingServiceConfigCustomValues:
-    """Tests for EmbeddingServiceConfig with custom values."""
+    """Tests for EmbeddingServiceConfig with explicit custom values."""
 
     def test_custom_port(self):
         """Tests custom port setting."""
-        config = EmbeddingServiceConfig(port=50099)
+        config = EmbeddingServiceConfig(
+            service_name="test",
+            port=50099,
+            enable_reflection=True,
+            datasets_config_path="config/test.yaml",
+        )
         assert config.port == 50099
 
     def test_custom_service_name(self):
         """Tests custom service name."""
-        config = EmbeddingServiceConfig(service_name="custom-embedding")
+        config = EmbeddingServiceConfig(
+            service_name="custom-embedding",
+            port=50051,
+            enable_reflection=True,
+            datasets_config_path="config/test.yaml",
+        )
         assert config.service_name == "custom-embedding"
 
     def test_custom_enable_reflection(self):
         """Tests custom enable_reflection."""
-        config = EmbeddingServiceConfig(enable_reflection=False)
+        config = EmbeddingServiceConfig(
+            service_name="test",
+            port=50051,
+            enable_reflection=False,
+            datasets_config_path="config/test.yaml",
+        )
         assert config.enable_reflection is False
 
     def test_custom_datasets_config_path(self):
         """Tests custom datasets_config_path."""
-        config = EmbeddingServiceConfig(datasets_config_path="custom/path.yaml")
+        config = EmbeddingServiceConfig(
+            service_name="test",
+            port=50051,
+            enable_reflection=True,
+            datasets_config_path="custom/path.yaml",
+        )
         assert config.datasets_config_path == "custom/path.yaml"
 
     def test_all_custom_values(self):
@@ -73,6 +131,44 @@ class TestEmbeddingServiceConfigCustomValues:
         assert config.datasets_config_path == "config/custom.yaml"
 
 
+class TestEmbeddingServiceConfigValidation:
+    """Tests for EmbeddingServiceConfig validation and requirements."""
+
+    def test_requires_all_fields(self, monkeypatch):
+        """Config requires all fields to be specified when no env vars are set."""
+        # Clear all relevant environment variables
+        env_vars = [
+            "SERVICE_NAME",
+            "PORT",
+            "ENABLE_REFLECTION",
+            "DATASETS_CONFIG_PATH",
+            "LOG_LEVEL",
+            "ENVIRONMENT",
+        ]
+        for var in env_vars:
+            monkeypatch.delenv(var, raising=False)
+
+        with pytest.raises(ValidationError) as exc_info:
+            EmbeddingServiceConfig()
+
+        errors = exc_info.value.errors()
+        error_fields = {error["loc"][0] for error in errors}
+        # At minimum, these fields from EmbeddingServiceConfig should be required
+        assert "port" in error_fields or "enable_reflection" in error_fields or "datasets_config_path" in error_fields
+
+    def test_pydantic_validation_invalid_port(self):
+        """Pydantic validation works for invalid port type."""
+        with pytest.raises(ValidationError):
+            EmbeddingServiceConfig(
+                service_name="test",
+                port="not_a_number",
+                enable_reflection=True,
+                datasets_config_path="config/test.yaml",
+                log_level="INFO",
+                environment="test",
+            )
+
+
 class TestEmbeddingServiceConfigInheritance:
     """Tests for EmbeddingServiceConfig inheritance from ServiceConfig."""
 
@@ -80,10 +176,10 @@ class TestEmbeddingServiceConfigInheritance:
         """Config inherits from ServiceConfig base class."""
         from src.common.config import ServiceConfig
 
-        config = EmbeddingServiceConfig()
+        config = EmbeddingServiceConfig(
+            service_name="test",
+            port=50051,
+            enable_reflection=True,
+            datasets_config_path="config/test.yaml",
+        )
         assert isinstance(config, ServiceConfig)
-
-    def test_pydantic_validation(self):
-        """Pydantic validation works for invalid types."""
-        with pytest.raises(Exception):  # ValidationError
-            EmbeddingServiceConfig(port="not_a_number")

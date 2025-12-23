@@ -11,18 +11,45 @@ rules:
       include:
         - src/
         - evals/
+      exclude:
+        - tests/
 
   - id: xrag.no-or-operator-fallback
     languages: [python]
     message: >
       OR operator fallback hides None/empty values. Use explicit None checks
       and raise an error when the value is expected but missing.
+
+      Example violations:
+        # WRONG - hides missing config with hardcoded default
+        endpoint = otlp_endpoint or os.getenv(
+            "OTEL_EXPORTER_OTLP_ENDPOINT",
+            "http://tempo.monitoring.svc.cluster.local:4317",
+        )
+
+        # STILL WRONG - removes hardcoded default, but 'or' still hides None
+        endpoint = otlp_endpoint or os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+
+        # ALSO WRONG - sneaky fallback chain instead of failing fast
+        if otlp_endpoint is not None:
+            endpoint = otlp_endpoint
+        else:
+            endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+            if endpoint is None:
+                raise ValueError("OTLP endpoint not configured")
+
+        # CORRECT - require explicit value, no fallbacks
+        endpoint = otlp_endpoint
+        if endpoint is None:
+            raise ValueError("otlp_endpoint is required")
     severity: ERROR
     pattern: $VAR = $EXPR or $DEFAULT
     paths:
       include:
         - src/
         - evals/
+      exclude:
+        - tests/
 
   - id: xrag.no-getattr-with-default
     languages: [python]
@@ -35,6 +62,8 @@ rules:
       include:
         - src/
         - evals/
+      exclude:
+        - tests/
 
   - id: xrag.no-ternary-none-check-fallback
     languages: [python]
@@ -47,6 +76,8 @@ rules:
       include:
         - src/
         - evals/
+      exclude:
+        - tests/
 
   - id: xrag.no-walrus-or-fallback
     languages: [python]
@@ -59,3 +90,5 @@ rules:
       include:
         - src/
         - evals/
+      exclude:
+        - tests/

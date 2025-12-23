@@ -3,6 +3,7 @@
 from unittest.mock import AsyncMock, Mock
 
 import pytest
+from pydantic import ValidationError
 
 from src.ingestion_api.main import (
     DocumentMetadata,
@@ -470,12 +471,11 @@ class TestIngestResponse:
         assert response.message == "Document accepted"
 
     def test_response_default_values(self):
-        """IngestResponse uses default values."""
-        response = IngestResponse(
-            document_id="test-123",
-            minio_bucket="documents",
-            minio_key="test-123.json",
-        )
-
-        assert response.status == "accepted"
-        assert response.message == "Document accepted for processing"
+        """IngestResponse requires all fields."""
+        # All fields are required - no defaults
+        with pytest.raises(ValidationError, match="Field required"):
+            IngestResponse(
+                document_id="test-123",
+                minio_bucket="documents",
+                minio_key="test-123.json",
+            )

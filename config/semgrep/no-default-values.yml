@@ -16,6 +16,8 @@ rules:
       include:
         - src/
         - evals/
+      exclude:
+        - tests/
 
   - id: xrag.no-dict-get-with-default
     languages: [python]
@@ -28,6 +30,8 @@ rules:
       include:
         - src/
         - evals/
+      exclude:
+        - tests/
 
   - id: xrag.no-pydantic-field-default
     languages: [python]
@@ -41,3 +45,5 @@ rules:
       include:
         - src/
         - evals/
+      exclude:
+        - tests/

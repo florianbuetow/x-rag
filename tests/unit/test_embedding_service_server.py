@@ -1,8 +1,9 @@
 """Tests for Embedding Service gRPC server implementation."""
 
+from unittest.mock import Mock, patch
+
 import grpc
 import pytest
-from unittest.mock import Mock, patch
 
 from src.core.errors import ServiceUnavailableError
 from src.embedding_service.server import EmbeddingServicer
@@ -78,7 +79,10 @@ class TestEmbedMethod:
         mock_async_grpc_context,
     ):
         """Empty text returns INVALID_ARGUMENT error."""
-        request = embedding_pb2.EmbedRequest(text="")
+        request = embedding_pb2.EmbedRequest(
+            text="",
+            options={"namespace": "test-ns"},
+        )
 
         with pytest.raises(GrpcAbortException) as exc_info:
             await servicer.Embed(request, mock_async_grpc_context)
@@ -99,6 +103,7 @@ class TestEmbedMethod:
         request = embedding_pb2.EmbedRequest(
             text="test text",
             model="custom-model",
+            options={"namespace": "test-ns"},
         )
 
         response = await servicer.Embed(request, mock_async_grpc_context)
@@ -115,19 +120,23 @@ class TestEmbedMethod:
         servicer,
         mock_async_grpc_context,
     ):
-        """Uses empty string for generator's test-ns when not specified in request."""
+        """Uses hash-based model for test-ns namespace."""
         servicer.generator.embed.return_value = [0.1, 0.2, 0.3]
         servicer.generator.get_dimension.return_value = 3
 
-        request = embedding_pb2.EmbedRequest(text="test text")
+        request = embedding_pb2.EmbedRequest(
+            text="test text",
+            model="hash-based",
+            options={"namespace": "test-ns"},
+        )
 
         response = await servicer.Embed(request, mock_async_grpc_context)
 
         servicer.generator.embed.assert_called_once_with(
             "test text",
-            "",  # Empty string lets generator use its configured test-ns
+            "hash-based",
         )
-        assert response.model == "test-ns"  # Returns namespace when no model specified
+        assert response.model == "hash-based"
 
     @pytest.mark.asyncio
     async def test_embed_successful_generation(
@@ -140,13 +149,17 @@ class TestEmbedMethod:
         servicer.generator.embed.return_value = expected_embedding
         servicer.generator.get_dimension.return_value = 5
 
-        request = embedding_pb2.EmbedRequest(text="test text")
+        request = embedding_pb2.EmbedRequest(
+            text="test text",
+            model="hash-based",
+            options={"namespace": "test-ns"},
+        )
 
         response = await servicer.Embed(request, mock_async_grpc_context)
 
         assert list(response.embedding) == pytest.approx(expected_embedding, rel=1e-5)
         assert response.dimension == 5
-        assert response.model == "test-ns"  # Uses namespace when no model specified
+        assert response.model == "hash-based"
 
     @pytest.mark.asyncio
     async def test_embed_with_options(
@@ -160,17 +173,18 @@ class TestEmbedMethod:
 
         request = embedding_pb2.EmbedRequest(
             text="test text",
+            model="hash-based",
             options={"namespace": "test-ns"},  # Options used for namespace, not passed to generator
         )
 
         response = await servicer.Embed(request, mock_async_grpc_context)
 
-        # Verify generator was called with empty string (test-ns model)
+        # Verify generator was called with hash-based model
         servicer.generator.embed.assert_called_once_with(
             "test text",
-            "",
+            "hash-based",
         )
-        assert response.model == "test-ns"
+        assert response.model == "hash-based"
 
     @pytest.mark.asyncio
     async def test_embed_service_unavailable_error(
@@ -181,7 +195,11 @@ class TestEmbedMethod:
         """ServiceUnavailableError returns UNAVAILABLE."""
         servicer.generator.embed.side_effect = ServiceUnavailableError("API", details="rate limited")
 
-        request = embedding_pb2.EmbedRequest(text="test text")
+        request = embedding_pb2.EmbedRequest(
+            text="test text",
+            model="hash-based",
+            options={"namespace": "test-ns"},
+        )
 
         with pytest.raises(GrpcAbortException) as exc_info:
             await servicer.Embed(request, mock_async_grpc_context)
@@ -198,7 +216,11 @@ class TestEmbedMethod:
         """ValueError returns INVALID_ARGUMENT."""
         servicer.generator.embed.side_effect = ValueError("Invalid model name")
 
-        request = embedding_pb2.EmbedRequest(text="test text")
+        request = embedding_pb2.EmbedRequest(
+            text="test text",
+            model="hash-based",
+            options={"namespace": "test-ns"},
+        )
 
         with pytest.raises(GrpcAbortException) as exc_info:
             await servicer.Embed(request, mock_async_grpc_context)
@@ -215,7 +237,11 @@ class TestEmbedMethod:
         """Generic exception returns INTERNAL error."""
         servicer.generator.embed.side_effect = RuntimeError("Unexpected error")
 
-        request = embedding_pb2.EmbedRequest(text="test text")
+        request = embedding_pb2.EmbedRequest(
+            text="test text",
+            model="hash-based",
+            options={"namespace": "test-ns"},
+        )
 
         with pytest.raises(GrpcAbortException) as exc_info:
             await servicer.Embed(request, mock_async_grpc_context)
@@ -251,7 +277,10 @@ class TestEmbedBatchMethod:
         mock_async_grpc_context,
     ):
         """Empty texts list returns INVALID_ARGUMENT error."""
-        request = embedding_pb2.EmbedBatchRequest(texts=[])
+        request = embedding_pb2.EmbedBatchRequest(
+            texts=[],
+            options={"namespace": "test-ns"},
+        )
 
         with pytest.raises(GrpcAbortException) as exc_info:
             await servicer.EmbedBatch(request, mock_async_grpc_context)
@@ -269,7 +298,11 @@ class TestEmbedBatchMethod:
         servicer.generator.embed_batch.return_value = [[0.1, 0.2, 0.3]]
         servicer.generator.get_dimension.return_value = 3
 
-        request = embedding_pb2.EmbedBatchRequest(texts=["single text"])
+        request = embedding_pb2.EmbedBatchRequest(
+            texts=["single text"],
+            model="hash-based",
+            options={"namespace": "test-ns"},
+        )
 
         response = await servicer.EmbedBatch(request, mock_async_grpc_context)
 
@@ -290,7 +323,11 @@ class TestEmbedBatchMethod:
         ]
         servicer.generator.get_dimension.return_value = 3
 
-        request = embedding_pb2.EmbedBatchRequest(texts=["text1", "text2", "text3"])
+        request = embedding_pb2.EmbedBatchRequest(
+            texts=["text1", "text2", "text3"],
+            model="hash-based",
+            options={"namespace": "test-ns"},
+        )
 
         response = await servicer.EmbedBatch(request, mock_async_grpc_context)
 
@@ -312,6 +349,7 @@ class TestEmbedBatchMethod:
         request = embedding_pb2.EmbedBatchRequest(
             texts=["text1", "text2"],
             model="custom-model",
+            options={"namespace": "test-ns"},
         )
 
         response = await servicer.EmbedBatch(request, mock_async_grpc_context)
@@ -328,17 +366,21 @@ class TestEmbedBatchMethod:
         servicer,
         mock_async_grpc_context,
     ):
-        """Uses empty string for generator's test-ns when not specified."""
+        """Uses hash-based model for test-ns namespace."""
         servicer.generator.embed_batch.return_value = [[0.1, 0.2]]
         servicer.generator.get_dimension.return_value = 2
 
-        request = embedding_pb2.EmbedBatchRequest(texts=["text"])
+        request = embedding_pb2.EmbedBatchRequest(
+            texts=["text"],
+            model="hash-based",
+            options={"namespace": "test-ns"},
+        )
 
         await servicer.EmbedBatch(request, mock_async_grpc_context)
 
         servicer.generator.embed_batch.assert_called_once_with(
             ["text"],
-            "",  # Empty string lets generator use its configured test-ns
+            "hash-based",
         )
 
     @pytest.mark.asyncio
@@ -353,15 +395,16 @@ class TestEmbedBatchMethod:
 
         request = embedding_pb2.EmbedBatchRequest(
             texts=["text"],
+            model="hash-based",
             options={"namespace": "test-ns"},  # Options used for namespace, not passed to generator
         )
 
         await servicer.EmbedBatch(request, mock_async_grpc_context)
 
-        # Verify generator was called with empty string (test-ns model)
+        # Verify generator was called with hash-based model
         servicer.generator.embed_batch.assert_called_once_with(
             ["text"],
-            "",
+            "hash-based",
         )
 
     @pytest.mark.asyncio
@@ -373,7 +416,11 @@ class TestEmbedBatchMethod:
         """ServiceUnavailableError returns UNAVAILABLE."""
         servicer.generator.embed_batch.side_effect = ServiceUnavailableError("API", details="Rate limited")
 
-        request = embedding_pb2.EmbedBatchRequest(texts=["text"])
+        request = embedding_pb2.EmbedBatchRequest(
+            texts=["text"],
+            model="hash-based",
+            options={"namespace": "test-ns"},
+        )
 
         with pytest.raises(GrpcAbortException) as exc_info:
             await servicer.EmbedBatch(request, mock_async_grpc_context)
@@ -389,7 +436,11 @@ class TestEmbedBatchMethod:
         """ValueError returns INVALID_ARGUMENT."""
         servicer.generator.embed_batch.side_effect = ValueError("Too many texts")
 
-        request = embedding_pb2.EmbedBatchRequest(texts=["text"])
+        request = embedding_pb2.EmbedBatchRequest(
+            texts=["text"],
+            model="hash-based",
+            options={"namespace": "test-ns"},
+        )
 
         with pytest.raises(GrpcAbortException) as exc_info:
             await servicer.EmbedBatch(request, mock_async_grpc_context)
@@ -405,7 +456,11 @@ class TestEmbedBatchMethod:
         """Generic exception returns INTERNAL error."""
         servicer.generator.embed_batch.side_effect = RuntimeError("Unexpected")
 
-        request = embedding_pb2.EmbedBatchRequest(texts=["text"])
+        request = embedding_pb2.EmbedBatchRequest(
+            texts=["text"],
+            model="hash-based",
+            options={"namespace": "test-ns"},
+        )
 
         with pytest.raises(GrpcAbortException) as exc_info:
             await servicer.EmbedBatch(request, mock_async_grpc_context)
@@ -438,15 +493,15 @@ class TestHealthCheckMethod:
         servicer,
         mock_async_grpc_context,
     ):
-        """Healthy generator returns HEALTHY status."""
-        servicer.generator.get_dimension.return_value = 1536
+        """Healthy datasets config returns HEALTHY status."""
+        servicer.datasets_loader.list_namespaces.return_value = ["test-ns", "wiki"]
 
         request = common_pb2.HealthCheckRequest()
 
         response = await servicer.HealthCheck(request, mock_async_grpc_context)
 
         assert response.status == common_pb2.HealthCheckResponse.HEALTHY
-        assert response.dependencies["generator"] == "HEALTHY"
+        assert response.dependencies["datasets_config"] == "HEALTHY"
         assert "healthy" in response.message.lower()
 
     @pytest.mark.asyncio
@@ -455,16 +510,16 @@ class TestHealthCheckMethod:
         servicer,
         mock_async_grpc_context,
     ):
-        """Generator exception returns UNHEALTHY status."""
-        servicer.generator.get_dimension.side_effect = RuntimeError("API error")
+        """Empty datasets config returns UNHEALTHY status."""
+        servicer.datasets_loader.list_namespaces.return_value = []
 
         request = common_pb2.HealthCheckRequest()
 
         response = await servicer.HealthCheck(request, mock_async_grpc_context)
 
         assert response.status == common_pb2.HealthCheckResponse.UNHEALTHY
-        assert response.dependencies["generator"] == "UNHEALTHY"
-        assert "not available" in response.message.lower()
+        assert response.dependencies["datasets_config"] == "UNHEALTHY"
+        assert "no datasets" in response.message.lower()
 
     @pytest.mark.asyncio
     async def test_health_check_includes_model_info(
@@ -472,15 +527,16 @@ class TestHealthCheckMethod:
         servicer,
         mock_async_grpc_context,
     ):
-        """Health check verifies the test-ns model."""
-        servicer.generator.get_dimension.return_value = 1536
+        """Health check verifies datasets are loaded."""
+        servicer.datasets_loader.list_namespaces.return_value = ["test-ns", "wiki"]
 
         request = common_pb2.HealthCheckRequest()
 
-        await servicer.HealthCheck(request, mock_async_grpc_context)
+        response = await servicer.HealthCheck(request, mock_async_grpc_context)
 
-        # Verify get_dimension was called with test-ns model
-        servicer.generator.get_dimension.assert_called_with("text-embedding-3-small")
+        # Verify list_namespaces was called to check config
+        servicer.datasets_loader.list_namespaces.assert_called()
+        assert response.status == common_pb2.HealthCheckResponse.HEALTHY
 
     @pytest.mark.asyncio
     async def test_health_check_unexpected_exception(
@@ -489,14 +545,13 @@ class TestHealthCheckMethod:
         mock_async_grpc_context,
     ):
         """Unexpected exception during health check returns UNHEALTHY."""
-        # Make generator None to force an unexpected exception path
-        servicer.generator = None
+        # Make list_namespaces raise an exception
+        servicer.datasets_loader.list_namespaces.side_effect = RuntimeError("Config error")
 
         request = common_pb2.HealthCheckRequest()
 
         response = await servicer.HealthCheck(request, mock_async_grpc_context)
 
-        # When generator is None, get_dimension raises AttributeError
-        # which is caught and treated as backend unhealthy
+        # When list_namespaces raises an exception, it's caught and treated as unhealthy
         assert response.status == common_pb2.HealthCheckResponse.UNHEALTHY
-        assert response.dependencies["generator"] == "UNHEALTHY"
+        assert response.dependencies["datasets_config"] == "UNHEALTHY"

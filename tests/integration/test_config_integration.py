@@ -7,7 +7,7 @@ and that their getter methods work correctly with real-world configurations.
 import pytest
 from pydantic import ValidationError
 
-from src.common.config import KafkaConfig, MinIOConfig, OpenAIConfig, WeaviateConfig
+from src.common.config import KafkaConfig, MinIOConfig
 from src.embedding_service.config import EmbeddingServiceConfig
 from src.indexer.config import IndexerConfig
 from src.ingestion_api.config import IngestionAPIConfig
@@ -20,16 +20,11 @@ class TestIndexerConfigIntegration:
 
     def test_indexer_config_minimal(self):
         """Test IndexerConfig with minimal required fields."""
-        config = IndexerConfig(service_name="test-indexer")
-
-        assert config.service_name == "test-indexer"
-        assert config.log_level == "INFO"
-        assert config.kafka_bootstrap == "kafka:9092"
-
-    def test_indexer_config_full(self):
-        """Test IndexerConfig with all fields."""
         config = IndexerConfig(
             service_name="test-indexer",
+            log_level="INFO",
+            port=8080,
+            environment="development",
             kafka_bootstrap="localhost:9092",
             kafka_topic="test-topic",
             kafka_group_id="test-group",
@@ -38,11 +33,47 @@ class TestIndexerConfigIntegration:
             minio_access_key="test-access",
             minio_secret_key="test-secret",
             minio_bucket="test-bucket",
+            minio_secure=False,
             weaviate_url="http://localhost:8080",
-            weaviate_class="TestClass",
-            chunk_size=1000,
-            chunk_overlap=100,
+            weaviate_timeout_init=30,
+            weaviate_timeout_query=30,
+            weaviate_timeout_insert=30,
+            embedding_service_addr="localhost:50051",
+            embedding_service_timeout=30.0,
+            batch_size=10,
+            health_port=8081,
+            datasets_config_path="config/datasets_config.yaml",
+        )
+
+        assert config.service_name == "test-indexer"
+        assert config.log_level == "INFO"
+        assert config.kafka_bootstrap == "localhost:9092"
+
+    def test_indexer_config_full(self):
+        """Test IndexerConfig with all fields."""
+        config = IndexerConfig(
+            service_name="test-indexer",
+            log_level="INFO",
+            port=8080,
+            environment="development",
+            kafka_bootstrap="localhost:9092",
+            kafka_topic="test-topic",
+            kafka_group_id="test-group",
+            kafka_auto_offset_reset="latest",
+            minio_endpoint="minio:9000",
+            minio_access_key="test-access",
+            minio_secret_key="test-secret",
+            minio_bucket="test-bucket",
+            minio_secure=False,
+            weaviate_url="http://localhost:8080",
+            weaviate_timeout_init=30,
+            weaviate_timeout_query=30,
+            weaviate_timeout_insert=30,
+            embedding_service_addr="localhost:50051",
+            embedding_service_timeout=30.0,
             batch_size=20,
+            health_port=8081,
+            datasets_config_path="config/datasets_config.yaml",
         )
 
         # Verify getters return correct types
@@ -57,17 +88,31 @@ class TestIndexerConfigIntegration:
         assert minio_config.minio_endpoint == "http://minio:9000"
         assert minio_config.minio_bucket == "test-bucket"
 
-        weaviate_config = config.get_weaviate_config()
-        assert isinstance(weaviate_config, WeaviateConfig)
-        assert weaviate_config.weaviate_url == "http://localhost:8080"
-        assert weaviate_config.weaviate_collection == "TestClass"
-
     def test_indexer_config_validation(self):
         """Test IndexerConfig validation."""
         config = IndexerConfig(
             service_name="test-indexer",
-            chunk_size=100,
-            chunk_overlap=50,
+            log_level="INFO",
+            port=8080,
+            environment="development",
+            kafka_bootstrap="localhost:9092",
+            kafka_topic="test-topic",
+            kafka_group_id="test-group",
+            kafka_auto_offset_reset="latest",
+            minio_endpoint="minio:9000",
+            minio_access_key="test-access",
+            minio_secret_key="test-secret",
+            minio_bucket="test-bucket",
+            minio_secure=False,
+            weaviate_url="http://localhost:8080",
+            weaviate_timeout_init=30,
+            weaviate_timeout_query=30,
+            weaviate_timeout_insert=30,
+            embedding_service_addr="localhost:50051",
+            embedding_service_timeout=30.0,
+            batch_size=10,
+            health_port=8081,
+            datasets_config_path="config/datasets_config.yaml",
         )
 
         result = config.validate_config()
@@ -76,11 +121,30 @@ class TestIndexerConfigIntegration:
 
     def test_indexer_config_validation_errors(self):
         """Test IndexerConfig validation catches errors."""
-        # Invalid chunk_overlap
+        # Invalid batch_size (negative)
         config = IndexerConfig(
             service_name="test-indexer",
-            chunk_size=100,
-            chunk_overlap=150,  # Invalid
+            log_level="INFO",
+            port=8080,
+            environment="development",
+            kafka_bootstrap="localhost:9092",
+            kafka_topic="test-topic",
+            kafka_group_id="test-group",
+            kafka_auto_offset_reset="latest",
+            minio_endpoint="minio:9000",
+            minio_access_key="test-access",
+            minio_secret_key="test-secret",
+            minio_bucket="test-bucket",
+            minio_secure=False,
+            weaviate_url="http://localhost:8080",
+            weaviate_timeout_init=30,
+            weaviate_timeout_query=30,
+            weaviate_timeout_insert=30,
+            embedding_service_addr="localhost:50051",
+            embedding_service_timeout=30.0,
+            batch_size=-1,  # Invalid
+            health_port=8081,
+            datasets_config_path="config/datasets_config.yaml",
         )
 
         result = config.validate_config()
@@ -91,13 +155,33 @@ class TestIndexerConfigIntegration:
         """Test IndexerConfig with invalid Kafka config."""
         config = IndexerConfig(
             service_name="test-indexer",
-            kafka_acks="invalid",  # Invalid acks value
+            log_level="INFO",
+            port=8080,
+            environment="development",
+            kafka_bootstrap="localhost:9092",
+            kafka_topic="test-topic",
+            kafka_group_id="test-group",
+            kafka_auto_offset_reset="latest",
+            minio_endpoint="minio:9000",
+            minio_access_key="test-access",
+            minio_secret_key="test-secret",
+            minio_bucket="test-bucket",
+            minio_secure=False,
+            weaviate_url="http://localhost:8080",
+            weaviate_timeout_init=30,
+            weaviate_timeout_query=30,
+            weaviate_timeout_insert=30,
+            embedding_service_addr="localhost:50051",
+            embedding_service_timeout=30.0,
+            batch_size=10,
+            health_port=8081,
+            datasets_config_path="config/datasets_config.yaml",
         )
 
-        # Note: kafka_acks is not in IndexerConfig, so this won't error
-        # But if we try to get kafka config, it should work with defaults
+        # Note: kafka_acks is not in IndexerConfig, so it won't be in the getter
+        # But we can verify the kafka config is valid
         kafka_config = config.get_kafka_config()
-        assert kafka_config.kafka_acks == "1"  # Default value
+        assert kafka_config.kafka_bootstrap == "localhost:9092"
 
 
 class TestIngestionAPIConfigIntegration:
@@ -105,7 +189,23 @@ class TestIngestionAPIConfigIntegration:
 
     def test_ingestion_api_config_minimal(self):
         """Test IngestionAPIConfig with minimal required fields."""
-        config = IngestionAPIConfig(service_name="test-ingestion")
+        config = IngestionAPIConfig(
+            service_name="test-ingestion",
+            log_level="INFO",
+            port=8082,
+            environment="development",
+            minio_endpoint="minio:9000",
+            minio_access_key="test-access",
+            minio_secret_key="test-secret",
+            minio_bucket="test-bucket",
+            minio_secure=False,
+            kafka_bootstrap="localhost:9092",
+            kafka_topic="test-topic",
+            kafka_acks="1",
+            max_content_length=10_000_000,
+            cors_enabled=True,
+            datasets_config_path="config/datasets_config.yaml",
+        )
 
         assert config.service_name == "test-ingestion"
         assert config.port == 8082
@@ -114,6 +214,9 @@ class TestIngestionAPIConfigIntegration:
         """Test IngestionAPIConfig with all fields."""
         config = IngestionAPIConfig(
             service_name="test-ingestion",
+            log_level="INFO",
+            port=8082,
+            environment="development",
             kafka_bootstrap="localhost:9092",
             kafka_topic="test-topic",
             kafka_acks="all",
@@ -121,8 +224,10 @@ class TestIngestionAPIConfigIntegration:
             minio_access_key="test-access",
             minio_secret_key="test-secret",
             minio_bucket="test-bucket",
+            minio_secure=False,
             max_content_length=20_000_000,
             cors_enabled=False,
+            datasets_config_path="config/datasets_config.yaml",
         )
 
         # Verify getters
@@ -139,7 +244,20 @@ class TestIngestionAPIConfigIntegration:
         """Test IngestionAPIConfig validation."""
         config = IngestionAPIConfig(
             service_name="test-ingestion",
+            log_level="INFO",
+            port=8082,
+            environment="development",
+            minio_endpoint="minio:9000",
+            minio_access_key="test-access",
+            minio_secret_key="test-secret",
+            minio_bucket="test-bucket",
+            minio_secure=False,
+            kafka_bootstrap="localhost:9092",
+            kafka_topic="test-topic",
+            kafka_acks="1",
             max_content_length=10_000_000,
+            cors_enabled=True,
+            datasets_config_path="config/datasets_config.yaml",
         )
 
         result = config.validate_config()
@@ -150,9 +268,20 @@ class TestIngestionAPIConfigIntegration:
         # MinIO endpoint validation happens in getter
         config = IngestionAPIConfig(
             service_name="test-ingestion",
+            log_level="INFO",
+            port=8082,
+            environment="development",
             minio_endpoint="invalid-endpoint",
             minio_access_key="access",
             minio_secret_key="secret",
+            minio_bucket="test-bucket",
+            minio_secure=False,
+            kafka_bootstrap="localhost:9092",
+            kafka_topic="test-topic",
+            kafka_acks="1",
+            max_content_length=10_000_000,
+            cors_enabled=True,
+            datasets_config_path="config/datasets_config.yaml",
         )
 
         # Should normalize to http://invalid-endpoint
@@ -167,7 +296,14 @@ class TestSearchServiceConfigIntegration:
         """Test SearchServiceConfig with minimal required fields."""
         config = SearchServiceConfig(
             service_name="test-search",
-            openai_api_key="sk-test-key-123",
+            log_level="INFO",
+            port=50052,
+            environment="development",
+            enable_reflection=True,
+            weaviate_url="http://localhost:8080",
+            embedding_service_addr="localhost:50051",
+            embedding_service_timeout=30,
+            datasets_config_path="config/datasets_config.yaml",
         )
 
         assert config.service_name == "test-search"
@@ -177,127 +313,91 @@ class TestSearchServiceConfigIntegration:
         """Test SearchServiceConfig with all fields."""
         config = SearchServiceConfig(
             service_name="test-search",
+            log_level="INFO",
+            port=50052,
+            environment="development",
+            enable_reflection=True,
             weaviate_url="http://localhost:8080",
-            weaviate_timeout=60,
-            weaviate_collection="TestCollection",
-            openai_api_key="sk-test-key",
-            openai_api_base="http://localhost:1234",
-            openai_model="gpt-4",
-            openai_max_tokens=1000,
-            openai_temperature=0.5,
-            top_k=20,
-            mode="vector",
-            hybrid_alpha=0.7,
+            embedding_service_addr="localhost:50051",
+            embedding_service_timeout=60,
+            datasets_config_path="config/datasets_config.yaml",
         )
 
-        # Verify getters
-        weaviate_config = config.get_weaviate_config()
-        assert isinstance(weaviate_config, WeaviateConfig)
-        assert weaviate_config.weaviate_url == "http://localhost:8080"
-        assert weaviate_config.weaviate_timeout == 60
-
-        openai_config = config.get_openai_config()
-        assert isinstance(openai_config, OpenAIConfig)
-        assert openai_config.openai_api_key == "sk-test-key"
-        assert openai_config.openai_api_base == "http://localhost:1234"
-
-        llm_config = config.get_llm_config()
-        assert llm_config.model == "gpt-4"
-        assert llm_config.temperature == 0.5
+        # Verify basic properties
+        assert config.service_name == "test-search"
+        assert config.weaviate_url == "http://localhost:8080"
+        assert config.embedding_service_timeout == 60
 
     def test_search_service_config_validation(self):
         """Test SearchServiceConfig validation."""
         config = SearchServiceConfig(
             service_name="test-search",
-            openai_api_key="sk-test-key",
+            log_level="INFO",
+            port=50052,
+            environment="development",
+            enable_reflection=True,
+            weaviate_url="http://localhost:8080",
+            embedding_service_addr="localhost:50051",
+            embedding_service_timeout=30,
+            datasets_config_path="config/datasets_config.yaml",
         )
 
         result = config.validate_config()
         assert result["valid"] is True
 
-    def test_search_service_config_invalid_openai(self):
-        """Test SearchServiceConfig with invalid OpenAI config."""
+    def test_search_service_config_invalid_weaviate(self):
+        """Test SearchServiceConfig with invalid Weaviate URL."""
         # Should fail validation at instantiation time (Pydantic validates on init)
         with pytest.raises(ValidationError) as exc_info:
             SearchServiceConfig(
                 service_name="test-search",
-                openai_api_key="",  # Invalid: empty key
+                log_level="INFO",
+                port=50052,
+                environment="development",
+                enable_reflection=True,
+                weaviate_url="invalid-url",  # Invalid: no http:// or https://
+                embedding_service_addr="localhost:50051",
+                embedding_service_timeout=30,
+                datasets_config_path="config/datasets_config.yaml",
             )
 
-        # Verify the error message mentions the API key
-        assert "openai_api_key" in str(exc_info.value).lower() or "not configured" in str(exc_info.value).lower()
-
-    def test_search_service_config_local_llm(self):
-        """Test SearchServiceConfig with local LLM."""
-        config = SearchServiceConfig(
-            service_name="test-search",
-            openai_api_key="local-key",
-            openai_api_base="http://localhost:1234",
-        )
-
-        openai_config = config.get_openai_config()
-        assert openai_config.openai_api_base == "http://localhost:1234"
-
-        llm_config = config.get_llm_config()
-        assert llm_config.provider.value == "local"
-
-    def test_search_service_config_redis_optional(self):
-        """Test SearchServiceConfig Redis config is optional."""
-        config = SearchServiceConfig(
-            service_name="test-search",
-            openai_api_key="sk-test-key",
-        )
-
-        # Redis config should return None if not configured
-        redis_config = config.get_redis_config()
-        assert redis_config is None
-
-        # Validation should pass
-        result = config.validate_config()
-        assert result["valid"] is True
+        # Verify the error message mentions the weaviate URL
+        assert "weaviate" in str(exc_info.value).lower()
 
 
 class TestEmbeddingServiceConfigIntegration:
     """Integration tests for EmbeddingServiceConfig."""
 
-    def test_embedding_service_config_hash_based(self):
-        """Test EmbeddingServiceConfig with hash-based generator."""
+    def test_embedding_service_config_minimal(self):
+        """Test EmbeddingServiceConfig with minimal required fields."""
         config = EmbeddingServiceConfig(
             service_name="test-embedding",
-            embedding_generator="hash_based",
+            log_level="INFO",
+            port=50051,
+            environment="development",
+            enable_reflection=True,
+            datasets_config_path="config/datasets_config.yaml",
         )
 
-        assert config.embedding_generator == "hash_based"
-        embedding_config = config.get_embedding_config()
-        assert embedding_config.provider.value == "hash_based"
+        assert config.service_name == "test-embedding"
+        assert config.port == 50051
+        assert config.enable_reflection is True
 
-    def test_embedding_service_config_openai(self):
-        """Test EmbeddingServiceConfig with OpenAI generator."""
+    def test_embedding_service_config_full(self):
+        """Test EmbeddingServiceConfig with all fields."""
         config = EmbeddingServiceConfig(
             service_name="test-embedding",
-            embedding_generator="openai",
-            openai_api_key="sk-test-key",
-            openai_api_base=None,  # Explicitly set to None to use OpenAI API
+            log_level="DEBUG",
+            port=50051,
+            environment="production",
+            enable_reflection=False,
+            datasets_config_path="config/datasets_config.yaml",
         )
 
-        assert config.embedding_generator == "openai"
-        embedding_config = config.get_embedding_config()
-        # When openai_api_base is None, it should use OpenAI provider
-        assert embedding_config.provider.value in ("openai", "local")  # Accept both as logic may vary
-        assert embedding_config.api_key == "sk-test-key"
-
-    def test_embedding_service_config_local(self):
-        """Test EmbeddingServiceConfig with local embedding server."""
-        config = EmbeddingServiceConfig(
-            service_name="test-embedding",
-            embedding_generator="openai",
-            openai_api_key="local-key",
-            openai_api_base="http://localhost:1234",
-        )
-
-        embedding_config = config.get_embedding_config()
-        assert embedding_config.provider.value == "local"
-        assert embedding_config.base_url == "http://localhost:1234"
+        assert config.service_name == "test-embedding"
+        assert config.log_level == "DEBUG"
+        assert config.environment == "production"
+        assert config.enable_reflection is False
 
 
 class TestSearchUIConfigIntegration:
@@ -305,7 +405,19 @@ class TestSearchUIConfigIntegration:
 
     def test_search_ui_config_minimal(self):
         """Test SearchUIConfig with minimal required fields."""
-        config = SearchUIConfig(service_name="test-ui")
+        config = SearchUIConfig(
+            service_name="test-ui",
+            log_level="INFO",
+            port=8080,
+            environment="development",
+            search_service_addr="localhost:50052",
+            search_service_timeout=30.0,
+            cors_enabled=True,
+            max_query_length=500,
+            top_k=10,
+            mode="vector",
+            datasets_config_path="config/datasets_config.yaml",
+        )
 
         assert config.service_name == "test-ui"
         assert config.port == 8080
@@ -314,11 +426,16 @@ class TestSearchUIConfigIntegration:
         """Test SearchUIConfig with all fields."""
         config = SearchUIConfig(
             service_name="test-ui",
+            log_level="INFO",
+            port=8080,
+            environment="development",
             search_service_addr="localhost:50052",
             search_service_timeout=60.0,
             cors_enabled=False,
+            max_query_length=1000,
             top_k=10,
             mode="hybrid",
+            datasets_config_path="config/datasets_config.yaml",
         )
 
         assert config.search_service_addr == "localhost:50052"
@@ -328,7 +445,16 @@ class TestSearchUIConfigIntegration:
         """Test SearchUIConfig validation."""
         config = SearchUIConfig(
             service_name="test-ui",
+            log_level="INFO",
+            port=8080,
+            environment="development",
+            search_service_addr="localhost:50052",
+            search_service_timeout=30.0,
+            cors_enabled=True,
+            max_query_length=500,
+            top_k=10,
             mode="vector",
+            datasets_config_path="config/datasets_config.yaml",
         )
 
         result = config.validate_config()
@@ -339,7 +465,16 @@ class TestSearchUIConfigIntegration:
         with pytest.raises(ValidationError):
             SearchUIConfig(
                 service_name="test-ui",
+                log_level="INFO",
+                port=8080,
+                environment="development",
+                search_service_addr="localhost:50052",
+                search_service_timeout=30.0,
+                cors_enabled=True,
+                max_query_length=500,
+                top_k=10,
                 mode="invalid-mode",
+                datasets_config_path="config/datasets_config.yaml",
             )
 
 
@@ -350,10 +485,27 @@ class TestConfigComposition:
         """Test that getter methods return properly validated Pydantic models."""
         indexer_config = IndexerConfig(
             service_name="test",
+            log_level="INFO",
+            port=8080,
+            environment="development",
             kafka_bootstrap="localhost:9092",
+            kafka_topic="test-topic",
+            kafka_group_id="test-group",
+            kafka_auto_offset_reset="latest",
             minio_endpoint="minio:9000",
             minio_access_key="access",
             minio_secret_key="secret",
+            minio_bucket="test-bucket",
+            minio_secure=False,
+            weaviate_url="http://localhost:8080",
+            weaviate_timeout_init=30,
+            weaviate_timeout_query=30,
+            weaviate_timeout_insert=30,
+            embedding_service_addr="localhost:50051",
+            embedding_service_timeout=30.0,
+            batch_size=10,
+            health_port=8081,
+            datasets_config_path="config/datasets_config.yaml",
         )
 
         # Get composed configs
@@ -373,16 +525,32 @@ class TestConfigComposition:
 
     def test_config_validation_catches_composed_errors(self):
         """Test that validation catches errors in composed configs."""
-        # Create a config with invalid Kafka settings
-        # Note: We can't directly set invalid kafka_acks in IndexerConfig,
-        # but we can test that validation works for what we can set
-
+        # Create a config with invalid batch_size
         config = IndexerConfig(
             service_name="test",
-            chunk_size=100,
-            chunk_overlap=150,  # Invalid
+            log_level="INFO",
+            port=8080,
+            environment="development",
+            kafka_bootstrap="localhost:9092",
+            kafka_topic="test-topic",
+            kafka_group_id="test-group",
+            kafka_auto_offset_reset="latest",
+            minio_endpoint="minio:9000",
+            minio_access_key="access",
+            minio_secret_key="secret",
+            minio_bucket="test-bucket",
+            minio_secure=False,
+            weaviate_url="http://localhost:8080",
+            weaviate_timeout_init=30,
+            weaviate_timeout_query=30,
+            weaviate_timeout_insert=30,
+            embedding_service_addr="localhost:50051",
+            embedding_service_timeout=30.0,
+            batch_size=-10,  # Invalid
+            health_port=8081,
+            datasets_config_path="config/datasets_config.yaml",
         )
 
         result = config.validate_config()
         assert result["valid"] is False
-        assert any("chunk_overlap" in err.lower() for err in result["errors"])
+        assert any("batch_size" in err.lower() for err in result["errors"])

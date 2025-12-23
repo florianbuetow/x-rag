@@ -49,6 +49,9 @@ class TestWeaviateRetrieverInit:
         retriever = WeaviateRetriever(
             weaviate_url="http://localhost:8080",
             collection_name="TestCollection",
+            timeout_init=30,
+            timeout_query=60,
+            timeout_insert=120,
         )
 
         assert retriever.weaviate_url == "http://localhost:8080"
@@ -58,7 +61,12 @@ class TestWeaviateRetrieverInit:
     def test_initialization_requires_collection_name(self):
         """Retriever requires collection_name parameter."""
         with pytest.raises(TypeError, match="collection_name"):
-            WeaviateRetriever(weaviate_url="http://localhost:8080")
+            WeaviateRetriever(
+                weaviate_url="http://localhost:8080",
+                timeout_init=30,
+                timeout_query=60,
+                timeout_insert=120,
+            )
 
 
 class TestWeaviateRetrieverConnection:
@@ -70,6 +78,9 @@ class TestWeaviateRetrieverConnection:
         return WeaviateRetriever(
             weaviate_url="http://localhost:8080",
             collection_name="DocumentChunk",
+            timeout_init=30,
+            timeout_query=60,
+            timeout_insert=120,
         )
 
     def test_connect_parses_http_url(self, retriever):
@@ -90,6 +101,9 @@ class TestWeaviateRetrieverConnection:
         retriever = WeaviateRetriever(
             weaviate_url="weaviate:8080",
             collection_name="DocumentChunk",
+            timeout_init=30,
+            timeout_query=60,
+            timeout_insert=120,
         )
 
         with patch("src.retrievers.weaviate_retriever.weaviate") as mock_weaviate:
@@ -102,11 +116,14 @@ class TestWeaviateRetrieverConnection:
             assert call_kwargs["http_host"] == "weaviate"
             assert call_kwargs["http_port"] == 8080
 
-    def test_connect_test-ns_port(self):
-        """connect() uses test-ns port 8080 when not specified."""
+    def test_connect_test_ns_port(self):
+        """connect() uses test_ns port 8080 when not specified."""
         retriever = WeaviateRetriever(
             weaviate_url="http://weaviate",
             collection_name="DocumentChunk",
+            timeout_init=30,
+            timeout_query=60,
+            timeout_insert=120,
         )
 
         with patch("src.retrievers.weaviate_retriever.weaviate") as mock_weaviate:
@@ -156,6 +173,9 @@ class TestWeaviateRetrieverSearch:
         retriever = WeaviateRetriever(
             weaviate_url="http://localhost:8080",
             collection_name="DocumentChunk",
+            timeout_init=30,
+            timeout_query=60,
+            timeout_insert=120,
         )
         return retriever
 
@@ -499,6 +519,9 @@ class TestWeaviateRetrieverHealth:
         return WeaviateRetriever(
             weaviate_url="http://localhost:8080",
             collection_name="DocumentChunk",
+            timeout_init=30,
+            timeout_query=60,
+            timeout_insert=120,
         )
 
     def test_health_check_not_connected(self, retriever):
@@ -533,6 +556,9 @@ class TestHelperMethods:
         retriever = WeaviateRetriever(
             weaviate_url="http://localhost:8080",
             collection_name="DocumentChunk",
+            timeout_init=30,
+            timeout_query=60,
+            timeout_insert=120,
         )
         retriever.client = Mock()
         return retriever
@@ -740,7 +766,9 @@ class TestHelperMethods:
         """_convert_to_search_result handles missing optional properties."""
         mock_weaviate_object.properties = {
             "content": "Minimal content",
+            "metadata_json": None,
         }
+        mock_weaviate_object.metadata.score = 0.5
 
         result = retriever._convert_to_search_result(mock_weaviate_object, mode="bm25")
 
@@ -759,19 +787,15 @@ class TestHelperMethods:
         assert result.score == 1.0
 
     def test_convert_to_search_result_none_distance(self, retriever, mock_weaviate_object):
-        """_convert_to_search_result handles None distance."""
+        """_convert_to_search_result raises ValueError for None distance in vector mode."""
         mock_weaviate_object.metadata.distance = None
 
-        result = retriever._convert_to_search_result(mock_weaviate_object, mode="vector")
-
-        # Score = 1 / (1 + 0) = 1.0 (None treated as 0)
-        assert result.score == 1.0
+        with pytest.raises(ValueError, match="missing required distance"):
+            retriever._convert_to_search_result(mock_weaviate_object, mode="vector")
 
     def test_convert_to_search_result_none_score(self, retriever, mock_weaviate_object):
-        """_convert_to_search_result handles None score."""
+        """_convert_to_search_result raises ValueError for None score in bm25 mode."""
         mock_weaviate_object.metadata.score = None
 
-        result = retriever._convert_to_search_result(mock_weaviate_object, mode="bm25")
-
-        # None treated as 0.0
-        assert result.score == 0.0
+        with pytest.raises(ValueError, match="missing required score"):
+            retriever._convert_to_search_result(mock_weaviate_object, mode="bm25")

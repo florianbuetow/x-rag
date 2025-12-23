@@ -73,7 +73,7 @@ class TestIndexerConfigFileIntegration:
         assert "service" in yaml_config
         assert "kafka" in yaml_config
 
-    def test_indexer_config_from_yaml_values(self):
+    def test_indexer_config_from_yaml_values(self, monkeypatch):
         """Test IndexerConfig can be created with values from YAML file."""
         yaml_config = load_app_config_yaml("indexer")
 
@@ -82,19 +82,46 @@ class TestIndexerConfigFileIntegration:
         kafka_config = yaml_config.get("kafka", {})
         minio_config = yaml_config.get("minio", {})
         weaviate_config = yaml_config.get("weaviate", {})
+        embedding_service_config = yaml_config.get("embedding_service", {})
+        chunking_config = yaml_config.get("chunking", {})
+        tracing_config = yaml_config.get("tracing", {})
+
+        # Set MinIO credentials from environment
+        monkeypatch.setenv("MINIO_ACCESS_KEY", "test-access-key")
+        monkeypatch.setenv("MINIO_SECRET_KEY", "test-secret-key")
 
         # Create IndexerConfig with YAML values
         config = IndexerConfig(
+            # ServiceConfig base fields
             service_name=service_config.get("name", "indexer"),
+            log_level=service_config.get("log_level", "INFO"),
+            port=service_config.get("health_port", 8080),
+            environment=tracing_config.get("environment", "development"),
+            otlp_endpoint=tracing_config.get("otlp_endpoint"),
+            # Kafka fields
             kafka_bootstrap=kafka_config.get("bootstrap", "kafka:9092"),
             kafka_topic=kafka_config.get("topic", "document-changes"),
             kafka_group_id=kafka_config.get("group_id", "indexer-group"),
             kafka_auto_offset_reset=kafka_config.get("auto_offset_reset", "earliest"),
+            # MinIO fields
             minio_endpoint=minio_config.get("endpoint", "minio:9000"),
+            minio_access_key=os.getenv("MINIO_ACCESS_KEY", "test-access-key"),
+            minio_secret_key=os.getenv("MINIO_SECRET_KEY", "test-secret-key"),
             minio_bucket=minio_config.get("bucket", "documents"),
             minio_secure=minio_config.get("secure", False),
+            # Weaviate fields
             weaviate_url=weaviate_config.get("url", "http://weaviate:8080"),
-            weaviate_class=weaviate_config.get("collection", "DocumentChunk"),
+            weaviate_timeout_init=30,
+            weaviate_timeout_query=30,
+            weaviate_timeout_insert=30,
+            # Embedding Service fields
+            embedding_service_addr=embedding_service_config.get("address", "embedding-service:50051"),
+            embedding_service_timeout=float(embedding_service_config.get("timeout", 30)),
+            # Processing fields
+            batch_size=chunking_config.get("batch_size", 10),
+            health_port=service_config.get("health_port", 8080),
+            # Dataset config
+            datasets_config_path="config/datasets_config.yaml",
         )
 
         # Verify config is valid
@@ -108,9 +135,6 @@ class TestIndexerConfigFileIntegration:
 
         minio_config_obj = config.get_minio_config()
         assert minio_config_obj.minio_bucket == minio_config.get("bucket", "documents")
-
-        weaviate_config_obj = config.get_weaviate_config()
-        assert weaviate_config_obj.weaviate_url == weaviate_config.get("url", "http://weaviate:8080").rstrip("/")
 
 
 class TestIngestionAPIConfigFileIntegration:
@@ -129,7 +153,7 @@ class TestIngestionAPIConfigFileIntegration:
         assert "kafka" in yaml_config
         assert "minio" in yaml_config
 
-    def test_ingestion_api_config_from_yaml_values(self):
+    def test_ingestion_api_config_from_yaml_values(self, monkeypatch):
         """Test IngestionAPIConfig can be created with values from YAML file."""
         yaml_config = load_app_config_yaml("ingestion-api")
 
@@ -137,6 +161,11 @@ class TestIngestionAPIConfigFileIntegration:
         kafka_config = yaml_config.get("kafka", {})
         minio_config = yaml_config.get("minio", {})
         api_config = yaml_config.get("api", {})
+        tracing_config = yaml_config.get("tracing", {})
+
+        # Set MinIO credentials from environment
+        monkeypatch.setenv("MINIO_ACCESS_KEY", "test-access-key")
+        monkeypatch.setenv("MINIO_SECRET_KEY", "test-secret-key")
 
         # Convert kafka_acks to string if it's an int (YAML may load it as int)
         kafka_acks = kafka_config.get("acks", "1")
@@ -144,16 +173,27 @@ class TestIngestionAPIConfigFileIntegration:
             kafka_acks = str(kafka_acks)
 
         config = IngestionAPIConfig(
+            # ServiceConfig base fields
             service_name=service_config.get("name", "ingestion-api"),
+            log_level=service_config.get("log_level", "INFO"),
             port=service_config.get("port", 8082),
+            environment=tracing_config.get("environment", "development"),
+            otlp_endpoint=tracing_config.get("otlp_endpoint"),
+            # Kafka fields
             kafka_bootstrap=kafka_config.get("bootstrap", "kafka:9092"),
             kafka_topic=kafka_config.get("topic", "document-changes"),
             kafka_acks=kafka_acks,
+            # MinIO fields
             minio_endpoint=minio_config.get("endpoint", "minio:9000"),
+            minio_access_key=os.getenv("MINIO_ACCESS_KEY", "test-access-key"),
+            minio_secret_key=os.getenv("MINIO_SECRET_KEY", "test-secret-key"),
             minio_bucket=minio_config.get("bucket", "documents"),
             minio_secure=minio_config.get("secure", False),
+            # API fields
             max_content_length=api_config.get("max_content_length", 10_485_760),
             cors_enabled=api_config.get("cors_enabled", True),
+            # Dataset config
+            datasets_config_path="config/datasets_config.yaml",
         )
 
         # Verify config is valid
@@ -189,42 +229,32 @@ class TestSearchServiceConfigFileIntegration:
         yaml_config = load_app_config_yaml("search-service")
 
         service_config = yaml_config.get("service", {})
+        grpc_config = yaml_config.get("grpc", {})
         weaviate_config = yaml_config.get("weaviate", {})
-        openai_config = yaml_config.get("openai", {})
-        search_config = yaml_config.get("search", {})
-
-        # Set required OpenAI API key (required field)
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key-from-yaml")
+        embedding_service_config = yaml_config.get("embedding_service", {})
+        tracing_config = yaml_config.get("tracing", {})
 
         config = SearchServiceConfig(
+            # ServiceConfig base fields
             service_name=service_config.get("name", "search-service"),
+            log_level=service_config.get("log_level", "INFO"),
             port=service_config.get("port", 50052),
+            environment=tracing_config.get("environment", "development"),
+            otlp_endpoint=tracing_config.get("otlp_endpoint"),
+            # gRPC settings
+            enable_reflection=grpc_config.get("enable_reflection", True),
+            # Weaviate settings
             weaviate_url=weaviate_config.get("url", "http://weaviate:8080"),
-            weaviate_timeout=weaviate_config.get("timeout", 30),
-            weaviate_collection=weaviate_config.get("collection", "DocumentChunk"),
-            openai_api_key=os.getenv("OPENAI_API_KEY", "sk-test-key"),
-            openai_api_base=openai_config.get("api_base"),
-            openai_model=openai_config.get("model", "gpt-4o-mini"),
-            openai_max_tokens=openai_config.get("max_tokens", 500),
-            openai_temperature=openai_config.get("temperature", 0.7),
-            openai_max_retries=openai_config.get("max_retries", 3),
-            openai_timeout=openai_config.get("timeout", 60),
-            top_k=search_config["top_k"],
-            mode=search_config["mode"],
-            hybrid_alpha=search_config.get("hybrid_alpha", 0.5),
-            max_context_length=search_config.get("max_context_length", 4000),
+            # Embedding Service settings
+            embedding_service_addr=embedding_service_config.get("address", "embedding-service:50051"),
+            embedding_service_timeout=embedding_service_config.get("timeout", 30),
+            # Dataset config
+            datasets_config_path="config/datasets_config.yaml",
         )
 
         # Verify config is valid
         validation_result = config.validate_config()
         assert validation_result["valid"] is True
-
-        # Verify getters work
-        weaviate_config_obj = config.get_weaviate_config()
-        assert weaviate_config_obj.weaviate_url == weaviate_config.get("url", "http://weaviate:8080").rstrip("/")
-
-        openai_config_obj = config.get_openai_config()
-        assert openai_config_obj.openai_model == openai_config.get("model", "gpt-4o-mini")
 
 
 class TestEmbeddingServiceConfigFileIntegration:
@@ -246,19 +276,28 @@ class TestEmbeddingServiceConfigFileIntegration:
         yaml_config = load_app_config_yaml("embedding-service")
 
         service_config = yaml_config.get("service", {})
-        generator_config = yaml_config.get("generator", {})
+        grpc_config = yaml_config.get("grpc", {})
+        tracing_config = yaml_config.get("tracing", {})
 
+        # Since EmbeddingServiceConfig no longer has model/embedding_generator fields,
+        # just create it with required fields from YAML
         config = EmbeddingServiceConfig(
+            # ServiceConfig base fields
             service_name=service_config.get("name", "embedding-service"),
+            log_level=service_config.get("log_level", "INFO"),
             port=service_config.get("port", 50051),
-            embedding_generator=generator_config.get("type", "hash_based"),
-            model=generator_config["model"],
-            max_batch_size=generator_config.get("max_batch_size", 100),
+            environment=tracing_config.get("environment", "development"),
+            otlp_endpoint=tracing_config.get("otlp_endpoint"),
+            # gRPC settings
+            enable_reflection=grpc_config.get("enable_reflection", True),
+            # Dataset config
+            datasets_config_path="config/datasets_config.yaml",
         )
 
         # Verify config is valid
         assert config.service_name == service_config.get("name", "embedding-service")
-        assert config.embedding_generator == generator_config.get("type", "hash_based")
+        validation_result = config.validate_config()
+        assert validation_result["valid"] is True
 
 
 class TestSearchUIConfigFileIntegration:
@@ -280,15 +319,27 @@ class TestSearchUIConfigFileIntegration:
         yaml_config = load_app_config_yaml("search-ui")
 
         service_config = yaml_config.get("service", {})
-        search_config = yaml_config.get("search", {})
+        search_service_config = yaml_config.get("search_service", {})
+        ui_config = yaml_config.get("ui", {})
+        tracing_config = yaml_config.get("tracing", {})
 
         config = SearchUIConfig(
+            # ServiceConfig base fields
             service_name=service_config.get("name", "search-ui"),
+            log_level=service_config.get("log_level", "INFO"),
             port=service_config.get("port", 8080),
-            search_service_addr=search_config.get("service_addr", "search-service:50052"),
-            search_service_timeout=search_config.get("service_timeout", 30.0),
-            top_k=search_config["top_k"],
-            mode=search_config["mode"],
+            environment=tracing_config.get("environment", "development"),
+            otlp_endpoint=tracing_config.get("otlp_endpoint"),
+            # Search Service connection
+            search_service_addr=search_service_config.get("address", "search-service:50052"),
+            search_service_timeout=search_service_config.get("timeout", 30.0),
+            # UI settings
+            cors_enabled=ui_config.get("cors_enabled", True),
+            max_query_length=ui_config.get("max_query_length", 1000),
+            top_k=ui_config["top_k"],
+            mode=ui_config["mode"],
+            # Dataset config
+            datasets_config_path="config/datasets_config.yaml",
         )
 
         # Verify config is valid

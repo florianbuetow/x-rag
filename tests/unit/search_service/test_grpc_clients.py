@@ -195,7 +195,7 @@ class TestEmbeddingServiceClientEmbed:
         mock_response.embedding = [0.1, 0.2, 0.3]
         client.stub.Embed = AsyncMock(return_value=mock_response)
 
-        result = await client.embed("test text", model="text-embedding-3-small")
+        result = await client.embed("test text", model="text-embedding-3-small", namespace="test-namespace")
 
         assert result == [0.1, 0.2, 0.3]
 
@@ -206,7 +206,7 @@ class TestEmbeddingServiceClientEmbed:
         client.stub = None
 
         with pytest.raises(RuntimeError) as exc_info:
-            await client.embed("test", model="model")
+            await client.embed("test", model="model", namespace="test-namespace")
 
         assert "not connected" in str(exc_info.value).lower()
 
@@ -218,7 +218,7 @@ class TestEmbeddingServiceClientEmbed:
         client.stub.Embed = AsyncMock(return_value=mock_response)
         client.timeout = 45.0
 
-        await client.embed("test", model="model")
+        await client.embed("test", model="model", namespace="test-namespace")
 
         client.stub.Embed.assert_called_once()
         call_kwargs = client.stub.Embed.call_args[1]
@@ -233,7 +233,7 @@ class TestEmbeddingServiceClientEmbed:
         client.stub.Embed = AsyncMock(side_effect=error)
 
         with pytest.raises(grpc.RpcError):
-            await client.embed("test", model="model")
+            await client.embed("test", model="model", namespace="test-namespace")
 
 
 class TestEmbeddingServiceClientEmbedBatch:
@@ -256,7 +256,7 @@ class TestEmbeddingServiceClientEmbedBatch:
         ]
         client.stub.EmbedBatch = AsyncMock(return_value=mock_response)
 
-        result = await client.embed_batch(["text1", "text2"], model="model")
+        result = await client.embed_batch(["text1", "text2"], model="model", namespace="test-namespace")
 
         assert result == [[0.1, 0.2], [0.3, 0.4]]
 
@@ -267,7 +267,7 @@ class TestEmbeddingServiceClientEmbedBatch:
         client.stub = None
 
         with pytest.raises(RuntimeError) as exc_info:
-            await client.embed_batch(["test"], model="model")
+            await client.embed_batch(["test"], model="model", namespace="test-namespace")
 
         assert "not connected" in str(exc_info.value).lower()
 
@@ -280,7 +280,7 @@ class TestEmbeddingServiceClientEmbedBatch:
         client.stub.EmbedBatch = AsyncMock(side_effect=error)
 
         with pytest.raises(grpc.RpcError):
-            await client.embed_batch(["test"], model="model")
+            await client.embed_batch(["test"], model="model", namespace="test-namespace")
 
 
 class TestEmbeddingServiceClientHealthCheck:

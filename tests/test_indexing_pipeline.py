@@ -449,8 +449,6 @@ class TestIndexingPipeline:
             chunk_ingester=chunk_ingester,
         )
 
-        # Process document (should handle missing text gracefully)
-        num_chunks = pipeline.process_document(bucket="test-bucket", key="test-key")
-
-        # Verify result
-        assert num_chunks == 0
+        # Process document (should raise KeyError for missing text field)
+        with pytest.raises(KeyError, match="text"):
+            pipeline.process_document(bucket="test-bucket", key="test-key")

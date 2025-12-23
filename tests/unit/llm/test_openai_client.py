@@ -185,16 +185,15 @@ class TestOpenAIClientGenerate:
 
     @pytest.mark.asyncio
     async def test_generate_handles_empty_content(self, mock_client):
-        """Tests that generate handles None content gracefully."""
+        """Tests that generate raises ValueError for None content."""
         mock_response = MagicMock()
         mock_response.choices = [MagicMock(message=MagicMock(content=None))]
         mock_response.usage = None
 
         mock_client.client.chat.completions.create = AsyncMock(return_value=mock_response)
 
-        result = await mock_client.generate("Prompt", max_tokens=500, temperature=0.7, system_message=None)
-
-        assert result == ""
+        with pytest.raises(ValueError, match="OpenAI returned None"):
+            await mock_client.generate("Prompt", max_tokens=500, temperature=0.7, system_message=None)
 
     @pytest.mark.asyncio
     async def test_generate_raises_on_api_error(self, mock_client):

@@ -245,7 +245,7 @@ class TestIndexerEmbeddingServiceClientEmbedBatch:
         ]
         client.stub.EmbedBatch.return_value = mock_response
 
-        result = client.embed_batch(["text1", "text2"], model="model")
+        result = client.embed_batch(["text1", "text2"], model="model", namespace="test-namespace")
 
         assert result == [[0.1, 0.2], [0.3, 0.4]]
 
@@ -255,7 +255,7 @@ class TestIndexerEmbeddingServiceClientEmbedBatch:
         client.stub = None
 
         with pytest.raises(RuntimeError) as exc_info:
-            client.embed_batch(["test"], model="model")
+            client.embed_batch(["test"], model="model", namespace="test-namespace")
 
         assert "not connected" in str(exc_info.value).lower()
 
@@ -272,7 +272,7 @@ class TestIndexerEmbeddingServiceClientEmbedBatch:
         client.stub.EmbedBatch.side_effect = MockRpcError()
 
         with pytest.raises(grpc.RpcError):
-            client.embed_batch(["test"], model="model")
+            client.embed_batch(["test"], namespace="test-ns", model="model")
 
 
 class TestIndexerEmbeddingServiceClientHealthCheck:

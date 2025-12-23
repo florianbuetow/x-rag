@@ -21,6 +21,8 @@ class TestCreateLLMClient:
         config = LLMConfig.for_openai(
             api_key="sk-test123",
             model="gpt-4",
+            max_tokens=1000,
+            temperature=0.7,
             max_retries=5,
             timeout=120,
         )
@@ -44,6 +46,10 @@ class TestCreateLLMClient:
             base_url="http://localhost:1234/v1",
             model="qwen2.5-7b",
             api_key="local",
+            max_tokens=1000,
+            temperature=0.7,
+            max_retries=3,
+            timeout=60,
         )
 
         result = create_llm_client(config)
@@ -64,6 +70,10 @@ class TestCreateLLMClient:
             base_url="http://localhost:1234/v1",
             model="model",
             api_key="custom-key",
+            max_tokens=1000,
+            temperature=0.7,
+            max_retries=3,
+            timeout=60,
         )
 
         create_llm_client(config)

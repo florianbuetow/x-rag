@@ -273,22 +273,40 @@ class TestWeaviateBatchInserter:
 class TestDocumentIndexer:
     """Tests for DocumentIndexer class."""
 
-    @patch("src.indexer.processor.GrpcEmbeddingServiceClient")
-    def test_initialization(self, mock_embedding_client_class):
-        """Test indexer initialization."""
+    @pytest.fixture
+    def indexer_config(self):
+        """Create a valid IndexerConfig for testing."""
         from src.indexer.config import IndexerConfig
 
-        config = IndexerConfig(
+        return IndexerConfig(
+            service_name="indexer-test",
+            log_level="INFO",
+            port=8080,
+            environment="test",
             minio_endpoint="localhost:9000",
             minio_access_key="minioadmin",
             minio_secret_key="minioadmin123",
+            minio_bucket="test-bucket",
             minio_secure=False,
             weaviate_url="http://weaviate:8080",
+            weaviate_timeout_init=30,
+            weaviate_timeout_query=60,
+            weaviate_timeout_insert=120,
             embedding_service_addr="embedding-service:50051",
             kafka_bootstrap="kafka:9092",
             kafka_topic="test-topic",
+            kafka_group_id="indexer-group",
+            kafka_auto_offset_reset="earliest",
+            datasets_config_path="config/test/datasets_config.yaml",
             batch_size=10,
+            health_port=8081,
+            embedding_service_timeout=30.0,
         )
+
+    @patch("src.indexer.processor.GrpcEmbeddingServiceClient")
+    def test_initialization(self, mock_embedding_client_class, indexer_config):
+        """Test indexer initialization."""
+        config = indexer_config
 
         mock_client_instance = Mock()
         mock_embedding_client_class.return_value = mock_client_instance
@@ -304,21 +322,9 @@ class TestDocumentIndexer:
         mock_client_instance.connect.assert_called_once()
 
     @patch("src.indexer.processor.GrpcEmbeddingServiceClient")
-    def test_context_manager(self, mock_embedding_client_class):
+    def test_context_manager(self, mock_embedding_client_class, indexer_config):
         """Test indexer as context manager."""
-        from src.indexer.config import IndexerConfig
-
-        config = IndexerConfig(
-            minio_endpoint="localhost:9000",
-            minio_access_key="minioadmin",
-            minio_secret_key="minioadmin123",
-            minio_secure=False,
-            weaviate_url="http://weaviate:8080",
-            embedding_service_addr="embedding-service:50051",
-            kafka_bootstrap="kafka:9092",
-            kafka_topic="test-topic",
-            batch_size=10,
-        )
+        config = indexer_config
 
         mock_client_instance = Mock()
         mock_embedding_client_class.return_value = mock_client_instance
@@ -335,21 +341,10 @@ class TestDocumentIndexer:
         self,
         mock_embedding_client_class,
         mock_weaviate_connect,
+        indexer_config,
     ):
         """Test lazy Weaviate client initialization."""
-        from src.indexer.config import IndexerConfig
-
-        config = IndexerConfig(
-            minio_endpoint="localhost:9000",
-            minio_access_key="minioadmin",
-            minio_secret_key="minioadmin123",
-            minio_secure=False,
-            weaviate_url="http://weaviate:8080",
-            embedding_service_addr="embedding-service:50051",
-            kafka_bootstrap="kafka:9092",
-            kafka_topic="test-topic",
-            batch_size=10,
-        )
+        config = indexer_config
 
         mock_client_instance = Mock()
         mock_embedding_client_class.return_value = mock_client_instance
@@ -388,25 +383,10 @@ class TestDocumentIndexer:
     @patch("src.indexer.processor.GrpcEmbeddingServiceClient")
     @pytest.mark.asyncio
     async def test_process_event_document_already_indexed(
-        self,
-        mock_embedding_client_class,
-        mock_weaviate_connect,
-        mock_to_thread,
+        self, mock_embedding_client_class, mock_weaviate_connect, mock_to_thread, indexer_config
     ):
         """Test processing event for already indexed document."""
-        from src.indexer.config import IndexerConfig
-
-        config = IndexerConfig(
-            minio_endpoint="localhost:9000",
-            minio_access_key="minioadmin",
-            minio_secret_key="minioadmin123",
-            minio_secure=False,
-            weaviate_url="http://weaviate:8080",
-            embedding_service_addr="embedding-service:50051",
-            kafka_bootstrap="kafka:9092",
-            kafka_topic="test-topic",
-            batch_size=10,
-        )
+        config = indexer_config
 
         mock_client_instance = Mock()
         mock_embedding_client_class.return_value = mock_client_instance
@@ -433,7 +413,7 @@ class TestDocumentIndexer:
         event = {
             "event_type": "document.ingested",
             "document_id": "doc123",
-            "namespace": "nutritionfacts",
+            "namespace": "test-ns",
             "minio_bucket": "documents",
             "minio_key": "doc123.json",
         }
@@ -445,24 +425,9 @@ class TestDocumentIndexer:
 
     @patch("src.indexer.processor.GrpcEmbeddingServiceClient")
     @pytest.mark.asyncio
-    async def test_process_event_unknown_type(
-        self,
-        mock_embedding_client_class,
-    ):
+    async def test_process_event_unknown_type(self, mock_embedding_client_class, indexer_config):
         """Test processing event with unknown event type."""
-        from src.indexer.config import IndexerConfig
-
-        config = IndexerConfig(
-            minio_endpoint="localhost:9000",
-            minio_access_key="minioadmin",
-            minio_secret_key="minioadmin123",
-            minio_secure=False,
-            weaviate_url="http://weaviate:8080",
-            embedding_service_addr="embedding-service:50051",
-            kafka_bootstrap="kafka:9092",
-            kafka_topic="test-topic",
-            batch_size=10,
-        )
+        config = indexer_config
 
         mock_client_instance = Mock()
         mock_embedding_client_class.return_value = mock_client_instance
@@ -473,10 +438,13 @@ class TestDocumentIndexer:
         event = {
             "event_type": "unknown.event.type",
             "document_id": "doc123",
+            "namespace": "test-ns",
         }
 
         # Should return early without error
-        await indexer.process_event(event)
+        result = await indexer.process_event(event)
+        assert result["skipped"] is True
+        assert result["reason"] == "unknown_event_type"
 
         # No Weaviate connection should be made
         assert indexer.weaviate_client is None
@@ -491,19 +459,30 @@ class TestDocumentIndexer:
         """Test Weaviate client initialization with URL without port."""
         from src.indexer.config import IndexerConfig
 
+        # Create config with URL without port
         config = IndexerConfig(
+            service_name="indexer-test",
+            log_level="INFO",
+            port=8080,
+            environment="test",
             minio_endpoint="localhost:9000",
             minio_access_key="minioadmin",
             minio_secret_key="minioadmin123",
+            minio_bucket="test-bucket",
             minio_secure=False,
             weaviate_url="http://weaviate",  # No port!
-            weaviate_class="TestCollection",
+            weaviate_timeout_init=30,
+            weaviate_timeout_query=60,
+            weaviate_timeout_insert=120,
             embedding_service_addr="embedding-service:50051",
-            embedding_model="test-model",
             kafka_bootstrap="kafka:9092",
             kafka_topic="test-topic",
+            kafka_group_id="indexer-group",
+            kafka_auto_offset_reset="earliest",
+            datasets_config_path="config/test/datasets_config.yaml",
             batch_size=10,
-            chunk_size=500,
+            health_port=8081,
+            embedding_service_timeout=30.0,
         )
 
         mock_client_instance = Mock()
@@ -531,25 +510,9 @@ class TestDocumentIndexer:
 
     @patch("src.indexer.processor.weaviate.connect_to_custom")
     @patch("src.indexer.processor.GrpcEmbeddingServiceClient")
-    def test_close_with_weaviate_client(
-        self,
-        mock_embedding_client_class,
-        mock_weaviate_connect,
-    ):
+    def test_close_with_weaviate_client(self, mock_embedding_client_class, mock_weaviate_connect, indexer_config):
         """Test closing indexer with Weaviate client connected."""
-        from src.indexer.config import IndexerConfig
-
-        config = IndexerConfig(
-            minio_endpoint="localhost:9000",
-            minio_access_key="minioadmin",
-            minio_secret_key="minioadmin123",
-            minio_secure=False,
-            weaviate_url="http://weaviate:8080",
-            embedding_service_addr="embedding-service:50051",
-            kafka_bootstrap="kafka:9092",
-            kafka_topic="test-topic",
-            batch_size=10,
-        )
+        config = indexer_config
 
         mock_client_instance = Mock()
         mock_embedding_client_class.return_value = mock_client_instance
@@ -576,26 +539,10 @@ class TestDocumentIndexer:
     @patch("src.indexer.processor.GrpcEmbeddingServiceClient")
     @pytest.mark.asyncio
     async def test_process_event_new_document(
-        self,
-        mock_embedding_client_class,
-        mock_weaviate_connect,
-        mock_to_thread,
-        mock_pipeline_class,
+        self, mock_embedding_client_class, mock_weaviate_connect, mock_to_thread, mock_pipeline_class, indexer_config
     ):
         """Test processing event for new document."""
-        from src.indexer.config import IndexerConfig
-
-        config = IndexerConfig(
-            minio_endpoint="localhost:9000",
-            minio_access_key="minioadmin",
-            minio_secret_key="minioadmin123",
-            minio_secure=False,
-            weaviate_url="http://weaviate:8080",
-            embedding_service_addr="embedding-service:50051",
-            kafka_bootstrap="kafka:9092",
-            kafka_topic="test-topic",
-            batch_size=10,
-        )
+        config = indexer_config
 
         mock_client_instance = Mock()
         mock_embedding_client_class.return_value = mock_client_instance
@@ -636,7 +583,7 @@ class TestDocumentIndexer:
         event = {
             "event_type": "document.ingested",
             "document_id": "doc123",
-            "namespace": "nutritionfacts",
+            "namespace": "test-ns",
             "minio_bucket": "documents",
             "minio_key": "doc123.json",
         }
@@ -650,26 +597,9 @@ class TestDocumentIndexer:
     @patch("src.indexer.processor.weaviate.connect_to_custom")
     @patch("src.indexer.processor.GrpcEmbeddingServiceClient")
     @pytest.mark.asyncio
-    async def test_process_event_raises_on_error(
-        self,
-        mock_embedding_client_class,
-        mock_weaviate_connect,
-        mock_to_thread,
-    ):
+    async def test_process_event_raises_on_error(self, mock_embedding_client_class, mock_weaviate_connect, mock_to_thread, indexer_config):
         """Test processing event raises error on failure."""
-        from src.indexer.config import IndexerConfig
-
-        config = IndexerConfig(
-            minio_endpoint="localhost:9000",
-            minio_access_key="minioadmin",
-            minio_secret_key="minioadmin123",
-            minio_secure=False,
-            weaviate_url="http://weaviate:8080",
-            embedding_service_addr="embedding-service:50051",
-            kafka_bootstrap="kafka:9092",
-            kafka_topic="test-topic",
-            batch_size=10,
-        )
+        config = indexer_config
 
         mock_client_instance = Mock()
         mock_embedding_client_class.return_value = mock_client_instance
@@ -689,10 +619,172 @@ class TestDocumentIndexer:
         event = {
             "event_type": "document.ingested",
             "document_id": "doc123",
-            "namespace": "nutritionfacts",
+            "namespace": "test-ns",
             "minio_bucket": "documents",
             "minio_key": "doc123.json",
         }
 
         with pytest.raises(RuntimeError, match="Processing failed"):
             await indexer.process_event(event)
+
+    @patch("src.indexer.processor.GrpcEmbeddingServiceClient")
+    @pytest.mark.asyncio
+    async def test_process_event_missing_namespace(self, mock_embedding_client_class, indexer_config):
+        """Test processing event with missing namespace field."""
+        config = indexer_config
+
+        mock_client_instance = Mock()
+        mock_embedding_client_class.return_value = mock_client_instance
+
+        indexer = DocumentIndexer(config)
+
+        # Process event without namespace field
+        event = {
+            "event_type": "document.ingested",
+            "document_id": "doc123",
+            # Missing "namespace" field
+            "minio_bucket": "documents",
+            "minio_key": "doc123.json",
+        }
+
+        with pytest.raises(ValueError, match="Event missing required 'namespace' field"):
+            await indexer.process_event(event)
+
+    @patch("src.indexer.processor.asyncio.to_thread")
+    @patch("src.indexer.processor.weaviate.connect_to_custom")
+    @patch("src.indexer.processor.GrpcEmbeddingServiceClient")
+    @pytest.mark.asyncio
+    async def test_process_event_unknown_namespace(
+        self, mock_embedding_client_class, mock_weaviate_connect, mock_to_thread, indexer_config
+    ):
+        """Test processing event with unknown namespace."""
+        config = indexer_config
+
+        mock_client_instance = Mock()
+        mock_embedding_client_class.return_value = mock_client_instance
+
+        mock_weaviate_client = Mock()
+        mock_weaviate_connect.return_value = mock_weaviate_client
+
+        indexer = DocumentIndexer(config)
+
+        # Process event with unknown namespace
+        event = {
+            "event_type": "document.ingested",
+            "document_id": "doc123",
+            "namespace": "unknown_namespace_that_does_not_exist",
+            "minio_bucket": "documents",
+            "minio_key": "doc123.json",
+        }
+
+        with pytest.raises(ValueError, match="Unknown namespace"):
+            await indexer.process_event(event)
+
+
+class TestWeaviateBatchInserterEdgeCases:
+    """Tests for WeaviateBatchInserter edge cases."""
+
+    def test_store_missing_source_metadata(self):
+        """Test storing chunks with missing source_file metadata."""
+        mock_collection = Mock()
+        mock_batch = MagicMock()
+        mock_batch.__enter__ = Mock(return_value=mock_batch)
+        mock_batch.__exit__ = Mock(return_value=False)
+        mock_collection.batch.dynamic.return_value = mock_batch
+
+        mock_client = Mock()
+        mock_client.collections.get.return_value = mock_collection
+
+        inserter = WeaviateBatchInserter(
+            client=mock_client,
+            collection_name="TestCollection",
+        )
+
+        # Create chunk without source_file in metadata
+        chunks = [
+            DocumentChunk(
+                content="Test content",
+                doc_id="doc123",
+                chunk_index=0,
+                namespace="test",
+                metadata={"title": "Test Doc"},  # No source_file
+            )
+        ]
+        embeddings = [[0.1, 0.2, 0.3]]
+
+        inserter.store(chunks=chunks, embeddings=embeddings)
+
+        # Verify source is empty string when missing
+        call_args = mock_batch.add_object.call_args_list[0]
+        assert call_args[1]["properties"]["source"] == ""
+        assert call_args[1]["properties"]["title"] == "Test Doc"
+
+    def test_store_missing_title_metadata(self):
+        """Test storing chunks with missing title metadata."""
+        mock_collection = Mock()
+        mock_batch = MagicMock()
+        mock_batch.__enter__ = Mock(return_value=mock_batch)
+        mock_batch.__exit__ = Mock(return_value=False)
+        mock_collection.batch.dynamic.return_value = mock_batch
+
+        mock_client = Mock()
+        mock_client.collections.get.return_value = mock_collection
+
+        inserter = WeaviateBatchInserter(
+            client=mock_client,
+            collection_name="TestCollection",
+        )
+
+        # Create chunk without title in metadata
+        chunks = [
+            DocumentChunk(
+                content="Test content",
+                doc_id="doc123",
+                chunk_index=0,
+                namespace="test",
+                metadata={"source_file": "test.txt"},  # No title
+            )
+        ]
+        embeddings = [[0.1, 0.2, 0.3]]
+
+        inserter.store(chunks=chunks, embeddings=embeddings)
+
+        # Verify title is empty string when missing
+        call_args = mock_batch.add_object.call_args_list[0]
+        assert call_args[1]["properties"]["source"] == "test.txt"
+        assert call_args[1]["properties"]["title"] == ""
+
+    def test_store_missing_both_metadata_fields(self):
+        """Test storing chunks with both source_file and title missing."""
+        mock_collection = Mock()
+        mock_batch = MagicMock()
+        mock_batch.__enter__ = Mock(return_value=mock_batch)
+        mock_batch.__exit__ = Mock(return_value=False)
+        mock_collection.batch.dynamic.return_value = mock_batch
+
+        mock_client = Mock()
+        mock_client.collections.get.return_value = mock_collection
+
+        inserter = WeaviateBatchInserter(
+            client=mock_client,
+            collection_name="TestCollection",
+        )
+
+        # Create chunk with minimal metadata
+        chunks = [
+            DocumentChunk(
+                content="Test content",
+                doc_id="doc123",
+                chunk_index=0,
+                namespace="test",
+                metadata={},  # Empty metadata
+            )
+        ]
+        embeddings = [[0.1, 0.2, 0.3]]
+
+        inserter.store(chunks=chunks, embeddings=embeddings)
+
+        # Verify both fields are empty strings when missing
+        call_args = mock_batch.add_object.call_args_list[0]
+        assert call_args[1]["properties"]["source"] == ""
+        assert call_args[1]["properties"]["title"] == ""

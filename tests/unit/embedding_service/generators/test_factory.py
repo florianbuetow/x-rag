@@ -78,7 +78,11 @@ class TestEmbeddingGeneratorFactoryCreateFromConfig:
 
     def test_create_from_config_hash_based(self):
         """Tests create_from_config with hash_based provider."""
-        config = EmbeddingConfig.for_hash_based(dimension=768)
+        config = EmbeddingConfig.for_hash_based(
+            dimension=768,
+            max_retries=0,
+            timeout=10,
+        )
 
         generator = EmbeddingGeneratorFactory.create_from_config(config)
 
@@ -94,6 +98,7 @@ class TestEmbeddingGeneratorFactoryCreateFromConfig:
             model="text-embedding-3-small",
             max_retries=3,
             timeout=30,
+            dimension=1536,
         )
 
         generator = EmbeddingGeneratorFactory.create_from_config(config)
@@ -114,6 +119,9 @@ class TestEmbeddingGeneratorFactoryCreateFromConfig:
             base_url="http://localhost:1234/v1",
             model="bge-large-en-v1.5",
             api_key="local",
+            max_retries=3,
+            timeout=60,
+            dimension=1024,
         )
 
         generator = EmbeddingGeneratorFactory.create_from_config(config)
@@ -121,14 +129,21 @@ class TestEmbeddingGeneratorFactoryCreateFromConfig:
         mock_openai_generator.assert_called_once_with(
             api_key="local",
             max_retries=3,
-            timeout=30,
+            timeout=60,
             base_url="http://localhost:1234/v1",
         )
         assert generator == mock_instance
 
     def test_create_from_config_openai_requires_api_key(self):
         """Tests create_from_config raises error when OpenAI config missing api_key."""
-        config = EmbeddingConfig(provider=EmbeddingProvider.OPENAI, api_key=None)
+        config = EmbeddingConfig(
+            provider=EmbeddingProvider.OPENAI,
+            api_key=None,
+            model="text-embedding-3-small",
+            max_retries=3,
+            timeout=60,
+            dimension=1536,
+        )
 
         with pytest.raises(ValueError) as exc_info:
             EmbeddingGeneratorFactory.create_from_config(config)

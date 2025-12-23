@@ -16,29 +16,42 @@ class TestSearchUIConfig:
     """Test Search UI configuration."""
 
     def test_default_values(self):
-        """Test default configuration values."""
-        config = SearchUIConfig()
-        assert config.service_name == "search-ui"
-        assert config.port == 8080
-        assert config.search_service_addr == "search-service:50052"
-        assert config.cors_enabled is True
-        assert config.mode == "hybrid"
+        """Test that SearchUIConfig requires all fields."""
+        # All fields are required - no defaults
+        with pytest.raises(ValueError, match="Field required"):
+            SearchUIConfig()
 
     def test_mode_validation(self):
         """Test search mode validation."""
         with pytest.raises(ValueError, match="Invalid mode"):
-            SearchUIConfig(mode="invalid")
+            SearchUIConfig(
+                service_name="search-ui",
+                log_level="INFO",
+                port=8080,
+                environment="test",
+                search_service_addr="search-service:50052",
+                search_service_timeout=30.0,
+                cors_enabled=True,
+                max_query_length=1000,
+                top_k=10,
+                mode="invalid",
+                datasets_config_path="config/test/datasets_config.yaml",
+            )
 
     def test_custom_values(self):
         """Test custom configuration values."""
         config = SearchUIConfig(
+            service_name="custom-search-ui",
+            log_level="DEBUG",
             port=9000,
+            environment="production",
             search_service_addr="localhost:50052",
             search_service_timeout=60.0,
             cors_enabled=False,
             max_query_length=500,
             top_k=10,
             mode="vector",
+            datasets_config_path="config/custom/datasets_config.yaml",
         )
         assert config.port == 9000
         assert config.search_service_addr == "localhost:50052"
@@ -51,7 +64,19 @@ class TestSearchUIConfig:
     def test_valid_modes(self):
         """Test all valid search modes."""
         for mode in ["vector", "bm25", "hybrid"]:
-            config = SearchUIConfig(mode=mode)
+            config = SearchUIConfig(
+                service_name="search-ui",
+                log_level="INFO",
+                port=8080,
+                environment="test",
+                search_service_addr="search-service:50052",
+                search_service_timeout=30.0,
+                cors_enabled=True,
+                max_query_length=1000,
+                top_k=10,
+                mode=mode,
+                datasets_config_path="config/test/datasets_config.yaml",
+            )
             assert config.mode == mode
 
 
@@ -97,57 +122,56 @@ class TestSearchUIModels:
         assert response.sources[0].score == 0.95
 
     def test_search_request_defaults(self):
-        """Test SearchRequest default values."""
-        request = SearchRequest(query="test query")
-        assert request.namespace == "test-ns"
-        assert request.top_k == 5
-        assert request.mode == "hybrid"
+        """Test SearchRequest requires all fields."""
+        # All fields are now required - no defaults
+        with pytest.raises(ValueError, match="Field required"):
+            SearchRequest(query="test query")
 
     def test_search_request_modes(self):
         """Test SearchRequest with different modes."""
         for mode in ["vector", "bm25", "hybrid"]:
-            request = SearchRequest(query="test", mode=mode)
+            request = SearchRequest(query="test", namespace="test-ns", top_k=5, mode=mode)
             assert request.mode == mode
 
     def test_search_request_invalid_mode(self):
         """Test SearchRequest with invalid mode."""
         # Note: mode validation happens at config level, not model level
         # The model accepts any string for mode
-        request = SearchRequest(query="test", mode="invalid")
+        request = SearchRequest(query="test", namespace="test-ns", top_k=5, mode="invalid")
         assert request.mode == "invalid"  # Model doesn't validate mode
 
     def test_search_request_boundary_top_k(self):
         """Test SearchRequest top_k boundaries."""
         # Minimum valid
-        request = SearchRequest(query="test", top_k=1)
+        request = SearchRequest(query="test", namespace="test-ns", top_k=1, mode="hybrid")
         assert request.top_k == 1
 
         # Maximum valid
-        request = SearchRequest(query="test", top_k=50)
+        request = SearchRequest(query="test", namespace="test-ns", top_k=50, mode="hybrid")
         assert request.top_k == 50
 
         # Below minimum
         with pytest.raises(ValueError):
-            SearchRequest(query="test", top_k=0)
+            SearchRequest(query="test", namespace="test-ns", top_k=0, mode="hybrid")
 
         # Above maximum
         with pytest.raises(ValueError):
-            SearchRequest(query="test", top_k=51)
+            SearchRequest(query="test", namespace="test-ns", top_k=51, mode="hybrid")
 
     def test_search_request_query_length(self):
         """Test SearchRequest query length validation."""
         # Valid short query
-        request = SearchRequest(query="a")
+        request = SearchRequest(query="a", namespace="test-ns", top_k=5, mode="hybrid")
         assert request.query == "a"
 
         # Valid long query
         long_query = "a" * 1000
-        request = SearchRequest(query=long_query)
+        request = SearchRequest(query=long_query, namespace="test-ns", top_k=5, mode="hybrid")
         assert request.query == long_query
 
         # Too long
         with pytest.raises(ValueError):
-            SearchRequest(query="a" * 1001)
+            SearchRequest(query="a" * 1001, namespace="test-ns", top_k=5, mode="hybrid")
 
     def test_search_request_extra_fields_forbidden(self):
         """Test that extra fields are rejected."""

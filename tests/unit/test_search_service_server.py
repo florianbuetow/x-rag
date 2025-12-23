@@ -22,6 +22,7 @@ class TestSearchServicerInit:
         servicer = SearchServicer(
             embedding_client=mock_embedding_service_client,
             config=search_service_config,
+            datasets_config_path="config/test/datasets_config.yaml",
         )
 
         assert servicer.embedding_client is mock_embedding_service_client
@@ -39,6 +40,7 @@ class TestSearchServicerInit:
         servicer = SearchServicer(
             embedding_client=mock_embedding_service_client,
             config=search_service_config,
+            datasets_config_path="config/test/datasets_config.yaml",
         )
 
         # Config values are now loaded from datasets_config.yaml per namespace
@@ -55,6 +57,7 @@ class TestSearchMethod:
         servicer = SearchServicer(
             embedding_client=mock_embedding_service_client,
             config=search_service_config,
+            datasets_config_path="config/test/datasets_config.yaml",
         )
         # Mock _get_pipeline to return our mock pipeline
         servicer._get_pipeline = Mock(return_value=mock_search_pipeline)
@@ -63,8 +66,8 @@ class TestSearchMethod:
 
         # Mock datasets_loader.get_dataset_config
         mock_dataset_config = Mock()
-        mock_dataset_config.search.test-ns_top_k = 10
-        mock_dataset_config.search.test-ns_mode = "hybrid"
+        mock_dataset_config.search.top_k = 10
+        mock_dataset_config.search.mode = "hybrid"
         mock_dataset_config.search.hybrid_alpha = 0.5
         mock_dataset_config.llm.max_tokens = 500
         mock_dataset_config.llm.temperature = 0.7
@@ -79,7 +82,10 @@ class TestSearchMethod:
         mock_async_grpc_context,
     ):
         """Empty query returns INVALID_ARGUMENT error."""
-        request = search_pb2.SearchRequest(query="")
+        request = search_pb2.SearchRequest(
+            query="",
+            namespace="test-ns",
+        )
 
         with pytest.raises(GrpcAbortException) as exc_info:
             await servicer.Search(request, mock_async_grpc_context)
@@ -95,7 +101,7 @@ class TestSearchMethod:
     ):
         """Whitespace-only query is treated as empty (passes validation but results may vary)."""
         # Note: Current implementation doesn't strip whitespace, so this test documents behavior
-        request = search_pb2.SearchRequest(query="   ")
+        request = search_pb2.SearchRequest(query="   ", namespace="test-ns")
 
         # Whitespace is technically non-empty, so it passes validation
         # Setup pipeline to return a result
@@ -117,7 +123,7 @@ class TestSearchMethod:
         servicer.pipeline.search.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_search_top_k_zero_uses_test-ns(
+    async def test_search_top_k_zero_uses_test_ns(
         self,
         servicer,
         mock_async_grpc_context,
@@ -132,6 +138,7 @@ class TestSearchMethod:
 
         request = search_pb2.SearchRequest(
             query="test query",
+            namespace="test-ns",
             top_k=0,  # Falsy value, will use test-ns
         )
 
@@ -150,6 +157,7 @@ class TestSearchMethod:
         """Negative top_k returns INVALID_ARGUMENT error."""
         request = search_pb2.SearchRequest(
             query="test query",
+            namespace="test-ns",
             top_k=-5,
         )
 
@@ -168,6 +176,7 @@ class TestSearchMethod:
         """top_k > 100 returns INVALID_ARGUMENT error."""
         request = search_pb2.SearchRequest(
             query="test query",
+            namespace="test-ns",
             top_k=101,
         )
 
@@ -186,6 +195,7 @@ class TestSearchMethod:
         """Invalid mode returns INVALID_ARGUMENT error."""
         request = search_pb2.SearchRequest(
             query="test query",
+            namespace="test-ns",
             mode="invalid_mode",
         )
 
@@ -204,6 +214,7 @@ class TestSearchMethod:
         """alpha < 0 returns INVALID_ARGUMENT error."""
         request = search_pb2.SearchRequest(
             query="test query",
+            namespace="test-ns",
             mode="hybrid",
             options={"alpha": "-0.5"},
         )
@@ -223,6 +234,7 @@ class TestSearchMethod:
         """alpha > 1 returns INVALID_ARGUMENT error."""
         request = search_pb2.SearchRequest(
             query="test query",
+            namespace="test-ns",
             mode="hybrid",
             options={"alpha": "1.5"},
         )
@@ -242,6 +254,7 @@ class TestSearchMethod:
         """Non-numeric alpha returns INVALID_ARGUMENT error."""
         request = search_pb2.SearchRequest(
             query="test query",
+            namespace="test-ns",
             mode="hybrid",
             options={"alpha": "not_a_number"},
         )
@@ -264,6 +277,7 @@ class TestSearchMethod:
 
         request = search_pb2.SearchRequest(
             query="What is machine learning?",
+            namespace="test-ns",
             mode="vector",
             top_k=10,
         )
@@ -296,6 +310,7 @@ class TestSearchMethod:
 
         request = search_pb2.SearchRequest(
             query="machine learning",
+            namespace="test-ns",
             mode="bm25",
             top_k=5,
         )
@@ -318,6 +333,7 @@ class TestSearchMethod:
 
         request = search_pb2.SearchRequest(
             query="machine learning",
+            namespace="test-ns",
             mode="hybrid",
             options={"alpha": "0.7"},
         )
@@ -329,7 +345,7 @@ class TestSearchMethod:
         assert call_kwargs["alpha"] == 0.7
 
     @pytest.mark.asyncio
-    async def test_search_uses_test-ns_top_k(
+    async def test_search_uses_test_ns_top_k(
         self,
         servicer,
         mock_async_grpc_context,
@@ -340,6 +356,7 @@ class TestSearchMethod:
 
         request = search_pb2.SearchRequest(
             query="test query",
+            namespace="test-ns",
             # top_k not specified
         )
 
@@ -349,7 +366,7 @@ class TestSearchMethod:
         assert call_kwargs["top_k"] == 10  # Default from config
 
     @pytest.mark.asyncio
-    async def test_search_uses_test-ns_mode(
+    async def test_search_uses_test_ns_mode(
         self,
         servicer,
         mock_async_grpc_context,
@@ -360,6 +377,7 @@ class TestSearchMethod:
 
         request = search_pb2.SearchRequest(
             query="test query",
+            namespace="test-ns",
             # mode not specified
         )
 
@@ -369,7 +387,7 @@ class TestSearchMethod:
         assert call_kwargs["mode"] == "hybrid"  # Default from config
 
     @pytest.mark.asyncio
-    async def test_search_uses_test-ns_namespace(
+    async def test_search_uses_test_ns_namespace(
         self,
         servicer,
         mock_async_grpc_context,
@@ -380,6 +398,7 @@ class TestSearchMethod:
 
         request = search_pb2.SearchRequest(
             query="test query",
+            namespace="test-ns",
             # namespace not specified
         )
 
@@ -418,7 +437,7 @@ class TestSearchMethod:
         """Search response includes correct metadata."""
         servicer.pipeline.search.return_value = sample_search_result
 
-        request = search_pb2.SearchRequest(query="test query")
+        request = search_pb2.SearchRequest(query="test query", namespace="test-ns")
 
         response = await servicer.Search(request, mock_async_grpc_context)
 
@@ -437,7 +456,7 @@ class TestSearchMethod:
         """Pipeline exception returns INTERNAL error."""
         servicer.pipeline.search.side_effect = RuntimeError("Pipeline failed")
 
-        request = search_pb2.SearchRequest(query="test query")
+        request = search_pb2.SearchRequest(query="test query", namespace="test-ns")
 
         with pytest.raises(GrpcAbortException) as exc_info:
             await servicer.Search(request, mock_async_grpc_context)
@@ -455,7 +474,7 @@ class TestSearchMethod:
         """Search passes OpenAI configuration to pipeline."""
         servicer.pipeline.search.return_value = sample_search_result
 
-        request = search_pb2.SearchRequest(query="test query")
+        request = search_pb2.SearchRequest(query="test query", namespace="test-ns")
 
         await servicer.Search(request, mock_async_grpc_context)
 
@@ -473,6 +492,7 @@ class TestHealthCheckMethod:
         servicer = SearchServicer(
             embedding_client=mock_embedding_service_client,
             config=search_service_config,
+            datasets_config_path="config/test/datasets_config.yaml",
         )
         # Mock _get_pipeline to return our mock pipeline
         servicer._get_pipeline = Mock(return_value=mock_search_pipeline)
@@ -481,8 +501,8 @@ class TestHealthCheckMethod:
 
         # Mock datasets_loader.get_dataset_config
         mock_dataset_config = Mock()
-        mock_dataset_config.search.test-ns_top_k = 10
-        mock_dataset_config.search.test-ns_mode = "hybrid"
+        mock_dataset_config.search.top_k = 10
+        mock_dataset_config.search.mode = "hybrid"
         mock_dataset_config.search.hybrid_alpha = 0.5
         mock_dataset_config.llm.max_tokens = 500
         mock_dataset_config.llm.temperature = 0.7
@@ -500,6 +520,7 @@ class TestHealthCheckMethod:
         servicer = SearchServicer(
             embedding_client=mock_embedding_service_client,
             config=search_service_config_dev_mode,
+            datasets_config_path="config/test/datasets_config.yaml",
         )
         # Mock _get_pipeline to return our mock pipeline
         servicer._get_pipeline = Mock(return_value=mock_search_pipeline)
@@ -508,8 +529,8 @@ class TestHealthCheckMethod:
 
         # Mock datasets_loader.get_dataset_config
         mock_dataset_config = Mock()
-        mock_dataset_config.search.test-ns_top_k = 10
-        mock_dataset_config.search.test-ns_mode = "hybrid"
+        mock_dataset_config.search.top_k = 10
+        mock_dataset_config.search.mode = "hybrid"
         mock_dataset_config.search.hybrid_alpha = 0.5
         mock_dataset_config.llm.max_tokens = 500
         mock_dataset_config.llm.temperature = 0.7
@@ -707,6 +728,7 @@ class TestHelperMethods:
         servicer = SearchServicer(
             embedding_client=mock_embedding_service_client,
             config=search_service_config,
+            datasets_config_path="config/test/datasets_config.yaml",
         )
         # Mock _get_pipeline to return our mock pipeline
         servicer._get_pipeline = Mock(return_value=mock_search_pipeline)
@@ -715,8 +737,8 @@ class TestHelperMethods:
 
         # Mock datasets_loader.get_dataset_config
         mock_dataset_config = Mock()
-        mock_dataset_config.search.test-ns_top_k = 10
-        mock_dataset_config.search.test-ns_mode = "hybrid"
+        mock_dataset_config.search.top_k = 10
+        mock_dataset_config.search.mode = "hybrid"
         mock_dataset_config.search.hybrid_alpha = 0.5
         mock_dataset_config.llm.max_tokens = 500
         mock_dataset_config.llm.temperature = 0.7
@@ -730,6 +752,7 @@ class TestHelperMethods:
         servicer = SearchServicer(
             embedding_client=mock_embedding_service_client,
             config=search_service_config_dev_mode,
+            datasets_config_path="config/test/datasets_config.yaml",
         )
         # Mock _get_pipeline to return our mock pipeline
         servicer._get_pipeline = Mock(return_value=mock_search_pipeline)
@@ -738,8 +761,8 @@ class TestHelperMethods:
 
         # Mock datasets_loader.get_dataset_config
         mock_dataset_config = Mock()
-        mock_dataset_config.search.test-ns_top_k = 10
-        mock_dataset_config.search.test-ns_mode = "hybrid"
+        mock_dataset_config.search.top_k = 10
+        mock_dataset_config.search.mode = "hybrid"
         mock_dataset_config.search.hybrid_alpha = 0.5
         mock_dataset_config.llm.max_tokens = 500
         mock_dataset_config.llm.temperature = 0.7
