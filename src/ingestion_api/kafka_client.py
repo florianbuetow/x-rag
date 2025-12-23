@@ -87,7 +87,7 @@ class KafkaClient:
                 value=message,
                 headers=kafka_headers,
             )
-            event_type = message["event_type"] if "event_type" in message else "unknown"
+            event_type = message["event_type"]
             logger.debug(f"Published to {topic}: {event_type}")
         except KafkaError as e:
             logger.error(f"Failed to publish to {topic}: {e}")

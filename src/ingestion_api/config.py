@@ -27,6 +27,12 @@ class IngestionAPIConfig(ServiceConfig):
     max_content_length: int = Field(...)  # 10MB
     cors_enabled: bool = Field(...)
 
+    # Dataset config path
+    datasets_config_path: str = Field(
+        ...,
+        description="Path to datasets configuration file",
+    )
+
     @field_validator("minio_endpoint")
     @classmethod
     def validate_minio_endpoint(cls, v: str) -> str:

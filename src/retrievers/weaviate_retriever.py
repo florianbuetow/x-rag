@@ -192,10 +192,15 @@ class WeaviateRetriever:
         """
         # Extract score/distance based on mode
         if mode == "vector":
-            distance = obj.metadata.distance or 0.0
+            distance = obj.metadata.distance
+            if distance is None:
+                raise ValueError(f"Weaviate object {obj.uuid} missing required distance in vector mode")
             score = 1.0 / (1.0 + distance)
         else:
-            score = obj.metadata.score or 0.0
+            score_val = obj.metadata.score
+            if score_val is None:
+                raise ValueError(f"Weaviate object {obj.uuid} missing required score in hybrid mode")
+            score = score_val
 
         # Build metadata
         metadata = {
@@ -207,7 +212,7 @@ class WeaviateRetriever:
         }
 
         # Add custom metadata if present
-        metadata_json = obj.properties["metadata_json"] if "metadata_json" in obj.properties else ""
+        metadata_json = obj.properties["metadata_json"]
         if metadata_json and isinstance(metadata_json, str):
             try:
                 custom_metadata = json.loads(metadata_json)
@@ -215,7 +220,7 @@ class WeaviateRetriever:
             except json.JSONDecodeError:
                 logger.warning(f"Failed to parse metadata_json for chunk {obj.uuid}")
 
-        content = obj.properties["content"] if "content" in obj.properties else ""
+        content = obj.properties["content"]
         content_str = str(content) if content is not None else ""
 
         return SearchResult(id=str(obj.uuid), content=content_str, score=score, metadata=metadata)

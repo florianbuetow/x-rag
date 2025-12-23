@@ -62,8 +62,7 @@ def init_tracing(
 
     Args:
         service_name: Name of this service (appears in traces)
-        otlp_endpoint: Tempo/collector endpoint. Defaults to OTEL_EXPORTER_OTLP_ENDPOINT
-                       env var or http://tempo.monitoring.svc.cluster.local:4317
+        otlp_endpoint: Tempo/collector endpoint (required, no default)
         environment: Deployment environment tag (development, staging, production)
 
     Environment variables:
@@ -86,11 +85,10 @@ def init_tracing(
         logger.warning("Tracing already initialized, returning existing provider")
         return _tracer_provider
 
-    # Resolve endpoint from parameter, env var, or default
-    endpoint = otlp_endpoint or os.getenv(
-        "OTEL_EXPORTER_OTLP_ENDPOINT",
-        "http://tempo.monitoring.svc.cluster.local:4317",
-    )
+    # otlp_endpoint is required - no fallbacks
+    if otlp_endpoint is None:
+        raise ValueError("otlp_endpoint parameter is required for tracing initialization")
+    endpoint = otlp_endpoint
 
     # Create resource with service metadata
     resource = Resource.create(

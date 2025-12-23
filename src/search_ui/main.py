@@ -19,7 +19,6 @@ from src.common.health import HealthChecker
 from src.common.metrics import track_latency
 from src.common.otel_metrics import init_otel_metrics, shutdown_otel_metrics
 from src.common.tracing import get_current_trace_id, init_tracing, shutdown_tracing
-from src.core.errors import ConfigurationError
 from src.search_ui.config import SearchUIConfig
 from src.search_ui.grpc_clients import SearchServiceClient
 from src.search_ui.metrics import (

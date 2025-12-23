@@ -187,7 +187,7 @@ class MinIODocumentLoader:
                     data = response.read()
                     storage_span.set_attribute("storage.bytes", len(data))
                     document: dict[str, Any] = json.loads(data.decode("utf-8"))
-                    doc_id_log = document["id"] if "id" in document else "unknown"
+                    doc_id_log = document["id"]
                     logger.debug(f"✓ Loaded document: {doc_id_log}")
                     return document
                 finally:
@@ -246,12 +246,17 @@ class HaystackTextCleaner:
         # Create a Haystack Document, clean it, extract the content
         doc = Document(content=text)
         result = self._cleaner.run(documents=[doc])
-        cleaned_docs = result["documents"] if "documents" in result else []
+        cleaned_docs = result["documents"]
 
         if not cleaned_docs:
             return ""
 
-        cleaned = cleaned_docs[0].content or ""
+        content = cleaned_docs[0].content
+        if content is None:
+            raise ValueError("DocumentCleaner returned None for content")
+        if not isinstance(content, str):
+            raise TypeError(f"DocumentCleaner returned {type(content)} instead of str")
+        cleaned: str = content
         logger.debug(f"Cleaned text: {len(text)} -> {len(cleaned)} chars")
         return cleaned
 
@@ -313,7 +318,7 @@ class HaystackTextSplitter:
         # Create a Haystack Document, split it, extract the contents
         doc = Document(content=text)
         result = self._splitter.run(documents=[doc])
-        split_docs = result["documents"] if "documents" in result else []
+        split_docs = result["documents"]
 
         chunks = [d.content for d in split_docs if d.content]
 
@@ -399,7 +404,7 @@ class IndexingPipeline:
         # Step 6: Store chunks
         self._store_chunks(chunks, embeddings)
 
-        doc_id_result = document["id"] if "id" in document else "unknown"
+        doc_id_result = document["id"]
         logger.info(f"✓ Processed document {doc_id_result}: {len(chunks)} chunks created")
         return len(chunks)
 
@@ -426,9 +431,9 @@ class IndexingPipeline:
         Returns:
             Cleaned text
         """
-        raw_text = document["text"] if "text" in document else ""
+        raw_text = document["text"]
         if not raw_text:
-            doc_id_for_log = document["id"] if "id" in document else "unknown"
+            doc_id_for_log = document["id"]
             logger.warning(f"Document {doc_id_for_log} has no text content")
             return ""
 
@@ -463,11 +468,11 @@ class IndexingPipeline:
         Returns:
             List of DocumentChunk objects
         """
-        doc_id = document["id"] if "id" in document else "unknown"
+        doc_id = document["id"]
         if "namespace" not in document:
             raise ValueError(f"Document {doc_id} missing required 'namespace' field")
         namespace = document["namespace"]
-        metadata = document["metadata"] if "metadata" in document else {}
+        metadata = document["metadata"]
 
         chunks = [
             DocumentChunk(

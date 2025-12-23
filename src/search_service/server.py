@@ -39,14 +39,14 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
         self,
         embedding_client: EmbeddingServiceClient,
         config: SearchServiceConfig,
-        datasets_config_path: str = "config/datasets_config.yaml",
+        datasets_config_path: str,
     ) -> None:
         """Initialize servicer.
 
         Args:
             embedding_client: Shared embedding service client (namespace-aware)
             config: Service configuration
-            datasets_config_path: Path to datasets configuration file
+            datasets_config_path: Path to datasets configuration file (required)
         """
         self.embedding_client = embedding_client
         self.config = config
@@ -136,8 +136,14 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
             await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
 
         query = request.query
-        top_k = request.top_k or dataset_config.search.top_k
-        mode = request.mode or dataset_config.search.mode
+
+        # Validate top_k if explicitly provided (negative values are invalid)
+        if request.top_k < 0:
+            await context.abort(grpc.StatusCode.INVALID_ARGUMENT, f"top_k must be positive, got {request.top_k}")
+
+        # Use provided values if valid, otherwise use dataset defaults
+        top_k = request.top_k if request.top_k > 0 else dataset_config.search.top_k
+        mode = request.mode if request.mode else dataset_config.search.mode
 
         if top_k <= 0:
             await context.abort(grpc.StatusCode.INVALID_ARGUMENT, f"top_k must be positive, got {top_k}")
@@ -266,7 +272,7 @@ class SearchServicer(search_pb2_grpc.SearchServiceServicer):
 
                 # Build and return response
                 response = self._build_search_response(result)
-                cache_hit = result["metadata"]["cache_hit"] if "cache_hit" in result["metadata"] else False
+                cache_hit = result["metadata"]["cache_hit"]
                 logger.info(f"Search completed: {len(response.sources)} sources, cache_hit={cache_hit}")
 
             inc_requests_total("Search", "success")

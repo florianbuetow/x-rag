@@ -1,10 +1,8 @@
 """Configuration for Indexer service."""
 
-from typing import Literal
-
 from pydantic import Field, ValidationError
 
-from src.common.config import KafkaConfig, MinIOConfig, ServiceConfig, WeaviateConfig
+from src.common.config import KafkaConfig, MinIOConfig, ServiceConfig
 
 
 class IndexerConfig(ServiceConfig):

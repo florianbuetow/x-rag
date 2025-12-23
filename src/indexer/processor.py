@@ -7,7 +7,6 @@ import asyncio
 import json
 import logging
 import threading
-from collections.abc import Callable
 from types import TracebackType
 from typing import Any, cast
 
@@ -31,7 +30,6 @@ from src.indexer.metrics import (
 )
 from src.pipelines.indexing_pipeline import (
     BasicTextCleaner,
-    ChunkIngestionInterface,
     DocumentChunk,
     IndexingPipeline,
     MinIODocumentLoader,
@@ -290,7 +288,7 @@ class DocumentIndexer:
         Raises:
             Exception: If processing fails
         """
-        event_type = event["event_type"] if "event_type" in event else None
+        event_type = event["event_type"]
         document_id = cast(str, event["document_id"])
         if "namespace" not in event:
             raise ValueError(f"Event missing required 'namespace' field for document {document_id}")
@@ -339,10 +337,12 @@ class DocumentIndexer:
             logger.debug(f"Creating pipeline components for namespace '{namespace}'")
 
             # Text cleaner with dataset-specific settings
+            unicode_norm = dataset_config.chunking.cleaner_unicode_normalization
+            unicode_normalization = unicode_norm if unicode_norm in ("NFC", "NFKC", "NFD", "NFKD") else None
             cleaner = BasicTextCleaner(
                 remove_empty_lines=dataset_config.chunking.cleaner_remove_empty_lines,
                 remove_extra_whitespaces=dataset_config.chunking.cleaner_remove_extra_whitespaces,
-                unicode_normalization=dataset_config.chunking.cleaner_unicode_normalization,
+                unicode_normalization=unicode_normalization,  # type: ignore[arg-type]
             )
 
             # Text splitter with dataset-specific chunk size/overlap

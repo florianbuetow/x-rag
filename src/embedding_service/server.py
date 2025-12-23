@@ -108,17 +108,20 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
                     logger.error(f"Unknown namespace: {namespace}")
                     await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
 
-                # Use request model or None (generator will use its configured model)
-                model = request.model or None
+                # Model is required - no defaults
+                model = request.model
+                if not model:
+                    logger.error("Model is required")
+                    await context.abort(grpc.StatusCode.INVALID_ARGUMENT, "model field is required")
 
                 # Generate embedding
                 logger.debug(f"Generating embedding for namespace={namespace}, model={model}")
                 with track_latency(get_backend_duration(), {"namespace": namespace}):
-                    embedding = await generator.embed(request.text, model or "")
-                    dimension = generator.get_dimension(model or "")
+                    embedding = await generator.embed(request.text, model)
+                    dimension = generator.get_dimension(model)
 
                 # Record embedding generated
-                inc_embeddings_total(model or namespace, 1)
+                inc_embeddings_total(model, 1)
 
             inc_requests_total("Embed", "success")
             return embedding_pb2.EmbedResponse(
@@ -187,8 +190,11 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
                     logger.error(f"Unknown namespace: {namespace}")
                     await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
 
-                # Use request model or None (generator will use its configured model)
-                model = request.model or None
+                # Model is required - no defaults
+                model = request.model
+                if not model:
+                    logger.error("Model is required")
+                    await context.abort(grpc.StatusCode.INVALID_ARGUMENT, "model field is required")
 
                 # Record batch size
                 num_texts = len(request.texts)
@@ -197,8 +203,8 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
                 # Generate embeddings
                 logger.debug(f"Generating {num_texts} embeddings in batch (namespace={namespace}, model={model})")
                 with track_latency(get_backend_duration(), {"namespace": namespace}):
-                    embeddings = await generator.embed_batch(list(request.texts), model or "")
-                    dimension = generator.get_dimension(model or "")
+                    embeddings = await generator.embed_batch(list(request.texts), model)
+                    dimension = generator.get_dimension(model)
 
                 # Record embeddings generated
                 inc_embeddings_total(model, num_texts)
@@ -208,7 +214,7 @@ class EmbeddingServicer(embedding_pb2_grpc.EmbeddingServiceServicer):
                     embedding_pb2.EmbedResponse(
                         embedding=emb,
                         dimension=dimension,
-                        model=model,
+                        model=model or "",
                     )
                     for emb in embeddings
                 ]
