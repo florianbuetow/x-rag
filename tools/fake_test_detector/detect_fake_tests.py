@@ -444,8 +444,8 @@ Respond with JSON only (no other text):
             model_capabilities={
                 "vision": False,
                 "function_calling": False,
-                "json_output": True,
-                "structured_output": True,
+                "json_output": False,
+                "structured_output": False,
             },
         )
         self.model = model
@@ -509,15 +509,55 @@ Is this a fake/fraudulent test? Respond with JSON only."""
             DetectionResult
         """
         try:
+            # Clean response - remove markdown code blocks if present
+            cleaned = response_text.strip()
+            if cleaned.startswith("```json"):
+                cleaned = cleaned[7:]  # Remove ```json
+            elif cleaned.startswith("```"):
+                cleaned = cleaned[3:]  # Remove ```
+            if cleaned.endswith("```"):
+                cleaned = cleaned[:-3]  # Remove trailing ```
+            cleaned = cleaned.strip()
+
             # Try to find JSON in response
-            start_idx = response_text.find("{")
-            end_idx = response_text.rfind("}") + 1
+            start_idx = cleaned.find("{")
+            end_idx = cleaned.rfind("}") + 1
 
             if start_idx == -1 or end_idx == 0:
                 raise ValueError("No JSON found in response")
 
-            json_str = response_text[start_idx:end_idx]
+            json_str = cleaned[start_idx:end_idx]
+
+            # Try to clean common JSON issues
+            import re
+
+            # Fix missing "reason": key - LLM sometimes outputs just "" instead of "reason": ""
+            # Case 1: Single "" before closing brace: , "" }
+            # Case 2: Double "" (one on each line): , "" , "" }
+            json_str_before = json_str
+
+            # First, remove any duplicate "" entries (LLM sometimes outputs two empty strings)
+            # Pattern: , "" , "" } -> , "" }
+            json_str = re.sub(r',\s*""\s*,\s*""', r', ""', json_str)
+
+            # Now fix the remaining "" to be "reason": ""
+            # Pattern: ,\s*"" before closing } should be ,\s*"reason": ""
+            json_str = re.sub(r',\s*""\s*}', r', "reason": "" }', json_str)
+
+            # Remove trailing commas before } or ]
+            json_str = re.sub(r',(\s*[}\]])', r'\1', json_str)
+
+            # Debug log if we fixed something
+            if json_str != json_str_before:
+                logger.debug(f"Fixed JSON: {json_str_before[:100]} -> {json_str[:100]}")
+
             data = json.loads(json_str)
+
+            # Log parsed data to verify
+            reason = data.get("reason", "")
+            if not reason:
+                logger.debug(f"Empty reason in parsed data: {data}")
+                logger.debug(f"Original response: {response_text[:200]}")
 
             return DetectionResult(
                 file_path=test_case.file_path,
@@ -525,12 +565,51 @@ Is this a fake/fraudulent test? Respond with JSON only."""
                 function_name=test_case.function_name,
                 is_fake=data.get("is_fake", False),
                 confidence=data.get("confidence", 0.0),
-                reason=data.get("reason", ""),
+                reason=reason,
+            )
+
+        except json.JSONDecodeError as e:
+            # Log the actual response for debugging
+            logger.warning(f"JSON decode error: {e}")
+            logger.warning(f"Raw response (first 500 chars): {response_text[:500]}")
+            logger.warning(f"Attempted to parse: {json_str[:200] if 'json_str' in locals() else 'N/A'}")
+
+            # Try regex extraction as fallback
+            try:
+                import re
+                is_fake_match = re.search(r'"is_fake"\s*:\s*(true|false)', response_text, re.IGNORECASE)
+                confidence_match = re.search(r'"confidence"\s*:\s*([\d.]+)', response_text)
+                reason_match = re.search(r'"reason"\s*:\s*"([^"]*)"', response_text)
+
+                if is_fake_match:
+                    is_fake = is_fake_match.group(1).lower() == "true"
+                    confidence = float(confidence_match.group(1)) if confidence_match else 0.0
+                    reason = reason_match.group(1) if reason_match else ""
+
+                    return DetectionResult(
+                        file_path=test_case.file_path,
+                        line_number=test_case.line_number,
+                        function_name=test_case.function_name,
+                        is_fake=is_fake,
+                        confidence=confidence,
+                        reason=reason,
+                    )
+            except Exception:
+                pass  # Fall through to default response
+
+            # Default to not fake if parsing fails
+            return DetectionResult(
+                file_path=test_case.file_path,
+                line_number=test_case.line_number,
+                function_name=test_case.function_name,
+                is_fake=False,
+                confidence=0.0,
+                reason="Failed to parse LLM response",
             )
 
         except Exception as e:
             logger.warning(f"Failed to parse LLM response: {e}")
-            logger.debug(f"Response was: {response_text}")
+            logger.warning(f"Response was (first 500 chars): {response_text[:500]}")
             # Default to not fake if parsing fails
             return DetectionResult(
                 file_path=test_case.file_path,
