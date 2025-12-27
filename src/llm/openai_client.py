@@ -7,6 +7,7 @@ error handling, and cost tracking.
 import logging
 
 from openai import AsyncOpenAI, OpenAIError
+from openai.types.chat import ChatCompletionMessageParam
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +69,7 @@ class OpenAIClient:
         """
         try:
             # Build messages
-            messages: list[dict[str, str]] = []
+            messages: list[ChatCompletionMessageParam] = []
             if system_message:
                 messages.append({"role": "system", "content": system_message})
             messages.append({"role": "user", "content": prompt})
@@ -77,7 +78,7 @@ class OpenAIClient:
             logger.debug(f"Calling OpenAI API (model={self.model}, max_tokens={max_tokens})")
             response = await self.client.chat.completions.create(
                 model=self.model,
-                messages=messages,  # type: ignore[arg-type]
+                messages=messages,
                 max_tokens=max_tokens,
                 temperature=temperature,
             )

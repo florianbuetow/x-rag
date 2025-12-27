@@ -84,8 +84,8 @@ packages = ["src", "evals"]
 line-length = 140
 indent-width = 4
 target-version = "py311"
-# Exclude generated gRPC/protobuf code, notes, data scripts, and tools from all linting
-exclude = ["src/proto_gen/*", "notes/*", "data/*", "tools/*"]
+# Exclude generated gRPC/protobuf code, notes, data scripts, tools, and type stubs from all linting
+exclude = ["src/proto_gen/*", "notes/*", "data/*", "tools/*", "stubs/*"]
 
 [tool.ruff.lint]
 # Core errors & warnings, Google-style docs, types, bugbear, quotes, imports, naming
@@ -94,6 +94,7 @@ select = [
   "E", "F",   # pycodestyle errors, pyflakes
   "D",        # pydocstyle (Google-style)
   "ANN",      # flake8-annotations
+  "ANN401",   # flake8-annotations: disallow typing.Any in function signatures
   "B",        # flake8-bugbear
   "Q",        # flake8-quotes
   "I",        # isort
@@ -123,6 +124,10 @@ convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["D", "ANN"]  # optional, if you find tests too noisy
+# Embedding generators: **options: Any needed for OpenAI API compatibility
+# TypedDict provides documentation, but base class requires Any for LSP
+"src/embedding_service/generators/embedding_generator.py" = ["ANN401"]
+"src/embedding_service/generators/openai_generator.py" = ["ANN401"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -149,6 +154,9 @@ warn_unused_configs = true
 
 # Limit what mypy considers part of the project
 files = ["src", "tests"]
+
+# Type stub path
+mypy_path = "stubs"
 
 # CI ergonomics
 show_error_codes = true
@@ -217,6 +225,9 @@ exclude = [
 # Reasonable default for CI:
 severity = "MEDIUM"
 confidence = "MEDIUM"
+
+# Skip B110 (try-except-pass) for optional OpenTelemetry instrumentation
+skips = ["B110"]
 
 [tool.deptry]
 # Source scanning - only check src/ directory

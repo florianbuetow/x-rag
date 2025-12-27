@@ -8,7 +8,7 @@ import json
 import logging
 import threading
 from types import TracebackType
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import weaviate
 from weaviate import WeaviateClient
@@ -337,12 +337,15 @@ class DocumentIndexer:
             logger.debug(f"Creating pipeline components for namespace '{namespace}'")
 
             # Text cleaner with dataset-specific settings
+            unicode_norm_type = Literal["NFC", "NFKC", "NFD", "NFKD"]
             unicode_norm = dataset_config.chunking.cleaner_unicode_normalization
-            unicode_normalization = unicode_norm if unicode_norm in ("NFC", "NFKC", "NFD", "NFKD") else None
+            unicode_normalization: unicode_norm_type | None = None
+            if unicode_norm in ("NFC", "NFKC", "NFD", "NFKD"):
+                unicode_normalization = cast(unicode_norm_type, unicode_norm)
             cleaner = BasicTextCleaner(
                 remove_empty_lines=dataset_config.chunking.cleaner_remove_empty_lines,
                 remove_extra_whitespaces=dataset_config.chunking.cleaner_remove_extra_whitespaces,
-                unicode_normalization=unicode_normalization,  # type: ignore[arg-type]
+                unicode_normalization=unicode_normalization,
             )
 
             # Text splitter with dataset-specific chunk size/overlap

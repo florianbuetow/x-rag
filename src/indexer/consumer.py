@@ -7,8 +7,8 @@ import time
 from collections.abc import AsyncIterator
 from typing import Any
 
-from aiokafka import AIOKafkaConsumer  # type: ignore[import-untyped]
-from aiokafka.errors import KafkaError  # type: ignore[import-untyped]
+from aiokafka import AIOKafkaConsumer
+from aiokafka.errors import KafkaError
 from opentelemetry import context
 from opentelemetry.propagate import extract
 

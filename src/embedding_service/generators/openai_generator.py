@@ -1,13 +1,45 @@
 """OpenAI embedding generator implementation."""
 
 import logging
+from collections.abc import Mapping
+from typing import Any, Literal, NotRequired, TypedDict
 
-from openai import APIError, AsyncOpenAI, RateLimitError
+import httpx
+from openai import APIError, AsyncOpenAI, NotGiven, Omit, RateLimitError
 
 from src.core.errors import ServiceUnavailableError
 from src.embedding_service.generators.embedding_generator import EmbeddingGenerator
 
 logger = logging.getLogger(__name__)
+
+
+class OpenAIEmbeddingOptions(TypedDict, total=False):
+    """Type-safe options for OpenAI embeddings.create() method.
+
+    This TypedDict documents the valid options that can be passed to embed() and embed_batch().
+    While the method signatures use **options: Any for compatibility with the base class,
+    this TypedDict provides type information for IDE autocomplete and documentation.
+
+    See OpenAI API documentation for details:
+    https://platform.openai.com/docs/api-reference/embeddings/create
+
+    Valid options:
+        dimensions: Target embedding dimensions (for models that support it)
+        encoding_format: Return format ("float" or "base64")
+        user: Unique user identifier for abuse monitoring
+        extra_headers: Additional HTTP headers
+        extra_query: Additional query parameters
+        extra_body: Additional request body fields
+        timeout: Request timeout
+    """
+
+    dimensions: NotRequired[int | Omit]
+    encoding_format: NotRequired[Literal["float", "base64"] | Omit]
+    user: NotRequired[str | Omit]
+    extra_headers: NotRequired[Mapping[str, str | Omit] | None]
+    extra_query: NotRequired[Mapping[str, object] | None]
+    extra_body: NotRequired[Mapping[str, object] | None]
+    timeout: NotRequired[float | httpx.Timeout | None | NotGiven]
 
 
 class OpenAIEmbeddingGenerator(EmbeddingGenerator):
@@ -55,13 +87,13 @@ class OpenAIEmbeddingGenerator(EmbeddingGenerator):
         base_info = f", base_url={base_url}" if base_url else ""
         logger.info(f"OpenAIEmbeddingGenerator initialized{base_info}")
 
-    async def embed(self, text: str, model: str, **options: object) -> list[float]:
+    async def embed(self, text: str, model: str, **options: Any) -> list[float]:
         """Generate embedding for a single text.
 
         Args:
             text: Input text to embed
             model: Model identifier (e.g., "text-embedding-3-small")
-            **options: Additional options (dimensions, etc.)
+            **options: Additional OpenAI API options (see OpenAIEmbeddingOptions for valid keys)
 
         Returns:
             Embedding vector as list of floats
@@ -73,7 +105,7 @@ class OpenAIEmbeddingGenerator(EmbeddingGenerator):
             response = await self.client.embeddings.create(
                 input=text,
                 model=model,
-                **options,  # type: ignore[arg-type]
+                **options,
             )
             embedding = response.data[0].embedding
             logger.debug(f"Generated embedding for text (length={len(text)})")
@@ -91,7 +123,7 @@ class OpenAIEmbeddingGenerator(EmbeddingGenerator):
             logger.error(f"Unexpected error in embed: {e}")
             raise ServiceUnavailableError("OpenAI", f"Embedding generation failed: {e}") from e
 
-    async def embed_batch(self, texts: list[str], model: str, **options: object) -> list[list[float]]:
+    async def embed_batch(self, texts: list[str], model: str, **options: Any) -> list[list[float]]:
         """Generate embeddings for multiple texts (batched for efficiency).
 
         OpenAI API supports batch embedding which is more efficient than
@@ -100,7 +132,7 @@ class OpenAIEmbeddingGenerator(EmbeddingGenerator):
         Args:
             texts: List of input texts to embed
             model: Model identifier
-            **options: Additional options (dimensions, etc.)
+            **options: Additional OpenAI API options (see OpenAIEmbeddingOptions for valid keys)
 
         Returns:
             List of embedding vectors
@@ -115,7 +147,7 @@ class OpenAIEmbeddingGenerator(EmbeddingGenerator):
             response = await self.client.embeddings.create(
                 input=texts,
                 model=model,
-                **options,  # type: ignore[arg-type]
+                **options,
             )
             # Extract embeddings in the same order as input
             embeddings = [item.embedding for item in response.data]

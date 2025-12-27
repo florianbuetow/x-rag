@@ -48,16 +48,17 @@ class TestTraceLlmCall:
         assert callable(sample_func)
 
     @patch("src.common.tracing_utils._get_tracer")
-    def test_sync_function_is_traced(self, mock_get_tracer: MagicMock, mock_tracer):
-        """Tests that sync functions are properly traced."""
+    @pytest.mark.asyncio
+    async def test_sync_function_is_traced(self, mock_get_tracer: MagicMock, mock_tracer):
+        """Tests that async functions are properly traced (decorator is async-only)."""
         tracer, span = mock_tracer
         mock_get_tracer.return_value = tracer
 
         @trace_llm_call(model="gpt-4", operation="completion")
-        def sync_func():
+        async def async_func():
             return "result"
 
-        result = sync_func()
+        result = await async_func()
 
         assert result == "result"
         tracer.start_as_current_span.assert_called_once()
@@ -82,47 +83,50 @@ class TestTraceLlmCall:
         span.set_attribute.assert_any_call("llm.model", "gpt-4")
 
     @patch("src.common.tracing_utils._get_tracer")
-    def test_span_kind_is_client(self, mock_get_tracer: MagicMock, mock_tracer):
+    @pytest.mark.asyncio
+    async def test_span_kind_is_client(self, mock_get_tracer: MagicMock, mock_tracer):
         """Tests that span kind is CLIENT for LLM calls."""
         tracer, _ = mock_tracer
         mock_get_tracer.return_value = tracer
 
         @trace_llm_call(model="gpt-4", operation="completion")
-        def sync_func():
+        async def async_func():
             return "result"
 
-        sync_func()
+        await async_func()
 
         tracer.start_as_current_span.assert_called_once()
         call_kwargs = tracer.start_as_current_span.call_args[1]
         assert call_kwargs["kind"] == SpanKind.CLIENT
 
     @patch("src.common.tracing_utils._get_tracer")
-    def test_exception_is_recorded(self, mock_get_tracer: MagicMock, mock_tracer):
+    @pytest.mark.asyncio
+    async def test_exception_is_recorded(self, mock_get_tracer: MagicMock, mock_tracer):
         """Tests that exceptions are recorded on the span."""
         tracer, span = mock_tracer
         mock_get_tracer.return_value = tracer
 
         @trace_llm_call(model="gpt-4", operation="completion")
-        def failing_func():
+        async def failing_func():
             raise ValueError("Test error")
 
         with pytest.raises(ValueError):
-            failing_func()
+            await failing_func()
 
         span.record_exception.assert_called_once()
 
     @patch("src.common.tracing_utils._get_tracer")
-    def test_duration_is_recorded(self, mock_get_tracer: MagicMock, mock_tracer):
+    @pytest.mark.asyncio
+    async def test_duration_is_recorded(self, mock_get_tracer: MagicMock, mock_tracer):
         """Tests that duration is recorded on the span."""
         tracer, span = mock_tracer
         mock_get_tracer.return_value = tracer
 
         @trace_llm_call(model="gpt-4", operation="completion")
-        def sync_func():
+        async def async_func():
             return "result"
 
-        sync_func()
+        await async_func()
 
         # Check that duration_ms attribute was set
         duration_calls = [call for call in span.set_attribute.call_args_list if call[0][0] == "llm.duration_ms"]

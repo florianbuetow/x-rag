@@ -1,11 +1,13 @@
 """Thin wrapper for Kafka producer with trace context propagation."""
 
+from __future__ import annotations
+
 import json
 import logging
 from typing import Any
 
-from aiokafka import AIOKafkaProducer  # type: ignore[import-untyped]
-from aiokafka.errors import KafkaError  # type: ignore[import-untyped]
+from aiokafka import AIOKafkaProducer
+from aiokafka.errors import KafkaError
 from opentelemetry.propagate import inject
 
 logger = logging.getLogger(__name__)
@@ -71,6 +73,8 @@ class KafkaClient:
             RuntimeError: If producer not started
             KafkaError: If publish fails
         """
+        from aiokafka.errors import KafkaError
+
         if not self.producer:
             raise RuntimeError("Kafka producer not started")
 

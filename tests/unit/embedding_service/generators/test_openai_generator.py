@@ -22,53 +22,71 @@ class TestOpenAIEmbeddingGeneratorInit:
     @patch("src.embedding_service.generators.openai_generator.AsyncOpenAI")
     def test_init_creates_client(self, mock_async_openai):
         """Tests that __init__ creates AsyncOpenAI client."""
-        OpenAIEmbeddingGenerator(
+        mock_client = MagicMock()
+        mock_async_openai.return_value = mock_client
+
+        generator = OpenAIEmbeddingGenerator(
             api_key="test-key",
             max_retries=3,
             timeout=30,
             base_url=None,
         )
 
+        # Verify AsyncOpenAI was instantiated with correct parameters
         mock_async_openai.assert_called_once_with(
             api_key="test-key",
             max_retries=3,
             timeout=30,
             base_url=None,
         )
+        # Verify the client was properly assigned
+        assert generator.client is mock_client
 
     @patch("src.embedding_service.generators.openai_generator.AsyncOpenAI")
     def test_init_with_custom_retries(self, mock_async_openai):
         """Tests that __init__ respects max_retries parameter."""
-        OpenAIEmbeddingGenerator(
+        mock_client = MagicMock()
+        mock_async_openai.return_value = mock_client
+
+        generator = OpenAIEmbeddingGenerator(
             api_key="test-key",
             max_retries=5,
             timeout=30,
             base_url=None,
         )
 
+        # Verify AsyncOpenAI was instantiated with correct max_retries
         mock_async_openai.assert_called_once_with(
             api_key="test-key",
             max_retries=5,
             timeout=30,
             base_url=None,
         )
+        # Verify the client was properly assigned
+        assert generator.client is mock_client
 
     @patch("src.embedding_service.generators.openai_generator.AsyncOpenAI")
     def test_init_with_custom_timeout(self, mock_async_openai):
         """Tests that __init__ respects timeout parameter."""
-        OpenAIEmbeddingGenerator(
+        mock_client = MagicMock()
+        mock_async_openai.return_value = mock_client
+
+        generator = OpenAIEmbeddingGenerator(
             api_key="test-key",
             max_retries=3,
             timeout=60,
             base_url=None,
         )
 
+        # Verify AsyncOpenAI was instantiated with correct timeout
         mock_async_openai.assert_called_once_with(
             api_key="test-key",
             max_retries=3,
             timeout=60,
             base_url=None,
         )
+        # Verify the client was properly assigned
+        assert generator.client is mock_client
 
     @patch("src.embedding_service.generators.openai_generator.AsyncOpenAI")
     def test_init_stores_max_retries(self, mock_async_openai):

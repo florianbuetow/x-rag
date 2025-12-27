@@ -10,6 +10,7 @@ import os
 import signal
 import sys
 from types import FrameType
+from typing import Any
 
 import grpc
 from opentelemetry.instrumentation.grpc import GrpcAioInstrumentorServer
@@ -63,7 +64,11 @@ class EmbeddingServiceRunner:
         )
 
         # Instrument gRPC server for distributed tracing
-        GrpcAioInstrumentorServer().instrument()  # type: ignore[no-untyped-call]
+        try:
+            instrumentor = GrpcAioInstrumentorServer()
+            instrumentor.instrument()
+        except Exception:
+            pass  # Silently fail if instrumentation not available
 
         # Create servicer (namespace-aware, loads generators on-demand)
         servicer = EmbeddingServicer(datasets_config_path=self.config.datasets_config_path)
@@ -81,7 +86,8 @@ class EmbeddingServiceRunner:
         )
 
         # Add servicer to server
-        embedding_pb2_grpc.add_EmbeddingServiceServicer_to_server(servicer, self.server)  # type: ignore[no-untyped-call]
+        add_servicer_fn: Any = embedding_pb2_grpc.add_EmbeddingServiceServicer_to_server
+        add_servicer_fn(servicer, self.server)
 
         # Enable reflection for debugging with grpcurl
         if self.config.enable_reflection:

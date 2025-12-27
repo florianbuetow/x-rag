@@ -492,7 +492,8 @@ class Config:
         """Check if dataset exists."""
         return dataset_name in self._datasets
 
-    def get_dataset_value(self, dataset_name: str, *keys: str, config_slug: str | None = None) -> Any:  # noqa: C901, ANN401  # nosemgrep: xrag.no-default-parameter-values
+    # nosemgrep: xrag.no-default-parameter-values
+    def get_dataset_value(self, dataset_name: str, *keys: str, config_slug: str | None = None) -> object:
         """Get a value from dataset config with defaults merging.
 
         Args:
@@ -512,9 +513,7 @@ class Config:
 
         merged = dict(self._defaults)
         dataset = self._datasets[dataset_name]
-        for key, value in dataset.items():
-            if key != "configs":
-                merged[key] = value  # noqa: PERF403
+        merged.update({key: value for key, value in dataset.items() if key != "configs"})
 
         if config_slug:
             configs = dataset.get("configs", [])  # nosemgrep: xrag.no-dict-get-with-default
@@ -529,9 +528,7 @@ class Config:
                     f"Config slug '{config_slug}' not found for dataset '{dataset_name}'. "
                     f"Available: {', '.join(available_slugs) if available_slugs else 'none'}"
                 )
-            for key, value in variant.items():
-                if key not in ["slug", "description"]:
-                    merged[key] = value  # noqa: PERF403
+            merged.update({key: value for key, value in variant.items() if key not in ["slug", "description"]})
 
         current = merged
         for key in keys:
@@ -563,9 +560,7 @@ class Config:
 
         merged = dict(self._defaults)
         dataset = self._datasets[dataset_name]
-        for key, value in dataset.items():
-            if key != "configs":
-                merged[key] = value  # noqa: PERF403
+        merged.update({key: value for key, value in dataset.items() if key != "configs"})
 
         if config_slug:
             configs = dataset.get("configs", [])  # nosemgrep: xrag.no-dict-get-with-default
@@ -580,8 +575,6 @@ class Config:
                     f"Config slug '{config_slug}' not found for dataset '{dataset_name}'. "
                     f"Available: {', '.join(available_slugs) if available_slugs else 'none'}"
                 )
-            for key, value in variant.items():
-                if key not in ["slug", "description"]:
-                    merged[key] = value  # noqa: PERF403
+            merged.update({key: value for key, value in variant.items() if key not in ["slug", "description"]})
 
         return merged

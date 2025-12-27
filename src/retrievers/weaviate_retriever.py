@@ -6,7 +6,7 @@ stored in Weaviate.
 
 import json
 import logging
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, Protocol, cast
 
 import weaviate
 from weaviate import WeaviateClient
@@ -16,7 +16,95 @@ from weaviate.classes.query import Filter
 if TYPE_CHECKING:
     from weaviate.collections.classes.filters import _Filters
 
+
 logger = logging.getLogger(__name__)
+
+
+class WeaviateObjectMetadata(Protocol):
+    """Protocol for Weaviate object metadata."""
+
+    @property
+    def distance(self) -> float | None:
+        """Distance metric for vector search."""
+        ...
+
+    @property
+    def score(self) -> float | None:
+        """Score metric for BM25/hybrid search."""
+        ...
+
+
+class WeaviateObject(Protocol):
+    """Protocol for Weaviate result object."""
+
+    @property
+    def uuid(self) -> object:
+        """Object UUID."""
+        ...
+
+    @property
+    def properties(self) -> dict[str, object]:
+        """Object properties."""
+        ...
+
+    @property
+    def metadata(self) -> WeaviateObjectMetadata:
+        """Object metadata."""
+        ...
+
+
+class WeaviateQueryResult(Protocol):
+    """Protocol for Weaviate query results."""
+
+    @property
+    def objects(self) -> list[WeaviateObject]:
+        """List of result objects."""
+        ...
+
+
+class WeaviateCollectionQuery(Protocol):
+    """Protocol for Weaviate collection query interface."""
+
+    def near_vector(
+        self,
+        near_vector: list[float] | None,
+        limit: int,
+        return_metadata: list[str],
+        filters: "_Filters | None",
+    ) -> WeaviateQueryResult:
+        """Execute near vector query."""
+        ...
+
+    def bm25(
+        self,
+        query: str,
+        limit: int,
+        return_metadata: list[str],
+        filters: "_Filters | None",
+    ) -> WeaviateQueryResult:
+        """Execute BM25 query."""
+        ...
+
+    def hybrid(
+        self,
+        query: str,
+        vector: list[float] | None,
+        alpha: float,
+        limit: int,
+        return_metadata: list[str],
+        filters: "_Filters | None",
+    ) -> WeaviateQueryResult:
+        """Execute hybrid query."""
+        ...
+
+
+class WeaviateCollection(Protocol):
+    """Protocol for Weaviate collection."""
+
+    @property
+    def query(self) -> WeaviateCollectionQuery:
+        """Query interface for the collection."""
+        ...
 
 
 class SearchResult:
@@ -128,14 +216,14 @@ class WeaviateRetriever:
 
     def _execute_query(
         self,
-        collection: Any,  # noqa: ANN401 - Weaviate Collection type is generic
+        collection: object,
         query: str,
         query_embedding: list[float] | None,
         top_k: int,
         mode: Literal["vector", "bm25", "hybrid"],
         alpha: float,
         filters: "_Filters | None",
-    ) -> Any:  # noqa: ANN401 - QueryReturn type is generic
+    ) -> WeaviateQueryResult:
         """Execute the search query based on mode.
 
         Args:
@@ -150,22 +238,23 @@ class WeaviateRetriever:
         Returns:
             Weaviate query result
         """
+        weaviate_collection = cast(WeaviateCollection, collection)
         if mode == "vector":
-            return collection.query.near_vector(
+            return weaviate_collection.query.near_vector(
                 near_vector=query_embedding,
                 limit=top_k,
                 return_metadata=["distance"],
                 filters=filters,
             )
         elif mode == "bm25":
-            return collection.query.bm25(
+            return weaviate_collection.query.bm25(
                 query=query,
                 limit=top_k,
                 return_metadata=["score"],
                 filters=filters,
             )
         elif mode == "hybrid":
-            return collection.query.hybrid(
+            return weaviate_collection.query.hybrid(
                 query=query,
                 vector=query_embedding,
                 alpha=alpha,
@@ -178,7 +267,7 @@ class WeaviateRetriever:
 
     def _convert_to_search_result(
         self,
-        obj: Any,  # noqa: ANN401 - Weaviate Object type is generic
+        obj: object,
         mode: Literal["vector", "bm25", "hybrid"],
     ) -> SearchResult:
         """Convert a Weaviate object to a SearchResult.
@@ -190,40 +279,45 @@ class WeaviateRetriever:
         Returns:
             SearchResult instance
         """
-        # Extract score/distance based on mode
+        # Extract score/distance based on mode (cast to Protocol for type safety)
+        weaviate_obj = cast(WeaviateObject, obj)
+        obj_metadata = weaviate_obj.metadata
+        obj_uuid = weaviate_obj.uuid
+        obj_properties = weaviate_obj.properties
+
         if mode == "vector":
-            distance = obj.metadata.distance
+            distance = obj_metadata.distance
             if distance is None:
-                raise ValueError(f"Weaviate object {obj.uuid} missing required distance in vector mode")
+                raise ValueError(f"Weaviate object {obj_uuid} missing required distance in vector mode")
             score = 1.0 / (1.0 + distance)
         else:
-            score_val = obj.metadata.score
+            score_val = obj_metadata.score
             if score_val is None:
-                raise ValueError(f"Weaviate object {obj.uuid} missing required score in hybrid mode")
+                raise ValueError(f"Weaviate object {obj_uuid} missing required score in hybrid mode")
             score = score_val
 
         # Build metadata
         metadata = {
-            "doc_id": obj.properties["doc_id"] if "doc_id" in obj.properties else "",
-            "chunk_index": obj.properties["chunk_index"] if "chunk_index" in obj.properties else 0,
-            "namespace": obj.properties["namespace"] if "namespace" in obj.properties else "",
-            "source": obj.properties["source"] if "source" in obj.properties else "",
-            "title": obj.properties["title"] if "title" in obj.properties else "",
+            "doc_id": obj_properties["doc_id"] if "doc_id" in obj_properties else "",
+            "chunk_index": obj_properties["chunk_index"] if "chunk_index" in obj_properties else 0,
+            "namespace": obj_properties["namespace"] if "namespace" in obj_properties else "",
+            "source": obj_properties["source"] if "source" in obj_properties else "",
+            "title": obj_properties["title"] if "title" in obj_properties else "",
         }
 
         # Add custom metadata if present
-        metadata_json = obj.properties["metadata_json"]
+        metadata_json = obj_properties["metadata_json"]
         if metadata_json and isinstance(metadata_json, str):
             try:
                 custom_metadata = json.loads(metadata_json)
                 metadata.update(custom_metadata)
             except json.JSONDecodeError:
-                logger.warning(f"Failed to parse metadata_json for chunk {obj.uuid}")
+                logger.warning(f"Failed to parse metadata_json for chunk {obj_uuid}")
 
-        content = obj.properties["content"]
+        content = obj_properties["content"]
         content_str = str(content) if content is not None else ""
 
-        return SearchResult(id=str(obj.uuid), content=content_str, score=score, metadata=metadata)
+        return SearchResult(id=str(obj_uuid), content=content_str, score=score, metadata=metadata)
 
     def search(
         self,

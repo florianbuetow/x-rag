@@ -32,10 +32,9 @@ Usage:
         span.set_attribute("vector_search.result_count", len(results))
 """
 
-import asyncio
 import functools
 import time
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Coroutine, Generator
 from contextlib import contextmanager
 from typing import Any, ParamSpec, TypeVar
 
@@ -54,17 +53,19 @@ def _get_tracer() -> trace.Tracer:
 def trace_llm_call(
     model: str,
     operation: str,
-) -> Callable[[Callable[P, T]], Callable[P, T]]:
-    """Decorator for tracing LLM API calls.
+) -> Callable[[Callable[P, Coroutine[Any, Any, T]]], Callable[P, Coroutine[Any, Any, T]]]:
+    """Decorator for tracing LLM API calls (async functions only).
 
     Records timing, model info, and token counts (if available) for LLM operations.
+
+    Note: This decorator only supports async functions. All LLM API calls are async.
 
     Args:
         model: LLM model name (e.g., "gpt-4", "gpt-3.5-turbo")
         operation: Operation type (e.g., "completion", "chat", "rerank")
 
     Returns:
-        Decorated function
+        Decorated async function
 
     Example:
         @trace_llm_call(model="gpt-4", operation="completion")
@@ -72,7 +73,7 @@ def trace_llm_call(
             return await llm.complete(prompt)
     """
 
-    def decorator(func: Callable[P, T]) -> Callable[P, T]:
+    def decorator(func: Callable[P, Coroutine[Any, Any, T]]) -> Callable[P, Coroutine[Any, Any, T]]:
         @functools.wraps(func)
         async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             tracer = _get_tracer()
@@ -85,7 +86,7 @@ def trace_llm_call(
 
                 start_time = time.perf_counter()
                 try:
-                    result = await func(*args, **kwargs)  # type: ignore[misc]
+                    result = await func(*args, **kwargs)
 
                     # Record token counts if available (OpenAI response format)
                     if hasattr(result, "usage") and result.usage is not None:
@@ -94,31 +95,8 @@ def trace_llm_call(
                         span.set_attribute("llm.total_tokens", result.usage.total_tokens)
 
                     span.set_status(Status(StatusCode.OK))
-                    return result  # type: ignore[no-any-return]
-
-                except Exception as e:
-                    span.set_status(Status(StatusCode.ERROR, str(e)))
-                    span.record_exception(e)
-                    raise
-                finally:
-                    duration_ms = (time.perf_counter() - start_time) * 1000
-                    span.set_attribute("llm.duration_ms", duration_ms)
-
-        @functools.wraps(func)
-        def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-            tracer = _get_tracer()
-            with tracer.start_as_current_span(
-                f"llm.{operation}",
-                kind=SpanKind.CLIENT,
-            ) as span:
-                span.set_attribute("llm.model", model)
-                span.set_attribute("llm.operation", operation)
-
-                start_time = time.perf_counter()
-                try:
-                    result = func(*args, **kwargs)
-                    span.set_status(Status(StatusCode.OK))
                     return result
+
                 except Exception as e:
                     span.set_status(Status(StatusCode.ERROR, str(e)))
                     span.record_exception(e)
@@ -127,9 +105,7 @@ def trace_llm_call(
                     duration_ms = (time.perf_counter() - start_time) * 1000
                     span.set_attribute("llm.duration_ms", duration_ms)
 
-        if asyncio.iscoroutinefunction(func):
-            return async_wrapper  # type: ignore[return-value]
-        return sync_wrapper
+        return async_wrapper
 
     return decorator
 

@@ -7,7 +7,7 @@
 .PHONY: cluster-start cluster-stop cluster-status cluster-clean cluster-reset cluster-destroy
 .PHONY: apps-generate-grpc apps-build apps-register apps-deploy apps-recycle apps-destroy
 .PHONY: test test-integration-config test-integration test-coverage test-e2e
-.PHONY: code-style code-format code-typecheck code-security code-deptry code-stats code-history code-spell code-audit code-semgrep
+.PHONY: code-style code-format code-lspchecks code-typecheck code-security code-deptry code-stats code-history code-spell code-audit code-semgrep
 .PHONY: ci ci-quiet
 .PHONY: logs-search-ui logs-search-service logs-embedding logs-ingest logs-indexer
 .PHONY: logs-weaviate logs-kafka logs-redis
@@ -338,8 +338,19 @@ code-format: ## Auto-fix code style and formatting
 	@echo "$(GREEN)✓ Code formatted$(NC)"
 	@echo ""
 
+code-lspchecks: ## Run strict type checking with Pyright (LSP-based)
+	@echo ""
+	@echo "$(BLUE)=== Running Pyright Type Checks ===$(NC)"
+	@mkdir -p reports/pyright
+	@uv run pyright --project pyrightconfig.json > reports/pyright/pyright.txt 2>&1 || true
+	@uv run pyright --project pyrightconfig.json
+	@echo ""
+	@echo "$(GREEN)✓ Pyright checks passed$(NC)"
+	@echo "  Report: reports/pyright/pyright.txt"
+	@echo ""
+
 code-typecheck: ## Run static type checking with mypy
-	@echo "$(BLUE)=== Running Type Checks ===$(NC)"
+	@echo "$(BLUE)=== Running Type Checks (mypy) ===$(NC)"
 	@uv run mypy src/
 	@echo ""
 	@echo "$(GREEN)✓ Type checks passed$(NC)"
@@ -457,7 +468,7 @@ test-e2e: ## Run E2E tests (destructive - resets cluster and data)
 
 ##@ CI/CD
 
-ci: init test-integration-config code-style code-typecheck code-security code-deptry code-spell code-semgrep code-audit test ## Run ALL validation checks (config tests + style + types + security + deps + spelling + semgrep + audit + tests)
+ci: init test-integration-config code-style code-typecheck code-lspchecks code-security code-deptry code-spell code-semgrep code-audit test ## Run ALL validation checks (config tests + style + types + lsp + security + deps + spelling + semgrep + audit + tests)
 	@echo "$(GREEN)✓ All CI checks passed$(NC)"
 	@echo ""
 
@@ -472,6 +483,8 @@ ci-quiet: ## Run ALL validation checks silently (only show output on errors)
 	echo "$(GREEN)✓ Code-style passed$(NC)"; \
 	$(MAKE) code-typecheck > $$TMPFILE 2>&1 || { echo "$(RED)✗ Code-typecheck failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
 	echo "$(GREEN)✓ Code-typecheck passed$(NC)"; \
+	$(MAKE) code-lspchecks > $$TMPFILE 2>&1 || { echo "$(RED)✗ Code-lspchecks failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
+	echo "$(GREEN)✓ Code-lspchecks passed$(NC)"; \
 	$(MAKE) code-security > $$TMPFILE 2>&1 || { echo "$(RED)✗ Code-security failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \
 	echo "$(GREEN)✓ Code-security passed$(NC)"; \
 	$(MAKE) code-deptry > $$TMPFILE 2>&1 || { echo "$(RED)✗ Code-deptry failed$(NC)"; cat $$TMPFILE; rm $$TMPFILE; exit 1; }; \

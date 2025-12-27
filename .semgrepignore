@@ -9,3 +9,4 @@ reports/
 .cache/
 src/proto_gen/
 tools/
+stubs/

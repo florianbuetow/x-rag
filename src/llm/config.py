@@ -221,7 +221,6 @@ class EmbeddingConfig(BaseModel):
         max_retries: int,
         timeout: int,
         dimension: int,
-        **kwargs: object,
     ) -> "EmbeddingConfig":
         """Create config for OpenAI API.
 
@@ -234,7 +233,6 @@ class EmbeddingConfig(BaseModel):
             max_retries: Maximum retry attempts (required)
             timeout: Request timeout in seconds (required)
             dimension: Embedding dimension (required)
-            **kwargs: Additional config overrides
         """
         return cls(
             provider=EmbeddingProvider.OPENAI,
@@ -244,7 +242,6 @@ class EmbeddingConfig(BaseModel):
             max_retries=max_retries,
             timeout=timeout,
             dimension=dimension,
-            **kwargs,
         )
 
     @classmethod
@@ -256,7 +253,6 @@ class EmbeddingConfig(BaseModel):
         max_retries: int,
         timeout: int,
         dimension: int,
-        **kwargs: object,
     ) -> "EmbeddingConfig":
         """Create config for local embedding server (LM Studio, Ollama, etc.).
 
@@ -270,7 +266,6 @@ class EmbeddingConfig(BaseModel):
             max_retries: Maximum retry attempts (required)
             timeout: Request timeout in seconds (required)
             dimension: Embedding dimension (required)
-            **kwargs: Additional config overrides
         """
         return cls(
             provider=EmbeddingProvider.LOCAL,
@@ -280,7 +275,6 @@ class EmbeddingConfig(BaseModel):
             max_retries=max_retries,
             timeout=timeout,
             dimension=dimension,
-            **kwargs,
         )
 
     @classmethod
@@ -289,7 +283,6 @@ class EmbeddingConfig(BaseModel):
         dimension: int,
         max_retries: int,
         timeout: int,
-        **kwargs: object,
     ) -> "EmbeddingConfig":
         """Create config for hash-based embeddings (testing only).
 
@@ -300,7 +293,6 @@ class EmbeddingConfig(BaseModel):
             dimension: Embedding dimension (required)
             max_retries: Maximum retry attempts (required - typically 0 for local hashing)
             timeout: Request timeout in seconds (required)
-            **kwargs: Additional config overrides
         """
         return cls(
             provider=EmbeddingProvider.HASH_BASED,
@@ -308,7 +300,8 @@ class EmbeddingConfig(BaseModel):
             dimension=dimension,
             max_retries=max_retries,
             timeout=timeout,
-            **kwargs,  # type: ignore[arg-type]
+            api_key=None,
+            base_url=None,
         )
 
     @property

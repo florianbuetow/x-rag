@@ -166,6 +166,16 @@ class TestFileHashCache:
         """
         return self.cache.get(file_path)
 
+    def remove_file(self, file_path: str):
+        """Remove a file from the cache.
+
+        Args:
+            file_path: Path to the file to remove
+        """
+        if file_path in self.cache:
+            del self.cache[file_path]
+            self._save_cache()
+
 
 # =============================================================================
 # Class 1: TestFileFinder
@@ -727,6 +737,8 @@ class FakeTestOrchestrator:
             for test_file in test_files:
                 if self.cache.has_file_changed(test_file):
                     files_to_scan.append(test_file)
+                    # Remove from cache before testing - will be re-added only if all tests pass
+                    self.cache.remove_file(test_file)
                 else:
                     skipped_files.append(test_file)
                     cached_info = self.cache.get_cached_info(test_file)

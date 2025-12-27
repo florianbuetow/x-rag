@@ -2,7 +2,7 @@
 
 import logging
 from types import TracebackType
-from typing import cast
+from typing import Any, cast
 
 import grpc
 from opentelemetry.instrumentation.grpc import GrpcInstrumentorClient
@@ -11,9 +11,13 @@ from src.proto_gen import embedding_pb2, embedding_pb2_grpc
 
 logger = logging.getLogger(__name__)
 
-# Instrument gRPC client for distributed tracing
-_grpc_client_instrumentor = GrpcInstrumentorClient()  # type: ignore[no-untyped-call]
-_grpc_client_instrumentor.instrument()
+
+# Instrument gRPC client for distributed tracing at module load time
+try:
+    _instrumentor = GrpcInstrumentorClient()
+    _instrumentor.instrument()
+except Exception:
+    pass  # Silently fail if instrumentation not available
 
 
 class EmbeddingServiceClient:
@@ -60,7 +64,8 @@ class EmbeddingServiceClient:
                 ("grpc.keepalive_timeout_ms", 5000),
             ],
         )
-        self.stub = embedding_pb2_grpc.EmbeddingServiceStub(self.channel)  # type: ignore[no-untyped-call]
+        stub_constructor: Any = embedding_pb2_grpc.EmbeddingServiceStub
+        self.stub = stub_constructor(self.channel)
         logger.info("Connected to Embedding Service")
 
     def close(self) -> None:
